@@ -176,7 +176,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Source
   <div id="content">
 
     <!-- OVERVIEW -->
-    <div class="page active" id="page-overview">
+    <div class="page active" id="page-overview" class="page active">
       <div class="stitle">Voting Intention</div>
       <div class="ssub" id="overview-sub">Loading latest polling data…</div>
       <div class="updated-bar">
@@ -756,18 +756,19 @@ async function refreshData() {
 }
 
 // ── Init ──
-async function init() {
-  // Hide loading screen IMMEDIATELY — never block the user
-  const loadScreen = document.getElementById('loading-screen');
-  loadScreen.style.display = 'none';
+function init() {
+  // Activate overview tab immediately
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg = document.getElementById('page-overview');
+  if(pg) pg.classList.add('active');
 
-  // Show fallback/cached data right away
+  // Show fallback data SYNCHRONOUSLY — no async, no waiting
   const cached = loadCache() || FALLBACK_DATA;
   pollingData = cached;
   renderAll(cached);
   setStatus('error','CACHED');
 
-  // Try background refresh after 1 second
+  // Try background refresh after 2 seconds
   setTimeout(async () => {
     setStatus('loading','UPDATING');
     try {
@@ -780,7 +781,7 @@ async function init() {
     } catch(e) {
       setStatus('error','CACHED');
     }
-  }, 1000);
+  }, 2000);
 }
 
 // PWA install
