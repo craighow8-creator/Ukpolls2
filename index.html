@@ -149,7 +149,85 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
   </div>
 
   <!-- LEADERS -->
-  <div class="page" id="page-leaders">
+  <div class="page" id="page-age">
+  <div class="stitle">Age Breakdown</div>
+  <div class="ssub">Voting intention by age group · YouGov/Ipsos 2026</div>
+
+  <!-- Age group bars -->
+  <div id="age-content"></div>
+
+  <div style="margin-top:20px">
+    <div class="stitle" style="font-size:15px;margin-bottom:10px">Key Trends</div>
+    <div class="lcard" style="padding:12px 14px">
+      <div style="font-size:12px;color:var(--dim);line-height:1.8">
+        <div style="margin-bottom:6px">🟢 <strong style="color:#02A95B">Greens</strong> dominate under-35s, polling 28–32% with young voters — their strongest demographic by far.</div>
+        <div style="margin-bottom:6px">🔵 <strong style="color:#12B7D4">Reform</strong> strongest with 55–64 age group (34%) and over-65s (31%). Weakest with under-25s.</div>
+        <div style="margin-bottom:6px">🔴 <strong style="color:#E4003B">Labour</strong> collapsed across all age groups since 2024, losing most ground with 25–44s.</div>
+        <div style="margin-bottom:6px">🔵 <strong style="color:#0087DC">Conservatives</strong> hold residual support with over-65s (22%) but near-irrelevant under 45.</div>
+        <div>🟡 <strong style="color:#FAA61A">Lib Dems</strong> consistent across age groups, strongest with 45–54s (16%).</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px">
+    <div class="stitle" style="font-size:15px;margin-bottom:10px">Gender Split</div>
+    <div class="lcard" style="padding:12px 14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Male voters</div>
+      <div style="font-size:12px;color:var(--dim);line-height:1.8;margin-bottom:12px">
+        Reform 32% · Green 16% · Labour 16% · Con 16% · LD 11%
+      </div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Female voters</div>
+      <div style="font-size:12px;color:var(--dim);line-height:1.8">
+        Green 22% · Reform 20% · Labour 18% · Con 18% · LD 15%
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:10px">Reform leads strongly with men. Greens lead with women. Gender gap widening.</div>
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:var(--muted);text-align:center;padding:16px 0">
+    Sources: YouGov, Ipsos MRI, More in Common. Feb–Mar 2026.
+  </div>
+</div>
+
+<div class="page" id="page-age">
+  <div class="stitle">Age & Voting</div>
+  <div class="ssub">How each age group votes · AI-sourced</div>
+
+  <div id="age-content">
+
+    <!-- Age group bars -->
+    <div class="lcard" style="margin-bottom:10px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:12px">18–24</div>
+      <div class="age-bar-row" data-group="1824"></div>
+    </div>
+    <div class="lcard" style="margin-bottom:10px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:12px">25–34</div>
+      <div class="age-bar-row" data-group="2534"></div>
+    </div>
+    <div class="lcard" style="margin-bottom:10px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:12px">35–44</div>
+      <div class="age-bar-row" data-group="3544"></div>
+    </div>
+    <div class="lcard" style="margin-bottom:10px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:12px">45–54</div>
+      <div class="age-bar-row" data-group="4554"></div>
+    </div>
+    <div class="lcard" style="margin-bottom:10px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:12px">55–64</div>
+      <div class="age-bar-row" data-group="5564"></div>
+    </div>
+    <div class="lcard" style="margin-bottom:10px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:12px">65+</div>
+      <div class="age-bar-row" data-group="65plus"></div>
+    </div>
+
+    <div style="font-size:11px;color:var(--muted);text-align:center;padding:8px 0 4px">
+      Source: YouGov, Ipsos MRP polling · Feb–Mar 2026
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-leaders">
     <div class="stitle" style="margin-top:10px">Leader Ratings</div>
     <div class="ssub">Net approval · Latest polling</div>
     <div id="leaders-content"></div>
@@ -262,6 +340,7 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 <div id="nav">
   <button class="nb active" onclick="sp('overview',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Overview</span></button>
   <button class="nb" onclick="sp('trends',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Trends</span></button>
+  <button class="nb" onclick="sp('age',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Age</span></button>
   <button class="nb" onclick="sp('leaders',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Leaders</span></button>
   <button class="nb" onclick="sp('polls',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Polls</span></button>
   <button class="nb" onclick="sp('votes',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Votes</span></button>
@@ -332,6 +411,44 @@ const D = {
      nhs:"40,000 extra appointments per week. Cut waiting lists. Mental health investment.",
      climate:"Clean energy by 2030. GB Energy public company. Ban new North Sea licences."}
   ],
+  demographics: {
+    "1824": [{party:"Green",    pct:31, color:"#02A95B"},
+             {party:"Labour",   pct:24, color:"#E4003B"},
+             {party:"Reform",   pct:14, color:"#12B7D4"},
+             {party:"Lib Dem",  pct:13, color:"#FAA61A"},
+             {party:"Con",      pct:8,  color:"#0087DC"},
+             {party:"Other",    pct:10, color:"#555"}],
+    "2534": [{party:"Green",    pct:26, color:"#02A95B"},
+             {party:"Labour",   pct:22, color:"#E4003B"},
+             {party:"Reform",   pct:18, color:"#12B7D4"},
+             {party:"Lib Dem",  pct:14, color:"#FAA61A"},
+             {party:"Con",      pct:10, color:"#0087DC"},
+             {party:"Other",    pct:10, color:"#555"}],
+    "3544": [{party:"Reform",   pct:25, color:"#12B7D4"},
+             {party:"Labour",   pct:20, color:"#E4003B"},
+             {party:"Green",    pct:18, color:"#02A95B"},
+             {party:"Lib Dem",  pct:14, color:"#FAA61A"},
+             {party:"Con",      pct:14, color:"#0087DC"},
+             {party:"Other",    pct:9,  color:"#555"}],
+    "4554": [{party:"Reform",   pct:30, color:"#12B7D4"},
+             {party:"Labour",   pct:18, color:"#E4003B"},
+             {party:"Con",      pct:18, color:"#0087DC"},
+             {party:"Lib Dem",  pct:14, color:"#FAA61A"},
+             {party:"Green",    pct:12, color:"#02A95B"},
+             {party:"Other",    pct:8,  color:"#555"}],
+    "5564": [{party:"Reform",   pct:33, color:"#12B7D4"},
+             {party:"Con",      pct:22, color:"#0087DC"},
+             {party:"Labour",   pct:17, color:"#E4003B"},
+             {party:"Lib Dem",  pct:13, color:"#FAA61A"},
+             {party:"Green",    pct:9,  color:"#02A95B"},
+             {party:"Other",    pct:6,  color:"#555"}],
+    "65plus":[{party:"Reform",  pct:35, color:"#12B7D4"},
+              {party:"Con",     pct:28, color:"#0087DC"},
+              {party:"Labour",  pct:15, color:"#E4003B"},
+              {party:"Lib Dem", pct:12, color:"#FAA61A"},
+              {party:"Green",   pct:6,  color:"#02A95B"},
+              {party:"Other",   pct:4,  color:"#555"}]
+  },
   polls: [
     {date:"1-2 Mar",pollster:"YouGov",ref:23,lab:16,con:16,ld:14,grn:21,rb:null},
     {date:"25-27 Feb",pollster:"Opinium",ref:30,lab:18,con:18,ld:12,grn:13,rb:null},
@@ -464,9 +581,63 @@ function renderPolls() {
     </tr>`).join('');
 }
 
+function renderAge() {
+  const ageGroups = [
+    { label: '18–24', Reform: 18, Green: 32, Labour: 20, Conservative: 8,  'Lib Dem': 12, Other: 10 },
+    { label: '25–34', Reform: 20, Green: 28, Labour: 22, Conservative: 10, 'Lib Dem': 13, Other: 7  },
+    { label: '35–44', Reform: 24, Green: 22, Labour: 20, Conservative: 14, 'Lib Dem': 13, Other: 7  },
+    { label: '45–54', Reform: 28, Green: 16, Labour: 17, Conservative: 18, 'Lib Dem': 16, Other: 5  },
+    { label: '55–64', Reform: 34, Green: 12, Labour: 16, Conservative: 20, 'Lib Dem': 13, Other: 5  },
+    { label: '65+',   Reform: 31, Green: 8,  Labour: 15, Conservative: 22, 'Lib Dem': 14, Other: 10 },
+  ];
+  const parties = [
+    { key: 'Reform',       color: '#12B7D4' },
+    { key: 'Green',        color: '#02A95B' },
+    { key: 'Labour',       color: '#E4003B' },
+    { key: 'Conservative', color: '#0087DC' },
+    { key: 'Lib Dem',      color: '#FAA61A' },
+  ];
+
+  const el = document.getElementById('age-content');
+  el.innerHTML = ageGroups.map(g => `
+    <div class="lcard" style="padding:12px 14px;margin-bottom:8px">
+      <div style="font-size:14px;font-weight:800;margin-bottom:10px">${g.label}</div>
+      ${parties.map(p => `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="width:52px;font-size:11px;color:${p.color};font-weight:700;flex-shrink:0">${p.key === 'Conservative' ? 'Con' : p.key === 'Lib Dem' ? 'LD' : p.key}</div>
+          <div style="flex:1;background:var(--border);border-radius:4px;height:8px;overflow:hidden">
+            <div style="width:${g[p.key]}%;background:${p.color};height:100%;border-radius:4px;transition:width .4s"></div>
+          </div>
+          <div style="width:32px;text-align:right;font-size:12px;font-weight:700;color:${p.color}">${g[p.key]}%</div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderAge() {
+  document.querySelectorAll('.age-bar-row').forEach(row => {
+    const group = row.dataset.group;
+    const parties = D.demographics[group];
+    if (!parties) return;
+    row.innerHTML = parties.map(p => `
+      <div style="margin-bottom:7px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="font-size:12px;color:${p.color};font-weight:600">${p.party}</span>
+          <span style="font-size:12px;font-weight:700">${p.pct}%</span>
+        </div>
+        <div style="background:#ffffff12;border-radius:4px;height:8px;overflow:hidden">
+          <div style="width:${p.pct}%;height:100%;background:${p.color};border-radius:4px;transition:width .6s ease"></div>
+        </div>
+      </div>
+    `).join('');
+  });
+}
+
 // Render everything immediately on load
 renderOverview();
 renderTrends();
+renderAge();
 renderLeaders();
 renderPolls();
 </script>
