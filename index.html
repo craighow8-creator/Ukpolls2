@@ -66,6 +66,22 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 .rbb{background:#9B202018;border:1px solid #9B202050;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.5;color:var(--muted);}
 .trend-chart{width:100%;height:180px;margin:8px 0;}
 .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+.section-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1.5px;margin:12px 0 8px}
+.ecard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.ecard.upcoming{border-left:3px solid #FAA61A}
+.ecard.result{border-left:3px solid #3fb95060}
+.ecard-date{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:4px}
+.ecard-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:2px}
+.ecard-sub{font-size:13px;color:var(--dim);margin-bottom:6px}
+.ecard-detail{font-size:12px;color:var(--muted);line-height:1.6}
+.ecard-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.etag{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500}
+.ecard-result-bar{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.erb-item{display:flex;align-items:center;gap:8px;font-size:13px}
+.erb-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.erb-party{color:var(--dim);width:55px;flex-shrink:0}
+.erb-pct{color:var(--text);font-weight:600;width:40px}
+.erb-note{color:var(--muted);font-size:11px}
 </style>
 </head>
 <body>
@@ -155,6 +171,88 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
   <button class="nb" onclick="sp('trends',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Trends</span></button>
   <button class="nb" onclick="sp('leaders',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Leaders</span></button>
   <button class="nb" onclick="sp('polls',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Polls</span></button>
+  <button class="nb" onclick="sp('votes',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Votes</span></button>
+</div>
+
+<div class="page" id="page-votes">
+  <div class="stitle">Elections &amp; By-Elections</div>
+  <div class="ssub">Upcoming votes &amp; recent results</div>
+
+  <div class="section-label">📅 UPCOMING</div>
+
+  <div class="ecard upcoming">
+    <div class="ecard-date">1 May 2026</div>
+    <div class="ecard-title">Local Elections 2026</div>
+    <div class="ecard-sub">England — county councils, unitaries &amp; mayoral contests</div>
+    <div class="ecard-detail">~1,600 seats across 23 councils. First major test of the Green surge and Reform's local strength. Key contests: West of England Mayor, Cambridgeshire &amp; Peterborough Mayor.</div>
+    <div class="ecard-tags">
+      <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform target</span>
+      <span class="etag" style="background:#00B14020;color:#00B140">Green surge test</span>
+    </div>
+  </div>
+
+  <div class="ecard upcoming">
+    <div class="ecard-date">1 May 2026</div>
+    <div class="ecard-title">Runcorn &amp; Helsby</div>
+    <div class="ecard-sub">By-election — Labour hold (majority: 14,696)</div>
+    <div class="ecard-detail">Triggered by MP Mike Amesbury's resignation after assault video. Labour defending a large majority in a northern Red Wall seat against a strong Reform challenge.</div>
+    <div class="ecard-tags">
+      <span class="etag" style="background:#E4003B20;color:#E4003B">Lab defend</span>
+      <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform target</span>
+    </div>
+  </div>
+
+  <div class="ecard upcoming">
+    <div class="ecard-date">TBC 2026</div>
+    <div class="ecard-title">Horsham</div>
+    <div class="ecard-sub">By-election — Conservative hold (majority: 3,027)</div>
+    <div class="ecard-detail">Jeremy Quin resigned on health grounds. Three-way marginal between Conservatives, Lib Dems and Reform. Could be a Lib Dem gain or a Reform breakthrough in the south.</div>
+    <div class="ecard-tags">
+      <span class="etag" style="background:#4060b020;color:#4060b0">Con defend</span>
+      <span class="etag" style="background:#FAA61A20;color:#FAA61A">LD target</span>
+      <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform threat</span>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:20px">🗳 RECENT RESULTS</div>
+
+  <div class="ecard result">
+    <div class="ecard-date">27 Feb 2026</div>
+    <div class="ecard-title">Gorton &amp; Denton</div>
+    <div class="ecard-sub">By-election — <span style="color:#00B140;font-weight:600">🟢 Green GAIN from Labour</span></div>
+    <div class="ecard-result-bar">
+      <div class="erb-item"><span class="erb-dot" style="background:#00B140"></span><span class="erb-party">Green</span><span class="erb-pct">34.1%</span><span class="erb-note">+28.6% 🏆</span></div>
+      <div class="erb-item"><span class="erb-dot" style="background:#E4003B"></span><span class="erb-party">Labour</span><span class="erb-pct">29.4%</span><span class="erb-note">-24.7%</span></div>
+      <div class="erb-item"><span class="erb-dot" style="background:#12B7D4"></span><span class="erb-party">Reform</span><span class="erb-pct">19.8%</span><span class="erb-note">+19.8%</span></div>
+      <div class="erb-item"><span class="erb-dot" style="background:#4060b0"></span><span class="erb-party">Con</span><span class="erb-pct">7.2%</span><span class="erb-note">-16.4%</span></div>
+    </div>
+    <div class="ecard-detail">Zack Polanski's first major test as Green leader. Massive 28.6pt swing. Labour vote collapsed. Greens now have 5 MPs. Seen as a pivotal moment for eco-socialist politics.</div>
+  </div>
+
+  <div class="ecard result">
+    <div class="ecard-date">6 Feb 2025</div>
+    <div class="ecard-title">Kingswood</div>
+    <div class="ecard-sub">By-election — <span style="color:#12B7D4;font-weight:600">🔵 Reform GAIN from Conservative</span></div>
+    <div class="ecard-result-bar">
+      <div class="erb-item"><span class="erb-dot" style="background:#12B7D4"></span><span class="erb-party">Reform</span><span class="erb-pct">38.7%</span><span class="erb-note">+38.7% 🏆</span></div>
+      <div class="erb-item"><span class="erb-dot" style="background:#4060b0"></span><span class="erb-party">Con</span><span class="erb-pct">26.1%</span><span class="erb-note">-21.3%</span></div>
+      <div class="erb-item"><span class="erb-dot" style="background:#E4003B"></span><span class="erb-party">Labour</span><span class="erb-pct">19.4%</span><span class="erb-note">-8.2%</span></div>
+    </div>
+    <div class="ecard-detail">Reform's first by-election gain. Signalled the collapse of the Conservative vote in Leave-leaning seats and Reform's ability to win under first-past-the-post.</div>
+  </div>
+
+  <div class="ecard result">
+    <div class="ecard-date">10 Oct 2024</div>
+    <div class="ecard-title">Henley &amp; Thame</div>
+    <div class="ecard-sub">By-election — <span style="color:#FAA61A;font-weight:600">🟡 Lib Dem HOLD</span></div>
+    <div class="ecard-result-bar">
+      <div class="erb-item"><span class="erb-dot" style="background:#FAA61A"></span><span class="erb-party">Lib Dem</span><span class="erb-pct">52.3%</span><span class="erb-note">+8.1% 🏆</span></div>
+      <div class="erb-item"><span class="erb-dot" style="background:#4060b0"></span><span class="erb-party">Con</span><span class="erb-pct">22.1%</span><span class="erb-note">-18.4%</span></div>
+      <div class="erb-item"><span class="erb-dot" style="background:#12B7D4"></span><span class="erb-party">Reform</span><span class="erb-pct">12.8%</span><span class="erb-note">+12.8%</span></div>
+    </div>
+    <div class="ecard-detail">Lib Dems consolidating their hold on southern Blue Wall seats. Conservatives continue to lose support in former heartlands.</div>
+  </div>
+
 </div>
 
 <script>
