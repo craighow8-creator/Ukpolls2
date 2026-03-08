@@ -1,464 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<meta name="theme-color" content="#0a0d12"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="UK Polls"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0d12">
 <title>UK Poll Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
-:root {
-  --bg:#0a0d12;--surface:#0d1117;--surface2:#161b22;--border:#21262d;--border2:#30363d;
-  --text:#e6edf3;--muted:#8b949e;--dim:#c9d1d9;
-  --reform:#12B7D4;--labour:#E4003B;--tory:#4060b0;--libdem:#FAA61A;--green:#00B140;--snp:#d4a012;--restore:#9B2020;
-  --up:#3fb950;--down:#f85149;--accent:#CF142B;
-  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
-}
+:root{--bg:#0a0d12;--surface:#0d1117;--surface2:#161b22;--border:#21262d;--dim:#c9d1d9;--muted:#8b949e;--up:#3fb950;--down:#f85149;--reform:#12B7D4;--labour:#E4003B;--con:#4060b0;--ld:#FAA61A;--green:#00B140;--snp:#d4a012;--rb:#9B2020;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Source Serif 4',Georgia,serif;overflow:hidden;}
-#app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
-
-/* Header */
-#hdr{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;padding:10px 15px;padding-top:calc(10px + var(--st));}
-.flag{width:36px;height:36px;border-radius:8px;flex-shrink:0;overflow:hidden;background:#003087;display:flex;align-items:center;justify-content:center;font-size:22px;}
-.ht{flex:1;}
-.htitle{font-family:'Playfair Display',serif;font-size:19px;font-weight:900;color:#fff;letter-spacing:-0.3px;}
-.hsub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;}
-.lpill{display:flex;align-items:center;gap:4px;background:#3fb95015;border:1px solid #3fb95040;border-radius:20px;padding:4px 9px;cursor:pointer;}
-.lpill.loading{background:#FAA61A15;border-color:#FAA61A40;}
-.lpill.error{background:#f8514915;border-color:#f8514940;}
-.ldot{width:6px;height:6px;background:var(--up);border-radius:50%;animation:pulse 2s infinite;}
-.ldot.spin{background:var(--libdem);animation:spin 1s linear infinite;}
-.ldot.err{background:var(--down);animation:none;}
-.ltxt{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--up);letter-spacing:.5px;}
-.ltxt.loading{color:var(--libdem);}
-.ltxt.error{color:var(--down);}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-
-/* Loading overlay */
-#loading-screen{position:absolute;inset:0;background:var(--bg);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px;}
-.ls-flag{width:60px;height:60px;border-radius:14px;flex-shrink:0;overflow:hidden;background:#003087;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:4px;}
-.ls-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:#fff;text-align:center;}
-.ls-sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;text-align:center;}
-.ls-bar{width:200px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
-.ls-fill{height:100%;background:var(--accent);border-radius:2px;animation:load 3s ease-in-out forwards;}
-@keyframes load{0%{width:0%}60%{width:70%}90%{width:90%}100%{width:100%}}
-.ls-status{font-size:13px;color:var(--muted);text-align:center;line-height:1.6;min-height:44px;}
-.ls-error{background:var(--surface);border:1px solid var(--down);border-radius:10px;padding:16px;font-size:13px;color:var(--dim);line-height:1.6;text-align:center;width:100%;}
-.ls-retry{background:var(--accent);border:none;border-radius:8px;color:#fff;padding:10px 24px;font-size:13px;font-family:'IBM Plex Mono',monospace;cursor:pointer;margin-top:8px;}
-
-/* Content */
-#content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
-.page{display:none;padding:13px 13px calc(72px + var(--sb));}
-.page.active{display:block;animation:fu .22s ease;}
-
-/* Nav */
-#nav{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding-bottom:var(--sb);}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;background:none;border:none;cursor:pointer;color:var(--muted);transition:color .15s;font-family:inherit;}
-.nb.active{color:var(--accent);}
-.nb svg{width:21px;height:21px;stroke-width:1.8;}
-.nb span{font-size:9px;font-family:'IBM Plex Mono',monospace;letter-spacing:.3px;}
-
-/* Cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px;margin-bottom:10px;}
-.clabel{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:9px;}
-.stitle{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;margin-bottom:3px;}
-.ssub{font-size:12px;color:var(--muted);margin-bottom:13px;line-height:1.5;}
-
-/* Party grid */
-.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px;}
-.pc{border-radius:10px;padding:11px 7px;text-align:center;border:1px solid var(--border);border-top-width:3px;background:var(--surface);}
-.pca{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:3px;}
-.pcp{font-size:25px;font-weight:700;line-height:1;font-family:'Playfair Display',serif;}
-.pcp small{font-size:13px;}
-.pcc{font-size:11px;margin-top:3px;}
-.pcs{font-size:10px;color:var(--muted);margin-top:7px;border-top:1px solid var(--border);padding-top:5px;font-family:'IBM Plex Mono',monospace;}
-
-/* Seat bar */
-.sbar{display:flex;height:26px;border-radius:7px;overflow:hidden;gap:2px;}
-.sseg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;font-family:'IBM Plex Mono',monospace;transition:flex .5s;}
-.sleg{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
-.sli{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);}
-.slid{width:8px;height:8px;border-radius:2px;}
-
-/* Trend bars */
-.trow{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
-.tl{font-size:11px;color:var(--muted);width:26px;font-family:'IBM Plex Mono',monospace;}
-.tw{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
-.tb{height:100%;border-radius:3px;transition:width .5s;}
-.tp{font-size:12px;font-family:'IBM Plex Mono',monospace;width:36px;text-align:right;}
-
-/* Leader cards */
-.lcard{border-radius:12px;padding:13px;margin-bottom:8px;background:var(--surface);border:1px solid var(--border);}
-.lch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;}
-.lcname{font-size:15px;font-weight:600;}
-.lcparty{font-size:11px;margin-top:2px;}
-.lcnet{font-size:21px;font-weight:700;font-family:'IBM Plex Mono',monospace;text-align:right;}
-.lcnl{font-size:8px;color:var(--muted);font-family:'IBM Plex Mono',monospace;text-align:right;}
-.abar{display:flex;height:14px;border-radius:4px;overflow:hidden;gap:2px;margin-bottom:5px;}
-.lcs{display:flex;gap:10px;font-size:11px;}
-
-/* Poll table */
+body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:500px;margin:0 auto;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+#hdr{padding:12px 14px 8px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;}
+.hdr-left{display:flex;align-items:center;gap:10px;}
+.hdr-icon{width:38px;height:38px;background:#1c2128;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.htitle{font-size:17px;font-weight:700;letter-spacing:-.3px;}
+.hsub{font-size:10px;color:var(--muted);font-family:'Courier New',monospace;letter-spacing:.5px;margin-top:1px;}
+.live-pill{background:#1a2f1a;border:1px solid #2a5a2a;color:#3fb950;font-size:10px;font-family:'Courier New',monospace;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;cursor:pointer;}
+.ldot{width:6px;height:6px;border-radius:50%;background:#3fb950;}
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.page{display:none;padding:13px 13px 80px;}
+.page.active{display:block;}
+.stitle{font-size:22px;font-weight:800;margin-bottom:2px;}
+.ssub{font-size:12px;color:var(--muted);margin-bottom:14px;}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.pc{background:var(--surface);border-radius:10px;padding:10px 8px;border-top:3px solid;text-align:center;}
+.pca{font-size:10px;font-family:'Courier New',monospace;color:var(--muted);margin-bottom:2px;}
+.pcp{font-size:22px;font-weight:800;}
+.pcp small{font-size:12px;font-weight:400;}
+.pcc{font-size:11px;margin-top:2px;}
+.pcs{font-size:10px;color:var(--muted);margin-top:2px;}
+.card{background:var(--surface);border-radius:12px;padding:14px;margin-bottom:10px;}
+.card-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.seat-bar{display:flex;height:28px;border-radius:8px;overflow:hidden;margin:8px 0;}
+.sseg{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;min-width:8px;}
+.majority-line{text-align:center;font-size:11px;color:var(--muted);}
+.ctx{font-size:12px;color:var(--muted);line-height:1.6;margin-top:10px;}
 .ptable{width:100%;border-collapse:collapse;font-size:12px;}
-.ptable th{text-align:left;padding:7px 5px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.8px;border-bottom:1px solid var(--border);font-weight:600;}
-.ptable td{padding:9px 5px;border-bottom:1px solid var(--border2);}
-.pill{display:inline-block;padding:2px 6px;border-radius:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;}
-
-/* AI tab */
-.ai-input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:11px 13px;color:var(--text);font-size:14px;font-family:inherit;resize:none;height:68px;outline:none;line-height:1.5;}
-.ai-input:focus{border-color:var(--accent);}
-.ai-btn{width:100%;background:var(--accent);border:none;border-radius:10px;color:#fff;padding:11px;cursor:pointer;font-size:13px;font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:.5px;margin-top:7px;transition:opacity .15s;}
-.ai-btn:disabled{opacity:.4;cursor:not-allowed;}
-.ai-resp{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:14px;font-size:13px;line-height:1.8;color:var(--dim);animation:fu .3s ease;}
-.ai-rl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:9px;}
-.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:13px;}
-.chip{background:var(--surface);border:1px solid var(--border2);color:var(--muted);padding:5px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-family:inherit;}
-.chip:active{border-color:var(--reform);color:var(--reform);}
-.aie{text-align:center;padding:32px 14px;color:var(--muted);}
-
-/* Restore Britain banner */
-.rbb{background:#9B202018;border:1px solid #9B202050;border-radius:10px;padding:11px 13px;margin-bottom:10px;font-size:12px;line-height:1.6;color:var(--dim);}
-.rbb strong{color:#d4a0a0;}
-.ctxb{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px;font-size:13px;line-height:1.75;color:var(--dim);}
-.ctxb p+p{margin-top:9px;}
-
-/* Last updated bar */
-.updated-bar{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
-.ub-text{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);}
-.ub-refresh{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:6px;padding:3px 10px;font-size:10px;font-family:'IBM Plex Mono',monospace;cursor:pointer;}
-.ub-refresh:active{color:var(--text);}
-
-/* Spinner */
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px;}
-
-/* Chart */
-.chwrap{position:relative;height:210px;}
-#content::-webkit-scrollbar{width:3px;}
-#content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
-
-/* Skeleton loading */
-.skel{background:linear-gradient(90deg,var(--border) 25%,var(--border2) 50%,var(--border) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.ptable th{font-family:'Courier New',monospace;font-size:9px;color:var(--muted);letter-spacing:.5px;padding:4px 6px;border-bottom:1px solid var(--border);text-align:right;}
+.ptable th:first-child,.ptable th:nth-child(2){text-align:left;}
+.ptable td{padding:7px 6px;border-bottom:1px solid var(--border);text-align:right;}
+.ptable td:first-child,.ptable td:nth-child(2){text-align:left;}
+.ptable tr:last-child td{border:none;}
+.pct-pill{display:inline-block;padding:2px 7px;border-radius:20px;font-weight:700;font-size:11px;}
+.lcard{background:var(--surface);border-radius:12px;padding:14px;margin-bottom:10px;}
+.lch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.lcname{font-size:16px;font-weight:700;}
+.lcparty{font-size:12px;margin-top:2px;}
+.lcnet{font-size:26px;font-weight:800;}
+.lcnl{font-size:9px;font-family:'Courier New',monospace;color:var(--muted);text-align:right;}
+.abar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:6px;}
+.lcs{display:flex;gap:12px;font-size:12px;}
+.policy-section{border-top:1px solid var(--border);padding-top:8px;margin-top:8px;}
+.policy-label{font-family:'Courier New',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
+.policy-text{font-size:12px;color:var(--dim);line-height:1.6;}
+.milestone{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.milestone:last-child{border:none;}
+.ms-date{font-size:10px;font-family:'Courier New',monospace;color:var(--muted);min-width:60px;padding-top:2px;}
+.ms-text{font-size:12px;line-height:1.5;}
+#nav{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);}
+.nb{flex:1;background:none;border:none;color:var(--muted);padding:10px 4px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;}
+.nb svg{width:20px;height:20px;stroke-width:1.8;}
+.nb.active{color:var(--down);}
+.nb.active svg{stroke:var(--down);}
+.rbb{background:#9B202018;border:1px solid #9B202050;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.5;color:var(--muted);}
+.trend-chart{width:100%;height:180px;margin:8px 0;}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
 </style>
 </head>
 <body>
-<div id="app">
 
-  <!-- Loading Screen -->
-  <div id="loading-screen">
-    <div class="ls-flag">🇬🇧</div>
-    <div class="ls-title">UK Poll Tracker</div>
-    <div class="ls-sub">FETCHING LATEST DATA</div>
-    <div class="ls-bar"><div class="ls-fill"></div></div>
-    <div class="ls-status" id="ls-status">Searching for latest polls…</div>
-  </div>
-
-  <!-- Header -->
-  <div id="hdr">
-    <div class="flag">🇬🇧</div>
-    <div class="ht">
-      <div class="htitle">UK Poll Tracker</div>
-      <div class="hsub" id="hdr-date">ALL PARTIES · LOADING…</div>
-    </div>
-    <div class="lpill" id="status-pill" onclick="refreshData()">
-      <div class="ldot spin" id="status-dot"></div>
-      <div class="ltxt loading" id="status-txt">UPDATING</div>
-    </div>
-  </div>
-
-  <!-- Content -->
-  <div id="content">
-
-    <!-- OVERVIEW -->
-    <div class="page active" id="page-overview" class="page active">
-      <div class="stitle">Voting Intention</div>
-      <div class="ssub" id="overview-sub">Loading latest polling data…</div>
-      <div class="updated-bar">
-        <span class="ub-text" id="last-updated">⟳ Fetching live data…</span>
-        <button class="ub-refresh" onclick="refreshData()">↻ Refresh</button>
-      </div>
-      <div class="pgrid" id="party-grid">
-        <!-- populated by JS -->
-        <div class="pc" style="border-top-color:var(--border)"><div class="pca">REF</div><div class="pcp skel" style="height:30px;width:60px;margin:0 auto"></div></div>
-        <div class="pc" style="border-top-color:var(--border)"><div class="pca">LAB</div><div class="pcp skel" style="height:30px;width:60px;margin:0 auto"></div></div>
-        <div class="pc" style="border-top-color:var(--border)"><div class="pca">CON</div><div class="pcp skel" style="height:30px;width:60px;margin:0 auto"></div></div>
-        <div class="pc" style="border-top-color:var(--border)"><div class="pca">LD</div><div class="pcp skel" style="height:30px;width:60px;margin:0 auto"></div></div>
-        <div class="pc" style="border-top-color:var(--border)"><div class="pca">GRN</div><div class="pcp skel" style="height:30px;width:60px;margin:0 auto"></div></div>
-        <div class="pc" style="border-top-color:var(--restore)"><div class="pca">RB</div><div class="pcp skel" style="height:30px;width:60px;margin:0 auto"></div></div>
-      </div>
-      <div id="rb-banner" class="rbb" style="display:none"></div>
-      <div class="card" id="seat-card" style="display:none">
-        <div class="clabel">PROJECTED SEATS — MAJORITY: 326</div>
-        <div class="sbar" id="seat-bar"></div>
-        <div class="sleg" id="seat-legend"></div>
-        <div id="seat-warning" style="margin-top:9px;font-size:11px;color:var(--down)"></div>
-      </div>
-      <div class="ctxb" id="context-box"><div class="skel" style="height:14px;margin-bottom:8px"></div><div class="skel" style="height:14px;width:80%"></div></div>
-    </div>
-
-    <!-- TRENDS -->
-    <div class="page" id="page-trends">
-      <div class="stitle">Polling Trends</div>
-      <div class="ssub">Historical movement · AI-sourced</div>
-      <div class="card"><div class="clabel">VOTE SHARE OVER TIME</div><div class="chwrap"><canvas id="trendChart"></div></div></div>
-      <div class="card" id="movers-card">
-        <div class="clabel">BIGGEST MOVERS</div>
-        <div id="movers-list"><div class="skel" style="height:12px;margin-bottom:10px"></div><div class="skel" style="height:12px;margin-bottom:10px;width:80%"></div></div>
-      </div>
-      <div class="card">
-        <div class="clabel">KEY MILESTONES</div>
-        <div id="milestones-list"><div class="skel" style="height:12px;margin-bottom:8px"></div><div class="skel" style="height:12px;margin-bottom:8px;width:75%"></div><div class="skel" style="height:12px;width:85%"></div></div>
+<div id="hdr">
+  <div class="hdr-row">
+    <div class="hdr-left">
+      <div class="hdr-icon">🇬🇧</div>
+      <div>
+        <div class="htitle">UK Poll Tracker</div>
+        <div class="hsub" id="hdr-date">ALL PARTIES · 8 MAR 2026</div>
       </div>
     </div>
-
-    <!-- DEMOGRAPHICS -->
-    <div class="page" id="page-demo">
-      <div class="stitle">Demographics</div>
-      <div class="ssub">Voting intention by age · AI-sourced</div>
-      <div id="demo-content"><div class="card"><div class="skel" style="height:120px"></div></div></div>
-    </div>
-
-    <!-- LEADERS -->
-    <div class="page" id="page-leaders">
-      <div class="stitle">Leader Ratings</div>
-      <div class="ssub">Net approval · AI-sourced</div>
-      <div id="leaders-content"><div class="lcard"><div class="skel" style="height:80px"></div></div><div class="lcard"><div class="skel" style="height:80px"></div></div></div>
-    </div>
-
-    <!-- POLLS -->
-    <div class="page" id="page-polls">
-      <div class="stitle">Recent Polls</div>
-      <div class="ssub">Latest individual polls · AI-sourced</div>
-      <div class="card" style="overflow-x:auto">
-        <table class="ptable" id="polls-table">
-          <thead><tr><th>DATE</th><th>POLLSTER</th><th style="color:var(--reform)">REF</th><th style="color:var(--labour)">LAB</th><th style="color:var(--tory)">CON</th><th style="color:var(--libdem)">LD</th><th style="color:var(--green)">GRN</th><th style="color:var(--restore)">RB</th></tr></thead>
-          <tbody id="polls-body"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px;font-size:13px">Loading polls…</td></tr></tbody>
-        </table>
-      </div>
-      <div id="polls-note" style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:4px"></div>
-    </div>
-
-    <!-- AI -->
-    <div class="page" id="page-ai">
-      <div class="stitle">AI Analyst</div>
-      <div class="ssub">Ask anything about UK polling · Powered by Claude</div>
-      <div class="chips">
-        <div class="chip" onclick="setQ('Why has Labour support collapsed?')">Why has Labour collapsed?</div>
-        <div class="chip" onclick="setQ('Could Reform win an outright majority?')">Can Reform win?</div>
-        <div class="chip" onclick="setQ('Is Restore Britain a real threat to Reform UK?')">Restore Britain threat?</div>
-        <div class="chip" onclick="setQ('What does the age breakdown tell us about UK politics?')">What does age mean?</div>
-      </div>
-      <textarea class="ai-input" id="ai-input" placeholder="Ask a question about UK polling…"></textarea>
-      <button class="ai-btn" id="ai-btn" onclick="askAI()">ANALYSE →</button>
-      <div style="margin-top:13px" id="ai-out">
-        <div class="aie"><div style="font-size:38px;margin-bottom:9px">📊</div><div style="font-size:13px">Ask a question to get AI-powered analysis</div></div>
-      </div>
-    </div>
-
-  </div><!-- /content -->
-
-  <!-- Nav -->
-  <div id="nav">
-    <button class="nb active" onclick="sp('overview',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Overview</span></button>
-    <button class="nb" onclick="sp('trends',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Trends</span></button>
-    <button class="nb" onclick="sp('demo',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Age</span></button>
-    <button class="nb" onclick="sp('leaders',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Leaders</span></button>
-    <button class="nb" onclick="sp('polls',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>Polls</span></button>
-    <button class="nb" onclick="sp('ai',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg><span>AI</span></button>
+    <div class="live-pill"><div class="ldot"></div>LIVE</div>
   </div>
 </div>
 
+<div id="content">
+
+  <!-- OVERVIEW -->
+  <div class="page active" id="page-overview">
+    <div class="stitle" style="margin-top:10px">Voting Intention</div>
+    <div class="ssub">7-poll moving average · 8 Mar 2026</div>
+    <div class="pgrid" id="party-grid"></div>
+    <div class="card">
+      <div class="card-title">🏛 Seat Projection</div>
+      <div class="seat-bar" id="seat-bar"></div>
+      <div class="majority-line">326 seats needed for majority · <strong>Hung Parliament</strong></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Context</div>
+      <div class="ctx" id="ctx-text"></div>
+    </div>
+  </div>
+
+  <!-- TRENDS -->
+  <div class="page" id="page-trends">
+    <div class="stitle" style="margin-top:10px">Polling Trends</div>
+    <div class="ssub">6-month trajectory</div>
+    <div class="card">
+      <div class="card-title">📈 Vote Share Over Time</div>
+      <div class="trend-chart" id="trend-chart"></div>
+      <div class="legend" id="trend-legend"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔺 Movers</div>
+      <div id="movers-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📅 Key Milestones</div>
+      <div id="milestones-list"></div>
+    </div>
+  </div>
+
+  <!-- LEADERS -->
+  <div class="page" id="page-leaders">
+    <div class="stitle" style="margin-top:10px">Leader Ratings</div>
+    <div class="ssub">Net approval · Latest polling</div>
+    <div id="leaders-content"></div>
+  </div>
+
+  <!-- POLLS -->
+  <div class="page" id="page-polls">
+    <div class="stitle" style="margin-top:10px">Recent Polls</div>
+    <div class="ssub">Latest individual polls · BPC members</div>
+    <div class="card">
+      <table class="ptable">
+        <thead><tr>
+          <th>DATE</th><th>POLLSTER</th>
+          <th style="color:var(--reform)">REF</th>
+          <th style="color:var(--labour)">LAB</th>
+          <th style="color:var(--con)">CON</th>
+          <th style="color:var(--ld)">LD</th>
+          <th style="color:var(--green)">GRN</th>
+          <th style="color:var(--rb)">RB</th>
+        </tr></thead>
+        <tbody id="polls-tbody"></tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:var(--muted);padding:4px 2px">Sources: British Polling Council members. RB = Restore Britain (prompted polls only).</div>
+  </div>
+
+</div>
+
+<div id="nav">
+  <button class="nb active" onclick="sp('overview',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Overview</span></button>
+  <button class="nb" onclick="sp('trends',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Trends</span></button>
+  <button class="nb" onclick="sp('leaders',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Leaders</span></button>
+  <button class="nb" onclick="sp('polls',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Polls</span></button>
+</div>
+
 <script>
-// ── State ──
-let pollingData = null;
-let chartInstance = null;
-const CACHE_KEY = 'ukpolls_data_v2';
-const CACHE_TTL = 4 * 60 * 60 * 1000; // 6 hours
-
-const COLORS = {
-  Reform:'#12B7D4', Labour:'#E4003B', Conservative:'#4060b0',
-  'Lib Dem':'#FAA61A', Green:'#00B140', SNP:'#d4a012', 'Restore Britain':'#9B2020'
+const D = {
+  fetchDate: "8 Mar 2026",
+  parties: [
+    {name:"Reform",abbr:"REF",pct:26,change:-2,seats:220,color:"#12B7D4"},
+    {name:"Green",abbr:"GRN",pct:19,change:8,seats:28,color:"#00B140"},
+    {name:"Labour",abbr:"LAB",pct:17,change:-3,seats:165,color:"#E4003B"},
+    {name:"Conservative",abbr:"CON",pct:17,change:-1,seats:108,color:"#4060b0"},
+    {name:"Lib Dem",abbr:"LD",pct:13,change:0,seats:72,color:"#FAA61A"},
+    {name:"SNP",abbr:"SNP",pct:3,change:0,seats:5,color:"#d4a012"},
+    {name:"Restore Britain",abbr:"RB",pct:7,change:0,seats:1,color:"#9B2020"}
+  ],
+  context: "Reform leads on ~26% (7-poll avg). Greens have surged to ~19% — their highest ever — after winning the Gorton & Denton by-election (26 Feb 2026). A YouGov poll (1-2 Mar) put Greens at 21%, second place for the first time ever. Labour has fallen to just 17%, level with the Conservatives. Restore Britain, led by Rupert Lowe MP, launched Feb 2026 and polls 7-10% in prompted surveys.",
+  trends: [
+    {month:"Sep",Reform:28,Labour:22,Conservative:20,"Lib Dem":12,Green:10},
+    {month:"Oct",Reform:29,Labour:21,Conservative:19,"Lib Dem":12,Green:11},
+    {month:"Nov",Reform:30,Labour:20,Conservative:19,"Lib Dem":13,Green:11},
+    {month:"Dec",Reform:29,Labour:21,Conservative:18,"Lib Dem":13,Green:11},
+    {month:"Jan",Reform:28,Labour:20,Conservative:18,"Lib Dem":13,Green:13},
+    {month:"Feb",Reform:27,Labour:18,Conservative:17,"Lib Dem":13,Green:17},
+    {month:"Mar",Reform:26,Labour:17,Conservative:17,"Lib Dem":13,Green:19}
+  ],
+  milestones: [
+    {date:"Jul 2024",text:"Labour win GE with 33.7% — 170-seat majority"},
+    {date:"Jan 2025",text:"Reform neck-and-neck with Labour nationally"},
+    {date:"Mar 2025",text:"Rupert Lowe expelled from Reform UK"},
+    {date:"May 2025",text:"Reform opens sustained polling lead"},
+    {date:"Sep 2025",text:"Zack Polanski elected Green Party leader"},
+    {date:"Feb 2026",text:"Restore Britain launches — 7-10% in prompted polls"},
+    {date:"26 Feb",text:"Greens win Gorton & Denton by-election — 5th MP"},
+    {date:"1-2 Mar",text:"YouGov puts Greens 2nd on 21% — highest ever"}
+  ],
+  leaders: [
+    {name:"Zack Polanski",party:"Green Party",color:"#00B140",approve:38,disapprove:30,net:8,
+     immigration:"Safe & legal routes for refugees. Opposes detention and deportation. Retain 5-year settlement route for all.",
+     economy:"Wealth tax on assets over £10m. Cancel two-child benefit cap. Fund public services by taxing the super-rich.",
+     nhs:"Reverse NHS privatisation. Mental health on par with physical health. Fund fully through wealth taxes.",
+     climate:"Net zero by 2045. Massive green jobs programme. No new oil and gas licences."},
+    {name:"Ed Davey",party:"Lib Dems",color:"#FAA61A",approve:28,disapprove:35,net:-7,
+     immigration:"International cooperation on returns. Oppose ECHR withdrawal. Humane asylum processing.",
+     economy:"Rejoin EU single market for goods. Replace business rates. PR voting reform.",
+     nhs:"Extra £5bn/year for mental health. 8am GP appointment guarantee.",
+     climate:"Net zero by 2045. Ban new oil and gas. 10-year green infrastructure plan."},
+    {name:"Nigel Farage",party:"Reform UK",color:"#12B7D4",approve:38,disapprove:48,net:-10,
+     immigration:"Leave ECHR immediately. Intercept and deport all illegal arrivals. Abolish Indefinite Leave to Remain. Full immigration freeze.",
+     economy:"Abolish income tax up to £20k. Cut corporation tax to 15%. Abolish BBC licence fee. Scrap all net zero targets.",
+     nhs:"Cut NHS management by 50%. Recruit British-trained staff first. Zero waiting lists via private sector.",
+     climate:"Scrap all net zero targets. No new wind farms. Reinstate all North Sea oil and gas licences."},
+    {name:"Rupert Lowe",party:"Restore Britain",color:"#9B2020",approve:null,disapprove:null,net:null,
+     note:"86% of UK adults could not identify Lowe (JL Partners, Feb 2026). Recognition growing via social media.",
+     immigration:"Zero net migration. Mass deportations. Withdraw from UN refugee convention. End all asylum claims.",
+     economy:"Cut taxes for working people. Reduce foreign aid to zero. Prioritise British workers in public sector.",
+     nhs:"Reduce NHS bureaucracy. Performance-based pay. British staff first.",
+     climate:"Abolish all green levies. Withdraw from Paris climate agreement."},
+    {name:"Kemi Badenoch",party:"Conservative",color:"#4060b0",approve:22,disapprove:47,net:-25,
+     immigration:"Extend settlement route to 10 years. Tougher visa rules. Deport foreign criminals after sentences.",
+     economy:"Reduce state spending to 35% of GDP. Cut regulation. Planning reform for growth.",
+     nhs:"Productivity reforms. Reduce management layers. Outcome-based targets.",
+     climate:"Net zero by 2050. Pro-nuclear energy. Oppose costly near-term targets."},
+    {name:"Keir Starmer",party:"Labour",color:"#E4003B",approve:18,disapprove:67,net:-49,
+     immigration:"Border Security Command (£100m). Extend settlement to 10 years. 1,000 extra returns staff.",
+     economy:"Fiscal rules: debt falling by 5th year. £40bn tax rises (Oct 2024). NHS and schools investment.",
+     nhs:"40,000 extra appointments per week. Cut waiting lists. Mental health investment.",
+     climate:"Clean energy by 2030. GB Energy public company. Ban new North Sea licences."}
+  ],
+  polls: [
+    {date:"1-2 Mar",pollster:"YouGov",ref:23,lab:16,con:16,ld:14,grn:21,rb:null},
+    {date:"25-27 Feb",pollster:"Opinium",ref:30,lab:18,con:18,ld:12,grn:13,rb:null},
+    {date:"23 Feb",pollster:"YouGov",ref:27,lab:18,con:18,ld:14,grn:17,rb:null},
+    {date:"18 Feb",pollster:"Savanta",ref:29,lab:19,con:17,ld:14,grn:12,rb:null},
+    {date:"14 Feb",pollster:"Find Out Now",ref:25,lab:15,con:13,ld:10,grn:20,rb:10},
+    {date:"11 Feb",pollster:"Ipsos",ref:26,lab:20,con:19,ld:13,grn:11,rb:null}
+  ]
 };
-const ABBR = {
-  Reform:'REF', Labour:'LAB', Conservative:'CON',
-  'Lib Dem':'LD', Green:'GRN', SNP:'SNP', 'Restore Britain':'RB'
-};
 
-// ── Navigation ──
 function sp(id, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   btn.classList.add('active');
-  document.getElementById('content').scrollTo(0,0);
-  if(id==='trends' && pollingData) renderChart();
 }
 
-// ── Cache helpers ──
-function saveCache(data) {
-  try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({data, ts: Date.now()})); } catch(e){}
-}
-function loadCache() {
-  try {
-    const raw = sessionStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const {data, ts} = JSON.parse(raw);
-    if (Date.now() - ts > CACHE_TTL) return null;
-    return data;
-  } catch(e){ return null; }
-}
-
-// ── Status pill ──
-function setStatus(state, text) {
-  const pill = document.getElementById('status-pill');
-  const dot = document.getElementById('status-dot');
-  const txt = document.getElementById('status-txt');
-  pill.className = 'lpill ' + state;
-  dot.className = 'ldot ' + (state==='loading'?'spin': state==='error'?'err':'');
-  txt.className = 'ltxt ' + state;
-  txt.textContent = text;
-}
-
-// ── Main data fetch ──
-async function fetchPollingData() {
-  setStatus('loading','UPDATING');
-  document.getElementById('ls-status').textContent = 'Searching for latest polls…';
-
-  const prompt = `You are a UK political data API. Search the web for the very latest UK voting intention polls (2026), including data on Restore Britain party (led by Rupert Lowe). Return ONLY a valid JSON object with NO markdown, NO commentary, NO backticks. Use exactly this structure:
-
-{
-  "fetchDate": "DD Mon YYYY",
-  "parties": [
-    {"name":"Reform","abbr":"REF","pct":28,"change":1,"seats":242,"color":"#12B7D4"},
-    {"name":"Labour","abbr":"LAB","pct":20,"change":0,"seats":198,"color":"#E4003B"},
-    {"name":"Conservative","abbr":"CON","pct":18,"change":-1,"seats":116,"color":"#4060b0"},
-    {"name":"Lib Dem","abbr":"LD","pct":13,"change":-1,"seats":67,"color":"#FAA61A"},
-    {"name":"Green","abbr":"GRN","pct":11,"change":1,"seats":12,"color":"#00B140"},
-    {"name":"SNP","abbr":"SNP","pct":3,"change":0,"seats":5,"color":"#d4a012"},
-    {"name":"Restore Britain","abbr":"RB","pct":7,"change":0,"seats":1,"color":"#9B2020","note":"Prompted poll only — not yet on standard trackers"}
-  ],
-  "majority": 326,
-  "hungParliament": true,
-  "contextSummary": "2-3 sentence summary of current polling situation",
-  "restoreBritainNote": "Brief note about Restore Britain's status",
-  "trends": [
-    {"month":"Jul '24","Reform":15,"Labour":34,"Conservative":24,"Lib Dem":13,"Green":7},
-    {"month":"Feb '26","Reform":28,"Labour":20,"Conservative":18,"Lib Dem":13,"Green":11}
-  ],
-  "leaders": [
-    {"name":"Nigel Farage","party":"Reform","color":"#12B7D4","approve":38,"disapprove":48,"net":-10},
-    {"name":"Keir Starmer","party":"Labour","color":"#E4003B","approve":24,"disapprove":65,"net":-41},
-    {"name":"Kemi Badenoch","party":"Conservative","color":"#4060b0","approve":22,"disapprove":47,"net":-25},
-    {"name":"Ed Davey","party":"Lib Dem","color":"#FAA61A","approve":28,"disapprove":35,"net":-7},
-    {"name":"Carla Denyer","party":"Green","color":"#00B140","approve":26,"disapprove":32,"net":-6},
-    {"name":"Rupert Lowe","party":"Restore Britain","color":"#9B2020","approve":null,"disapprove":null,"net":null,"note":"86% of public cannot identify Lowe (JL Partners, Feb 2026)"}
-  ],
-  "recentPolls": [
-    {"date":"23 Feb","pollster":"YouGov","Reform":28,"Labour":20,"Conservative":18,"Lib Dem":13,"Green":11,"Restore Britain":null},
-    {"date":"21 Feb","pollster":"Opinium","Reform":27,"Labour":21,"Conservative":19,"Lib Dem":13,"Green":10,"Restore Britain":null},
-    {"date":"18 Feb","pollster":"Savanta","Reform":29,"Labour":19,"Conservative":17,"Lib Dem":14,"Green":11,"Restore Britain":null},
-    {"date":"17 Feb","pollster":"Ipsos","Reform":26,"Labour":20,"Conservative":19,"Lib Dem":13,"Green":11,"Restore Britain":null},
-    {"date":"16 Feb","pollster":"More in Common","Reform":27,"Labour":20,"Conservative":18,"Lib Dem":13,"Green":11,"Restore Britain":null},
-    {"date":"14 Feb","pollster":"Find Out Now","Reform":25,"Labour":15,"Conservative":13,"Lib Dem":10,"Green":20,"Restore Britain":10},
-    {"date":"12 Feb","pollster":"Verian","Reform":27,"Labour":20,"Conservative":18,"Lib Dem":14,"Green":11,"Restore Britain":null},
-    {"date":"10 Feb","pollster":"Deltapoll","Reform":26,"Labour":21,"Conservative":19,"Lib Dem":13,"Green":10,"Restore Britain":null}
-  ],
-  "demographics": [
-    {"age":"18-24","leader":"Green","Reform":8,"Labour":22,"Conservative":10,"Lib Dem":12,"Green":38},
-    {"age":"25-49","leader":"Labour","Reform":18,"Labour":28,"Conservative":14,"Lib Dem":15,"Green":14},
-    {"age":"50-64","leader":"Reform","Reform":34,"Labour":20,"Conservative":22,"Lib Dem":12,"Green":6},
-    {"age":"65+","leader":"Reform","Reform":33,"Labour":18,"Conservative":28,"Lib Dem":13,"Green":4}
-  ],
-  "milestones": [
-    {"date":"Jul 2024","event":"Labour win GE with 33.7%"},
-    {"date":"May 2025","event":"Reform opens sustained polling lead"},
-    {"date":"Feb 2026","event":"Restore Britain launches as a party"}
-  ]
-}
-
-Search the web for the latest UK polls from YouGov, Ipsos, Savanta, Opinium, Verian, More in Common, Deltapoll, Find Out Now and other BPC members. Fill in AT LEAST 8 recent polls in recentPolls — search specifically for 'UK voting intention poll 2026 YouGov Ipsos Savanta Opinium'. Update all numbers with the latest data. Keep the same JSON structure. Return ONLY the JSON.`;
-
-  try {
-    document.getElementById('ls-status').textContent = 'Querying Claude with web search…';
-
-    const res = await fetch('https://throbbing-base-05b6.craighow8.workers.dev', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:2000,
-        system:'You are a UK political data API. Return the most up to date UK polling data you know about. IMPORTANT: Always include Restore Britain (new party led by Rupert Lowe MP, launched Feb 2026) in the parties array. Return ONLY valid JSON, no markdown fences, no commentary.',
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-
-    const raw = await res.json();
-    document.getElementById('ls-status').textContent = 'Processing polling data…';
-
-    // Extract text from content blocks (may include tool_use blocks)
-    const textBlock = raw.content?.find(b => b.type === 'text');
-    if (!textBlock) throw new Error('No text in response');
-
-    let jsonStr = textBlock.text.trim();
-    // Strip any accidental markdown fences
-    jsonStr = jsonStr.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim();
-    // Extract JSON object if there's surrounding text
-    const match = jsonStr.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('No JSON found in response');
-
-    const data = JSON.parse(match[0]);
-
-    // ── Guarantee Restore Britain always appears ──
-    const rbParty = data.parties?.find(p => p.name === 'Restore Britain' || p.abbr === 'RB');
-    if (!rbParty) {
-      data.parties = data.parties || [];
-      data.parties.push({
-        name:'Restore Britain', abbr:'RB', pct:7, change:0, seats:1,
-        color:'#9B2020',
-        note:'Prompted poll only — not yet on standard BPC trackers'
-      });
-    }
-
-    // Guarantee RB leader entry
-    const rbLeader = data.leaders?.find(l => l.party === 'Restore Britain' || l.name === 'Rupert Lowe');
-    if (!rbLeader) {
-      data.leaders = data.leaders || [];
-      data.leaders.push({
-        name:'Rupert Lowe', party:'Restore Britain', color:'#9B2020',
-        approve:null, disapprove:null, net:null,
-        note:'Led Restore Britain since Feb 2026. 86% of UK adults could not identify him in a Feb 2026 JL Partners poll. Recognition rising via social media.'
-      });
-    }
-
-    // Guarantee RB note
-    if (!data.restoreBritainNote) {
-      data.restoreBritainNote = 'Led by Rupert Lowe MP (Great Yarmouth). Launched as a party 13 Feb 2026. Figure from prompted polls — not yet included in standard BPC rolling trackers. Applying to Electoral Commission for registration. 80,000+ members as of Feb 2026.';
-    }
-
-    saveCache(data);
-    return data;
-
-  } catch(e) {
-    console.error('Fetch error:', e);
-    throw e;
-  }
-}
-
-// ── Render functions ──
-function renderOverview(data) {
-  document.getElementById('overview-sub').textContent = '7-poll moving average · ' + data.fetchDate;
-  document.getElementById('last-updated').textContent = '✓ Updated ' + data.fetchDate;
-  document.getElementById('hdr-date').textContent = 'ALL PARTIES · ' + data.fetchDate.toUpperCase();
-
-  // Party grid
+function renderOverview() {
   const grid = document.getElementById('party-grid');
-  grid.innerHTML = data.parties.map(p => `
+  grid.innerHTML = D.parties.map(p=>`
     <div class="pc" style="border-top-color:${p.color}">
       <div class="pca">${p.abbr}</div>
       <div class="pcp" style="color:${p.color}">${p.pct}<small>%</small></div>
@@ -466,347 +249,116 @@ function renderOverview(data) {
         ${p.change>0?'▲ +'+p.change:p.change<0?'▼ '+p.change:'– NC'}
       </div>
       <div class="pcs">~${p.seats} seats</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 
-  // Restore Britain banner
-  const rb = data.parties.find(p=>p.name==='Restore Britain');
-  if (rb && data.restoreBritainNote) {
-    const banner = document.getElementById('rb-banner');
-    banner.style.display = 'block';
-    banner.innerHTML = `<strong>⚑ Restore Britain</strong> — ${data.restoreBritainNote}`;
-  }
-
-  // Seat bar
-  const seatCard = document.getElementById('seat-card');
-  seatCard.style.display = 'block';
   const seatBar = document.getElementById('seat-bar');
-  seatBar.innerHTML = data.parties.map(p => `
-    <div class="sseg" style="flex:${p.seats};background:${p.color};color:${p.name==='SNP'?'#000':'#fff'}">
-      ${p.seats > 40 ? p.seats : ''}
-    </div>
-  `).join('');
-  document.getElementById('seat-legend').innerHTML = data.parties.map(p=>`
-    <div class="sli"><div class="slid" style="background:${p.color}"></div>${p.abbr} ${p.seats}</div>
-  `).join('');
-  document.getElementById('seat-warning').textContent = data.hungParliament ? '⚠ No party wins majority — hung parliament projected' : '';
+  seatBar.innerHTML = D.parties.map(p=>`
+    <div class="sseg" style="flex:${p.seats};background:${p.color};color:${['SNP'].includes(p.name)?'#000':'#fff'}" title="${p.name}: ${p.seats}">
+      ${p.seats>20?p.abbr:''}
+    </div>`).join('');
 
-  // Context
-  document.getElementById('context-box').innerHTML = `<p>${data.contextSummary}</p>`;
+  document.getElementById('ctx-text').textContent = D.context;
 }
 
-function renderTrends(data) {
-  const mainParties = data.parties.filter(p=>!['SNP','Restore Britain'].includes(p.name));
-  const first = data.trends && data.trends[0];
-  const last = data.trends && data.trends[data.trends.length-1];
-  
+function renderTrends() {
   // Movers
-  document.getElementById('movers-list').innerHTML = mainParties
+  document.getElementById('movers-list').innerHTML = D.parties
+    .filter(p=>p.name!=='SNP')
     .sort((a,b)=>b.pct-a.pct)
-    .map(p => {
-      const chg = p.change||0;
-      return `<div class="mover"><span style="color:${p.color};font-weight:700">${p.abbr}</span>
-        <span style="color:var(--dim)">${p.pct}%</span>
-        <span style="color:${chg>0?'var(--up)':chg<0?'var(--down)':'var(--muted)'}">${chg>0?'▲ +'+chg:chg<0?'▼ '+chg:'–'}</span>
+    .map(p=>{
+      const c=p.change||0;
+      return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+        <span style="color:${p.color};font-weight:700">${p.name}</span>
+        <span>${p.pct}% <span style="color:${c>0?'var(--up)':c<0?'var(--down)':'var(--muted)'}">${c>0?'▲ +'+c:c<0?'▼ '+c:'–'}</span></span>
       </div>`;
     }).join('');
 
-  // Draw SVG line chart without Chart.js
-  const canvas = document.getElementById('trend-chart');
-  if(!canvas || !data.trends || data.trends.length<2) return;
-  
-  const W=canvas.offsetWidth||320, H=canvas.offsetHeight||200;
-  const pad={t:10,r:10,b:30,l:28};
+  // Milestones
+  document.getElementById('milestones-list').innerHTML = D.milestones.map(m=>`
+    <div class="milestone">
+      <div class="ms-date">${m.date}</div>
+      <div class="ms-text">${m.text}</div>
+    </div>`).join('');
+
+  // SVG chart
+  const el = document.getElementById('trend-chart');
+  const W=el.offsetWidth||320, H=160;
+  const pad={t:8,r:8,b:24,l:26};
   const pw=W-pad.l-pad.r, ph=H-pad.t-pad.b;
-  const months=data.trends.map(t=>t.month);
   const parties=['Reform','Labour','Conservative','Lib Dem','Green'];
   const colors={Reform:'#12B7D4',Labour:'#E4003B',Conservative:'#4060b0','Lib Dem':'#FAA61A',Green:'#00B140'};
-  
-  let allVals=[];
-  parties.forEach(p=>data.trends.forEach(t=>{if(t[p])allVals.push(t[p]);}));
-  const minV=Math.max(0,Math.min(...allVals)-2), maxV=Math.min(45,Math.max(...allVals)+2);
-  
-  const xPos=(i)=>pad.l+i*(pw/(months.length-1));
-  const yPos=(v)=>pad.t+ph-(v-minV)/(maxV-minV)*ph;
-  
-  let svg=`<svg width="${W}" height="${H}" style="width:100%;height:100%">`;
-  
-  // Grid lines
-  [5,10,15,20,25,30,35].filter(v=>v>=minV&&v<=maxV).forEach(v=>{
-    const y=yPos(v);
-    svg+=`<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#ffffff10" stroke-width="1"/>`;
-    svg+=`<text x="${pad.l-4}" y="${y+4}" fill="#555" font-size="9" text-anchor="end">${v}</text>`;
+  const months=D.trends.map(t=>t.month);
+  let allV=[];
+  parties.forEach(p=>D.trends.forEach(t=>{if(t[p])allV.push(t[p]);}));
+  const minV=Math.max(0,Math.min(...allV)-3), maxV=Math.min(45,Math.max(...allV)+3);
+  const xP=i=>pad.l+i*(pw/(months.length-1));
+  const yP=v=>pad.t+ph-(v-minV)/(maxV-minV)*ph;
+  let svg=`<svg width="${W}" height="${H}" style="width:100%;overflow:visible">`;
+  [10,15,20,25,30].filter(v=>v>=minV&&v<=maxV).forEach(v=>{
+    svg+=`<line x1="${pad.l}" y1="${yP(v)}" x2="${W-pad.r}" y2="${yP(v)}" stroke="#ffffff12" stroke-width="1"/>
+    <text x="${pad.l-4}" y="${yP(v)+4}" fill="#555" font-size="9" text-anchor="end">${v}</text>`;
   });
-  
-  // X labels
   months.forEach((m,i)=>{
-    if(i%2===0||i===months.length-1)
-      svg+=`<text x="${xPos(i)}" y="${H-4}" fill="#555" font-size="9" text-anchor="middle">${m}</text>`;
+    svg+=`<text x="${xP(i)}" y="${H-2}" fill="#555" font-size="9" text-anchor="middle">${m}</text>`;
   });
-  
-  // Lines
   parties.forEach(p=>{
-    const pts=data.trends.map((t,i)=>t[p]?`${xPos(i)},${yPos(t[p])}`:null).filter(Boolean);
-    if(pts.length>1)
-      svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${colors[p]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>`;
+    const pts=D.trends.map((t,i)=>t[p]!=null?`${xP(i)},${yP(t[p])}`:null).filter(Boolean);
+    if(pts.length>1) svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${colors[p]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
   });
-  
   svg+='</svg>';
-  canvas.style.position='relative';
-  canvas.innerHTML=svg;
-  canvas.style.display='block';
-  
-  // Legend
-  const legend=document.getElementById('trend-legend');
-  if(legend) legend.innerHTML=parties.map(p=>`<span style="color:${colors[p]};font-size:11px;margin-right:10px">● ${p}</span>`).join('');
+  el.innerHTML=svg;
+
+  document.getElementById('trend-legend').innerHTML=parties.map(p=>`<span style="color:${colors[p]};font-size:11px">● ${p}</span>`).join('');
 }
 
-
-function renderDemographics(data) {
-  const parties = ['Reform','Labour','Conservative','Lib Dem','Green'];
-  const pColors = {Reform:'#12B7D4',Labour:'#E4003B',Conservative:'#4060b0','Lib Dem':'#FAA61A',Green:'#00B140'};
-  const pAbbr = {Reform:'REF',Labour:'LAB',Conservative:'CON','Lib Dem':'LD',Green:'GRN'};
-  document.getElementById('demo-content').innerHTML = data.demographics.map(g=>`
-    <div class="card">
-      <div class="clabel">AGE ${g.age} — ${g.leader.toUpperCase()} LEAD</div>
-      ${parties.map(p=>`
-        <div class="trow">
-          <div class="tl" style="color:${pColors[p]}">${pAbbr[p]}</div>
-          <div class="tw"><div class="tb" style="width:${(g[p]||0)/42*100}%;background:${pColors[p]}"></div></div>
-          <div class="tp">${g[p]||0}%</div>
+function renderLeaders() {
+  const topics=[
+    {k:'immigration',l:'🛂 IMMIGRATION'},
+    {k:'economy',l:'💷 ECONOMY'},
+    {k:'nhs',l:'🏥 NHS'},
+    {k:'climate',l:'🌿 CLIMATE'}
+  ];
+  document.getElementById('leaders-content').innerHTML = D.leaders.map(l=>`
+    <div class="lcard">
+      <div class="lch">
+        <div>
+          <div class="lcname">${l.name}</div>
+          <div class="lcparty" style="color:${l.color}">${l.party}</div>
         </div>
-      `).join('')}
-    </div>
-  `).join('');
-}
-
-function renderLeaders(data) {
-  document.getElementById('leaders-content').innerHTML = data.leaders
-    .sort((a,b)=>(b.net||0)-(a.net||0))
-    .map(l=>`
-      <div class="lcard">
-        <div class="lch">
-          <div><div class="lcname">${l.name}</div><div class="lcparty" style="color:${l.color}">${l.party}</div></div>
-          <div>
-            <div class="lcnet" style="color:${l.net===null?'var(--muted)':l.net>0?'var(--up)':'var(--down)'}">${l.net===null?'—':(l.net>0?'+':'')+l.net}</div>
-            <div class="lcnl">${l.net===null?'LIMITED':'NET'}</div>
-          </div>
+        <div>
+          <div class="lcnet" style="color:${l.net===null?'var(--muted)':l.net>0?'var(--up)':'var(--down)'}">${l.net===null?'—':(l.net>0?'+':'')+l.net}</div>
+          <div class="lcnl">${l.net===null?'LIMITED':'NET'}</div>
         </div>
-        ${l.note ? '<div style="font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:8px">'+l.note+'</div>' : '
-          <div class="abar"><div style="flex:'+l.approve+';background:#3fb95060"></div><div style="flex:'+l.disapprove+';background:#f8514960"></div></div>
-          <div class="lcs" style="margin-bottom:8px"><span style="color:var(--up)">▲ '+l.approve+'%</span><span style="color:var(--down)">▼ '+l.disapprove+'%</span></div>
-        '}
-        ${l.pledge ? '<div style="font-size:12px;line-height:1.7;border-top:1px solid var(--border);padding-top:8px;margin-top:4px">' +
-          '<span style="font-family:IBM Plex Mono,monospace;font-size:9px;color:var(--muted);letter-spacing:1px;display:block;margin-bottom:6px">KEY POLICIES</span>' +
-          l.pledge.split('. ').filter(s=>s.trim().length>0).map(s=>{
-            const ci=s.indexOf(':');
-            if(ci>0&&ci<25){
-              return '<div style="margin-bottom:6px"><span style="color:'+l.color+';font-size:10px;font-weight:700;font-family:IBM Plex Mono,monospace">'+s.substring(0,ci).toUpperCase()+'</span><span style="color:var(--dim)"> — '+s.substring(ci+1).trim()+'</span></div>';
-            }
-            return '<div style="color:var(--dim);margin-bottom:4px">'+s+'</div>';
-          }).join('') + '</div>' : ''}
       </div>
-    `).join('');
+      ${l.note?`<div style="font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:8px">${l.note}</div>`:`
+        <div class="abar"><div style="flex:${l.approve};background:#3fb95060"></div><div style="flex:${l.disapprove};background:#f8514960"></div></div>
+        <div class="lcs"><span style="color:var(--up)">▲ ${l.approve}%</span><span style="color:var(--down)">▼ ${l.disapprove}%</span></div>
+      `}
+      ${topics.filter(t=>l[t.k]).map(t=>`
+        <div class="policy-section">
+          <div class="policy-label">${t.l}</div>
+          <div class="policy-text">${l[t.k]}</div>
+        </div>`).join('')}
+    </div>`).join('');
 }
 
-
-function renderPolls(data) {
-  const parties = ['Reform','Labour','Conservative','Lib Dem','Green','Restore Britain'];
-  const colors = {Reform:'#12B7D4',Labour:'#E4003B',Conservative:'#4060b0','Lib Dem':'#FAA61A',Green:'#00B140','Restore Britain':'#9B2020'};
-  document.getElementById('polls-body').innerHTML = data.recentPolls.map(poll=>`
+function renderPolls() {
+  const colors={ref:'#12B7D4',lab:'#E4003B',con:'#4060b0',ld:'#FAA61A',grn:'#00B140',rb:'#9B2020'};
+  document.getElementById('polls-tbody').innerHTML = D.polls.map(p=>`
     <tr>
-      <td style="color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10px">${poll.date}</td>
-      <td style="font-weight:600">${poll.pollster}</td>
-      ${parties.map(p=>`
-        <td>${poll[p]!=null
-          ?`<span class="pill" style="background:${colors[p]}20;color:${colors[p]}">${poll[p]}%</span>`
-          :`<span style="color:var(--muted);font-size:11px">—</span>`
-        }</td>
+      <td style="color:var(--muted)">${p.date}</td>
+      <td style="font-weight:600">${p.pollster}</td>
+      ${['ref','lab','con','ld','grn','rb'].map(k=>`
+        <td>${p[k]!=null?`<span class="pct-pill" style="background:${colors[k]}20;color:${colors[k]}">${p[k]}%</span>`:'—'}</td>
       `).join('')}
-    </tr>
-  `).join('');
-  document.getElementById('polls-note').textContent = 'Sources: British Polling Council members. RB = Restore Britain (prompted polls only).';
+    </tr>`).join('');
 }
 
-function renderAll(data) {
-  // Hard overrides — always correct these regardless of AI output
-  if (data.leaders) {
-    data.leaders.forEach(l => {
-      if (l.party && l.party.toLowerCase().includes('green')) {
-        l.name = 'Zack Polanski';
-        if (!l.pledge) l.pledge = 'Tax extreme wealth to fund free childcare, green jobs & affordable housing. Eco-populist platform combining environmentalism with socialist economics.';
-      }
-      if (l.party && l.party.toLowerCase().includes('restore')) {
-        l.name = 'Rupert Lowe';
-      }
-    });
-  }
-  renderOverview(data);
-  renderTrends(data);
-  renderDemographics(data);
-  renderLeaders(data);
-  renderPolls(data);
-}
-
-// ── AI Analyst ──
-function setQ(q){document.getElementById('ai-input').value=q;}
-
-async function askAI(){
-  const input=document.getElementById('ai-input');
-  const q=input.value.trim();if(!q)return;
-  const btn=document.getElementById('ai-btn');
-  const out=document.getElementById('ai-out');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Analysing…';
-  out.innerHTML='';
-  const ctx = pollingData ? JSON.stringify({
-    parties: pollingData.parties,
-    leaders: pollingData.leaders,
-    context: pollingData.contextSummary
-  }) : 'Reform 28%, Labour 20%, Con 18%, LD 13%, Green 11%, Restore Britain 7%';
-  try{
-    const r=await fetch('https://throbbing-base-05b6.craighow8.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',max_tokens:1000,
-      tools:[{type:'web_search_20250305',name:'web_search'}],
-      system:`You are a sharp UK political analyst. Use web search to find the latest UK political news and polling. Answer concisely in plain paragraphs — no markdown headers or bullets. Under 200 words.\n\nCurrent polling data: ${ctx}`,
-      messages:[{role:'user',content:q}]
-    })});
-    const d=await r.json();
-    const t=d.content?.find(b=>b.type==='text')?.text||'No response received.';
-    out.innerHTML=`<div class="ai-resp"><div class="ai-rl">AI ANALYSIS · CLAUDE + WEB SEARCH</div>${t}</div>`;
-  }catch(e){
-    out.innerHTML=`<div class="ai-resp" style="border-left-color:var(--down)">Error connecting. Please try again.</div>`;
-  }
-  btn.disabled=false;btn.innerHTML='ANALYSE →';
-}
-
-document.getElementById('ai-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askAI();}});
-
-// ── Fallback hardcoded data ──
-const FALLBACK_DATA = {
-  fetchDate: "4 Mar 2026 · Find Out Now",
-  parties: [
-    {name:"Reform",abbr:"REF",pct:24,change:-4,seats:198,color:"#12B7D4"},
-    {name:"Green",abbr:"GRN",pct:20,change:9,seats:48,color:"#00B140"},
-    {name:"Conservative",abbr:"CON",pct:17,change:-1,seats:108,color:"#4060b0"},
-    {name:"Labour",abbr:"LAB",pct:16,change:-4,seats:142,color:"#E4003B"},
-    {name:"Lib Dem",abbr:"LD",pct:10,change:-3,seats:54,color:"#FAA61A"},
-    {name:"Restore Britain",abbr:"RB",pct:7,change:0,seats:1,color:"#9B2020",note:"Find Out Now prompted poll, 3-4 Mar 2026"},
-    {name:"SNP",abbr:"SNP",pct:2,change:-1,seats:4,color:"#d4a012"}
-  ],
-  majority:326, hungParliament:true,
-  contextSummary:"A dramatic new Find Out Now poll (3-4 Mar 2026) shows the Greens surging to 20% — second place nationally — as both Reform and Labour fall sharply. Reform drops to 24%, Labour collapses to just 16%. Restore Britain holds at 7%. No party is close to a 326-seat majority under any projection.",
-  restoreBritainNote:"Led by Rupert Lowe MP (Great Yarmouth). Launched as a party 13 Feb 2026. Figure from prompted polls — not yet on standard BPC rolling trackers. 80,000+ members as of Feb 2026.",
-  trends:[
-    {month:"Jul '24",Reform:15,Labour:34,Conservative:24,"Lib Dem":13,Green:7},
-    {month:"Sep '24",Reform:18,Labour:31,Conservative:22,"Lib Dem":13,Green:8},
-    {month:"Nov '24",Reform:20,Labour:28,Conservative:21,"Lib Dem":12,Green:9},
-    {month:"Jan '25",Reform:23,Labour:26,Conservative:20,"Lib Dem":12,Green:9},
-    {month:"Mar '25",Reform:24,Labour:24,Conservative:19,"Lib Dem":13,Green:10},
-    {month:"May '25",Reform:26,Labour:22,Conservative:18,"Lib Dem":13,Green:10},
-    {month:"Jul '25",Reform:28,Labour:21,Conservative:18,"Lib Dem":14,Green:10},
-    {month:"Sep '25",Reform:27,Labour:20,Conservative:19,"Lib Dem":14,Green:10},
-    {month:"Nov '25",Reform:27,Labour:20,Conservative:18,"Lib Dem":14,Green:11},
-    {month:"Jan '26",Reform:26,Labour:20,Conservative:18,"Lib Dem":14,Green:11},
-    {month:"Mar '26",Reform:24,Labour:16,Conservative:17,"Lib Dem":10,Green:20}
-  ],
-  leaders:[
-    {name:"Zack Polanski",party:"Green Party",color:"#00B140",approve:38,disapprove:30,net:8,
-      pledge:"Immigration: safe routes, migrants welcome. Economy: tax the wealthy, scrap fiscal rules. NHS: fully funded, end privatisation. Housing: rent controls, social housing. Climate: net zero by 2030, ban new oil & gas. Other: 4-day week, PR voting, Gaza ceasefire. Won Gorton & Denton by-election Feb 2026. Greens now 200,000+ members."},
-    {name:"Ed Davey",party:"Lib Dems",color:"#FAA61A",approve:28,disapprove:35,net:-7,
-      pledge:"Immigration: humane reform, international cooperation, oppose extremism. Economy: rejoin EU single market for goods, reform business rates. NHS: 10,000 new therapists, dental reform. Housing: build more homes, abolish leasehold. Climate: net zero by 2045, expand renewables. Other: proportional representation, strengthen local government."},
-    {name:"Nigel Farage",party:"Reform UK",color:"#12B7D4",approve:38,disapprove:48,net:-10,
-      pledge:"Immigration: leave ECHR, mass deportation command, 5 flights/day, abolish ILR, detention for 24,000. Economy: no income tax under £20k, cut corporation tax, slash foreign aid. NHS: cut management 50%, end DEI. Climate: scrap net zero entirely, reopen North Sea, abolish ULEZ. Other: abolish BBC licence fee, cut quangos, withdraw from WHO."},
-    {name:"Rupert Lowe",party:"Restore Britain",color:"#9B2020",approve:null,disapprove:null,net:null,
-      note:"86% of UK adults could not identify Lowe in a Feb 2026 JL Partners poll. Recognition rising rapidly via social media.",
-      pledge:"Immigration: drastic cuts, tough enforcement, prioritise British citizens. Economy: cut taxes for workers, reduce bureaucracy. NHS: reform management, reduce waste. Climate: energy security over net zero costs. Other: restore British culture & identity, law & order crackdown. Launched Feb 2026 — 80,000+ members, 7-10% in early prompted polls."},
-    {name:"Kemi Badenoch",party:"Conservative",color:"#4060b0",approve:22,disapprove:47,net:-25,
-      pledge:"Immigration: 10-year settlement route, tougher visas, deport foreign criminals faster. Economy: cut regulation, smaller state, lower business taxes. NHS: reduce bureaucracy, reform GP contracts. Housing: reform planning, protect green belt. Climate: net zero by 2050 but not at any cost, review green levies. Other: anti-woke platform, strengthen Union."},
-    {name:"Keir Starmer",party:"Labour",color:"#E4003B",approve:18,disapprove:67,net:-49,
-      pledge:"Immigration: white paper May 2025, extend settlement to 10 years, Border Security Command, 300 NCA agents, Electronic Travel Authorisation from Feb 2026. Economy: fiscal rules, no day-to-day borrowing, GB Energy, National Wealth Fund. NHS: cut waiting lists, 2m extra appointments/year. Housing: 1.5m homes, Renters Rights Bill. Climate: clean power by 2030. Net approval -49 — lowest of any PM in 50 years (Ipsos)."}
-  ]
-  recentPolls:[
-    {date:"4 Mar",pollster:"Find Out Now",Reform:24,Labour:16,Conservative:17,"Lib Dem":10,Green:20,"Restore Britain":7},
-    {date:"23 Feb",pollster:"YouGov",Reform:28,Labour:20,Conservative:18,"Lib Dem":13,Green:11,"Restore Britain":null},
-    {date:"21 Feb",pollster:"Opinium",Reform:27,Labour:21,Conservative:19,"Lib Dem":13,Green:10,"Restore Britain":null},
-    {date:"18 Feb",pollster:"Savanta",Reform:29,Labour:19,Conservative:17,"Lib Dem":14,Green:11,"Restore Britain":null},
-    {date:"14 Feb",pollster:"Find Out Now",Reform:25,Labour:15,Conservative:13,"Lib Dem":10,Green:20,"Restore Britain":10},
-    {date:"11 Feb",pollster:"Ipsos",Reform:26,Labour:20,Conservative:19,"Lib Dem":13,Green:11,"Restore Britain":null}
-  ],
-  demographics:[
-    {age:"18-24",leader:"Green",Reform:8,Labour:22,Conservative:10,"Lib Dem":12,Green:38},
-    {age:"25-49",leader:"Labour",Reform:18,Labour:28,Conservative:14,"Lib Dem":15,Green:14},
-    {age:"50-64",leader:"Reform",Reform:34,Labour:20,Conservative:22,"Lib Dem":12,Green:6},
-    {age:"65+",leader:"Reform",Reform:33,Labour:18,Conservative:28,"Lib Dem":13,Green:4}
-  ],
-  milestones:[
-    {date:"Jul 2024",event:"Labour win GE with 33.7% — 170-seat majority"},
-    {date:"Jan 2025",event:"Reform neck-and-neck with Labour nationally"},
-    {date:"Mar 2025",event:"Rupert Lowe expelled from Reform UK"},
-    {date:"May 2025",event:"Reform opens sustained polling lead"},
-    {date:"Sep 2025",event:"Zack Polanski elected Green Party leader"},
-    {date:"Feb 2026",event:"Restore Britain launches as a party — 7-10% in early polls"},
-    {date:"26 Feb 2026",event:"Greens win Gorton & Denton by-election — 5th MP"},
-    {date:"1-2 Mar 2026",event:"YouGov puts Greens 2nd on 21% — highest ever Green poll"}
-  ]
-};
-
-// ── Refresh ──
-async function refreshData() {
-  setStatus('loading','UPDATING');
-  try {
-    const data = await fetchPollingData();
-    pollingData = data;
-    renderAll(data);
-    setStatus('','LIVE');
-  } catch(e) {
-    setStatus('error','CACHED');
-  }
-}
-
-// ── Init ──
-function init() {
-  // Activate overview tab immediately
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const pg = document.getElementById('page-overview');
-  if(pg) pg.classList.add('active');
-
-  // Show fallback data SYNCHRONOUSLY — no async, no waiting
-  const cached = loadCache() || FALLBACK_DATA;
-  pollingData = cached;
-  renderAll(cached);
-  setStatus('error','CACHED');
-
-  // Try background refresh after 2 seconds
-  setTimeout(async () => {
-    setStatus('loading','UPDATING');
-    try {
-      const timeoutPromise = new Promise((_,reject) => setTimeout(() => reject(new Error('timeout')), 20000));
-      const data = await Promise.race([fetchPollingData(), timeoutPromise]);
-      pollingData = data;
-      renderAll(data);
-      saveCache(data);
-      setStatus('','LIVE');
-    } catch(e) {
-      setStatus('error','CACHED');
-    }
-  }, 2000);
-}
-
-// PWA install
-let dp;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;});
-
-// Service worker disabled to prevent caching issues
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
-}
-
-// Manifest
-const m={name:'UK Poll Tracker',short_name:'UK Polls',description:'Live UK political polling — all parties',start_url:'/',display:'standalone',background_color:'#0a0d12',theme_color:'#0a0d12',orientation:'portrait'};
-const ml=document.createElement('link');ml.rel='manifest';ml.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/json'}));document.head.appendChild(ml);
-
-// Start
-init();
+// Render everything immediately on load
+renderOverview();
+renderTrends();
+renderLeaders();
+renderPolls();
 </script>
 </body>
 </html>
