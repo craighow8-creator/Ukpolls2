@@ -206,7 +206,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Source
     <div class="page" id="page-trends">
       <div class="stitle">Polling Trends</div>
       <div class="ssub">Historical movement · AI-sourced</div>
-      <div class="card"><div class="clabel">VOTE SHARE OVER TIME</div><div class="chwrap"><canvas id="trendChart"></canvas></div></div>
+      <div class="card"><div class="clabel">VOTE SHARE OVER TIME</div><div class="chwrap"><canvas id="trendChart"></div></div></div>
       <div class="card" id="movers-card">
         <div class="clabel">BIGGEST MOVERS</div>
         <div id="movers-list"><div class="skel" style="height:12px;margin-bottom:10px"></div><div class="skel" style="height:12px;margin-bottom:10px;width:80%"></div></div>
@@ -496,63 +496,71 @@ function renderOverview(data) {
 }
 
 function renderTrends(data) {
-  // Movers
   const mainParties = data.parties.filter(p=>!['SNP','Restore Britain'].includes(p.name));
-  const first = data.trends[0];
-  const last = data.trends[data.trends.length-1];
+  const first = data.trends && data.trends[0];
+  const last = data.trends && data.trends[data.trends.length-1];
+  
+  // Movers
   document.getElementById('movers-list').innerHTML = mainParties
-    .map(p => ({...p, delta: (last[p.name]||0)-(first[p.name]||0)}))
-    .sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta))
-    .map(p=>`
-      <div class="trow">
-        <div class="tl" style="color:${p.color}">${p.abbr}</div>
-        <div class="tw"><div class="tb" style="width:${p.pct/40*100}%;background:${p.color}"></div></div>
-        <div class="tp" style="color:${p.delta>0?'var(--up)':'var(--down)'}">${p.delta>0?'+':''}${p.delta}pp</div>
-      </div>
-    `).join('');
+    .sort((a,b)=>b.pct-a.pct)
+    .map(p => {
+      const chg = p.change||0;
+      return `<div class="mover"><span style="color:${p.color};font-weight:700">${p.abbr}</span>
+        <span style="color:var(--dim)">${p.pct}%</span>
+        <span style="color:${chg>0?'var(--up)':chg<0?'var(--down)':'var(--muted)'}">${chg>0?'▲ +'+chg:chg<0?'▼ '+chg:'–'}</span>
+      </div>`;
+    }).join('');
 
-  // Milestones
-  document.getElementById('milestones-list').innerHTML = data.milestones.map(m=>`
-    <div style="display:flex;gap:9px;margin-bottom:9px">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);min-width:60px;padding-top:2px">${m.date}</div>
-      <div style="font-size:13px;color:var(--dim)">${m.event}</div>
-    </div>
-  `).join('');
-
-  renderChart(data);
-}
-
-function renderChart(data) {
-  data = data || pollingData;
-  if (!data || !data.trends) return;
-  const ctx = document.getElementById('trendChart').getContext('2d');
-  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-  const parties = ['Reform','Labour','Conservative','Lib Dem','Green'];
-  const colors = {Reform:'#12B7D4',Labour:'#E4003B',Conservative:'#4060b0','Lib Dem':'#FAA61A',Green:'#00B140'};
-  chartInstance = new Chart(ctx, {
-    type:'line',
-    data:{
-      labels: data.trends.map(t=>t.month),
-      datasets: parties.map(p=>({
-        label:p, data:data.trends.map(t=>t[p]||null),
-        borderColor:colors[p], backgroundColor:colors[p]+'10',
-        tension:.4, pointRadius:0, borderWidth:2.5, spanGaps:true
-      }))
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{display:true,position:'bottom',labels:{color:'#8b949e',font:{size:10,family:"'IBM Plex Mono'"},boxWidth:10,padding:8}},
-        tooltip:{mode:'index',intersect:false,backgroundColor:'#0d1117',borderColor:'#30363d',borderWidth:1,titleColor:'#8b949e',bodyColor:'#e6edf3',callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y}%`}}
-      },
-      scales:{
-        x:{grid:{color:'#21262d'},ticks:{color:'#8b949e',font:{size:8,family:"'IBM Plex Mono'"},maxRotation:45}},
-        y:{grid:{color:'#21262d'},ticks:{color:'#8b949e',font:{size:9},callback:v=>v+'%'},min:0,max:45}
-      },
-      interaction:{mode:'index',intersect:false}
-    }
+  // Draw SVG line chart without Chart.js
+  const canvas = document.getElementById('trend-chart');
+  if(!canvas || !data.trends || data.trends.length<2) return;
+  
+  const W=canvas.offsetWidth||320, H=canvas.offsetHeight||200;
+  const pad={t:10,r:10,b:30,l:28};
+  const pw=W-pad.l-pad.r, ph=H-pad.t-pad.b;
+  const months=data.trends.map(t=>t.month);
+  const parties=['Reform','Labour','Conservative','Lib Dem','Green'];
+  const colors={Reform:'#12B7D4',Labour:'#E4003B',Conservative:'#4060b0','Lib Dem':'#FAA61A',Green:'#00B140'};
+  
+  let allVals=[];
+  parties.forEach(p=>data.trends.forEach(t=>{if(t[p])allVals.push(t[p]);}));
+  const minV=Math.max(0,Math.min(...allVals)-2), maxV=Math.min(45,Math.max(...allVals)+2);
+  
+  const xPos=(i)=>pad.l+i*(pw/(months.length-1));
+  const yPos=(v)=>pad.t+ph-(v-minV)/(maxV-minV)*ph;
+  
+  let svg=`<svg width="${W}" height="${H}" style="width:100%;height:100%">`;
+  
+  // Grid lines
+  [5,10,15,20,25,30,35].filter(v=>v>=minV&&v<=maxV).forEach(v=>{
+    const y=yPos(v);
+    svg+=`<line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#ffffff10" stroke-width="1"/>`;
+    svg+=`<text x="${pad.l-4}" y="${y+4}" fill="#555" font-size="9" text-anchor="end">${v}</text>`;
   });
+  
+  // X labels
+  months.forEach((m,i)=>{
+    if(i%2===0||i===months.length-1)
+      svg+=`<text x="${xPos(i)}" y="${H-4}" fill="#555" font-size="9" text-anchor="middle">${m}</text>`;
+  });
+  
+  // Lines
+  parties.forEach(p=>{
+    const pts=data.trends.map((t,i)=>t[p]?`${xPos(i)},${yPos(t[p])}`:null).filter(Boolean);
+    if(pts.length>1)
+      svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${colors[p]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>`;
+  });
+  
+  svg+='</svg>';
+  canvas.style.position='relative';
+  canvas.innerHTML=svg;
+  canvas.style.display='block';
+  
+  // Legend
+  const legend=document.getElementById('trend-legend');
+  if(legend) legend.innerHTML=parties.map(p=>`<span style="color:${colors[p]};font-size:11px;margin-right:10px">● ${p}</span>`).join('');
 }
+
 
 function renderDemographics(data) {
   const parties = ['Reform','Labour','Conservative','Lib Dem','Green'];
