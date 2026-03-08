@@ -9,7 +9,7 @@
 <style>
 :root{--bg:#0a0d12;--surface:#0d1117;--surface2:#161b22;--border:#21262d;--dim:#c9d1d9;--muted:#8b949e;--up:#3fb950;--down:#f85149;--reform:#12B7D4;--labour:#E4003B;--con:#4060b0;--ld:#FAA61A;--green:#00B140;--snp:#d4a012;--rb:#0D2A5C;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:100%;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;width:100%;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
 #hdr{padding:8px 14px 6px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
 .hdr-row{display:flex;align-items:center;justify-content:space-between;}
 .hdr-left{display:flex;align-items:center;gap:10px;}
@@ -18,7 +18,7 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 .hsub{font-size:10px;color:var(--muted);font-family:'Courier New',monospace;letter-spacing:.5px;margin-top:1px;}
 .live-pill{background:#1a2f1a;border:1px solid #2a5a2a;color:#3fb950;font-size:10px;font-family:'Courier New',monospace;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;cursor:pointer;}
 .ldot{width:6px;height:6px;border-radius:50%;background:#3fb950;}
-#content{position:fixed;top:62px;bottom:calc(56px + env(safe-area-inset-bottom));left:0;right:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;max-width:500px;margin:0 auto;}
+#content{position:fixed;top:62px;bottom:calc(56px + env(safe-area-inset-bottom));left:0;right:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;}
 .page{display:none;padding:13px 13px 80px;}
 .page.active{display:block;}
 .stitle{font-size:22px;font-weight:800;margin-bottom:2px;}
@@ -87,9 +87,11 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
   .hdr-flag{width:26px;height:26px;font-size:15px;}
   .hdr-title{font-size:15px;}
   .nb span{display:none;}
-  .nb{padding:6px 4px;}
-  #content{top:46px;}
-  .page{padding:8px 13px 65px;}
+  .nb{padding:4px;}
+  .nb svg{margin-bottom:0;}
+  #nav{height:44px;}
+  #content{top:46px;bottom:44px;left:0;right:0;width:100%;max-width:100%;}
+  .page{padding:8px 13px 10px;}
   .stitle{font-size:16px;margin-bottom:2px;}
 }
 </style>
