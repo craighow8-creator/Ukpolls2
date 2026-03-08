@@ -4,100 +4,114 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0d12">
 <title>UK Poll Tracker</title>
 <style>
-:root{--bg:#0a0d12;--surface:#0d1117;--surface2:#161b22;--border:#21262d;--dim:#c9d1d9;--muted:#8b949e;--up:#3fb950;--down:#f85149;--reform:#12B7D4;--labour:#E4003B;--con:#4060b0;--ld:#FAA61A;--green:#00B140;--snp:#d4a012;--rb:#0D2A5C;}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;width:100%;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
-#hdr{padding:8px 14px 6px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+:root{--bg:#0a0d12;--surface:#13171f;--border:#1e2330;--dim:#c8cdd8;--muted:#555e72;--up:#3fb950;--down:#f85149;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── Header ── */
+#hdr{padding:10px 14px 8px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
 .hdr-row{display:flex;align-items:center;justify-content:space-between;}
 .hdr-left{display:flex;align-items:center;gap:10px;}
-.hdr-icon{width:38px;height:38px;background:#1c2128;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;}
-.htitle{font-size:17px;font-weight:700;letter-spacing:-.3px;}
-.hsub{font-size:10px;color:var(--muted);font-family:'Courier New',monospace;letter-spacing:.5px;margin-top:1px;}
-.live-pill{background:#1a2f1a;border:1px solid #2a5a2a;color:#3fb950;font-size:10px;font-family:'Courier New',monospace;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;cursor:pointer;}
-.ldot{width:6px;height:6px;border-radius:50%;background:#3fb950;}
-#content{position:fixed;top:62px;bottom:calc(64px + env(safe-area-inset-bottom));left:0;right:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;z-index:1;}
-.page{display:none;padding:13px 13px 80px;}
+.hdr-icon{width:36px;height:36px;background:linear-gradient(135deg,#012169,#C8102E);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.htitle{font-size:18px;font-weight:800;color:#fff;line-height:1.1;}
+.hsub{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:1px;}
+.live-badge{display:flex;align-items:center;gap:5px;background:#1a2e1a;border:1px solid #2d5a2d;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:700;color:#3fb950;cursor:pointer;white-space:nowrap;}
+.ldot{width:7px;height:7px;border-radius:50%;background:#3fb950;}
+.ldot.spin{animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ltxt.loading{color:#FAA61A;}
+.ltxt.error{color:var(--muted);}
+
+/* ── Content ── */
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;}
+
+/* ── Pages ── */
+.page{display:none;padding:14px 14px 24px;}
 .page.active{display:block;}
-.stitle{font-size:22px;font-weight:800;margin-bottom:2px;}
+
+/* ── Nav ── */
+#nav{flex-shrink:0;background:#13171f;border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;background:none;border:none;color:var(--muted);font-size:9px;cursor:pointer;gap:3px;}
+.nb svg{width:20px;height:20px;stroke-width:1.8;}
+.nb.active{color:#f85149;}
+.nb.active svg{stroke:#f85149;}
+
+/* ── Cards ── */
+.card{background:var(--surface);border-radius:12px;padding:14px;margin-bottom:12px;}
+.stitle{font-size:22px;font-weight:800;margin-bottom:2px;color:#fff;}
 .ssub{font-size:12px;color:var(--muted);margin-bottom:14px;}
-.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.pc{background:var(--surface);border-radius:10px;padding:10px 8px;border-top:3px solid;text-align:center;}
-.pca{font-size:10px;font-family:'Courier New',monospace;color:var(--muted);margin-bottom:2px;}
-.pcp{font-size:22px;font-weight:800;}
-.pcp small{font-size:12px;font-weight:400;}
-.pcc{font-size:11px;margin-top:2px;}
+.sec-label{font-size:9px;letter-spacing:1.5px;color:var(--muted);margin:16px 0 8px;font-weight:600;}
+
+/* ── Party grid ── */
+.pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;}
+.pc{background:var(--surface);border-radius:10px;padding:10px 6px;border-top:3px solid;text-align:center;}
+.pca{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
+.pcp{font-size:22px;font-weight:800;line-height:1;}
+.pcc{font-size:11px;margin-top:3px;}
 .pcs{font-size:10px;color:var(--muted);margin-top:2px;}
-.card{background:var(--surface);border-radius:12px;padding:14px;margin-bottom:10px;}
-.card-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-.seat-bar{display:flex;height:28px;border-radius:8px;overflow:hidden;margin:8px 0;}
-.sseg{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;min-width:8px;}
-.majority-line{text-align:center;font-size:11px;color:var(--muted);}
-.ctx{font-size:12px;color:var(--muted);line-height:1.6;margin-top:10px;}
-.ptable{width:100%;border-collapse:collapse;font-size:12px;}
-.ptable th{font-family:'Courier New',monospace;font-size:9px;color:var(--muted);letter-spacing:.5px;padding:4px 6px;border-bottom:1px solid var(--border);text-align:right;}
-.ptable th:first-child,.ptable th:nth-child(2){text-align:left;}
-.ptable td{padding:7px 6px;border-bottom:1px solid var(--border);text-align:right;}
-.ptable td:first-child,.ptable td:nth-child(2){text-align:left;}
-.ptable tr:last-child td{border:none;}
-.pct-pill{display:inline-block;padding:2px 7px;border-radius:20px;font-weight:700;font-size:11px;}
+
+/* ── Seat bar ── */
+.sbar{display:flex;height:36px;border-radius:8px;overflow:hidden;margin-bottom:6px;}
+.sseg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;overflow:hidden;}
+
+/* ── Leaders ── */
 .lcard{background:var(--surface);border-radius:12px;padding:14px;margin-bottom:10px;}
 .lch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-.lcname{font-size:16px;font-weight:700;}
+.lcname{font-size:16px;font-weight:800;color:#fff;}
 .lcparty{font-size:12px;margin-top:2px;}
-.lcnet{font-size:26px;font-weight:800;}
-.lcnl{font-size:9px;font-family:'Courier New',monospace;color:var(--muted);text-align:right;}
-.abar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:6px;}
-.lcs{display:flex;gap:12px;font-size:12px;}
-.policy-section{border-top:1px solid var(--border);padding-top:8px;margin-top:8px;}
-.policy-label{font-family:'Courier New',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
-.policy-text{font-size:12px;color:var(--dim);line-height:1.6;}
-.milestone{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
-.milestone:last-child{border:none;}
-.ms-date{font-size:10px;font-family:'Courier New',monospace;color:var(--muted);min-width:60px;padding-top:2px;}
-.ms-text{font-size:12px;line-height:1.5;}
-#nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:1000;max-width:100%;margin:0 auto;}
-.nb{flex:1;background:none;border:none;color:var(--muted);padding:10px 4px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;}
-.nb svg{width:20px;height:20px;stroke-width:1.8;}
-.nb.active{color:var(--down);}
-.nb.active svg{stroke:var(--down);}
-.rbb{background:#0D2A5C18;border:1px solid #0D2A5C50;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.5;color:var(--muted);}
-.trend-chart{width:100%;height:180px;margin:8px 0;}
-.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
-.section-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1.5px;margin:12px 0 8px}
-.ecard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
-.ecard.upcoming{border-left:3px solid #FAA61A}
-.ecard.result{border-left:3px solid #3fb95060}
-.ecard-date{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:4px}
-.ecard-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:2px}
-.ecard-sub{font-size:13px;color:var(--dim);margin-bottom:6px}
-.ecard-detail{font-size:12px;color:var(--muted);line-height:1.6}
-.ecard-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.etag{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500}
-.ecard-result-bar{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-.erb-item{display:flex;align-items:center;gap:8px;font-size:13px}
-.erb-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.erb-party{color:var(--dim);width:55px;flex-shrink:0}
-.erb-pct{color:var(--text);font-weight:600;width:40px}
-.erb-note{color:var(--muted);font-size:11px}
+.lcnet{font-size:26px;font-weight:800;line-height:1;}
+.lcnl{font-size:9px;color:var(--muted);text-align:right;letter-spacing:1px;}
+.abar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-bottom:6px;}
+.lcs{display:flex;gap:12px;font-size:12px;margin-bottom:2px;}
+.psec{border-top:1px solid var(--border);padding-top:8px;margin-top:8px;}
+.plbl{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;font-weight:600;}
+.ptxt{font-size:12px;color:var(--dim);line-height:1.6;}
+
+/* ── Polls table ── */
+.ptable{width:100%;border-collapse:collapse;font-size:12px;}
+.ptable th{font-size:9px;color:var(--muted);letter-spacing:1px;padding:4px 3px;text-align:center;border-bottom:1px solid var(--border);}
+.ptable td{padding:6px 3px;text-align:center;border-bottom:1px solid var(--border);}
+.pill{display:inline-block;padding:2px 5px;border-radius:4px;font-weight:700;font-size:11px;}
+
+/* ── Elections ── */
+.ecard{background:var(--surface);border-radius:12px;padding:14px;margin-bottom:10px;}
+.ed{font-size:11px;color:var(--muted);margin-bottom:3px;}
+.et{font-size:15px;font-weight:800;color:#fff;margin-bottom:2px;}
+.es{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.ex{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:8px;}
+.etags{display:flex;flex-wrap:wrap;gap:6px;}
+.etag{font-size:11px;padding:3px 8px;border-radius:6px;}
+.ri{display:flex;align-items:center;gap:6px;padding:3px 0;}
+.rd{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.rp{width:52px;font-size:12px;font-weight:600;}
+.rn{width:38px;font-size:12px;font-weight:800;}
+.rm{font-size:11px;color:var(--muted);}
+
+/* ── AI ── */
+.chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:7px 12px;font-size:12px;cursor:pointer;color:var(--dim);}
+.ai-box{background:var(--surface);border-radius:12px;padding:14px;font-size:13px;line-height:1.7;}
+.ai-empty{text-align:center;padding:24px;color:var(--muted);font-size:13px;}
+
+/* ── Landscape ── */
 @media (orientation:landscape) and (max-height:500px){
-  #hdr{padding:4px 14px 4px;}
-  .hdr-flag{width:26px;height:26px;font-size:15px;}
-  .hdr-title{font-size:15px;}
+  #hdr{padding:4px 14px;}
+  .htitle{font-size:15px;}
+  .hsub{display:none;}
+  .hdr-icon{width:28px;height:28px;font-size:15px;}
   .nb span{display:none;}
-  .nb{padding:4px;}
-  .nb svg{margin-bottom:0;}
-  #nav{height:44px;}
-  #content{top:46px;bottom:44px;left:0;right:0;width:100%;max-width:100%;}
-  .page{padding:8px 13px 10px;}
-  .stitle{font-size:16px;margin-bottom:2px;}
+  .nb{padding:5px 2px;}
+  .page{padding:8px 14px 10px;}
+  .stitle{font-size:17px;}
 }
 </style>
 </head>
 <body>
 
+<!-- ── Header ── -->
 <div id="hdr">
   <div class="hdr-row">
     <div class="hdr-left">
@@ -107,190 +121,205 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
         <div class="hsub" id="hdr-date">ALL PARTIES · 8 MAR 2026</div>
       </div>
     </div>
-    <div class="live-pill"><div class="ldot"></div>LIVE</div>
+    <div class="live-badge" onclick="refreshData()">
+      <div class="ldot" id="status-dot"></div>
+      <span class="ltxt error" id="status-txt">CACHED</span>
+    </div>
   </div>
 </div>
 
+<!-- ── Scrollable content ── -->
 <div id="content">
 
   <!-- OVERVIEW -->
   <div class="page active" id="page-overview">
-    <div class="stitle" style="margin-top:10px">Voting Intention</div>
-    <div class="ssub">7-poll moving average · 8 Mar 2026</div>
+    <div class="stitle">Voting Intention</div>
+    <div class="ssub" id="overview-sub">7-poll moving average · 8 Mar 2026</div>
     <div class="pgrid" id="party-grid"></div>
-    <div class="card">
-      <div class="card-title">🏛 Seat Projection</div>
-      <div class="seat-bar" id="seat-bar"></div>
-      <div class="majority-line">326 seats needed for majority · <strong>Hung Parliament</strong></div>
-    </div>
-    <div class="card">
-      <div class="card-title">📋 Context</div>
-      <div class="ctx" id="ctx-text"></div>
-    </div>
+    <div class="sec-label">🏛 SEAT PROJECTION</div>
+    <div class="sbar" id="seat-bar"></div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:16px">326 seats needed for majority · <strong style="color:#fff">Hung Parliament</strong></div>
+    <div class="sec-label">📋 CONTEXT</div>
+    <div class="card" style="font-size:13px;line-height:1.7" id="ctx-text"></div>
   </div>
 
   <!-- TRENDS -->
   <div class="page" id="page-trends">
-    <div class="stitle" style="margin-top:10px">Polling Trends</div>
-    <div class="ssub">6-month trajectory</div>
-    <div class="card">
-      <div class="card-title">📈 Vote Share Over Time</div>
-      <div class="trend-chart" id="trend-chart"></div>
-      <div class="legend" id="trend-legend"></div>
+    <div class="stitle">Trends</div>
+    <div class="ssub">6-month polling movement</div>
+    <div class="card" style="padding:10px">
+      <svg id="trend-chart" style="width:100%;display:block;height:160px"></svg>
+      <div id="trend-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px"></div>
     </div>
-    <div class="card">
-      <div class="card-title">🔺 Movers</div>
-      <div id="movers-list"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">📅 Key Milestones</div>
-      <div id="milestones-list"></div>
-    </div>
+    <div class="sec-label">📈 LATEST MOVEMENT</div>
+    <div class="card" id="movers-list"></div>
+    <div class="sec-label">📌 MILESTONES</div>
+    <div class="card" id="milestones-list"></div>
+  </div>
+
+  <!-- DEMOGRAPHICS -->
+  <div class="page" id="page-age">
+    <div class="stitle">Demographics</div>
+    <div class="ssub">Voting intention by group · YouGov/Ipsos/MiC 2026</div>
+    <div class="sec-label">👤 AGE GROUP</div><div id="age-content"></div>
+    <div class="sec-label">🏠 SOCIAL CLASS</div><div id="class-content"></div>
+    <div class="sec-label">🎓 EDUCATION</div><div id="edu-content"></div>
+    <div class="sec-label">📍 REGION</div><div id="region-content"></div>
+    <div class="sec-label">🌍 ETHNICITY</div><div id="ethnicity-content"></div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common. Feb–Mar 2026.</div>
   </div>
 
   <!-- LEADERS -->
-  <div class="page" id="page-age">
-  <div class="stitle">Demographics</div>
-  <div class="ssub">Voting intention by group · YouGov/Ipsos/MiC 2026</div>
-
-  <!-- Section tabs -->
-  <div style="display:flex;gap:6px;margin:12px 0;flex-wrap:wrap" id="demo-tabs">
-    <button onclick="showDemo('age',this)" class="dtab active" style="background:#12B7D420;color:#12B7D4;border:1px solid #12B7D450;border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Age</button>
-    <button onclick="showDemo('class',this)" class="dtab" style="background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Class</button>
-    <button onclick="showDemo('education',this)" class="dtab" style="background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Education</button>
-    <button onclick="showDemo('region',this)" class="dtab" style="background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Region</button>
-    <button onclick="showDemo('ethnicity',this)" class="dtab" style="background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Ethnicity</button>
-  </div>
-
-  <div id="demo-content"></div>
-
-  <div style="font-size:11px;color:var(--muted);text-align:center;padding:16px 0">
-    Sources: YouGov, Ipsos, More in Common. Feb–Mar 2026.
-  </div>
-</div>
-
-<div class="page" id="page-leaders"><div class="page" id="page-leaders"><div class="page" id="page-leaders">
-    <div class="stitle" style="margin-top:10px">Leader Ratings</div>
-    <div class="ssub">Net approval · Latest polling</div>
+  <div class="page" id="page-leaders">
+    <div class="stitle">Leader Ratings</div>
+    <div class="ssub">Net approval · latest polling</div>
     <div id="leaders-content"></div>
   </div>
 
   <!-- POLLS -->
   <div class="page" id="page-polls">
-    <div class="stitle" style="margin-top:10px">Recent Polls</div>
+    <div class="stitle">Recent Polls</div>
     <div class="ssub">Latest individual polls · BPC members</div>
-    <div class="card">
+    <div class="card" style="overflow-x:auto;padding:10px">
       <table class="ptable">
         <thead><tr>
           <th>DATE</th><th>POLLSTER</th>
-          <th style="color:var(--reform)">REF</th>
-          <th style="color:var(--labour)">LAB</th>
-          <th style="color:var(--con)">CON</th>
-          <th style="color:var(--ld)">LD</th>
-          <th style="color:var(--green)">GRN</th>
-          <th style="color:var(--rb)">RB</th>
+          <th style="color:#12B7D4">REF</th><th style="color:#E4003B">LAB</th>
+          <th style="color:#0087DC">CON</th><th style="color:#FAA61A">LD</th>
+          <th style="color:#02A95B">GRN</th><th style="color:#0D2A5C">RB</th>
         </tr></thead>
         <tbody id="polls-tbody"></tbody>
       </table>
     </div>
-    <div style="font-size:11px;color:var(--muted);padding:4px 2px">Sources: British Polling Council members. RB = Restore Britain (prompted polls only).</div>
+    <div style="font-size:11px;color:var(--muted);padding:4px 2px">BPC members. RB = Restore Britain (prompted only).</div>
   </div>
 
-<div class="page" id="page-votes">
-  <div class="stitle">Elections &amp; By-Elections</div>
-  <div class="ssub">Upcoming votes &amp; recent results</div>
+  <!-- VOTES -->
+  <div class="page" id="page-votes">
+    <div class="stitle">Elections</div>
+    <div class="ssub">Upcoming votes &amp; recent results</div>
+    <div class="sec-label">📅 UPCOMING</div>
+    <div class="ecard">
+      <div class="ed">1 May 2026</div>
+      <div class="et">Local Elections 2026</div>
+      <div class="es">England — county councils, unitaries &amp; mayoral contests</div>
+      <div class="ex">~1,600 seats across 23 councils. First major test of the Green surge and Reform's local strength. Key contests: West of England Mayor, Cambridgeshire &amp; Peterborough Mayor.</div>
+      <div class="etags">
+        <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform target</span>
+        <span class="etag" style="background:#02A95B20;color:#02A95B">Green surge test</span>
+      </div>
+    </div>
+    <div class="ecard">
+      <div class="ed">1 May 2026</div>
+      <div class="et">Runcorn &amp; Helsby</div>
+      <div class="es">By-election — Labour hold (majority: 14,696)</div>
+      <div class="ex">Triggered by MP Mike Amesbury's resignation after assault video. Labour defending against a strong Reform challenge in this Red Wall seat.</div>
+      <div class="etags">
+        <span class="etag" style="background:#E4003B20;color:#E4003B">Lab defend</span>
+        <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform target</span>
+      </div>
+    </div>
+    <div class="ecard">
+      <div class="ed">TBC 2026</div>
+      <div class="et">Horsham</div>
+      <div class="es">By-election — Conservative hold (majority: 3,027)</div>
+      <div class="ex">Jeremy Quin resigned on health grounds. Three-way marginal between Conservatives, Lib Dems and Reform.</div>
+      <div class="etags">
+        <span class="etag" style="background:#0087DC20;color:#0087DC">Con defend</span>
+        <span class="etag" style="background:#FAA61A20;color:#FAA61A">LD target</span>
+        <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform threat</span>
+      </div>
+    </div>
+    <div class="sec-label">🗳 RECENT RESULTS</div>
+    <div class="ecard">
+      <div class="ed">27 Feb 2026</div>
+      <div class="et">Gorton &amp; Denton</div>
+      <div class="es">By-election — <span style="color:#02A95B;font-weight:600">🟢 Green GAIN from Labour</span></div>
+      <div class="ri"><span class="rd" style="background:#02A95B"></span><span class="rp">Green</span><span class="rn">34.1%</span><span class="rm">+28.6% 🏆</span></div>
+      <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">29.4%</span><span class="rm">-24.7%</span></div>
+      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform</span><span class="rn">19.8%</span><span class="rm">+19.8%</span></div>
+      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">7.2%</span><span class="rm">-16.4%</span></div>
+      <div class="ex" style="margin-top:8px;margin-bottom:0">Massive 28.6pt swing to Greens. Labour vote collapsed. Greens now have 5 MPs. Zack Polanski campaigned in person.</div>
+    </div>
+    <div class="ecard">
+      <div class="ed">6 Feb 2025</div>
+      <div class="et">Kingswood</div>
+      <div class="es">By-election — <span style="color:#12B7D4;font-weight:600">🔵 Reform GAIN from Conservative</span></div>
+      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform</span><span class="rn">38.7%</span><span class="rm">+38.7% 🏆</span></div>
+      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">26.1%</span><span class="rm">-21.3%</span></div>
+      <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">19.4%</span><span class="rm">-8.2%</span></div>
+      <div class="ex" style="margin-top:8px;margin-bottom:0">Reform's first by-election gain. Signalled collapse of Conservative vote in Leave-leaning seats.</div>
+    </div>
+    <div class="ecard">
+      <div class="ed">10 Oct 2024</div>
+      <div class="et">Henley &amp; Thame</div>
+      <div class="es">By-election — <span style="color:#FAA61A;font-weight:600">🟡 Lib Dem HOLD</span></div>
+      <div class="ri"><span class="rd" style="background:#FAA61A"></span><span class="rp">Lib Dem</span><span class="rn">52.3%</span><span class="rm">+8.1% 🏆</span></div>
+      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">22.1%</span><span class="rm">-18.4%</span></div>
+      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform</span><span class="rn">12.8%</span><span class="rm">+12.8%</span></div>
+      <div class="ex" style="margin-top:8px;margin-bottom:0">Lib Dems consolidating hold on southern Blue Wall seats.</div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;padding:12px 0">Results approximate. Sources: BBC, Electoral Commission.</div>
+  </div>
 
-  <div class="section-label">📅 UPCOMING</div>
-
-  <div class="ecard upcoming">
-    <div class="ecard-date">1 May 2026</div>
-    <div class="ecard-title">Local Elections 2026</div>
-    <div class="ecard-sub">England — county councils, unitaries &amp; mayoral contests</div>
-    <div class="ecard-detail">~1,600 seats across 23 councils. First major test of the Green surge and Reform's local strength. Key contests: West of England Mayor, Cambridgeshire &amp; Peterborough Mayor.</div>
-    <div class="ecard-tags">
-      <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform target</span>
-      <span class="etag" style="background:#00B14020;color:#00B140">Green surge test</span>
+  <!-- AI -->
+  <div class="page" id="page-ai">
+    <div class="stitle">AI Analyst</div>
+    <div class="ssub">Ask anything about UK politics</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+      <button class="chip" onclick="askAI('What are the key polling trends right now?')">Key trends</button>
+      <button class="chip" onclick="askAI('Who is most likely to win the next election?')">Next election</button>
+      <button class="chip" onclick="askAI('Why are the Greens surging in the polls?')">Green surge</button>
+      <button class="chip" onclick="askAI('What does Reform UK stand for?')">Reform policies</button>
+      <button class="chip" onclick="askAI('How is Keir Starmer performing as PM?')">Starmer verdict</button>
+    </div>
+    <div id="ai-output" class="ai-empty">Ask a question above or type below</div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <input id="ai-input" type="text" placeholder="Ask about UK politics..."
+        style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--dim);font-size:13px;outline:none;"
+        onkeydown="if(event.key==='Enter')askAI(this.value)">
+      <button onclick="askAI(document.getElementById('ai-input').value)"
+        style="background:#12B7D4;border:none;border-radius:10px;padding:10px 16px;color:#000;font-weight:700;cursor:pointer;font-size:13px;">Ask</button>
     </div>
   </div>
 
-  <div class="ecard upcoming">
-    <div class="ecard-date">1 May 2026</div>
-    <div class="ecard-title">Runcorn &amp; Helsby</div>
-    <div class="ecard-sub">By-election — Labour hold (majority: 14,696)</div>
-    <div class="ecard-detail">Triggered by MP Mike Amesbury's resignation after assault video. Labour defending a large majority in a northern Red Wall seat against a strong Reform challenge.</div>
-    <div class="ecard-tags">
-      <span class="etag" style="background:#E4003B20;color:#E4003B">Lab defend</span>
-      <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform target</span>
-    </div>
-  </div>
+</div><!-- end #content -->
 
-  <div class="ecard upcoming">
-    <div class="ecard-date">TBC 2026</div>
-    <div class="ecard-title">Horsham</div>
-    <div class="ecard-sub">By-election — Conservative hold (majority: 3,027)</div>
-    <div class="ecard-detail">Jeremy Quin resigned on health grounds. Three-way marginal between Conservatives, Lib Dems and Reform. Could be a Lib Dem gain or a Reform breakthrough in the south.</div>
-    <div class="ecard-tags">
-      <span class="etag" style="background:#4060b020;color:#4060b0">Con defend</span>
-      <span class="etag" style="background:#FAA61A20;color:#FAA61A">LD target</span>
-      <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform threat</span>
-    </div>
-  </div>
-
-  <div class="section-label" style="margin-top:20px">🗳 RECENT RESULTS</div>
-
-  <div class="ecard result">
-    <div class="ecard-date">27 Feb 2026</div>
-    <div class="ecard-title">Gorton &amp; Denton</div>
-    <div class="ecard-sub">By-election — <span style="color:#00B140;font-weight:600">🟢 Green GAIN from Labour</span></div>
-    <div class="ecard-result-bar">
-      <div class="erb-item"><span class="erb-dot" style="background:#00B140"></span><span class="erb-party">Green</span><span class="erb-pct">34.1%</span><span class="erb-note">+28.6% 🏆</span></div>
-      <div class="erb-item"><span class="erb-dot" style="background:#E4003B"></span><span class="erb-party">Labour</span><span class="erb-pct">29.4%</span><span class="erb-note">-24.7%</span></div>
-      <div class="erb-item"><span class="erb-dot" style="background:#12B7D4"></span><span class="erb-party">Reform</span><span class="erb-pct">19.8%</span><span class="erb-note">+19.8%</span></div>
-      <div class="erb-item"><span class="erb-dot" style="background:#4060b0"></span><span class="erb-party">Con</span><span class="erb-pct">7.2%</span><span class="erb-note">-16.4%</span></div>
-    </div>
-    <div class="ecard-detail">Zack Polanski's first major test as Green leader. Massive 28.6pt swing. Labour vote collapsed. Greens now have 5 MPs. Seen as a pivotal moment for eco-socialist politics.</div>
-  </div>
-
-  <div class="ecard result">
-    <div class="ecard-date">6 Feb 2025</div>
-    <div class="ecard-title">Kingswood</div>
-    <div class="ecard-sub">By-election — <span style="color:#12B7D4;font-weight:600">🔵 Reform GAIN from Conservative</span></div>
-    <div class="ecard-result-bar">
-      <div class="erb-item"><span class="erb-dot" style="background:#12B7D4"></span><span class="erb-party">Reform</span><span class="erb-pct">38.7%</span><span class="erb-note">+38.7% 🏆</span></div>
-      <div class="erb-item"><span class="erb-dot" style="background:#4060b0"></span><span class="erb-party">Con</span><span class="erb-pct">26.1%</span><span class="erb-note">-21.3%</span></div>
-      <div class="erb-item"><span class="erb-dot" style="background:#E4003B"></span><span class="erb-party">Labour</span><span class="erb-pct">19.4%</span><span class="erb-note">-8.2%</span></div>
-    </div>
-    <div class="ecard-detail">Reform's first by-election gain. Signalled the collapse of the Conservative vote in Leave-leaning seats and Reform's ability to win under first-past-the-post.</div>
-  </div>
-
-  <div class="ecard result">
-    <div class="ecard-date">10 Oct 2024</div>
-    <div class="ecard-title">Henley &amp; Thame</div>
-    <div class="ecard-sub">By-election — <span style="color:#FAA61A;font-weight:600">🟡 Lib Dem HOLD</span></div>
-    <div class="ecard-result-bar">
-      <div class="erb-item"><span class="erb-dot" style="background:#FAA61A"></span><span class="erb-party">Lib Dem</span><span class="erb-pct">52.3%</span><span class="erb-note">+8.1% 🏆</span></div>
-      <div class="erb-item"><span class="erb-dot" style="background:#4060b0"></span><span class="erb-party">Con</span><span class="erb-pct">22.1%</span><span class="erb-note">-18.4%</span></div>
-      <div class="erb-item"><span class="erb-dot" style="background:#12B7D4"></span><span class="erb-party">Reform</span><span class="erb-pct">12.8%</span><span class="erb-note">+12.8%</span></div>
-    </div>
-    <div class="ecard-detail">Lib Dems consolidating their hold on southern Blue Wall seats. Conservatives continue to lose support in former heartlands.</div>
-  </div>
-
-</div>
-
-</div>
-
+<!-- ── Nav bar — always outside #content ── -->
 <div id="nav">
-  <button class="nb active" onclick="sp('overview',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Overview</span></button>
-  <button class="nb" onclick="sp('trends',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Trends</span></button>
-  <button class="nb" onclick="sp('age',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Demo</span></button>
-  <button class="nb" onclick="sp('leaders',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Leaders</span></button>
-  <button class="nb" onclick="sp('polls',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Polls</span></button>
-  <button class="nb" onclick="sp('votes',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Votes</span></button>
+  <button class="nb active" onclick="sp('overview',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Overview</span>
+  </button>
+  <button class="nb" onclick="sp('trends',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Trends</span>
+  </button>
+  <button class="nb" onclick="sp('age',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Demo</span>
+  </button>
+  <button class="nb" onclick="sp('leaders',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Leaders</span>
+  </button>
+  <button class="nb" onclick="sp('polls',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <span>Polls</span>
+  </button>
+  <button class="nb" onclick="sp('votes',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    <span>Votes</span>
+  </button>
+  <button class="nb" onclick="sp('ai',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    <span>AI</span>
+  </button>
 </div>
-
-
 
 <script>
+const WORKER = 'https://throbbing-base-05b6.craighow8.workers.dev';
+
 const D = {
   fetchDate: "8 Mar 2026",
   parties: [
@@ -334,14 +363,14 @@ const D = {
      nhs:"Extra £5bn/year for mental health. 8am GP appointment guarantee.",
      climate:"Net zero by 2045. Ban new oil and gas. 10-year green infrastructure plan."},
     {name:"Nigel Farage",party:"Reform UK",color:"#12B7D4",approve:38,disapprove:48,net:-10,
-     immigration:"Leave ECHR immediately. Intercept and deport all illegal arrivals. Abolish Indefinite Leave to Remain. Full immigration freeze.",
-     economy:"Abolish income tax up to £20k. Cut corporation tax to 15%. Abolish BBC licence fee. Scrap all net zero targets.",
+     immigration:"Leave ECHR immediately. Intercept and deport all illegal arrivals. Abolish ILR. Full immigration freeze.",
+     economy:"Abolish income tax up to £20k. Cut corporation tax to 15%. Abolish BBC licence fee. Scrap net zero.",
      nhs:"Cut NHS management by 50%. Recruit British-trained staff first. Zero waiting lists via private sector.",
      climate:"Scrap all net zero targets. No new wind farms. Reinstate all North Sea oil and gas licences."},
     {name:"Rupert Lowe",party:"Restore Britain",color:"#0D2A5C",approve:null,disapprove:null,net:null,
      note:"86% of UK adults could not identify Lowe (JL Partners, Feb 2026). Recognition growing via social media.",
-     immigration:"Zero net migration. Mass deportations. Withdraw from UN refugee convention. End all asylum claims.",
-     economy:"Cut taxes for working people. Reduce foreign aid to zero. Prioritise British workers in public sector.",
+     immigration:"Zero net migration. Mass deportations. Withdraw from UN refugee convention.",
+     economy:"Cut taxes for working people. Reduce foreign aid to zero. Prioritise British workers.",
      nhs:"Reduce NHS bureaucracy. Performance-based pay. British staff first.",
      climate:"Abolish all green levies. Withdraw from Paris climate agreement."},
     {name:"Kemi Badenoch",party:"Conservative",color:"#0087DC",approve:22,disapprove:47,net:-25,
@@ -355,44 +384,6 @@ const D = {
      nhs:"40,000 extra appointments per week. Cut waiting lists. Mental health investment.",
      climate:"Clean energy by 2030. GB Energy public company. Ban new North Sea licences."}
   ],
-  demographics: {
-    "1824": [{party:"Green",    pct:31, color:"#02A95B"},
-             {party:"Labour",   pct:24, color:"#E4003B"},
-             {party:"Reform",   pct:14, color:"#12B7D4"},
-             {party:"Lib Dem",  pct:13, color:"#FAA61A"},
-             {party:"Con",      pct:8,  color:"#0087DC"},
-             {party:"Other",    pct:10, color:"#555"}],
-    "2534": [{party:"Green",    pct:26, color:"#02A95B"},
-             {party:"Labour",   pct:22, color:"#E4003B"},
-             {party:"Reform",   pct:18, color:"#12B7D4"},
-             {party:"Lib Dem",  pct:14, color:"#FAA61A"},
-             {party:"Con",      pct:10, color:"#0087DC"},
-             {party:"Other",    pct:10, color:"#555"}],
-    "3544": [{party:"Reform",   pct:25, color:"#12B7D4"},
-             {party:"Labour",   pct:20, color:"#E4003B"},
-             {party:"Green",    pct:18, color:"#02A95B"},
-             {party:"Lib Dem",  pct:14, color:"#FAA61A"},
-             {party:"Con",      pct:14, color:"#0087DC"},
-             {party:"Other",    pct:9,  color:"#555"}],
-    "4554": [{party:"Reform",   pct:30, color:"#12B7D4"},
-             {party:"Labour",   pct:18, color:"#E4003B"},
-             {party:"Con",      pct:18, color:"#0087DC"},
-             {party:"Lib Dem",  pct:14, color:"#FAA61A"},
-             {party:"Green",    pct:12, color:"#02A95B"},
-             {party:"Other",    pct:8,  color:"#555"}],
-    "5564": [{party:"Reform",   pct:33, color:"#12B7D4"},
-             {party:"Con",      pct:22, color:"#0087DC"},
-             {party:"Labour",   pct:17, color:"#E4003B"},
-             {party:"Lib Dem",  pct:13, color:"#FAA61A"},
-             {party:"Green",    pct:9,  color:"#02A95B"},
-             {party:"Other",    pct:6,  color:"#555"}],
-    "65plus":[{party:"Reform",  pct:35, color:"#12B7D4"},
-              {party:"Con",     pct:28, color:"#0087DC"},
-              {party:"Labour",  pct:15, color:"#E4003B"},
-              {party:"Lib Dem", pct:12, color:"#FAA61A"},
-              {party:"Green",   pct:6,  color:"#02A95B"},
-              {party:"Other",   pct:4,  color:"#555"}]
-  },
   polls: [
     {date:"1-2 Mar",pollster:"YouGov",ref:23,lab:16,con:16,ld:14,grn:21,rb:null},
     {date:"25-27 Feb",pollster:"Opinium",ref:30,lab:18,con:18,ld:12,grn:13,rb:null},
@@ -403,222 +394,228 @@ const D = {
   ]
 };
 
+// ── Tab switching ──
 function sp(id, btn) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
   btn.classList.add('active');
+  document.getElementById('content').scrollTop = 0;
 }
 
+function setStatus(cls, txt) {
+  document.getElementById('status-dot').className = 'ldot' + (cls === 'loading' ? ' spin' : '');
+  const el = document.getElementById('status-txt');
+  el.className = 'ltxt' + (cls ? ' ' + cls : '');
+  el.textContent = txt;
+}
+
+// ── Render Overview ──
 function renderOverview() {
-  const grid = document.getElementById('party-grid');
-  grid.innerHTML = D.parties.map(p=>`
+  document.getElementById('overview-sub').textContent = '7-poll moving average · ' + D.fetchDate;
+  document.getElementById('hdr-date').textContent = 'ALL PARTIES · ' + D.fetchDate.toUpperCase();
+  document.getElementById('party-grid').innerHTML = D.parties.map(p => `
     <div class="pc" style="border-top-color:${p.color}">
       <div class="pca">${p.abbr}</div>
-      <div class="pcp" style="color:${p.color}">${p.pct}<small>%</small></div>
-      <div class="pcc" style="color:${p.change>0?'var(--up)':p.change<0?'var(--down)':'var(--muted)'}">
-        ${p.change>0?'▲ +'+p.change:p.change<0?'▼ '+p.change:'– NC'}
+      <div class="pcp" style="color:${p.color}">${p.pct}<small style="font-size:12px">%</small></div>
+      <div class="pcc" style="color:${p.change > 0 ? 'var(--up)' : p.change < 0 ? 'var(--down)' : 'var(--muted)'}">
+        ${p.change > 0 ? '▲ +' + p.change : p.change < 0 ? '▼ ' + p.change : '– NC'}
       </div>
       <div class="pcs">~${p.seats} seats</div>
     </div>`).join('');
-
-  const seatBar = document.getElementById('seat-bar');
-  seatBar.innerHTML = D.parties.map(p=>`
-    <div class="sseg" style="flex:${p.seats};background:${p.color};color:${['SNP'].includes(p.name)?'#000':'#fff'}" title="${p.name}: ${p.seats}">
-      ${p.seats>20?p.abbr:''}
+  document.getElementById('seat-bar').innerHTML = D.parties.map(p => `
+    <div class="sseg" style="flex:${p.seats};background:${p.color};color:${p.name === 'SNP' ? '#000' : '#fff'}" title="${p.name}: ${p.seats}">
+      ${p.seats > 15 ? p.abbr : ''}
     </div>`).join('');
-
   document.getElementById('ctx-text').textContent = D.context;
 }
 
+// ── Render Trends ──
 function renderTrends() {
-  // Movers
-  document.getElementById('movers-list').innerHTML = D.parties
-    .filter(p=>p.name!=='SNP')
-    .sort((a,b)=>b.pct-a.pct)
-    .map(p=>{
-      const c=p.change||0;
-      return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-        <span style="color:${p.color};font-weight:700">${p.name}</span>
-        <span>${p.pct}% <span style="color:${c>0?'var(--up)':c<0?'var(--down)':'var(--muted)'}">${c>0?'▲ +'+c:c<0?'▼ '+c:'–'}</span></span>
-      </div>`;
-    }).join('');
-
-  // Milestones
-  document.getElementById('milestones-list').innerHTML = D.milestones.map(m=>`
-    <div class="milestone">
-      <div class="ms-date">${m.date}</div>
-      <div class="ms-text">${m.text}</div>
+  document.getElementById('movers-list').innerHTML = D.parties.filter(p => p.name !== 'SNP').sort((a, b) => b.pct - a.pct).map(p => {
+    const c = p.change || 0;
+    return `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+      <span style="color:${p.color};font-weight:700">${p.name}</span>
+      <span>${p.pct}% <span style="color:${c > 0 ? 'var(--up)' : c < 0 ? 'var(--down)' : 'var(--muted)'}">${c > 0 ? '▲ +' + c : c < 0 ? '▼ ' + c : '–'}</span></span>
+    </div>`;
+  }).join('');
+  document.getElementById('milestones-list').innerHTML = D.milestones.map(m => `
+    <div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--muted);white-space:nowrap;min-width:60px">${m.date}</div>
+      <div style="font-size:12px">${m.text}</div>
     </div>`).join('');
-
-  // SVG chart
   const el = document.getElementById('trend-chart');
-  const W=el.offsetWidth||320, H=160;
-  const pad={t:8,r:8,b:24,l:26};
-  const pw=W-pad.l-pad.r, ph=H-pad.t-pad.b;
-  const parties=['Reform','Labour','Conservative','Lib Dem','Green'];
-  const colors={Reform:'#12B7D4',Labour:'#E4003B',Conservative:'#0087DC','Lib Dem':'#FAA61A',Green:'#02A95B'};
-  const months=D.trends.map(t=>t.month);
-  let allV=[];
-  parties.forEach(p=>D.trends.forEach(t=>{if(t[p])allV.push(t[p]);}));
-  const minV=Math.max(0,Math.min(...allV)-3), maxV=Math.min(45,Math.max(...allV)+3);
-  const xP=i=>pad.l+i*(pw/(months.length-1));
-  const yP=v=>pad.t+ph-(v-minV)/(maxV-minV)*ph;
-  let svg=`<svg width="${W}" height="${H}" style="width:100%;overflow:visible">`;
-  [10,15,20,25,30].filter(v=>v>=minV&&v<=maxV).forEach(v=>{
-    svg+=`<line x1="${pad.l}" y1="${yP(v)}" x2="${W-pad.r}" y2="${yP(v)}" stroke="#ffffff12" stroke-width="1"/>
+  const W = el.offsetWidth || 300, H = 160;
+  const pad = {t:8, r:8, b:24, l:26};
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+  const parties = ['Reform','Labour','Conservative','Lib Dem','Green'];
+  const colors = {Reform:'#12B7D4',Labour:'#E4003B',Conservative:'#0087DC','Lib Dem':'#FAA61A',Green:'#02A95B'};
+  const months = D.trends.map(t => t.month);
+  let allV = [];
+  parties.forEach(p => D.trends.forEach(t => { if (t[p]) allV.push(t[p]); }));
+  const minV = Math.max(0, Math.min(...allV) - 2), maxV = Math.min(45, Math.max(...allV) + 2);
+  const xP = i => pad.l + i * (pw / (months.length - 1));
+  const yP = v => pad.t + ph - (v - minV) / (maxV - minV) * ph;
+  let svg = `<svg width="${W}" height="${H}" style="width:100%;overflow:visible">`;
+  [10,15,20,25,30,35].filter(v => v >= minV && v <= maxV).forEach(v => {
+    svg += `<line x1="${pad.l}" y1="${yP(v)}" x2="${W-pad.r}" y2="${yP(v)}" stroke="#ffffff10" stroke-width="1"/>
     <text x="${pad.l-4}" y="${yP(v)+4}" fill="#555" font-size="9" text-anchor="end">${v}</text>`;
   });
-  months.forEach((m,i)=>{
-    svg+=`<text x="${xP(i)}" y="${H-2}" fill="#555" font-size="9" text-anchor="middle">${m}</text>`;
+  months.forEach((m, i) => {
+    svg += `<text x="${xP(i)}" y="${H-2}" fill="#555" font-size="9" text-anchor="middle">${m}</text>`;
   });
-  parties.forEach(p=>{
-    const pts=D.trends.map((t,i)=>t[p]!=null?`${xP(i)},${yP(t[p])}`:null).filter(Boolean);
-    if(pts.length>1) svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${colors[p]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  parties.forEach(p => {
+    const pts = D.trends.map((t, i) => t[p] != null ? `${xP(i)},${yP(t[p])}` : null).filter(Boolean);
+    if (pts.length > 1) svg += `<polyline points="${pts.join(' ')}" fill="none" stroke="${colors[p]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
   });
-  svg+='</svg>';
-  el.innerHTML=svg;
-
-  document.getElementById('trend-legend').innerHTML=parties.map(p=>`<span style="color:${colors[p]};font-size:11px">● ${p}</span>`).join('');
+  svg += '</svg>';
+  el.innerHTML = svg;
+  document.getElementById('trend-legend').innerHTML = parties.map(p => `<span style="color:${colors[p]};font-size:11px">● ${p}</span>`).join('');
 }
 
-function renderLeaders() {
-  const topics=[
-    {k:'immigration',l:'🛂 IMMIGRATION'},
-    {k:'economy',l:'💷 ECONOMY'},
-    {k:'nhs',l:'🏥 NHS'},
-    {k:'climate',l:'🌿 CLIMATE'}
+// ── Render Demographics ──
+function renderAge() {
+  const parties = [
+    {key:'REF',label:'Reform',color:'#12B7D4'},
+    {key:'GRN',label:'Green',color:'#02A95B'},
+    {key:'LAB',label:'Labour',color:'#E4003B'},
+    {key:'CON',label:'Con',color:'#0087DC'},
+    {key:'LD',label:'LD',color:'#FAA61A'},
   ];
-  document.getElementById('leaders-content').innerHTML = D.leaders.map(l=>`
+  function bars(elId, groups) {
+    document.getElementById(elId).innerHTML = groups.map(g => `
+      <div class="lcard" style="margin-bottom:8px">
+        <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:10px">${g.label}</div>
+        ${parties.map(p => `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <div style="width:42px;font-size:11px;color:${p.color};font-weight:700;flex-shrink:0">${p.label}</div>
+            <div style="flex:1;background:var(--border);border-radius:4px;height:8px;overflow:hidden">
+              <div style="width:${g[p.key]}%;background:${p.color};height:100%;border-radius:4px"></div>
+            </div>
+            <div style="width:30px;text-align:right;font-size:12px;font-weight:700;color:${p.color}">${g[p.key]}%</div>
+          </div>`).join('')}
+        ${g.note ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${g.note}</div>` : ''}
+      </div>`).join('');
+  }
+  bars('age-content', [
+    {label:'18–24', REF:18,GRN:32,LAB:20,CON:8,LD:12, note:'Greens dominate youngest voters'},
+    {label:'25–34', REF:20,GRN:28,LAB:22,CON:10,LD:13},
+    {label:'35–44', REF:24,GRN:22,LAB:20,CON:14,LD:13},
+    {label:'45–54', REF:28,GRN:16,LAB:17,CON:18,LD:16},
+    {label:'55–64', REF:34,GRN:12,LAB:16,CON:20,LD:13, note:'Reform strongest age group'},
+    {label:'65+',   REF:31,GRN:8, LAB:15,CON:22,LD:14},
+  ]);
+  bars('class-content', [
+    {label:'AB — Professional/managerial', REF:20,GRN:24,LAB:18,CON:20,LD:18, note:'Higher earners split Green/Con/Reform roughly equally'},
+    {label:'C1 — Clerical/supervisory',    REF:26,GRN:19,LAB:18,CON:18,LD:14},
+    {label:'C2 — Skilled working class',   REF:32,GRN:14,LAB:18,CON:16,LD:11, note:'Reform dominate — big shift from Labour'},
+    {label:'DE — Semi/unskilled',          REF:30,GRN:16,LAB:20,CON:12,LD:10, note:'Labour retain most ground here'},
+  ]);
+  bars('edu-content', [
+    {label:'Degree educated',      REF:16,GRN:28,LAB:22,CON:16,LD:18, note:'Graduates strongly favour Greens and Labour'},
+    {label:'Non-degree educated',  REF:33,GRN:13,LAB:15,CON:18,LD:11, note:'Reform lead by 20pts+ among non-graduates'},
+    {label:'In education (16–21)', REF:12,GRN:35,LAB:20,CON:8, LD:14, note:'Greens dominate among students'},
+  ]);
+  bars('region-content', [
+    {label:'London',           REF:16,GRN:26,LAB:26,CON:14,LD:14, note:'Lab/Green split the capital'},
+    {label:'South East',       REF:26,GRN:18,LAB:14,CON:20,LD:18},
+    {label:'South West',       REF:24,GRN:20,LAB:14,CON:18,LD:20},
+    {label:'Midlands',         REF:32,GRN:14,LAB:20,CON:18,LD:10, note:'Reform heartland'},
+    {label:'North of England', REF:30,GRN:16,LAB:22,CON:14,LD:11},
+    {label:'Wales',            REF:24,GRN:14,LAB:26,CON:14,LD:12},
+    {label:'Scotland',         REF:14,GRN:10,LAB:28,CON:14,LD:8,  note:'SNP ~28% not shown here'},
+  ]);
+  bars('ethnicity-content', [
+    {label:'White British', REF:30,GRN:17,LAB:17,CON:17,LD:12},
+    {label:'Asian British', REF:14,GRN:18,LAB:36,CON:16,LD:12, note:'Labour retain strong lead'},
+    {label:'Black British', REF:8, GRN:22,LAB:44,CON:10,LD:10, note:'Labour dominant but Greens making inroads'},
+    {label:'Mixed/Other',   REF:18,GRN:26,LAB:24,CON:12,LD:14},
+  ]);
+}
+
+// ── Render Leaders ──
+function renderLeaders() {
+  const topics = [
+    {k:'immigration', l:'🛂 IMMIGRATION'},
+    {k:'economy',     l:'💷 ECONOMY'},
+    {k:'nhs',         l:'🏥 NHS'},
+    {k:'climate',     l:'🌿 CLIMATE'}
+  ];
+  document.getElementById('leaders-content').innerHTML = D.leaders.map(l => `
     <div class="lcard">
       <div class="lch">
         <div>
           <div class="lcname">${l.name}</div>
           <div class="lcparty" style="color:${l.color}">${l.party}</div>
         </div>
-        <div>
-          <div class="lcnet" style="color:${l.net===null?'var(--muted)':l.net>0?'var(--up)':'var(--down)'}">${l.net===null?'—':(l.net>0?'+':'')+l.net}</div>
-          <div class="lcnl">${l.net===null?'LIMITED':'NET'}</div>
+        <div style="text-align:right">
+          <div class="lcnet" style="color:${l.net === null ? 'var(--muted)' : l.net > 0 ? 'var(--up)' : 'var(--down)'}">${l.net === null ? '—' : (l.net > 0 ? '+' : '') + l.net}</div>
+          <div class="lcnl">${l.net === null ? 'LIMITED' : 'NET'}</div>
         </div>
       </div>
-      ${l.note?`<div style="font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:8px">${l.note}</div>`:`
-        <div class="abar"><div style="flex:${l.approve};background:#3fb95060"></div><div style="flex:${l.disapprove};background:#f8514960"></div></div>
-        <div class="lcs"><span style="color:var(--up)">▲ ${l.approve}%</span><span style="color:var(--down)">▼ ${l.disapprove}%</span></div>
-      `}
-      ${topics.filter(t=>l[t.k]).map(t=>`
-        <div class="policy-section">
-          <div class="policy-label">${t.l}</div>
-          <div class="policy-text">${l[t.k]}</div>
+      ${l.note ? `<div style="font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:8px">${l.note}</div>` : `
+        <div class="abar"><div style="flex:${l.approve};background:#3fb95050"></div><div style="flex:${l.disapprove};background:#f8514950"></div></div>
+        <div class="lcs"><span style="color:var(--up)">▲ ${l.approve}%</span><span style="color:var(--down)">▼ ${l.disapprove}%</span></div>`}
+      ${topics.filter(t => l[t.k]).map(t => `
+        <div class="psec">
+          <div class="plbl">${t.l}</div>
+          <div class="ptxt">${l[t.k]}</div>
         </div>`).join('')}
     </div>`).join('');
 }
 
+// ── Render Polls ──
 function renderPolls() {
-  const colors={ref:'#12B7D4',lab:'#E4003B',con:'#4060b0',ld:'#FAA61A',grn:'#00B140',rb:'#0D2A5C'};
-  document.getElementById('polls-tbody').innerHTML = D.polls.map(p=>`
+  const colors = {ref:'#12B7D4',lab:'#E4003B',con:'#0087DC',ld:'#FAA61A',grn:'#02A95B',rb:'#0D2A5C'};
+  document.getElementById('polls-tbody').innerHTML = D.polls.map(p => `
     <tr>
-      <td style="color:var(--muted)">${p.date}</td>
-      <td style="font-weight:600">${p.pollster}</td>
-      ${['ref','lab','con','ld','grn','rb'].map(k=>`
-        <td>${p[k]!=null?`<span class="pct-pill" style="background:${colors[k]}20;color:${colors[k]}">${p[k]}%</span>`:'—'}</td>
-      `).join('')}
+      <td style="color:var(--muted);white-space:nowrap;font-size:11px">${p.date}</td>
+      <td style="font-weight:600;font-size:11px">${p.pollster}</td>
+      ${['ref','lab','con','ld','grn','rb'].map(k => `
+        <td>${p[k] != null ? `<span class="pill" style="background:${colors[k]}20;color:${colors[k]}">${p[k]}%</span>` : '—'}</td>`).join('')}
     </tr>`).join('');
 }
 
-const DEMO_DATA = {
-  age: [
-    { label:'18–24', Reform:18, Green:32, Labour:20, Conservative:8,  'Lib Dem':12 },
-    { label:'25–34', Reform:20, Green:28, Labour:22, Conservative:10, 'Lib Dem':13 },
-    { label:'35–44', Reform:24, Green:22, Labour:20, Conservative:14, 'Lib Dem':13 },
-    { label:'45–54', Reform:28, Green:16, Labour:17, Conservative:18, 'Lib Dem':16 },
-    { label:'55–64', Reform:34, Green:12, Labour:16, Conservative:20, 'Lib Dem':13 },
-    { label:'65+',   Reform:31, Green:8,  Labour:15, Conservative:22, 'Lib Dem':14 },
-  ],
-  class: [
-    { label:'AB (Professional)', Reform:20, Green:22, Labour:19, Conservative:18, 'Lib Dem':17 },
-    { label:'C1 (White collar)', Reform:24, Green:20, Labour:18, Conservative:17, 'Lib Dem':15 },
-    { label:'C2 (Skilled work)', Reform:34, Green:14, Labour:18, Conservative:16, 'Lib Dem':11 },
-    { label:'DE (Working class)', Reform:36, Green:12, Labour:20, Conservative:14, 'Lib Dem':9  },
-  ],
-  education: [
-    { label:'Postgraduate',      Reform:14, Green:28, Labour:22, Conservative:14, 'Lib Dem':18 },
-    { label:'Undergraduate',     Reform:18, Green:26, Labour:21, Conservative:15, 'Lib Dem':16 },
-    { label:'A-level / College', Reform:28, Green:18, Labour:18, Conservative:17, 'Lib Dem':13 },
-    { label:'GCSE or below',     Reform:36, Green:10, Labour:18, Conservative:18, 'Lib Dem':10 },
-  ],
-  region: [
-    { label:'Scotland',       Reform:10, Green:8,  Labour:28, Conservative:14, 'Lib Dem':7  },
-    { label:'London',         Reform:14, Green:28, Labour:26, Conservative:14, 'Lib Dem':13 },
-    { label:'South East',     Reform:26, Green:20, Labour:16, Conservative:20, 'Lib Dem':16 },
-    { label:'South West',     Reform:24, Green:22, Labour:14, Conservative:18, 'Lib Dem':18 },
-    { label:'East of England',Reform:30, Green:18, Labour:16, Conservative:20, 'Lib Dem':12 },
-    { label:'Midlands',       Reform:32, Green:14, Labour:20, Conservative:18, 'Lib Dem':10 },
-    { label:'North West',     Reform:30, Green:16, Labour:22, Conservative:14, 'Lib Dem':11 },
-    { label:'North East',     Reform:32, Green:14, Labour:24, Conservative:12, 'Lib Dem':9  },
-    { label:'Wales',          Reform:26, Green:12, Labour:26, Conservative:16, 'Lib Dem':10 },
-  ],
-  ethnicity: [
-    { label:'White British',  Reform:30, Green:18, Labour:17, Conservative:17, 'Lib Dem':13 },
-    { label:'Asian British',  Reform:12, Green:14, Labour:38, Conservative:18, 'Lib Dem':12 },
-    { label:'Black British',  Reform:8,  Green:16, Labour:48, Conservative:10, 'Lib Dem':10 },
-    { label:'Mixed / Other',  Reform:18, Green:22, Labour:26, Conservative:14, 'Lib Dem':14 },
-  ],
-};
-
-const PARTY_STYLES = [
-  { key:'Reform',       color:'#12B7D4', abbr:'REF' },
-  { key:'Green',        color:'#02A95B', abbr:'GRN' },
-  { key:'Labour',       color:'#E4003B', abbr:'LAB' },
-  { key:'Conservative', color:'#0087DC', abbr:'CON' },
-  { key:'Lib Dem',      color:'#FAA61A', abbr:'LD'  },
-];
-
-let currentDemo = 'age';
-
-function showDemo(key, btn) {
-  currentDemo = key;
-  document.querySelectorAll('.dtab').forEach(b => {
-    b.style.background = 'var(--surface)';
-    b.style.color = 'var(--muted)';
-    b.style.borderColor = 'var(--border)';
-  });
-  btn.style.background = '#12B7D420';
-  btn.style.color = '#12B7D4';
-  btn.style.borderColor = '#12B7D450';
-  renderDemoContent(key);
+// ── AI ──
+async function askAI(q) {
+  if (!q || !q.trim()) return;
+  document.getElementById('ai-input').value = '';
+  document.getElementById('ai-output').innerHTML = '<div class="ai-empty">Thinking...</div>';
+  const ctx = `You are a UK political analyst. Current polling (Mar 2026): Reform 26%, Green 19%, Labour 17%, Conservative 17%, Lib Dem 13%, Restore Britain 7%. Greens recently won Gorton & Denton by-election. Starmer net approval -49. Zack Polanski leads Greens. Answer concisely and analytically.`;
+  try {
+    const resp = await fetch(WORKER, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:ctx,messages:[{role:'user',content:q}]})
+    });
+    const data = await resp.json();
+    const txt = data.content?.[0]?.text || 'No response received.';
+    document.getElementById('ai-output').innerHTML = `<div class="ai-box">${txt.replace(/\n/g,'<br>')}</div>`;
+  } catch(e) {
+    document.getElementById('ai-output').innerHTML = '<div class="ai-empty">Could not connect. Try again.</div>';
+  }
 }
 
-function renderDemoContent(key) {
-  const groups = DEMO_DATA[key];
-  const el = document.getElementById('demo-content');
-  el.innerHTML = groups.map(g => `
-    <div class="lcard" style="padding:12px 14px;margin-bottom:8px">
-      <div style="font-size:13px;font-weight:800;margin-bottom:10px">${g.label}</div>
-      ${PARTY_STYLES.map(p => `
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <div style="width:36px;font-size:11px;color:${p.color};font-weight:700;flex-shrink:0">${p.abbr}</div>
-          <div style="flex:1;background:var(--border);border-radius:4px;height:8px;overflow:hidden">
-            <div style="width:${g[p.key]}%;background:${p.color};height:100%;border-radius:4px"></div>
-          </div>
-          <div style="width:32px;text-align:right;font-size:12px;font-weight:700;color:${p.color}">${g[p.key]}%</div>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
+async function refreshData() {
+  setStatus('loading','UPDATING');
+  try {
+    const resp = await fetch(WORKER, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:'Confirm you are online with one sentence.'}]})
+    });
+    const data = await resp.json();
+    if (data.content?.[0]?.text) setStatus('', 'LIVE');
+    else setStatus('error','CACHED');
+  } catch(e) { setStatus('error','CACHED'); }
 }
 
-function renderAge() {
-  renderDemoContent('age');
-}
-
-
-// Render everything immediately on load
+// ── Boot ──
 renderOverview();
 renderTrends();
 renderAge();
 renderLeaders();
 renderPolls();
 </script>
+
 <script data-goatcounter="https://ukpolls.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
