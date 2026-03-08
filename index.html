@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#0a0d12">
 <title>UK Poll Tracker</title>
 <style>
-:root{--bg:#0a0d12;--surface:#0d1117;--surface2:#161b22;--border:#21262d;--dim:#c9d1d9;--muted:#8b949e;--up:#3fb950;--down:#f85149;--reform:#12B7D4;--labour:#E4003B;--con:#4060b0;--ld:#FAA61A;--green:#00B140;--snp:#d4a012;--rb:#9B2020;}
+:root{--bg:#0a0d12;--surface:#0d1117;--surface2:#161b22;--border:#21262d;--dim:#c9d1d9;--muted:#8b949e;--up:#3fb950;--down:#f85149;--reform:#12B7D4;--labour:#E4003B;--con:#4060b0;--ld:#FAA61A;--green:#00B140;--snp:#d4a012;--rb:#0D2A5C;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:500px;margin:0 auto;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
 #hdr{padding:12px 14px 8px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
@@ -63,7 +63,7 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 .nb svg{width:20px;height:20px;stroke-width:1.8;}
 .nb.active{color:var(--down);}
 .nb.active svg{stroke:var(--down);}
-.rbb{background:#9B202018;border:1px solid #9B202050;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.5;color:var(--muted);}
+.rbb{background:#0D2A5C18;border:1px solid #0D2A5C50;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.5;color:var(--muted);}
 .trend-chart{width:100%;height:180px;margin:8px 0;}
 .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
 .section-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1.5px;margin:12px 0 8px}
@@ -260,12 +260,12 @@ const D = {
   fetchDate: "8 Mar 2026",
   parties: [
     {name:"Reform",abbr:"REF",pct:26,change:-2,seats:220,color:"#12B7D4"},
-    {name:"Green",abbr:"GRN",pct:19,change:8,seats:28,color:"#00B140"},
+    {name:"Green",abbr:"GRN",pct:19,change:8,seats:28,color:"#02A95B"},
     {name:"Labour",abbr:"LAB",pct:17,change:-3,seats:165,color:"#E4003B"},
-    {name:"Conservative",abbr:"CON",pct:17,change:-1,seats:108,color:"#4060b0"},
+    {name:"Conservative",abbr:"CON",pct:17,change:-1,seats:108,color:"#0087DC"},
     {name:"Lib Dem",abbr:"LD",pct:13,change:0,seats:72,color:"#FAA61A"},
-    {name:"SNP",abbr:"SNP",pct:3,change:0,seats:5,color:"#d4a012"},
-    {name:"Restore Britain",abbr:"RB",pct:7,change:0,seats:1,color:"#9B2020"}
+    {name:"SNP",abbr:"SNP",pct:3,change:0,seats:5,color:"#FFF95D"},
+    {name:"Restore Britain",abbr:"RB",pct:7,change:0,seats:1,color:"#0D2A5C"}
   ],
   context: "Reform leads on ~26% (7-poll avg). Greens have surged to ~19% — their highest ever — after winning the Gorton & Denton by-election (26 Feb 2026). A YouGov poll (1-2 Mar) put Greens at 21%, second place for the first time ever. Labour has fallen to just 17%, level with the Conservatives. Restore Britain, led by Rupert Lowe MP, launched Feb 2026 and polls 7-10% in prompted surveys.",
   trends: [
@@ -288,7 +288,7 @@ const D = {
     {date:"1-2 Mar",text:"YouGov puts Greens 2nd on 21% — highest ever"}
   ],
   leaders: [
-    {name:"Zack Polanski",party:"Green Party",color:"#00B140",approve:38,disapprove:30,net:8,
+    {name:"Zack Polanski",party:"Green Party",color:"#02A95B",approve:38,disapprove:30,net:8,
      immigration:"Safe & legal routes for refugees. Opposes detention and deportation. Retain 5-year settlement route for all.",
      economy:"Wealth tax on assets over £10m. Cancel two-child benefit cap. Fund public services by taxing the super-rich.",
      nhs:"Reverse NHS privatisation. Mental health on par with physical health. Fund fully through wealth taxes.",
@@ -303,13 +303,13 @@ const D = {
      economy:"Abolish income tax up to £20k. Cut corporation tax to 15%. Abolish BBC licence fee. Scrap all net zero targets.",
      nhs:"Cut NHS management by 50%. Recruit British-trained staff first. Zero waiting lists via private sector.",
      climate:"Scrap all net zero targets. No new wind farms. Reinstate all North Sea oil and gas licences."},
-    {name:"Rupert Lowe",party:"Restore Britain",color:"#9B2020",approve:null,disapprove:null,net:null,
+    {name:"Rupert Lowe",party:"Restore Britain",color:"#0D2A5C",approve:null,disapprove:null,net:null,
      note:"86% of UK adults could not identify Lowe (JL Partners, Feb 2026). Recognition growing via social media.",
      immigration:"Zero net migration. Mass deportations. Withdraw from UN refugee convention. End all asylum claims.",
      economy:"Cut taxes for working people. Reduce foreign aid to zero. Prioritise British workers in public sector.",
      nhs:"Reduce NHS bureaucracy. Performance-based pay. British staff first.",
      climate:"Abolish all green levies. Withdraw from Paris climate agreement."},
-    {name:"Kemi Badenoch",party:"Conservative",color:"#4060b0",approve:22,disapprove:47,net:-25,
+    {name:"Kemi Badenoch",party:"Conservative",color:"#0087DC",approve:22,disapprove:47,net:-25,
      immigration:"Extend settlement route to 10 years. Tougher visa rules. Deport foreign criminals after sentences.",
      economy:"Reduce state spending to 35% of GDP. Cut regulation. Planning reform for growth.",
      nhs:"Productivity reforms. Reduce management layers. Outcome-based targets.",
@@ -384,7 +384,7 @@ function renderTrends() {
   const pad={t:8,r:8,b:24,l:26};
   const pw=W-pad.l-pad.r, ph=H-pad.t-pad.b;
   const parties=['Reform','Labour','Conservative','Lib Dem','Green'];
-  const colors={Reform:'#12B7D4',Labour:'#E4003B',Conservative:'#4060b0','Lib Dem':'#FAA61A',Green:'#00B140'};
+  const colors={Reform:'#12B7D4',Labour:'#E4003B',Conservative:'#0087DC','Lib Dem':'#FAA61A',Green:'#02A95B'};
   const months=D.trends.map(t=>t.month);
   let allV=[];
   parties.forEach(p=>D.trends.forEach(t=>{if(t[p])allV.push(t[p]);}));
@@ -441,7 +441,7 @@ function renderLeaders() {
 }
 
 function renderPolls() {
-  const colors={ref:'#12B7D4',lab:'#E4003B',con:'#4060b0',ld:'#FAA61A',grn:'#00B140',rb:'#9B2020'};
+  const colors={ref:'#12B7D4',lab:'#E4003B',con:'#4060b0',ld:'#FAA61A',grn:'#00B140',rb:'#0D2A5C'};
   document.getElementById('polls-tbody').innerHTML = D.polls.map(p=>`
     <tr>
       <td style="color:var(--muted)">${p.date}</td>
