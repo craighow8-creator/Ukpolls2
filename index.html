@@ -19,7 +19,7 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 .live-pill{background:#1a2f1a;border:1px solid #2a5a2a;color:#3fb950;font-size:10px;font-family:'Courier New',monospace;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;cursor:pointer;}
 .ldot{width:6px;height:6px;border-radius:50%;background:#3fb950;}
 #content{position:fixed;top:62px;bottom:calc(56px + env(safe-area-inset-bottom));left:0;right:0;overflow-y:auto;-webkit-overflow-scrolling:touch;max-width:500px;margin:0 auto;}
-.page{display:none;padding:13px 13px 80px;}
+.page{display:none;padding:13px 13px 80px;overflow-y:auto;height:calc(100vh - 120px);-webkit-overflow-scrolling:touch;}
 .page.active{display:block;}
 .stitle{font-size:22px;font-weight:800;margin-bottom:2px;}
 .ssub{font-size:12px;color:var(--muted);margin-bottom:14px;}
