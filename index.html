@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a0d12">
 <title>UK Poll Tracker</title>
 <style>
 :root{--bg:#0a0d12;--surface:#0d1117;--surface2:#161b22;--border:#21262d;--dim:#c9d1d9;--muted:#8b949e;--up:#3fb950;--down:#f85149;--reform:#12B7D4;--labour:#E4003B;--con:#4060b0;--ld:#FAA61A;--green:#00B140;--snp:#d4a012;--rb:#0D2A5C;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:500px;margin:0 auto;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
-#hdr{padding:12px 14px 8px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:100%;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+#hdr{padding:8px 14px 6px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
 .hdr-row{display:flex;align-items:center;justify-content:space-between;}
 .hdr-left{display:flex;align-items:center;gap:10px;}
 .hdr-icon{width:38px;height:38px;background:#1c2128;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;}
@@ -58,7 +58,7 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 .milestone:last-child{border:none;}
 .ms-date{font-size:10px;font-family:'Courier New',monospace;color:var(--muted);min-width:60px;padding-top:2px;}
 .ms-text{font-size:12px;line-height:1.5;}
-#nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:100;max-width:500px;margin:0 auto;}
+#nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:100;max-width:100%;margin:0 auto;}
 .nb{flex:1;background:none;border:none;color:var(--muted);padding:10px 4px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;}
 .nb svg{width:20px;height:20px;stroke-width:1.8;}
 .nb.active{color:var(--down);}
@@ -82,6 +82,16 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 .erb-party{color:var(--dim);width:55px;flex-shrink:0}
 .erb-pct{color:var(--text);font-weight:600;width:40px}
 .erb-note{color:var(--muted);font-size:11px}
+@media (orientation:landscape) and (max-height:500px){
+  #hdr{padding:4px 14px 4px;}
+  .hdr-flag{width:26px;height:26px;font-size:15px;}
+  .hdr-title{font-size:15px;}
+  .nb span{display:none;}
+  .nb{padding:6px 4px;}
+  #content{top:46px;}
+  .page{padding:8px 13px 65px;}
+  .stitle{font-size:16px;margin-bottom:2px;}
+}
 </style>
 </head>
 <body>
