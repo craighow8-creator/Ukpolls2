@@ -326,17 +326,17 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 const WORKER = 'https://throbbing-base-05b6.craighow8.workers.dev';
 
 const D = {
-  fetchDate: "8 Mar 2026",
+  fetchDate: "9 Mar 2026",
   parties: [
-    {name:"Reform",abbr:"REF",pct:26,change:-2,seats:220,color:"#12B7D4"},
-    {name:"Green",abbr:"GRN",pct:19,change:8,seats:28,color:"#02A95B"},
-    {name:"Labour",abbr:"LAB",pct:17,change:-3,seats:165,color:"#E4003B"},
-    {name:"Conservative",abbr:"CON",pct:17,change:-1,seats:108,color:"#0087DC"},
-    {name:"Lib Dem",abbr:"LD",pct:13,change:0,seats:72,color:"#FAA61A"},
-    {name:"SNP",abbr:"SNP",pct:3,change:0,seats:5,color:"#FFF95D"},
+    {name:"Reform",abbr:"REF",pct:27,change:1,seats:335,color:"#12B7D4"},
+    {name:"Green",abbr:"GRN",pct:16,change:-3,seats:52,color:"#02A95B"},
+    {name:"Labour",abbr:"LAB",pct:18,change:1,seats:41,color:"#E4003B"},
+    {name:"Conservative",abbr:"CON",pct:17,change:0,seats:92,color:"#0087DC"},
+    {name:"Lib Dem",abbr:"LD",pct:12,change:-1,seats:60,color:"#FAA61A"},
+    {name:"SNP",abbr:"SNP",pct:3,change:0,seats:44,color:"#FFF95D"},
     {name:"Restore Britain",abbr:"RB",pct:7,change:0,seats:1,color:"#0D2A5C"}
   ],
-  context: "Reform leads on ~26% (7-poll avg). Greens have surged to ~19% — their highest ever — after winning the Gorton & Denton by-election (26 Feb 2026). A YouGov poll (1-2 Mar) put Greens at 21%, second place for the first time ever. Labour has fallen to just 17%, level with the Conservatives. Restore Britain, led by Rupert Lowe MP, launched Feb 2026 and polls 7-10% in prompted surveys.",
+  context: "Reform leads on ~27% (7-poll avg, 9 Mar 2026). The Green surge has partially eased to ~16% in the latest 7-poll average, though YouGov and Find Out Now both put them at 21% individually. Labour has recovered slightly to 18%. Conservatives hold steady at 17%. Lib Dems slipped to 12%. Restore Britain holds at 7% in prompted polls. Electoral Calculus MRP (Dec 2025) projects Reform on 335 seats — a majority.",
   trends: [
     {month:"Sep",Reform:28,Labour:22,Conservative:20,"Lib Dem":12,Green:10},
     {month:"Oct",Reform:29,Labour:21,Conservative:19,"Lib Dem":12,Green:11},
@@ -344,7 +344,7 @@ const D = {
     {month:"Dec",Reform:29,Labour:21,Conservative:18,"Lib Dem":13,Green:11},
     {month:"Jan",Reform:28,Labour:20,Conservative:18,"Lib Dem":13,Green:13},
     {month:"Feb",Reform:27,Labour:18,Conservative:17,"Lib Dem":13,Green:17},
-    {month:"Mar",Reform:26,Labour:17,Conservative:17,"Lib Dem":13,Green:19}
+    {month:"Mar",Reform:27,Labour:18,Conservative:17,"Lib Dem":12,Green:16}
   ],
   milestones: [
     {date:"Jul 2024",text:"Labour win GE with 33.7% — 170-seat majority"},
@@ -390,12 +390,12 @@ const D = {
      climate:"Clean energy by 2030. GB Energy public company. Ban new North Sea licences."}
   ],
   polls: [
+    {date:"5 Mar",pollster:"Survation",ref:29,lab:21,con:18,ld:10,grn:12,rb:null},
+    {date:"4-6 Mar",pollster:"Opinium",ref:29,lab:21,con:16,ld:10,grn:14,rb:null},
+    {date:"4-6 Mar",pollster:"Find Out Now",ref:27,lab:15,con:17,ld:10,grn:21,rb:7},
+    {date:"4-5 Mar",pollster:"BMG",ref:27,lab:20,con:18,ld:12,grn:14,rb:null},
     {date:"1-2 Mar",pollster:"YouGov",ref:23,lab:16,con:16,ld:14,grn:21,rb:null},
-    {date:"25-27 Feb",pollster:"Opinium",ref:30,lab:18,con:18,ld:12,grn:13,rb:null},
-    {date:"23 Feb",pollster:"YouGov",ref:27,lab:18,con:18,ld:14,grn:17,rb:null},
-    {date:"18 Feb",pollster:"Savanta",ref:29,lab:19,con:17,ld:14,grn:12,rb:null},
-    {date:"14 Feb",pollster:"Find Out Now",ref:25,lab:15,con:13,ld:10,grn:20,rb:10},
-    {date:"11 Feb",pollster:"Ipsos",ref:26,lab:20,con:19,ld:13,grn:11,rb:null}
+    {date:"27 Feb-2 Mar",pollster:"More in Common",ref:29,lab:18,con:19,ld:14,grn:14,rb:null}
   ]
 };
 
