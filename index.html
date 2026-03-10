@@ -179,9 +179,10 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
         <div class="hsub" id="hdr-date">ALL PARTIES · 8 MAR 2026</div>
       </div>
     </div>
-    <a href="https://ko-fi.com/craighowe" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#FF5E5B;color:#fff;text-decoration:none;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;">
-      ☕ Support this app
-    </a>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="openShare()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:5px 10px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;">Share</button>
+      <a href="https://ko-fi.com/craighowe" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#FF5E5B;color:#fff;text-decoration:none;padding:5px 10px;border-radius:20px;font-size:13px;font-weight:700;white-space:nowrap;">Support</a>
+    </div>
   </div>
 </div>
 
@@ -258,7 +259,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
   </div>
 
   <!-- DEMOGRAPHICS -->
-  <div class="page" id="page-age">
+  <div class="page" id="page-demo">
     <div class="stitle">Demographics</div>
     <div class="ssub">Voting intention by group · YouGov/Ipsos/MiC 2026</div>
     <div class="sec-label">👤 AGE GROUP</div><div id="age-content"></div>
@@ -284,7 +285,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <div id="polls-cards"></div>
     <div style="font-size:14px;color:#c8cdd8;padding:4px 2px">BPC members. RB = Restore Britain (prompted only).</div>
   </div>
-  <div class="page" id="page-votes">
+  <div class="page" id="page-elections">
     <div class="stitle">Elections</div>
     <div class="ssub">Upcoming votes &amp; recent results</div>
     <div class="sec-label">📅 UPCOMING</div>
