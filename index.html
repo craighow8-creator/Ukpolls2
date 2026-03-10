@@ -857,7 +857,7 @@ function showPopupIfDue() {
   if (!last || (now - parseInt(last)) > oneMonth) {
     setTimeout(() => {
       document.getElementById('support-popup').classList.add('show');
-    }, 3 * 60 * 1000); // 3 minutes
+    }, 10 * 1000); // 10 seconds (TEST)
   }
 }
 
