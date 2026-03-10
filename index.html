@@ -8,9 +8,9 @@
 <meta name="theme-color" content="#0a0d12">
 <title>UK Poll Tracker</title>
 <style>
-:root{--bg:#0a0d12;--surface:#13171f;--border:#1e2330;--dim:#c8cdd8;--muted:#555e72;--up:#3fb950;--down:#f85149;}
+:root{--bg:#0a0d12;--surface:#13171f;--border:#1e2330;--dim:#dde1ea;--muted:#7a8396;--up:#3fb950;--down:#f85149;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
 
 /* ── Header ── */
 #hdr{padding:10px 14px 8px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
@@ -35,16 +35,16 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 
 /* ── Nav ── */
 #nav{flex-shrink:0;background:#13171f;border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;background:none;border:none;color:var(--muted);font-size:9px;cursor:pointer;gap:3px;}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;gap:3px;}
 .nb svg{width:20px;height:20px;stroke-width:1.8;}
 .nb.active{color:#f85149;}
 .nb.active svg{stroke:#f85149;}
 
 /* ── Cards ── */
-.card{background:var(--surface);border-radius:12px;padding:14px;margin-bottom:12px;}
+.card{background:var(--surface);border-radius:12px;padding:14px;margin-bottom:12px;font-size:14px;}
 .stitle{font-size:22px;font-weight:800;margin-bottom:2px;color:#fff;}
 .ssub{font-size:12px;color:var(--muted);margin-bottom:14px;}
-.sec-label{font-size:9px;letter-spacing:1.5px;color:var(--muted);margin:16px 0 8px;font-weight:600;}
+.sec-label{font-size:11px;letter-spacing:1.5px;color:var(--muted);margin:16px 0 8px;font-weight:600;}
 
 /* ── Party grid ── */
 .pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;}
@@ -73,8 +73,8 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 
 /* ── Polls table ── */
 .ptable{width:100%;border-collapse:collapse;font-size:12px;}
-.ptable th{font-size:9px;color:var(--muted);letter-spacing:1px;padding:4px 3px;text-align:center;border-bottom:1px solid var(--border);}
-.ptable td{padding:6px 3px;text-align:center;border-bottom:1px solid var(--border);}
+.ptable th{font-size:10px;color:var(--muted);letter-spacing:1px;padding:5px 3px;text-align:center;border-bottom:1px solid var(--border);}
+.ptable td{padding:7px 3px;text-align:center;border-bottom:1px solid var(--border);font-size:13px;}
 .pill{display:inline-block;padding:2px 5px;border-radius:4px;font-weight:700;font-size:11px;}
 
 /* ── Elections ── */
@@ -274,7 +274,7 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
     <div class="ssub">How would you vote today? One vote per day.</div>
     <div id="vote-section">
       <div class="sec-label">🗳 CAST YOUR VOTE</div>
-      <div id="vote-buttons" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
+      <div id="vote-buttons" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px"></div>
       <div id="vote-msg" style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:16px"></div>
     </div>
     <div class="sec-label">📊 APP USERS VS REAL POLLS</div>
@@ -430,6 +430,7 @@ function sp(id, btn) {
   document.getElementById('page-' + id).classList.add('active');
   btn.classList.add('active');
   document.getElementById('content').scrollTop = 0;
+  if (id === 'trends') setTimeout(renderTrends, 50);
 }
 
 function setStatus(cls, txt) {
@@ -675,14 +676,18 @@ async function refreshData() {
 
 // ── Vote ──
 const PARTIES_VOTE = [
-  {name:"Reform",     color:"#12B7D4", poll:27},
-  {name:"Labour",     color:"#E4003B", poll:19},
-  {name:"Conservative",color:"#0087DC",poll:18},
-  {name:"Green",      color:"#02A95B", poll:16},
-  {name:"Lib Dem",    color:"#FAA61A", poll:12},
-  {name:"SNP",        color:"#FFF95D", poll:3},
-  {name:"Restore Britain",color:"#4a6fa5",poll:7},
-  {name:"Would not vote",color:"#555e72",poll:0},
+  {name:"Reform",          color:"#12B7D4", poll:27},
+  {name:"Labour",          color:"#E4003B", poll:19},
+  {name:"Conservative",    color:"#0087DC", poll:18},
+  {name:"Green",           color:"#02A95B", poll:16},
+  {name:"Lib Dem",         color:"#FAA61A", poll:12},
+  {name:"Restore Britain", color:"#4a6fa5", poll:7},
+  {name:"SNP",             color:"#FFD700", poll:3},
+  {name:"Plaid Cymru",     color:"#008142", poll:1},
+  {name:"SDP",             color:"#E30613", poll:1},
+  {name:"UKIP",            color:"#6D3177", poll:1},
+  {name:"Other",           color:"#7a8396", poll:2},
+  {name:"Would not vote",  color:"#555e72", poll:0},
 ];
 
 function getVoteKey() {
