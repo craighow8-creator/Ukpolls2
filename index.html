@@ -24,7 +24,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
 .live-badge{display:flex;align-items:center;gap:5px;background:#1a2e1a;border:1px solid #2d5a2d;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:700;color:#3fb950;cursor:pointer;white-space:nowrap;}
 .ldot{width:7px;height:7px;border-radius:50%;background:#3fb950;}
 .ldot.spin{animation:pulse 1.5s infinite;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .ltxt.loading{color:#FAA61A;}
 .ltxt.error{color:#c8cdd8;}
@@ -34,15 +34,17 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
 
 /* ── Pages ── */
 .page{display:none;padding:14px 14px 24px;}
-.page.active{animation:fadeIn 0.2s ease;}
+.page.active{animation:fadeIn 0.18s ease;}
 .page.active{display:block;}
 
 /* ── Nav ── */
-#nav{flex-shrink:0;background:rgba(1,33,105,0.7);border-top:1px solid rgba(255,255,255,0.15);display:flex;padding-bottom:env(safe-area-inset-bottom);position:relative;z-index:10;backdrop-filter:blur(8px);}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;background:none;border:none;color:#c8cdd8;font-size:12px;cursor:pointer;gap:3px;}
-.nb svg{width:20px;height:20px;stroke-width:1.8;}
-.nb.active{color:#f85149;}
-.nb.active svg{stroke:#f85149;}
+#nav{flex-shrink:0;background:rgba(1,33,105,0.75);border-bottom:1px solid rgba(255,255,255,0.2);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative;z-index:10;backdrop-filter:blur(8px);}
+#nav::-webkit-scrollbar{display:none;}
+#nav-inner{display:inline-flex;min-width:100%;}
+.nb{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 16px;background:none;border:none;border-bottom:3px solid transparent;color:#c8cdd8;font-size:13px;cursor:pointer;gap:4px;white-space:nowrap;flex-shrink:0;}
+.nb svg{width:18px;height:18px;stroke-width:1.8;}
+.nb.active{color:#fff;border-bottom-color:#f85149;}
+.nb.active svg{stroke:#fff;}
 
 /* ── Cards ── */
 .card{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;margin-bottom:12px;font-size:14px;backdrop-filter:blur(6px);}
@@ -183,41 +185,41 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
   </div>
 </div>
 
-<!-- ── Scrollable content ── -->
 <div id="nav"><div id="nav-inner">
   <button class="nb active" onclick="sp('overview',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-    <span>Overview</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Overview
   </button>
   <button class="nb" onclick="sp('trends',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    <span>Trends</span>
+    Trends
   </button>
   <button class="nb" onclick="sp('polls',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-    <span>Polls</span>
+    Polls
   </button>
-  <button class="nb" onclick="sp('votes',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-    <span>Elections</span>
+  <button class="nb" onclick="sp('elections',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Elections
   </button>
   <button class="nb" onclick="sp('vote',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-    <span>Vote</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Vote
   </button>
-  <button class="nb" onclick="sp('age',this)">
+  <button class="nb" onclick="sp('demo',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    <span>Demo</span>
+    Demo
   </button>
   <button class="nb" onclick="sp('leaders',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span>Leaders</span>
+    Leaders
   </button>
   <button class="nb" onclick="sp('ai',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-    <span>AI</span>
+    AI
   </button>
 </div></div>
+
 <div id="content">
 
   <!-- OVERVIEW -->
@@ -281,9 +283,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <div class="ssub">Latest individual polls · BPC members</div>
     <div id="polls-cards"></div>
     <div style="font-size:14px;color:#c8cdd8;padding:4px 2px">BPC members. RB = Restore Britain (prompted only).</div>
-    </div>
-
-  <!-- VOTES -->
+  </div>
   <div class="page" id="page-votes">
     <div class="stitle">Elections</div>
     <div class="ssub">Upcoming votes &amp; recent results</div>
@@ -372,15 +372,15 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <div class="stitle">AI Analyst</div>
     <div class="ssub">Ask anything about UK politics</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
-      <button class="chip" onclick="askAI('How do Reform UK and Restore Britain compare - policies, leadership and polling?')">Reform UK vs Restore Britain</button>
+      <button class="chip" onclick="askAI('How do Reform UK and Restore Britain compare?')">Reform UK vs Restore Britain</button>
       <button class="chip" onclick="askAI('Why are the Greens surging in the polls?')">Why are Greens rising?</button>
-      <button class="chip" onclick="askAI('Why are Muslim voters switching to the Greens and what does this mean for Labour?')">Muslim votes &amp; the Greens</button>
-      <button class="chip" onclick="askAI('What happens in a hung parliament - how does government formation work?')">Hung parliament</button>
-      <button class="chip" onclick="askAI('Can Labour recover from their current polling slump under Keir Starmer?')">Can Labour recover?</button>
-      <button class="chip" onclick="askAI('Compare Nigel Farage and Rupert Lowe - their styles, appeal and rivalry.')">Farage vs Lowe</button>
-      <button class="chip" onclick="askAI('Is a second general election coming soon given current polling?')">Second election?</button>
-      <button class="chip" onclick="askAI('What does Reform UK stand for? Key policies and ideology.')">What does Reform UK stand for?</button>
-      <button class="chip" onclick="askAI('What does Restore Britain stand for? Who leads it and what are their policies?')">What does Restore Britain stand for?</button>
+      <button class="chip" onclick="askAI('Why are Muslim voters switching to the Greens?')">Muslim votes &amp; Greens</button>
+      <button class="chip" onclick="askAI('What happens in a hung parliament?')">Hung parliament</button>
+      <button class="chip" onclick="askAI('Can Labour recover under Keir Starmer?')">Can Labour recover?</button>
+      <button class="chip" onclick="askAI('Compare Nigel Farage and Rupert Lowe.')">Farage vs Lowe</button>
+      <button class="chip" onclick="askAI('Is a second general election coming?')">Second election?</button>
+      <button class="chip" onclick="askAI('What does Reform UK stand for?')">What does Reform UK stand for?</button>
+      <button class="chip" onclick="askAI('What does Restore Britain stand for?')">What does Restore Britain stand for?</button>
     </div>
     <div id="ai-output" class="ai-empty">Ask a question above or type below</div>
     <div style="display:flex;gap:8px;margin-top:12px">
@@ -412,7 +412,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
   <div style="background:rgba(10,15,35,0.98);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:20px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto;backdrop-filter:blur(16px);">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <div style="font-size:18px;font-weight:800;color:#fff">Compare Parties</div>
-      <button onclick="closeCompare()" style="background:none;border:none;color:#c8cdd8;font-size:24px;cursor:pointer">x</button>
+      <button onclick="closeCompare()" style="background:none;border:none;color:#c8cdd8;font-size:24px;cursor:pointer;line-height:1">&#x2715;</button>
     </div>
     <div style="font-size:13px;color:#c8cdd8;margin-bottom:12px">Pick two parties to compare</div>
     <div id="compare-picker" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:16px"></div>
@@ -429,202 +429,10 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
   </div>
 </div>
 
-<!-- ── Nav bar — always outside #content ── -->
-<div id="content">
+<!-- nav moved --> ── -->
 
-  <!-- OVERVIEW -->
-  <div class="page active" id="page-overview">
-    <div class="stitle">Voting Intention</div>
-    <div class="ssub" id="overview-sub">7-poll moving average · 8 Mar 2026</div>
-    <div class="pgrid" id="party-grid"></div>
-    <div class="sec-label">🏛 SEAT PROJECTION</div>
-    <div class="sbar" id="seat-bar"></div>
-    <div style="font-size:11px;color:#c8cdd8;text-align:center;margin-bottom:16px">326 seats needed for majority · <strong style="color:#fff">Hung Parliament</strong></div>
-    <div class="sec-label">📋 CONTEXT</div>
-    <div class="card" style="font-size:14px;line-height:1.8;color:#e8ecf4" id="ctx-text"></div>
-    <div style="text-align:center;padding:16px 0 4px">
-      <a href="https://ko-fi.com/craighowe" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:#FF5E5B;color:#fff;text-decoration:none;padding:11px 20px;border-radius:12px;font-weight:700;font-size:14px;">
-        ❤️ Support this app
-      </a>
-      <div style="font-size:11px;color:#c8cdd8;margin-top:8px">If you find this useful, a coffee keeps it running!</div>
-    </div>
-  </div>
+<!-- ── Scrollable content ── -->
 
-  <!-- TRENDS -->
-  <div class="page" id="page-trends">
-    <div class="stitle">Trends</div>
-    <div class="ssub">6-month polling movement</div>
-    <div class="card" style="padding:10px" id="trend-card">
-      <canvas id="trend-chart" style="width:100%;display:block"></canvas>
-      <div id="trend-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px"></div>
-    </div>
-    <div class="sec-label">📈 LATEST MOVEMENT</div>
-    <div class="card" id="movers-list"></div>
-    <div class="sec-label">📌 MILESTONES</div>
-    <div class="card" id="milestones-list"></div>
-  </div>
-
-  <!-- DEMOGRAPHICS -->
-  <div class="page" id="page-age">
-    <div class="stitle">Demographics</div>
-    <div class="ssub">Voting intention by group · YouGov/Ipsos/MiC 2026</div>
-    <div class="sec-label">👤 AGE GROUP</div><div id="age-content"></div>
-    <div class="sec-label">🏠 SOCIAL CLASS</div><div id="class-content"></div>
-    <div class="sec-label">🎓 EDUCATION</div><div id="edu-content"></div>
-    <div class="sec-label">📍 REGION</div><div id="region-content"></div>
-    <div class="sec-label">🌍 ETHNICITY</div><div id="ethnicity-content"></div>
-    <div class="sec-label">🗳 2024 NON-VOTERS</div><div id="nonvoter-content"></div>
-    <div style="font-size:11px;color:#c8cdd8;text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common. Feb–Mar 2026.</div>
-  </div>
-
-  <!-- LEADERS -->
-  <div class="page" id="page-leaders">
-    <div class="stitle">Leader Ratings</div>
-    <div class="ssub">Net approval · latest polling</div>
-    <div id="leaders-content"></div>
-  </div>
-
-  <!-- POLLS -->
-  <div class="page" id="page-polls">
-    <div class="stitle">Recent Polls</div>
-    <div class="ssub">Latest individual polls · BPC members</div>
-    <div class="card" style="overflow-x:auto;padding:10px">
-      <table class="ptable">
-        <thead><tr>
-          <th>DATE</th><th>POLLSTER</th>
-          <th style="color:#12B7D4">REF</th><th style="color:#E4003B">LAB</th>
-          <th style="color:#0087DC">CON</th><th style="color:#FAA61A">LD</th>
-          <th style="color:#02A95B">GRN</th><th style="color:#0D2A5C">RB</th>
-        </tr></thead>
-        <tbody id="polls-tbody"></tbody>
-      </table>
-    </div>
-    <div style="font-size:11px;color:#c8cdd8;padding:4px 2px">BPC members. RB = Restore Britain (prompted only).</div>
-  </div>
-
-  <!-- VOTES -->
-  <div class="page" id="page-votes">
-    <div class="stitle">Elections</div>
-    <div class="ssub">Upcoming votes &amp; recent results</div>
-    <div class="sec-label">📅 UPCOMING</div>
-    <div class="ecard">
-      <div class="ed">1 May 2026</div>
-      <div class="et">Local Elections 2026</div>
-      <div class="es">England — county councils, unitaries &amp; mayoral contests</div>
-      <div class="ex">~1,600 seats across 23 councils. First major test of the Green surge and Reform's local strength. Key contests: West of England Mayor, Cambridgeshire &amp; Peterborough Mayor.</div>
-      <div class="etags">
-        <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform target</span>
-        <span class="etag" style="background:#02A95B20;color:#02A95B">Green surge test</span>
-      </div>
-    </div>
-    <div class="ecard">
-      <div class="ed">1 May 2026</div>
-      <div class="et">Runcorn &amp; Helsby</div>
-      <div class="es">By-election — Labour hold (majority: 14,696)</div>
-      <div class="ex">Triggered by MP Mike Amesbury's resignation after assault video. Labour defending against a strong Reform challenge in this Red Wall seat.</div>
-      <div class="etags">
-        <span class="etag" style="background:#E4003B20;color:#E4003B">Lab defend</span>
-        <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform target</span>
-      </div>
-    </div>
-    <div class="ecard">
-      <div class="ed">TBC 2026</div>
-      <div class="et">Horsham</div>
-      <div class="es">By-election — Conservative hold (majority: 3,027)</div>
-      <div class="ex">Jeremy Quin resigned on health grounds. Three-way marginal between Conservatives, Lib Dems and Reform.</div>
-      <div class="etags">
-        <span class="etag" style="background:#0087DC20;color:#0087DC">Con defend</span>
-        <span class="etag" style="background:#FAA61A20;color:#FAA61A">LD target</span>
-        <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform threat</span>
-      </div>
-    </div>
-    <div class="sec-label">🗳 RECENT RESULTS</div>
-    <div class="ecard">
-      <div class="ed">27 Feb 2026</div>
-      <div class="et">Gorton &amp; Denton</div>
-      <div class="es">By-election — <span style="color:#02A95B;font-weight:600">🟢 Green GAIN from Labour</span></div>
-      <div class="ri"><span class="rd" style="background:#02A95B"></span><span class="rp">Green</span><span class="rn">34.1%</span><span class="rm">+28.6% 🏆</span></div>
-      <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">29.4%</span><span class="rm">-24.7%</span></div>
-      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform</span><span class="rn">19.8%</span><span class="rm">+19.8%</span></div>
-      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">7.2%</span><span class="rm">-16.4%</span></div>
-      <div class="ex" style="margin-top:8px;margin-bottom:0">Massive 28.6pt swing to Greens. Labour vote collapsed. Greens now have 5 MPs. Zack Polanski campaigned in person.</div>
-    </div>
-    <div class="ecard">
-      <div class="ed">6 Feb 2025</div>
-      <div class="et">Kingswood</div>
-      <div class="es">By-election — <span style="color:#12B7D4;font-weight:600">🔵 Reform GAIN from Conservative</span></div>
-      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform</span><span class="rn">38.7%</span><span class="rm">+38.7% 🏆</span></div>
-      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">26.1%</span><span class="rm">-21.3%</span></div>
-      <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">19.4%</span><span class="rm">-8.2%</span></div>
-      <div class="ex" style="margin-top:8px;margin-bottom:0">Reform's first by-election gain. Signalled collapse of Conservative vote in Leave-leaning seats.</div>
-    </div>
-    <div class="ecard">
-      <div class="ed">10 Oct 2024</div>
-      <div class="et">Henley &amp; Thame</div>
-      <div class="es">By-election — <span style="color:#FAA61A;font-weight:600">🟡 Lib Dem HOLD</span></div>
-      <div class="ri"><span class="rd" style="background:#FAA61A"></span><span class="rp">Lib Dem</span><span class="rn">52.3%</span><span class="rm">+8.1% 🏆</span></div>
-      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">22.1%</span><span class="rm">-18.4%</span></div>
-      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform</span><span class="rn">12.8%</span><span class="rm">+12.8%</span></div>
-      <div class="ex" style="margin-top:8px;margin-bottom:0">Lib Dems consolidating hold on southern Blue Wall seats.</div>
-    </div>
-    <div style="font-size:11px;color:#c8cdd8;text-align:center;padding:12px 0">Results approximate. Sources: BBC, Electoral Commission.</div>
-  </div>
-
-  <!-- VOTE -->
-  <div class="page" id="page-vote">
-    <div class="stitle">Your Vote</div>
-    <div class="ssub">How would you vote? One vote per device — change anytime.</div>
-    <div id="vote-section">
-      <div class="sec-label">🗳 CAST YOUR VOTE</div>
-      <div id="vote-buttons" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px"></div>
-      <div id="vote-msg" style="text-align:center;font-size:12px;color:#c8cdd8;margin-bottom:16px"></div>
-    </div>
-    <div class="sec-label">📊 APP USERS VS REAL POLLS</div>
-    <div class="card" id="vote-results">
-      <div style="text-align:center;color:#c8cdd8;font-size:13px;padding:16px">Loading results...</div>
-    </div>
-    <div style="font-size:11px;color:#c8cdd8;text-align:center;padding:4px 0">One vote per device · Change your mind anytime · Totals never reset</div>
-  </div>
-
-  <!-- AI -->
-  <div class="page" id="page-ai">
-    <div class="stitle">AI Analyst</div>
-    <div class="ssub">Ask anything about UK politics</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
-      <button class="chip" onclick="askAI('How do Reform UK and Restore Britain compare - policies, leadership and polling?')">Reform UK vs Restore Britain</button>
-      <button class="chip" onclick="askAI('Why are the Greens surging in the polls?')">Why are Greens rising?</button>
-      <button class="chip" onclick="askAI('Why are Muslim voters switching to the Greens and what does this mean for Labour?')">Muslim votes &amp; the Greens</button>
-      <button class="chip" onclick="askAI('What happens in a hung parliament - how does government formation work?')">Hung parliament</button>
-      <button class="chip" onclick="askAI('Can Labour recover from their current polling slump under Keir Starmer?')">Can Labour recover?</button>
-      <button class="chip" onclick="askAI('Compare Nigel Farage and Rupert Lowe - their styles, appeal and rivalry.')">Farage vs Lowe</button>
-      <button class="chip" onclick="askAI('Is a second general election coming soon given current polling?')">Second election?</button>
-      <button class="chip" onclick="askAI('What does Reform UK stand for? Key policies and ideology.')">What does Reform UK stand for?</button>
-      <button class="chip" onclick="askAI('What does Restore Britain stand for? Who leads it and what are their policies?')">What does Restore Britain stand for?</button>
-    </div>
-    <div id="ai-output" class="ai-empty">Ask a question above or type below</div>
-    <div style="display:flex;gap:8px;margin-top:12px">
-      <input id="ai-input" type="text" placeholder="Ask about UK politics..."
-        style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--dim);font-size:13px;outline:none;"
-        onkeydown="if(event.key==='Enter')askAI(this.value)">
-      <button onclick="askAI(document.getElementById('ai-input').value)"
-        style="background:#12B7D4;border:none;border-radius:10px;padding:10px 16px;color:#000;font-weight:700;cursor:pointer;font-size:13px;">Ask</button>
-    </div>
-  </div>
-
-</div><!-- end #content -->
-
-<!-- Support Popup -->
-<div id="support-popup">
-  <div class="popup-box">
-    <div class="popup-icon">☕</div>
-    <div class="popup-title">Enjoying UK Poll Tracker?</div>
-    <div class="popup-body">This app is free to use and updated daily. If you find it useful, a small contribution helps keep it running!</div>
-    <a href="https://ko-fi.com/craighowe" target="_blank" class="popup-btn popup-yes" onclick="dismissPopup()">❤️ Support this app</a>
-    <button class="popup-btn popup-no" onclick="dismissPopup()">Maybe later</button>
-  </div>
-</div>
-
-<!-- ── Nav bar — always outside #content ── -->
 
 
 <script>
@@ -719,75 +527,29 @@ function sp(id, btn) {
 }
 
 
-var APP_URL = 'https://craighow8-creator.github.io/Ukpolls2/';
-function openShare() {
-  var top = D.parties[0];
-  document.getElementById('share-preview-text').textContent = 'UK Poll Tracker: ' + top.name + ' leads on ' + top.pct + '% - Hung Parliament projected. ' + APP_URL;
-  document.getElementById('share-modal').style.display = 'flex';
-}
-function closeShare() { document.getElementById('share-modal').style.display = 'none'; }
-function shareToX() {
-  var top = D.parties[0];
-  var txt = encodeURIComponent(top.name + ' leads UK polls on ' + top.pct + '% - Hung Parliament projected. Track every poll live:');
-  window.open('https://twitter.com/intent/tweet?text=' + txt + '&url=' + encodeURIComponent(APP_URL), '_blank');
-}
-function shareToWhatsApp() {
-  var top = D.parties[0];
-  var txt = encodeURIComponent('UK Poll Tracker: ' + top.name + ' on ' + top.pct + '%, Hung Parliament projected. ' + APP_URL);
-  window.open('https://wa.me/?text=' + txt, '_blank');
-}
-function shareToFacebook() {
-  window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(APP_URL), '_blank');
-}
-function copyLink() {
-  var btn = document.getElementById('copy-btn');
-  navigator.clipboard.writeText(APP_URL).then(function(){ btn.textContent='Copied!'; setTimeout(function(){ btn.textContent='Copy link'; },2000); });
-}
-var compareSelected = [];
-function openCompare() {
-  compareSelected = [];
-  document.getElementById('compare-result').innerHTML = '';
-  document.getElementById('compare-picker').innerHTML = D.parties.map(function(p){
-    return '<div onclick="toggleCompare(\'' + p.name + '\',this)" style="background:rgba(5,10,30,0.8);border:2px solid '+p.color+'40;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;">'
+var APP_URL='https://craighow8-creator.github.io/Ukpolls2/';
+function openShare(){var top=D.parties[0];document.getElementById('share-preview-text').textContent='UK Poll Tracker: '+top.name+' leads on '+top.pct+'% - Hung Parliament projected. '+APP_URL;document.getElementById('share-modal').style.display='flex';}
+function closeShare(){document.getElementById('share-modal').style.display='none';}
+function shareToX(){var top=D.parties[0];window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(top.name+' leads UK polls on '+top.pct+'% - Hung Parliament projected:')+encodeURIComponent(' ')+encodeURIComponent(APP_URL),'_blank');}
+function shareToWhatsApp(){var top=D.parties[0];window.open('https://wa.me/?text='+encodeURIComponent('UK Poll Tracker: '+top.name+' on '+top.pct+'%, Hung Parliament projected. '+APP_URL),'_blank');}
+function shareToFacebook(){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(APP_URL),'_blank');}
+function copyLink(){var btn=document.getElementById('copy-btn');navigator.clipboard.writeText(APP_URL).then(function(){btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy link';},2000);});}
+var compareSelected=[];
+function openCompare(){
+  compareSelected=[];
+  document.getElementById('compare-result').innerHTML='';
+  document.getElementById('compare-picker').innerHTML=D.parties.map(function(p){
+    return '<div onclick="toggleCompare(\u0027'+p.name+'\u0027,this)" style="background:rgba(5,10,30,0.8);border:2px solid '+p.color+'40;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;">'
       +'<div style="font-size:10px;color:'+p.color+';font-weight:700;margin-bottom:4px">'+p.name+'</div>'
       +'<div style="font-size:18px;font-weight:800;color:'+p.color+'">'+p.pct+'%</div>'
       +'</div>';
   }).join('');
-  document.getElementById('compare-modal').style.display = 'flex';
+  document.getElementById('compare-modal').style.display='flex';
 }
-function closeCompare() { document.getElementById('compare-modal').style.display = 'none'; }
-function toggleCompare(name, el) {
-  var idx = compareSelected.indexOf(name);
-  var p = D.parties.find(function(x){ return x.name===name; });
-  if (idx > -1) { compareSelected.splice(idx,1); el.style.borderColor=p.color+'40'; el.style.background='rgba(5,10,30,0.8)'; }
-  else if (compareSelected.length < 2) { compareSelected.push(name); el.style.borderColor=p.color; el.style.background='rgba(5,10,30,0.95)'; }
-  if (compareSelected.length===2) renderComparison();
-  else document.getElementById('compare-result').innerHTML='';
-}
-function renderComparison() {
-  var a = D.parties.find(function(p){ return p.name===compareSelected[0]; });
-  var b = D.parties.find(function(p){ return p.name===compareSelected[1]; });
-  var diff = Math.abs(a.pct-b.pct);
-  var leader = a.pct>b.pct?a:b;
-  var seatDiff = Math.abs(a.seats-b.seats);
-  var note = diff<=3?'Extremely tight - within polling margin of error.':diff<=8?'Meaningful but not decisive lead.':'Significant gap translating to major seat difference.';
-  document.getElementById('compare-result').innerHTML =
-    '<div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;margin-top:4px">'
-    +'<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:14px">'
-    +'<div style="text-align:center"><div style="font-size:12px;color:'+a.color+';font-weight:700">'+a.name+'</div><div style="font-size:34px;font-weight:900;color:'+a.color+'">'+a.pct+'%</div><div style="font-size:12px;color:#c8cdd8">~'+a.seats+' seats</div></div>'
-    +'<div style="font-size:13px;color:#c8cdd8;font-weight:700">VS</div>'
-    +'<div style="text-align:center"><div style="font-size:12px;color:'+b.color+';font-weight:700">'+b.name+'</div><div style="font-size:34px;font-weight:900;color:'+b.color+'">'+b.pct+'%</div><div style="font-size:12px;color:#c8cdd8">~'+b.seats+' seats</div></div>'
-    +'</div>'
-    +'<div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:12px;font-size:14px;color:#e8ecf4;line-height:1.7">'+leader.name+' leads by '+diff+' points (~'+seatDiff+' seats). '+note+' Neither on course for a majority alone.</div>'
-    +'</div>';
-}
-(function(){
-  var content=document.getElementById('content');
-  var startY=0,pulling=false,refreshing=false;
-  content.addEventListener('touchstart',function(e){ if(content.scrollTop===0){startY=e.touches[0].clientY;pulling=true;}},{passive:true});
-  content.addEventListener('touchmove',function(e){ if(!pulling||refreshing)return; var dy=e.touches[0].clientY-startY; if(dy>0&&dy<70)content.style.paddingTop=(dy*0.4)+'px';},{passive:true});
-  content.addEventListener('touchend',function(){ if(!pulling)return; var dy=parseInt(content.style.paddingTop)||0; content.style.paddingTop=''; pulling=false; if(dy>20&&!refreshing){refreshing=true;refreshData();setTimeout(function(){refreshing=false;},3000);}});
-})();
+function closeCompare(){document.getElementById('compare-modal').style.display='none';}
+function toggleCompare(name,el){var idx=compareSelected.indexOf(name),p=D.parties.find(function(x){return x.name===name;});if(idx>-1){compareSelected.splice(idx,1);el.style.borderColor=p.color+'40';el.style.background='rgba(5,10,30,0.8)';}else if(compareSelected.length<2){compareSelected.push(name);el.style.borderColor=p.color;el.style.background='rgba(5,10,30,0.95)';}if(compareSelected.length===2)renderComparison();else document.getElementById('compare-result').innerHTML='';}
+function renderComparison(){var a=D.parties.find(function(p){return p.name===compareSelected[0];}),b=D.parties.find(function(p){return p.name===compareSelected[1];});var diff=Math.abs(a.pct-b.pct),ld=a.pct>b.pct?a:b,sd=Math.abs(a.seats-b.seats);var note=diff<=3?'Extremely tight - within margin of error.':diff<=8?'Meaningful but not decisive lead.':'Significant gap - major seat difference.';document.getElementById('compare-result').innerHTML='<div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;margin-top:4px"><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:14px"><div style="text-align:center"><div style="font-size:11px;color:'+a.color+';font-weight:700">'+a.name+'</div><div style="font-size:32px;font-weight:900;color:'+a.color+'">'+a.pct+'%</div><div style="font-size:11px;color:#c8cdd8">~'+a.seats+' seats</div></div><div style="font-size:13px;color:#c8cdd8;font-weight:700">VS</div><div style="text-align:center"><div style="font-size:11px;color:'+b.color+';font-weight:700">'+b.name+'</div><div style="font-size:32px;font-weight:900;color:'+b.color+'">'+b.pct+'%</div><div style="font-size:11px;color:#c8cdd8">~'+b.seats+' seats</div></div></div><div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:12px;font-size:14px;color:#e8ecf4;line-height:1.6">'+ld.name+' leads by '+diff+' points (~'+sd+' seats). '+note+' Neither on course for a majority.</div></div>';}
+(function(){var el=document.getElementById('content'),sY=0,pull=false,busy=false;el.addEventListener('touchstart',function(e){if(el.scrollTop===0){sY=e.touches[0].clientY;pull=true;}},{passive:true});el.addEventListener('touchmove',function(e){if(!pull||busy)return;var d=e.touches[0].clientY-sY;if(d>0&&d<70)el.style.paddingTop=(d*0.4)+'px';},{passive:true});el.addEventListener('touchend',function(){if(!pull)return;var d=parseInt(el.style.paddingTop)||0;el.style.paddingTop='';pull=false;if(d>20&&!busy){busy=true;refreshData();setTimeout(function(){busy=false;},3000);}});})();
 function setStatus(cls, txt) {
   document.getElementById('status-dot').className = 'ldot' + (cls === 'loading' ? ' spin' : '');
   const el = document.getElementById('status-txt');
@@ -815,15 +577,8 @@ function renderOverview() {
       ${p.seats > 15 ? p.abbr : ''}
     </div>`).join('');
   document.getElementById('ctx-text').textContent = D.context;
-  var wim = document.getElementById('what-it-means');
-  if (wim) {
-    var leading = D.parties[0];
-    var short = 326 - leading.seats;
-    wim.innerHTML = '<strong>What this means:</strong> On current polling, <span style="color:' + leading.color + ';font-weight:700">' + leading.name + '</span>'
-      + (leading.seats >= 326
-        ? ' projects to an outright majority with ~' + leading.seats + ' seats.'
-        : ' would be the largest party on ~' + leading.seats + ' seats but <strong>' + short + ' short of a majority</strong> — a <strong>hung parliament</strong>, needing a coalition or deal to govern.');
-  }
+  var wim=document.getElementById('what-it-means');
+  if(wim){var ld=D.parties[0],short=326-ld.seats;wim.innerHTML='<strong>What this means:</strong> On current polling, <span style="color:'+ld.color+';font-weight:700">'+ld.name+'</span>'+(ld.seats>=326?' projects to an outright majority (~'+ld.seats+' seats).':' would be largest party (~'+ld.seats+' seats) but <strong>'+short+' short of a majority</strong> — a <strong>hung parliament</strong>, needing a coalition or deal to govern.');}
 }
 
 // ── Render Trends ──
@@ -1011,31 +766,21 @@ function renderLeaders() {
 
 // ── Render Polls ──
 function renderPolls() {
-  var KEYS = [
-    {k:'ref',label:'Reform UK',color:'#12B7D4'},
-    {k:'lab',label:'Labour',color:'#E4003B'},
-    {k:'con',label:'Con',color:'#0087DC'},
-    {k:'ld',label:'Lib Dem',color:'#FAA61A'},
-    {k:'grn',label:'Green',color:'#02A95B'},
-    {k:'rb',label:'RB',color:'#4a6fa5'}
-  ];
-  document.getElementById('polls-cards').innerHTML = D.polls.map(function(p) {
-    var boxes = KEYS.filter(function(x){return p[x.k]!=null;}).map(function(x){
-      return '<div style="background:rgba(5,10,30,0.85);border:1px solid rgba(255,255,255,0.12);border-top:3px solid '+x.color+';border-radius:8px;padding:8px 4px;text-align:center;flex:1;min-width:48px">'
-        +'<div style="font-size:11px;color:#c8cdd8;margin-bottom:3px">'+x.label+'</div>'
-        +'<div style="font-size:20px;font-weight:800;color:'+x.color+'">'+p[x.k]+'<span style="font-size:12px">%</span></div>'
+  var KEYS=[{k:'ref',label:'Reform UK',color:'#12B7D4'},{k:'lab',label:'Labour',color:'#E4003B'},{k:'con',label:'Con',color:'#0087DC'},{k:'ld',label:'Lib Dem',color:'#FAA61A'},{k:'grn',label:'Green',color:'#02A95B'},{k:'rb',label:'RB',color:'#4a6fa5'}];
+  document.getElementById('polls-cards').innerHTML=D.polls.map(function(p){
+    var boxes=KEYS.filter(function(x){return p[x.k]!=null;}).map(function(x){
+      return '<div style="background:rgba(5,10,30,0.85);border:1px solid rgba(255,255,255,0.12);border-top:3px solid '+x.color+';border-radius:8px;padding:8px 4px;text-align:center;flex:1;min-width:46px">'
+        +'<div style="font-size:10px;color:#c8cdd8;margin-bottom:3px">'+x.label+'</div>'
+        +'<div style="font-size:18px;font-weight:800;color:'+x.color+'">'+p[x.k]+'%</div>'
         +'</div>';
     }).join('');
     return '<div class="card" style="margin-bottom:10px;padding:12px">'
       +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">'
-      +'<div style="font-size:17px;font-weight:800;color:#fff">'+p.pollster+'</div>'
+      +'<div style="font-size:16px;font-weight:800;color:#fff">'+p.pollster+'</div>'
       +'<div style="font-size:13px;color:#c8cdd8">'+p.date+'</div>'
-      +'</div>'
-      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+boxes+'</div>'
-      +'</div>';
+      +'</div><div style="display:flex;gap:5px;flex-wrap:wrap">'+boxes+'</div></div>';
   }).join('');
 }
-
 
 // ── AI ──
 async function askAI(q) {
@@ -1114,15 +859,13 @@ function renderVoteButtons() {
   btns.innerHTML = PARTIES_VOTE.map(function(p) {
     var sel = p.name === myVote;
     var glow = sel ? ';box-shadow:0 0 0 2px ' + p.color : '';
-    var count = (window._voteCache && window._voteCache[p.name]) ? window._voteCache[p.name] : 0;
-    var watermark = count > 0
-      ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:900;color:' + p.color + ';opacity:0.45;pointer-events:none;line-height:1">' + count + '</div>'
-      : '';
+    var count = (window._voteCache && window._voteCache[p.name]) || 0;
+    var wm = count > 0 ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:900;color:' + p.color + ';opacity:0.45;pointer-events:none">' + count + '</div>' : '';
     return '<div onclick="castVote(\'' + p.name + '\')" class="pc" style="border-top-color:' + p.color + ';cursor:pointer;position:relative;overflow:hidden' + glow + '">'
-      + watermark
-      + '<div style="position:relative;font-size:12px;color:#c8cdd8;margin-bottom:6px;min-height:28px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2">' + p.name + '</div>'
-      + '<div style="position:relative;font-size:22px;font-weight:800;line-height:1;color:' + p.color + '">' + (sel ? '&#10003;' : '&#8212;') + '</div>'
-      + '<div style="position:relative;font-size:12px;color:#c8cdd8;margin-top:4px;min-height:14px">' + (sel ? 'Your vote' : '') + '</div>'
+      + wm
+      + '<div style="position:relative;font-size:11px;color:#c8cdd8;margin-bottom:6px;min-height:28px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2">' + p.name + '</div>'
+      + '<div style="position:relative;font-size:22px;font-weight:800;color:' + p.color + '">' + (sel ? '&#10003;' : '&#8212;') + '</div>'
+      + '<div style="position:relative;font-size:11px;color:#c8cdd8;margin-top:4px;min-height:14px">' + (sel ? 'Your vote' : '') + '</div>'
       + '</div>';
   }).join('');
   const msg = document.getElementById('vote-msg');
