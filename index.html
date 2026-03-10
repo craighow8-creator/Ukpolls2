@@ -172,8 +172,8 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
   <div class="page" id="page-trends">
     <div class="stitle">Trends</div>
     <div class="ssub">6-month polling movement</div>
-    <div class="card" style="padding:10px">
-      <svg id="trend-chart" style="width:100%;display:block;height:160px"></svg>
+    <div class="card" style="padding:10px" id="trend-card">
+      <canvas id="trend-chart" style="width:100%;display:block"></canvas>
       <div id="trend-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px"></div>
     </div>
     <div class="sec-label">📈 LATEST MOVEMENT</div>
@@ -450,7 +450,7 @@ function sp(id, btn) {
   document.getElementById('page-' + id).classList.add('active');
   btn.classList.add('active');
   document.getElementById('content').scrollTop = 0;
-  if (id === 'trends') setTimeout(renderTrends, 50);
+  if (id === 'trends') { setTimeout(renderTrends, 50); setTimeout(renderTrends, 300); }
 }
 
 function setStatus(cls, txt) {
@@ -497,8 +497,13 @@ function renderTrends() {
       <div style="font-size:12px">${m.text}</div>
     </div>`).join('');
   const el = document.getElementById('trend-chart');
-  const W = el.offsetWidth || 300, H = Math.max(160, Math.min(320, W * 0.45));
-  const pad = {t:8, r:8, b:24, l:26};
+  const W = el.parentElement.clientWidth - 28 || 600;
+  const H = Math.max(200, Math.min(400, W * 0.42));
+  el.width = W;
+  el.height = H;
+  el.style.height = H + 'px';
+  const c = el.getContext('2d');
+  const pad = {t:12, r:12, b:30, l:36};
   const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
   const parties = ['Reform','Labour','Conservative','Lib Dem','Green'];
   const colors = {Reform:'#12B7D4',Labour:'#E4003B',Conservative:'#0087DC','Lib Dem':'#FAA61A',Green:'#02A95B'};
@@ -508,28 +513,38 @@ function renderTrends() {
   const minV = Math.max(0, Math.min(...allV) - 2), maxV = Math.min(45, Math.max(...allV) + 2);
   const xP = i => pad.l + i * (pw / (months.length - 1));
   const yP = v => pad.t + ph - (v - minV) / (maxV - minV) * ph;
-  let svg = `<svg width="${W}" height="${H}" style="width:100%;overflow:visible">`;
+  // Grid lines + labels
   [10,15,20,25,30,35].filter(v => v >= minV && v <= maxV).forEach(v => {
-    svg += `<line x1="${pad.l}" y1="${yP(v)}" x2="${W-pad.r}" y2="${yP(v)}" stroke="#ffffff10" stroke-width="1"/>
-    <text x="${pad.l-4}" y="${yP(v)+4}" fill="#555" font-size="9" text-anchor="end">${v}</text>`;
+    c.beginPath(); c.strokeStyle = 'rgba(255,255,255,0.07)'; c.lineWidth = 1;
+    c.moveTo(pad.l, yP(v)); c.lineTo(W - pad.r, yP(v)); c.stroke();
+    c.fillStyle = '#7a8396'; c.font = '12px -apple-system,sans-serif';
+    c.textAlign = 'right'; c.fillText(v + '%', pad.l - 5, yP(v) + 4);
   });
+  // Month labels
   months.forEach((m, i) => {
-    svg += `<text x="${xP(i)}" y="${H-2}" fill="#555" font-size="9" text-anchor="middle">${m}</text>`;
+    c.fillStyle = '#7a8396'; c.font = '12px -apple-system,sans-serif';
+    c.textAlign = 'center'; c.fillText(m, xP(i), H - 8);
   });
+  // Party lines + dots
   parties.forEach(p => {
-    const pts = D.trends.map((t, i) => t[p] != null ? `${xP(i)},${yP(t[p])}` : null).filter(Boolean);
-    if (pts.length > 1) svg += `<polyline points="${pts.join(' ')}" fill="none" stroke="${colors[p]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const pts = D.trends.map((t, i) => t[p] != null ? {x: xP(i), y: yP(t[p])} : null).filter(Boolean);
+    if (pts.length < 2) return;
+    c.beginPath(); c.strokeStyle = colors[p]; c.lineWidth = 3;
+    c.lineJoin = 'round'; c.lineCap = 'round';
+    c.moveTo(pts[0].x, pts[0].y);
+    pts.slice(1).forEach(pt => c.lineTo(pt.x, pt.y));
+    c.stroke();
+    pts.forEach(pt => {
+      c.beginPath(); c.fillStyle = colors[p];
+      c.arc(pt.x, pt.y, 4, 0, Math.PI * 2); c.fill();
+    });
   });
-  svg += '</svg>';
-  el.style.height = H + 'px';
-  el.innerHTML = svg;
-  document.getElementById('trend-legend').innerHTML = parties.map(p => `<span style="color:${colors[p]};font-size:11px">● ${p}</span>`).join('');
+  document.getElementById('trend-legend').innerHTML = parties.map(p => `<span style="color:${colors[p]};font-size:12px">● ${p}</span>`).join('');
 }
 
-// Redraw chart when window resizes
+// Redraw chart on resize
 window.addEventListener('resize', () => {
-  const el = document.getElementById('trend-chart');
-  if (el && el.closest('.page.active')) renderTrends();
+  if (document.getElementById('page-trends').classList.contains('active')) renderTrends();
 });
 
 // ── Render Demographics ──
@@ -800,11 +815,12 @@ async function loadVoteResults() {
 
 // ── Boot ──
 renderOverview();
-renderTrends();
 renderAge();
 renderLeaders();
 renderPolls();
 initVotePage();
+// Render trends after layout settles
+setTimeout(renderTrends, 100);
 </script>
 
 <script data-goatcounter="https://ukpolls.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
