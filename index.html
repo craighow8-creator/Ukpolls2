@@ -195,7 +195,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     Trends
   </button>
-  <button class="nb" onclick="sp('polls',this)">
+  <button class="nb" onclick="document.getElementById('polls-anchor').scrollIntoView({behavior:'smooth'});sp('trends',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
     Polls
   </button>
@@ -246,7 +246,11 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
 
   <!-- TRENDS -->
   <div class="page" id="page-trends">
-    <div class="stitle">Trends</div>
+    <div class="stitle">Trends
+    <div class="sec-label" id="polls-anchor">📋 RECENT POLLS</div>
+    <div id="polls-cards"></div>
+    <div style="font-size:13px;color:#c8cdd8;padding:2px 2px 8px">BPC members · RB = Restore Britain (prompted only)</div>
+  </div>
     <div class="ssub">6-month polling movement</div>
     <div class="card" style="padding:10px" id="trend-card">
       <canvas id="trend-chart" style="width:100%;display:block"></canvas>
@@ -279,12 +283,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
   </div>
 
   <!-- POLLS -->
-  <div class="page" id="page-polls">
-    <div class="stitle">Recent Polls</div>
-    <div class="ssub">Latest individual polls · BPC members</div>
-    <div id="polls-cards"></div>
-    <div style="font-size:14px;color:#c8cdd8;padding:4px 2px">BPC members. RB = Restore Britain (prompted only).</div>
-  </div>
+
   <div class="page" id="page-elections">
     <div class="stitle">Elections</div>
     <div class="ssub">Upcoming votes &amp; recent results</div>
@@ -967,7 +966,7 @@ setTimeout(renderTrends, 100);
 
 
 (function(){
-  var TABS = ['overview','trends','polls','elections','vote','demo','leaders','ai'];
+  var TABS = ['overview','trends','elections','vote','demo','leaders','ai'];
   var content = document.getElementById('content');
   var sx = 0, sy = 0;
   content.addEventListener('touchstart', function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
