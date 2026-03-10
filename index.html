@@ -725,43 +725,56 @@ const PARTIES_VOTE = [
   {name:"Would not vote",  color:"#555e72", poll:0},
 ];
 
-function getVoteKey() {
-  const d = new Date();
-  return `voted_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}`;
+// Generate or retrieve a permanent device ID
+function getDeviceId() {
+  let id = localStorage.getItem('device_id');
+  if (!id) {
+    id = 'dev_' + Math.random().toString(36).substr(2,9) + Date.now().toString(36);
+    localStorage.setItem('device_id', id);
+  }
+  return id;
 }
 
-function hasVotedToday() {
-  return localStorage.getItem(getVoteKey());
+function getMyVote() {
+  return localStorage.getItem('my_vote');
+}
+
+function setMyVote(party) {
+  localStorage.setItem('my_vote', party);
 }
 
 function initVotePage() {
-  const btns = document.getElementById('vote-buttons');
-  const voted = hasVotedToday();
-  if (voted) {
-    btns.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--muted);font-size:13px">
-      ✅ You voted <strong style="color:#fff">${voted}</strong> today. Come back tomorrow!
-    </div>`;
-  } else {
-    btns.innerHTML = PARTIES_VOTE.map(p => `
-      <button onclick="castVote('${p.name}')" style="background:${p.color}20;border:1px solid ${p.color}50;border-radius:12px;padding:14px 8px;color:${p.color};font-weight:700;font-size:13px;cursor:pointer;text-align:center;">
-        ${p.name}
-      </button>`).join('');
-  }
+  renderVoteButtons();
   loadVoteResults();
 }
 
+function renderVoteButtons() {
+  const btns = document.getElementById('vote-buttons');
+  const myVote = getMyVote();
+  btns.innerHTML = PARTIES_VOTE.map(p => `
+    <button onclick="castVote('${p.name}')" style="
+      background:${p.name===myVote ? p.color+'40' : p.color+'20'};
+      border:${p.name===myVote ? '2px solid '+p.color : '1px solid '+p.color+'50'};
+      border-radius:12px;padding:14px 8px;color:${p.color};font-weight:700;font-size:13px;cursor:pointer;text-align:center;position:relative;">
+      ${p.name===myVote ? '✓ ' : ''}${p.name}
+    </button>`).join('');
+  const msg = document.getElementById('vote-msg');
+  if (myVote) {
+    msg.innerHTML = `Your current vote: <strong style="color:#fff">${myVote}</strong> &nbsp;·&nbsp; <span style="color:var(--muted);font-size:12px">Tap any party to change it</span>`;
+  } else {
+    msg.textContent = 'Tap a party to cast your vote';
+  }
+}
+
 async function castVote(party) {
-  if (hasVotedToday()) return;
-  localStorage.setItem(getVoteKey(), party);
-  document.getElementById('vote-buttons').innerHTML = `
-    <div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--muted);font-size:13px">
-      ✅ You voted <strong style="color:#fff">${party}</strong> today. Come back tomorrow!
-    </div>`;
-  document.getElementById('vote-msg').textContent = 'Your vote has been counted!';
+  const deviceId = getDeviceId();
+  const prevVote = getMyVote();
+  setMyVote(party);
+  renderVoteButtons();
   try {
     await fetch(WORKER + '/vote', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({party})
+      body: JSON.stringify({party, deviceId, prevVote})
     });
   } catch(e) {}
   loadVoteResults();
