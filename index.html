@@ -29,18 +29,20 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
 .ltxt.error{color:#c8cdd8;}
 
 /* ── Content ── */
-#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;position:relative;z-index:5;}
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;position:relative;z-index:5;padding-bottom:env(safe-area-inset-bottom);}
 
 /* ── Pages ── */
 .page{display:none;padding:14px 14px 24px;}
 .page.active{display:block;}
 
 /* ── Nav ── */
-#nav{flex-shrink:0;background:rgba(1,33,105,0.7);border-top:1px solid rgba(255,255,255,0.15);display:flex;padding-bottom:env(safe-area-inset-bottom);position:relative;z-index:10;backdrop-filter:blur(8px);}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;background:none;border:none;color:#c8cdd8;font-size:14px;cursor:pointer;gap:3px;}
-.nb svg{width:20px;height:20px;stroke-width:1.8;}
-.nb.active{color:#f85149;}
-.nb.active svg{stroke:#f85149;}
+#nav{flex-shrink:0;background:rgba(1,33,105,0.75);border-bottom:1px solid rgba(255,255,255,0.15);position:relative;z-index:10;backdrop-filter:blur(8px);overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;scrollbar-width:none;}
+#nav::-webkit-scrollbar{display:none;}
+#nav-inner{display:inline-flex;min-width:100%;}
+.nb{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 16px;background:none;border:none;border-bottom:3px solid transparent;color:#c8cdd8;font-size:13px;cursor:pointer;gap:4px;white-space:nowrap;flex-shrink:0;}
+.nb svg{width:18px;height:18px;stroke-width:1.8;}
+.nb.active{color:#ffffff;border-bottom-color:#f85149;}
+.nb.active svg{stroke:#ffffff;}
 
 /* ── Cards ── */
 .card{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;margin-bottom:12px;font-size:16px;backdrop-filter:blur(6px);}
@@ -116,8 +118,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
   .htitle{font-size:17px;}
   .hsub{display:none;}
   .hdr-icon{width:28px;height:28px;font-size:17px;}
-  .nb span{display:none;}
-  .nb{padding:5px 2px;}
+  .nb{padding:6px 10px;}
   .page{padding:8px 14px 10px;}
   .stitle{font-size:19px;}
 }
@@ -182,6 +183,41 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
 </div>
 
 <!-- ── Scrollable content ── -->
+<div id="nav"><div id="nav-inner">
+  <button class="nb active" onclick="sp('overview',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Overview</span>
+  </button>
+  <button class="nb" onclick="sp('trends',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Trends</span>
+  </button>
+  <button class="nb" onclick="sp('polls',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    <span>Polls</span>
+  </button>
+  <button class="nb" onclick="sp('votes',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    <span>Elections</span>
+  </button>
+  <button class="nb" onclick="sp('vote',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+    <span>Vote</span>
+  </button>
+  <button class="nb" onclick="sp('age',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Demo</span>
+  </button>
+  <button class="nb" onclick="sp('leaders',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Leaders</span>
+  </button>
+  <button class="nb" onclick="sp('ai',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    <span>AI</span>
+  </button>
+</div></div>
+
 <div id="content">
 
   <!-- OVERVIEW -->
@@ -367,40 +403,6 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
 </div>
 
 <!-- ── Nav bar — always outside #content ── -->
-<div id="nav">
-  <button class="nb active" onclick="sp('overview',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-    <span>Overview</span>
-  </button>
-  <button class="nb" onclick="sp('trends',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    <span>Trends</span>
-  </button>
-  <button class="nb" onclick="sp('polls',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-    <span>Polls</span>
-  </button>
-  <button class="nb" onclick="sp('votes',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-    <span>Elections</span>
-  </button>
-  <button class="nb" onclick="sp('vote',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-    <span>Vote</span>
-  </button>
-  <button class="nb" onclick="sp('age',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    <span>Demo</span>
-  </button>
-  <button class="nb" onclick="sp('leaders',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span>Leaders</span>
-  </button>
-  <button class="nb" onclick="sp('ai',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-    <span>AI</span>
-  </button>
-</div>
 
 <script>
 const WORKER = 'https://throbbing-base-05b6.craighow8.workers.dev';
@@ -489,6 +491,7 @@ function sp(id, btn) {
   document.getElementById('page-' + id).classList.add('active');
   btn.classList.add('active');
   document.getElementById('content').scrollTop = 0;
+  btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
   if (id === 'trends') { setTimeout(renderTrends, 50); setTimeout(renderTrends, 300); }
 }
 
