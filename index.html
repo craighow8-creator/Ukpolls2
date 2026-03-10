@@ -5,98 +5,98 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0d12">
+<meta name="theme-color" content="#012169">
 <title>UK Poll Tracker</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%230a0d12'/%3E%3Ccircle cx='100' cy='100' r='72' fill='%23012169'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Crect x='28' y='86' width='144' height='28' rx='2' fill='white'/%3E%3Crect x='86' y='28' width='28' height='144' rx='2' fill='white'/%3E%3Crect x='28' y='91' width='144' height='18' rx='2' fill='%23C8102E'/%3E%3Crect x='91' y='28' width='18' height='144' rx='2' fill='%23C8102E'/%3E%3Crect x='52' y='118' width='14' height='28' rx='3' fill='%2312B7D4' opacity='.95'/%3E%3Crect x='70' y='105' width='14' height='41' rx='3' fill='%2302A95B' opacity='.95'/%3E%3Crect x='88' y='112' width='14' height='34' rx='3' fill='%23E4003B' opacity='.95'/%3E%3Crect x='106' y='112' width='14' height='34' rx='3' fill='%230087DC' opacity='.95'/%3E%3Crect x='124' y='120' width='14' height='26' rx='3' fill='%23FAA61A' opacity='.95'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%230a0d12'/%3E%3Ccircle cx='100' cy='100' r='72' fill='%23012169'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Crect x='28' y='86' width='144' height='28' rx='2' fill='white'/%3E%3Crect x='86' y='28' width='28' height='144' rx='2' fill='white'/%3E%3Crect x='28' y='91' width='144' height='18' rx='2' fill='%23C8102E'/%3E%3Crect x='91' y='28' width='18' height='144' rx='2' fill='%23C8102E'/%3E%3Crect x='52' y='118' width='14' height='28' rx='3' fill='%2312B7D4' opacity='.95'/%3E%3Crect x='70' y='105' width='14' height='41' rx='3' fill='%2302A95B' opacity='.95'/%3E%3Crect x='88' y='112' width='14' height='34' rx='3' fill='%23E4003B' opacity='.95'/%3E%3Crect x='106' y='112' width='14' height='34' rx='3' fill='%230087DC' opacity='.95'/%3E%3Crect x='124' y='120' width='14' height='26' rx='3' fill='%23FAA61A' opacity='.95'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#0d1117;--surface:#1a1f2e;--border:#2d3548;--dim:#e8ecf4;--muted:#9aa3b8;--up:#3fb950;--down:#f85149;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;}
+body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:17px;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;}
 
 /* ── Header ── */
-#hdr{padding:10px 14px 8px;background:#111827;border-bottom:1px solid #2d3548;flex-shrink:0;}
+#hdr{padding:10px 14px 8px;background:rgba(1,33,105,0.7);border-bottom:1px solid rgba(255,255,255,0.15);flex-shrink:0;position:relative;z-index:10;backdrop-filter:blur(8px);}
 .hdr-row{display:flex;align-items:center;justify-content:space-between;}
 .hdr-left{display:flex;align-items:center;gap:10px;}
 .hdr-icon{width:36px;height:36px;background:linear-gradient(135deg,#012169,#C8102E);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
 .htitle{font-size:18px;font-weight:800;color:#fff;line-height:1.1;}
-.hsub{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:1px;}
+.hsub{font-size:10px;color:#c8cdd8;letter-spacing:1px;margin-top:1px;}
 .live-badge{display:flex;align-items:center;gap:5px;background:#1a2e1a;border:1px solid #2d5a2d;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:700;color:#3fb950;cursor:pointer;white-space:nowrap;}
 .ldot{width:7px;height:7px;border-radius:50%;background:#3fb950;}
 .ldot.spin{animation:pulse 1.5s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .ltxt.loading{color:#FAA61A;}
-.ltxt.error{color:var(--muted);}
+.ltxt.error{color:#c8cdd8;}
 
 /* ── Content ── */
-#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;}
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;position:relative;z-index:5;}
 
 /* ── Pages ── */
 .page{display:none;padding:14px 14px 24px;}
 .page.active{display:block;}
 
 /* ── Nav ── */
-#nav{flex-shrink:0;background:#111827;border-top:1px solid #2d3548;display:flex;padding-bottom:env(safe-area-inset-bottom);}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;gap:3px;}
+#nav{flex-shrink:0;background:rgba(1,33,105,0.7);border-top:1px solid rgba(255,255,255,0.15);display:flex;padding-bottom:env(safe-area-inset-bottom);position:relative;z-index:10;backdrop-filter:blur(8px);}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;background:none;border:none;color:#c8cdd8;font-size:12px;cursor:pointer;gap:3px;}
 .nb svg{width:20px;height:20px;stroke-width:1.8;}
 .nb.active{color:#f85149;}
 .nb.active svg{stroke:#f85149;}
 
 /* ── Cards ── */
-.card{background:#1a1f2e;border:1px solid #2d3548;border-radius:12px;padding:14px;margin-bottom:12px;font-size:14px;}
-.stitle{font-size:22px;font-weight:800;margin-bottom:4px;color:#ffffff;}
-.ssub{font-size:13px;color:#9aa3b8;margin-bottom:14px;}
-.sec-label{font-size:11px;letter-spacing:1.5px;color:var(--muted);margin:16px 0 8px;font-weight:600;}
+.card{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;margin-bottom:12px;font-size:14px;backdrop-filter:blur(6px);}
+.stitle{font-size:26px;font-weight:800;margin-bottom:4px;color:#ffffff;}
+.ssub{font-size:15px;color:#c8cdd8;margin-bottom:14px;}
+.sec-label{font-size:12px;letter-spacing:1.5px;color:#c8cdd8;margin:16px 0 8px;font-weight:600;}
 
 /* ── Party grid ── */
 .pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;}
-.pc{background:#1a1f2e;border:1px solid #2d3548;border-radius:10px;padding:10px 6px;border-top:3px solid;text-align:center;}
-.pca{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
-.pcp{font-size:22px;font-weight:800;line-height:1;}
+.pc{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 6px;border-top:3px solid;text-align:center;backdrop-filter:blur(6px);}
+.pca{font-size:10px;color:#c8cdd8;letter-spacing:1px;margin-bottom:4px;}
+.pcp{font-size:24px;font-weight:800;line-height:1;}
 .pcc{font-size:11px;margin-top:3px;}
-.pcs{font-size:10px;color:var(--muted);margin-top:2px;}
+.pcs{font-size:11px;color:#c8cdd8;margin-top:2px;}
 
 /* ── Seat bar ── */
 .sbar{display:flex;height:36px;border-radius:8px;overflow:hidden;margin-bottom:6px;}
 .sseg{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;overflow:hidden;}
 
 /* ── Leaders ── */
-.lcard{background:#1a1f2e;border:1px solid #2d3548;border-radius:12px;padding:14px;margin-bottom:10px;}
+.lcard{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;margin-bottom:10px;backdrop-filter:blur(6px);}
 .lch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
 .lcname{font-size:16px;font-weight:800;color:#fff;}
 .lcparty{font-size:12px;margin-top:2px;}
 .lcnet{font-size:26px;font-weight:800;line-height:1;}
-.lcnl{font-size:9px;color:var(--muted);text-align:right;letter-spacing:1px;}
+.lcnl{font-size:9px;color:#c8cdd8;text-align:right;letter-spacing:1px;}
 .abar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-bottom:6px;}
 .lcs{display:flex;gap:12px;font-size:12px;margin-bottom:2px;}
 .psec{border-top:1px solid var(--border);padding-top:8px;margin-top:8px;}
-.plbl{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;font-weight:600;}
-.ptxt{font-size:13px;color:#e8ecf4;line-height:1.6;}
+.plbl{font-size:10px;color:#c8cdd8;letter-spacing:1px;margin-bottom:4px;font-weight:600;}
+.ptxt{font-size:14px;color:#e8ecf4;line-height:1.6;}
 
 /* ── Polls table ── */
 .ptable{width:100%;border-collapse:collapse;font-size:12px;}
-.ptable th{font-size:10px;color:var(--muted);letter-spacing:1px;padding:5px 3px;text-align:center;border-bottom:1px solid var(--border);}
-.ptable td{padding:7px 3px;text-align:center;border-bottom:1px solid var(--border);font-size:13px;}
+.ptable th{font-size:10px;color:#c8cdd8;letter-spacing:1px;padding:5px 3px;text-align:center;border-bottom:1px solid var(--border);}
+.ptable td{padding:8px 3px;text-align:center;border-bottom:1px solid var(--border);font-size:14px;}
 .pill{display:inline-block;padding:2px 5px;border-radius:4px;font-weight:700;font-size:11px;}
 
 /* ── Elections ── */
-.ecard{background:#1a1f2e;border:1px solid #2d3548;border-radius:12px;padding:14px;margin-bottom:10px;}
-.ed{font-size:11px;color:var(--muted);margin-bottom:3px;}
+.ecard{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;margin-bottom:10px;backdrop-filter:blur(6px);}
+.ed{font-size:11px;color:#c8cdd8;margin-bottom:3px;}
 .et{font-size:15px;font-weight:800;color:#fff;margin-bottom:2px;}
-.es{font-size:12px;color:var(--muted);margin-bottom:8px;}
-.ex{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:8px;}
+.es{font-size:12px;color:#c8cdd8;margin-bottom:8px;}
+.ex{font-size:13px;color:var(--dim);line-height:1.6;margin-bottom:8px;}
 .etags{display:flex;flex-wrap:wrap;gap:6px;}
 .etag{font-size:11px;padding:3px 8px;border-radius:6px;}
 .ri{display:flex;align-items:center;gap:6px;padding:3px 0;}
 .rd{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .rp{width:52px;font-size:12px;font-weight:600;}
 .rn{width:38px;font-size:12px;font-weight:800;}
-.rm{font-size:11px;color:var(--muted);}
+.rm{font-size:12px;color:#c8cdd8;}
 
 /* ── AI ── */
 .chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:7px 12px;font-size:12px;cursor:pointer;color:var(--dim);}
 .ai-box{background:var(--surface);border-radius:12px;padding:14px;font-size:13px;line-height:1.7;}
-.ai-empty{text-align:center;padding:24px;color:var(--muted);font-size:13px;}
+.ai-empty{text-align:center;padding:24px;color:#c8cdd8;font-size:13px;}
 
 /* ── Support Popup ── */
 #support-popup{display:none;position:fixed;inset:0;background:#000000bb;z-index:1000;align-items:center;justify-content:center;padding:20px;}
@@ -105,10 +105,10 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 @keyframes popIn{from{transform:scale(0.85);opacity:0}to{transform:scale(1);opacity:1}}
 .popup-icon{font-size:44px;margin-bottom:10px;}
 .popup-title{font-size:20px;font-weight:800;color:#fff;margin-bottom:8px;}
-.popup-body{font-size:14px;color:#9aa3b8;line-height:1.6;margin-bottom:20px;}
+.popup-body{font-size:14px;color:#c8cdd8;line-height:1.6;margin-bottom:20px;}
 .popup-btn{display:block;width:100%;padding:13px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;border:none;margin-bottom:10px;}
 .popup-yes{background:#ff5e5b;color:#fff;}
-.popup-no{background:transparent;color:#9aa3b8;font-size:13px;text-decoration:underline;}
+.popup-no{background:transparent;color:#c8cdd8;font-size:13px;text-decoration:underline;}
 
 /* ── Landscape ── */
 @media (orientation:landscape) and (max-height:500px){
@@ -124,6 +124,28 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 </style>
 </head>
 <body>
+
+<!-- Union Jack Background -->
+<div style="position:fixed;inset:0;z-index:0;overflow:hidden;">
+  <svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%">
+    <!-- Blue field -->
+    <rect width="60" height="40" fill="#012169"/>
+    <!-- White diagonals (St Andrew) -->
+    <line x1="0" y1="0" x2="60" y2="40" stroke="white" stroke-width="8"/>
+    <line x1="60" y1="0" x2="0" y2="40" stroke="white" stroke-width="8"/>
+    <!-- Red diagonals (St Patrick) - offset -->
+    <line x1="0" y1="0" x2="60" y2="40" stroke="#C8102E" stroke-width="4"/>
+    <line x1="60" y1="0" x2="0" y2="40" stroke="#C8102E" stroke-width="4"/>
+    <!-- White cross (St George) -->
+    <rect x="0" y="15" width="60" height="10" fill="white"/>
+    <rect x="25" y="0" width="10" height="40" fill="white"/>
+    <!-- Red cross (St George) -->
+    <rect x="0" y="17" width="60" height="6" fill="#C8102E"/>
+    <rect x="27" y="0" width="6" height="40" fill="#C8102E"/>
+  </svg>
+  <!-- Dark overlay -->
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,0.78)"></div>
+</div>
 
 <!-- ── Header ── -->
 <div id="hdr">
@@ -169,14 +191,14 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
     <div class="pgrid" id="party-grid"></div>
     <div class="sec-label">🏛 SEAT PROJECTION</div>
     <div class="sbar" id="seat-bar"></div>
-    <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:16px">326 seats needed for majority · <strong style="color:#fff">Hung Parliament</strong></div>
+    <div style="font-size:11px;color:#c8cdd8;text-align:center;margin-bottom:16px">326 seats needed for majority · <strong style="color:#fff">Hung Parliament</strong></div>
     <div class="sec-label">📋 CONTEXT</div>
     <div class="card" style="font-size:14px;line-height:1.8;color:#e8ecf4" id="ctx-text"></div>
     <div style="text-align:center;padding:16px 0 4px">
       <a href="https://ko-fi.com/craighowe" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:#FF5E5B;color:#fff;text-decoration:none;padding:11px 20px;border-radius:12px;font-weight:700;font-size:14px;">
         ❤️ Support this app
       </a>
-      <div style="font-size:11px;color:var(--muted);margin-top:8px">If you find this useful, a coffee keeps it running!</div>
+      <div style="font-size:11px;color:#c8cdd8;margin-top:8px">If you find this useful, a coffee keeps it running!</div>
     </div>
   </div>
 
@@ -204,7 +226,7 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
     <div class="sec-label">📍 REGION</div><div id="region-content"></div>
     <div class="sec-label">🌍 ETHNICITY</div><div id="ethnicity-content"></div>
     <div class="sec-label">🗳 2024 NON-VOTERS</div><div id="nonvoter-content"></div>
-    <div style="font-size:11px;color:var(--muted);text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common. Feb–Mar 2026.</div>
+    <div style="font-size:11px;color:#c8cdd8;text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common. Feb–Mar 2026.</div>
   </div>
 
   <!-- LEADERS -->
@@ -229,7 +251,7 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
         <tbody id="polls-tbody"></tbody>
       </table>
     </div>
-    <div style="font-size:11px;color:var(--muted);padding:4px 2px">BPC members. RB = Restore Britain (prompted only).</div>
+    <div style="font-size:11px;color:#c8cdd8;padding:4px 2px">BPC members. RB = Restore Britain (prompted only).</div>
   </div>
 
   <!-- VOTES -->
@@ -297,7 +319,7 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
       <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform</span><span class="rn">12.8%</span><span class="rm">+12.8%</span></div>
       <div class="ex" style="margin-top:8px;margin-bottom:0">Lib Dems consolidating hold on southern Blue Wall seats.</div>
     </div>
-    <div style="font-size:11px;color:var(--muted);text-align:center;padding:12px 0">Results approximate. Sources: BBC, Electoral Commission.</div>
+    <div style="font-size:11px;color:#c8cdd8;text-align:center;padding:12px 0">Results approximate. Sources: BBC, Electoral Commission.</div>
   </div>
 
   <!-- VOTE -->
@@ -307,13 +329,13 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
     <div id="vote-section">
       <div class="sec-label">🗳 CAST YOUR VOTE</div>
       <div id="vote-buttons" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px"></div>
-      <div id="vote-msg" style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:16px"></div>
+      <div id="vote-msg" style="text-align:center;font-size:12px;color:#c8cdd8;margin-bottom:16px"></div>
     </div>
     <div class="sec-label">📊 APP USERS VS REAL POLLS</div>
     <div class="card" id="vote-results">
-      <div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">Loading results...</div>
+      <div style="text-align:center;color:#c8cdd8;font-size:13px;padding:16px">Loading results...</div>
     </div>
-    <div style="font-size:11px;color:var(--muted);text-align:center;padding:4px 0">One vote per device · Change your mind anytime · Totals never reset</div>
+    <div style="font-size:11px;color:#c8cdd8;text-align:center;padding:4px 0">One vote per device · Change your mind anytime · Totals never reset</div>
   </div>
 
   <!-- AI -->
@@ -516,7 +538,7 @@ function renderTrends() {
   }).join('');
   document.getElementById('milestones-list').innerHTML = D.milestones.map(m => `
     <div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:11px;color:var(--muted);white-space:nowrap;min-width:60px">${m.date}</div>
+      <div style="font-size:11px;color:#c8cdd8;white-space:nowrap;min-width:60px">${m.date}</div>
       <div style="font-size:12px">${m.text}</div>
     </div>`).join('');
   const el = document.getElementById('trend-chart');
@@ -591,7 +613,7 @@ function renderAge() {
             </div>
             <div style="width:30px;text-align:right;font-size:12px;font-weight:700;color:${p.color}">${g[p.key]}%</div>
           </div>`).join('')}
-        ${g.note ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${g.note}</div>` : ''}
+        ${g.note ? `<div style="font-size:11px;color:#c8cdd8;margin-top:4px">${g.note}</div>` : ''}
       </div>`).join('');
   }
   bars('age-content', [
@@ -636,7 +658,7 @@ function renderAge() {
       <div style="font-size:12px;color:var(--dim);line-height:1.7;margin-bottom:12px">
         42% of eligible voters did not vote in the 2024 General Election. Research by Find Out Now shows that among people who didn't vote in 2024 but now say they would <em>"definitely vote"</em>, Reform UK and Restore Britain are picking up the largest share — driven by long-term disillusionment with the major parties.
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:600;letter-spacing:1px">ESTIMATED INTENTION AMONG 2024 NON-VOTERS WHO NOW SAY THEY'D VOTE</div>
+      <div style="font-size:11px;color:#c8cdd8;margin-bottom:10px;font-weight:600;letter-spacing:1px">ESTIMATED INTENTION AMONG 2024 NON-VOTERS WHO NOW SAY THEY'D VOTE</div>
       ${[
         {label:'Reform',  color:'#12B7D4', pct:32, note:'Biggest beneficiary of returning non-voters'},
         {label:'RB',      color:'#0D2A5C', pct:18, note:'Growing fast among disengaged voters'},
@@ -652,8 +674,8 @@ function renderAge() {
           </div>
           <div style="width:30px;text-align:right;font-size:12px;font-weight:700;color:${p.color}">${p.pct}%</div>
         </div>
-        ${p.note ? `<div style="font-size:11px;color:var(--muted);margin-bottom:4px;padding-left:50px">${p.note}</div>` : ''}`).join('')}
-      <div style="font-size:11px;color:var(--muted);margin-top:8px">Source: Find Out Now, JL Partners. Estimates based on prompted polling of previous non-voters.</div>
+        ${p.note ? `<div style="font-size:11px;color:#c8cdd8;margin-bottom:4px;padding-left:50px">${p.note}</div>` : ''}`).join('')}
+      <div style="font-size:11px;color:#c8cdd8;margin-top:8px">Source: Find Out Now, JL Partners. Estimates based on prompted polling of previous non-voters.</div>
     </div>`;
 }
 
@@ -677,7 +699,7 @@ function renderLeaders() {
           <div class="lcnl">${l.net === null ? 'LIMITED' : 'NET'}</div>
         </div>
       </div>
-      ${l.note ? `<div style="font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:8px">${l.note}</div>` : `
+      ${l.note ? `<div style="font-size:12px;color:#c8cdd8;line-height:1.55;margin-bottom:8px">${l.note}</div>` : `
         <div class="abar"><div style="flex:${l.approve};background:#3fb95050"></div><div style="flex:${l.disapprove};background:#f8514950"></div></div>
         <div class="lcs"><span style="color:var(--up)">▲ ${l.approve}%</span><span style="color:var(--down)">▼ ${l.disapprove}%</span></div>`}
       ${topics.filter(t => l[t.k]).map(t => `
@@ -693,7 +715,7 @@ function renderPolls() {
   const colors = {ref:'#12B7D4',lab:'#E4003B',con:'#0087DC',ld:'#FAA61A',grn:'#02A95B',rb:'#0D2A5C'};
   document.getElementById('polls-tbody').innerHTML = D.polls.map(p => `
     <tr>
-      <td style="color:var(--muted);white-space:nowrap;font-size:11px">${p.date}</td>
+      <td style="color:#c8cdd8;white-space:nowrap;font-size:11px">${p.date}</td>
       <td style="font-weight:600;font-size:11px">${p.pollster}</td>
       ${['ref','lab','con','ld','grn','rb'].map(k => `
         <td>${p[k] != null ? `<span class="pill" style="background:${colors[k]}20;color:${colors[k]}">${p[k]}%</span>` : '—'}</td>`).join('')}
@@ -783,7 +805,7 @@ function renderVoteButtons() {
     </button>`).join('');
   const msg = document.getElementById('vote-msg');
   if (myVote) {
-    msg.innerHTML = `Your current vote: <strong style="color:#fff">${myVote}</strong> &nbsp;·&nbsp; <span style="color:var(--muted);font-size:12px">Tap any party to change it</span>`;
+    msg.innerHTML = `Your current vote: <strong style="color:#fff">${myVote}</strong> &nbsp;·&nbsp; <span style="color:#c8cdd8;font-size:12px">Tap any party to change it</span>`;
   } else {
     msg.textContent = 'Tap a party to cast your vote';
   }
@@ -810,13 +832,13 @@ async function loadVoteResults() {
     const total = Object.values(votes).reduce((a,b) => a+b, 0);
     const el = document.getElementById('vote-results');
     if (total === 0) {
-      el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">No votes cast yet — be the first!</div>';
+      el.innerHTML = '<div style="text-align:center;color:#c8cdd8;font-size:13px;padding:16px">No votes cast yet — be the first!</div>';
       return;
     }
     el.innerHTML = `
       <div style="text-align:center;margin-bottom:16px">
-        <div style="font-size:32px;font-weight:800;color:#fff">${total.toLocaleString()}</div>
-        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-top:2px">TOTAL VOTES CAST BY APP USERS</div>
+        <div style="font-size:36px;font-weight:800;color:#ffffff;text-shadow:0 2px 8px rgba(0,0,0,0.5)">${total.toLocaleString()}</div>
+        <div style="font-size:11px;color:#c8cdd8;letter-spacing:1px;margin-top:2px">TOTAL VOTES CAST BY APP USERS</div>
       </div>
       ${PARTIES_VOTE.filter(p => votes[p.name] || p.poll > 0).map(p => {
         const userPct = total > 0 ? Math.round((votes[p.name]||0)/total*100) : 0;
@@ -825,10 +847,10 @@ async function loadVoteResults() {
           <div style="margin-bottom:12px">
             <div style="display:flex;justify-content:space-between;margin-bottom:4px">
               <span style="color:${p.color};font-weight:700;font-size:12px">${p.name}</span>
-              <span style="font-size:11px;color:var(--muted)">${userPct}% app · ${pollPct}% real polls</span>
+              <span style="font-size:11px;color:#c8cdd8">${userPct}% app · ${pollPct}% real polls</span>
             </div>
             <div style="display:flex;gap:4px;align-items:center">
-              <div style="width:36px;font-size:10px;color:var(--muted)">App</div>
+              <div style="width:36px;font-size:10px;color:#c8cdd8">App</div>
               <div style="flex:1;background:var(--border);border-radius:4px;height:8px;overflow:hidden">
                 <div style="width:${userPct}%;background:${p.color};height:100%;border-radius:4px;transition:width 0.5s"></div>
               </div>
@@ -836,16 +858,16 @@ async function loadVoteResults() {
             </div>
             ${pollPct > 0 ? `
             <div style="display:flex;gap:4px;align-items:center;margin-top:3px">
-              <div style="width:36px;font-size:10px;color:var(--muted)">Polls</div>
+              <div style="width:36px;font-size:10px;color:#c8cdd8">Polls</div>
               <div style="flex:1;background:var(--border);border-radius:4px;height:4px;overflow:hidden">
                 <div style="width:${pollPct}%;background:${p.color}60;height:100%;border-radius:4px"></div>
               </div>
-              <div style="width:28px;font-size:11px;color:var(--muted);text-align:right">${pollPct}%</div>
+              <div style="width:28px;font-size:11px;color:#c8cdd8;text-align:right">${pollPct}%</div>
             </div>` : ''}
           </div>`;
       }).join('')}`;
   } catch(e) {
-    document.getElementById('vote-results').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">Could not load results.</div>';
+    document.getElementById('vote-results').innerHTML = '<div style="text-align:center;color:#c8cdd8;font-size:13px;padding:16px">Could not load results.</div>';
   }
 }
 
@@ -853,11 +875,11 @@ async function loadVoteResults() {
 function showPopupIfDue() {
   const last = localStorage.getItem('popup_shown');
   const now = Date.now();
-  const oneMonth = 30 * 24 * 60 * 60 * 1000;
+  const oneMonth = 7 * 24 * 60 * 60 * 1000; // once a week
   if (!last || (now - parseInt(last)) > oneMonth) {
     setTimeout(() => {
       document.getElementById('support-popup').classList.add('show');
-    }, 10 * 1000); // 10 seconds (TEST)
+    }, 2 * 60 * 1000); // 2 minutes
   }
 }
 
