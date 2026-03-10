@@ -326,17 +326,17 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 const WORKER = 'https://throbbing-base-05b6.craighow8.workers.dev';
 
 const D = {
-  fetchDate: "9 Mar 2026",
+  fetchDate: "10 Mar 2026",
   parties: [
-    {name:"Reform",abbr:"REF",pct:27,change:1,seats:335,color:"#12B7D4"},
-    {name:"Green",abbr:"GRN",pct:16,change:-3,seats:52,color:"#02A95B"},
-    {name:"Labour",abbr:"LAB",pct:18,change:1,seats:41,color:"#E4003B"},
-    {name:"Conservative",abbr:"CON",pct:17,change:0,seats:92,color:"#0087DC"},
-    {name:"Lib Dem",abbr:"LD",pct:12,change:-1,seats:60,color:"#FAA61A"},
+    {name:"Reform",abbr:"REF",pct:27,change:0,seats:335,color:"#12B7D4"},
+    {name:"Labour",abbr:"LAB",pct:19,change:1,seats:41,color:"#E4003B"},
+    {name:"Green",abbr:"GRN",pct:16,change:0,seats:52,color:"#02A95B"},
+    {name:"Conservative",abbr:"CON",pct:18,change:1,seats:92,color:"#0087DC"},
+    {name:"Lib Dem",abbr:"LD",pct:12,change:0,seats:60,color:"#FAA61A"},
     {name:"SNP",abbr:"SNP",pct:3,change:0,seats:44,color:"#FFF95D"},
     {name:"Restore Britain",abbr:"RB",pct:7,change:0,seats:1,color:"#0D2A5C"}
   ],
-  context: "Reform leads on ~27% (7-poll avg, 9 Mar 2026). The Green surge has partially eased to ~16% in the latest 7-poll average, though YouGov and Find Out Now both put them at 21% individually. Labour has recovered slightly to 18%. Conservatives hold steady at 17%. Lib Dems slipped to 12%. Restore Britain holds at 7% in prompted polls. Electoral Calculus MRP (Dec 2025) projects Reform on 335 seats — a majority.",
+  context: "Reform leads on ~27% (7-poll avg, 10 Mar 2026). Labour nudges up to 19% as the Green surge settles at 16% in the average — though YouGov and Find Out Now individually still show Greens at 21%. Conservatives recover slightly to 18%. Lib Dems steady at 12%. Survation (5 Mar) has Reform on 29%, Labour on 21%. Restore Britain holds at 7% in prompted polls. Electoral Calculus MRP projects Reform on 335 seats — a majority.",
   trends: [
     {month:"Sep",Reform:28,Labour:22,Conservative:20,"Lib Dem":12,Green:10},
     {month:"Oct",Reform:29,Labour:21,Conservative:19,"Lib Dem":12,Green:11},
@@ -347,7 +347,8 @@ const D = {
     {month:"Mar",Reform:27,Labour:18,Conservative:17,"Lib Dem":12,Green:16}
   ],
   milestones: [
-    {date:"4-6 Mar",text:"Reform 27%, Green 16%, Labour 18% — Green surge eases in 7-poll avg"},
+    {date:"10 Mar",text:"Reform 27%, Labour 19%, Green 16%, Con 18% — multi-party squeeze continues"},
+    {date:"5 Mar",text:"Survation: Reform 29%, Labour 21% — largest parties still far apart"},
     {date:"1-2 Mar",text:"YouGov puts Greens 2nd on 21% — highest ever"},
     {date:"26 Feb",text:"Greens win Gorton & Denton by-election — 5th MP"},
     {date:"Feb 2026",text:"Restore Britain launches — 7-10% in prompted polls"},
@@ -368,7 +369,7 @@ const D = {
      economy:"Rejoin EU single market for goods. Replace business rates. PR voting reform.",
      nhs:"Extra £5bn/year for mental health. 8am GP appointment guarantee.",
      climate:"Net zero by 2045. Ban new oil and gas. 10-year green infrastructure plan."},
-    {name:"Nigel Farage",party:"Reform UK",color:"#12B7D4",approve:38,disapprove:48,net:-10,
+    {name:"Nigel Farage",party:"Reform UK",color:"#12B7D4",approve:34,disapprove:51,net:-17,
      immigration:"Leave ECHR immediately. Intercept and deport all illegal arrivals. Abolish ILR. Full immigration freeze.",
      economy:"Abolish income tax up to £20k. Cut corporation tax to 15%. Abolish BBC licence fee. Scrap net zero.",
      nhs:"Cut NHS management by 50%. Recruit British-trained staff first. Zero waiting lists via private sector.",
@@ -379,12 +380,12 @@ const D = {
      economy:"Cut taxes for working people. Reduce foreign aid to zero. Prioritise British workers.",
      nhs:"Reduce NHS bureaucracy. Performance-based pay. British staff first.",
      climate:"Abolish all green levies. Withdraw from Paris climate agreement."},
-    {name:"Kemi Badenoch",party:"Conservative",color:"#0087DC",approve:22,disapprove:47,net:-25,
+    {name:"Kemi Badenoch",party:"Conservative",color:"#0087DC",approve:24,disapprove:36,net:-12,
      immigration:"Extend settlement route to 10 years. Tougher visa rules. Deport foreign criminals after sentences.",
      economy:"Reduce state spending to 35% of GDP. Cut regulation. Planning reform for growth.",
      nhs:"Productivity reforms. Reduce management layers. Outcome-based targets.",
      climate:"Net zero by 2050. Pro-nuclear energy. Oppose costly near-term targets."},
-    {name:"Keir Starmer",party:"Labour",color:"#E4003B",approve:18,disapprove:67,net:-49,
+    {name:"Keir Starmer",party:"Labour",color:"#E4003B",approve:20,disapprove:66,net:-46,
      immigration:"Border Security Command (£100m). Extend settlement to 10 years. 1,000 extra returns staff.",
      economy:"Fiscal rules: debt falling by 5th year. £40bn tax rises (Oct 2024). NHS and schools investment.",
      nhs:"40,000 extra appointments per week. Cut waiting lists. Mental health investment.",
