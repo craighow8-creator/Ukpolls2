@@ -476,7 +476,7 @@ function renderTrends() {
       <div style="font-size:12px">${m.text}</div>
     </div>`).join('');
   const el = document.getElementById('trend-chart');
-  const W = el.offsetWidth || 300, H = 160;
+  const W = el.offsetWidth || 300, H = Math.max(160, Math.min(320, W * 0.45));
   const pad = {t:8, r:8, b:24, l:26};
   const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
   const parties = ['Reform','Labour','Conservative','Lib Dem','Green'];
@@ -500,9 +500,16 @@ function renderTrends() {
     if (pts.length > 1) svg += `<polyline points="${pts.join(' ')}" fill="none" stroke="${colors[p]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
   });
   svg += '</svg>';
+  el.style.height = H + 'px';
   el.innerHTML = svg;
   document.getElementById('trend-legend').innerHTML = parties.map(p => `<span style="color:${colors[p]};font-size:11px">● ${p}</span>`).join('');
 }
+
+// Redraw chart when window resizes
+window.addEventListener('resize', () => {
+  const el = document.getElementById('trend-chart');
+  if (el && el.closest('.page.active')) renderTrends();
+});
 
 // ── Render Demographics ──
 function renderAge() {
@@ -731,7 +738,10 @@ async function loadVoteResults() {
       return;
     }
     el.innerHTML = `
-      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;text-align:center">${total.toLocaleString()} votes cast by app users</div>
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:32px;font-weight:800;color:#fff">${total.toLocaleString()}</div>
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-top:2px">TOTAL VOTES CAST BY APP USERS</div>
+      </div>
       ${PARTIES_VOTE.filter(p => votes[p.name] || p.poll > 0).map(p => {
         const userPct = total > 0 ? Math.round((votes[p.name]||0)/total*100) : 0;
         const pollPct = p.poll || 0;
