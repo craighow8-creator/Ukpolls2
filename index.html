@@ -396,9 +396,9 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:10px">Share UK Poll Tracker</div>
     <div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:12px;font-size:14px;color:#e8ecf4;line-height:1.6;margin-bottom:16px" id="share-preview-text"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <button onclick="shareToX()" style="padding:12px;border-radius:12px;border:none;font-weight:700;font-size:14px;cursor:pointer;background:#000;color:#fff">X / Twitter</button>
-      <button onclick="shareToWhatsApp()" style="padding:12px;border-radius:12px;border:none;font-weight:700;font-size:14px;cursor:pointer;background:#25D366;color:#fff">WhatsApp</button>
-      <button onclick="shareToFacebook()" style="padding:12px;border-radius:12px;border:none;font-weight:700;font-size:14px;cursor:pointer;background:#1877F2;color:#fff">Facebook</button>
+      <button onclick="shareToX();closeShare()" style="padding:12px;border-radius:12px;border:none;font-weight:700;font-size:14px;cursor:pointer;background:#000;color:#fff">X / Twitter</button>
+      <button onclick="shareToWhatsApp();closeShare()" style="padding:12px;border-radius:12px;border:none;font-weight:700;font-size:14px;cursor:pointer;background:#25D366;color:#fff">WhatsApp</button>
+      <button onclick="shareToFacebook();closeShare()" style="padding:12px;border-radius:12px;border:none;font-weight:700;font-size:14px;cursor:pointer;background:#1877F2;color:#fff">Facebook</button>
       <button onclick="copyLink()" id="copy-btn" style="padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);font-weight:700;font-size:14px;cursor:pointer;background:rgba(255,255,255,0.1);color:#fff">Copy link</button>
     </div>
     <button onclick="closeShare()" style="width:100%;padding:10px;background:transparent;color:#c8cdd8;border:none;font-size:14px;cursor:pointer;text-decoration:underline">Close</button>
