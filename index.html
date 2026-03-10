@@ -420,7 +420,9 @@ function setStatus(cls, txt) {
 // ── Render Overview ──
 function renderOverview() {
   document.getElementById('overview-sub').textContent = '7-poll moving average · ' + D.fetchDate;
-  document.getElementById('hdr-date').textContent = 'ALL PARTIES · ' + D.fetchDate.toUpperCase();
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}).toUpperCase();
+  document.getElementById('hdr-date').textContent = 'ALL PARTIES · ' + dateStr;
   document.getElementById('party-grid').innerHTML = D.parties.map(p => `
     <div class="pc" style="border-top-color:${p.color}">
       <div class="pca">${p.abbr}</div>
