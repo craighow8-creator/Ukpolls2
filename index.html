@@ -813,7 +813,7 @@ function renderVoteButtons(votes) {
     const glow = sel ? ';box-shadow:0 0 0 2px ' + p.color : '';
     const count = (votes && votes[p.name]) ? votes[p.name] : 0;
     const watermark = count > 0
-      ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;color:' + p.color + ';opacity:0.15;pointer-events:none;line-height:1">' + count + '</div>'
+      ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:900;color:' + p.color + ';opacity:0.45;pointer-events:none;line-height:1">' + count + '</div>'
       : '';
     return '<div onclick="castVote(\'' + p.name + '\')" class="pc" style="border-top-color:' + p.color + ';cursor:pointer;position:relative;overflow:hidden' + glow + '">'
       + watermark
