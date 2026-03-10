@@ -98,6 +98,18 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
 .ai-box{background:var(--surface);border-radius:12px;padding:14px;font-size:13px;line-height:1.7;}
 .ai-empty{text-align:center;padding:24px;color:var(--muted);font-size:13px;}
 
+/* ── Support Popup ── */
+#support-popup{display:none;position:fixed;inset:0;background:#000000bb;z-index:1000;align-items:center;justify-content:center;padding:20px;}
+#support-popup.show{display:flex;}
+.popup-box{background:#1a1f2e;border:1px solid #2d3548;border-radius:20px;padding:28px 24px;max-width:320px;width:100%;text-align:center;animation:popIn 0.3s ease;}
+@keyframes popIn{from{transform:scale(0.85);opacity:0}to{transform:scale(1);opacity:1}}
+.popup-icon{font-size:44px;margin-bottom:10px;}
+.popup-title{font-size:20px;font-weight:800;color:#fff;margin-bottom:8px;}
+.popup-body{font-size:14px;color:#9aa3b8;line-height:1.6;margin-bottom:20px;}
+.popup-btn{display:block;width:100%;padding:13px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;border:none;margin-bottom:10px;}
+.popup-yes{background:#ff5e5b;color:#fff;}
+.popup-no{background:transparent;color:#9aa3b8;font-size:13px;text-decoration:underline;}
+
 /* ── Landscape ── */
 @media (orientation:landscape) and (max-height:500px){
   #hdr{padding:4px 14px;}
@@ -326,6 +338,17 @@ body{background:var(--bg);color:var(--dim);font-family:-apple-system,BlinkMacSys
   </div>
 
 </div><!-- end #content -->
+
+<!-- Support Popup -->
+<div id="support-popup">
+  <div class="popup-box">
+    <div class="popup-icon">☕</div>
+    <div class="popup-title">Enjoying UK Poll Tracker?</div>
+    <div class="popup-body">This app is free to use and updated daily. If you find it useful, a small contribution helps keep it running!</div>
+    <a href="https://ko-fi.com/craighowe" target="_blank" class="popup-btn popup-yes" onclick="dismissPopup()">❤️ Support this app</a>
+    <button class="popup-btn popup-no" onclick="dismissPopup()">Maybe later</button>
+  </div>
+</div>
 
 <!-- ── Nav bar — always outside #content ── -->
 <div id="nav">
@@ -824,6 +847,23 @@ async function loadVoteResults() {
   } catch(e) {
     document.getElementById('vote-results').innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">Could not load results.</div>';
   }
+}
+
+// ── Support Popup ──
+function showPopupIfDue() {
+  const last = localStorage.getItem('popup_shown');
+  const now = Date.now();
+  const oneMonth = 30 * 24 * 60 * 60 * 1000;
+  if (!last || (now - parseInt(last)) > oneMonth) {
+    setTimeout(() => {
+      document.getElementById('support-popup').classList.add('show');
+    }, 3 * 60 * 1000); // 3 minutes
+  }
+}
+
+function dismissPopup() {
+  document.getElementById('support-popup').classList.remove('show');
+  localStorage.setItem('popup_shown', Date.now().toString());
 }
 
 // ── Boot ──
