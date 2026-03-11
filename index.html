@@ -1118,7 +1118,10 @@ async function loadVoteResults() {
   try {
     const resp = await fetch(WORKER + '/votes');
     const votes = await resp.json();
-    const total = Object.values(votes).reduce((a,b) => a+b, 0);
+    const knownNames = PARTIES_VOTE.map(p => p.name);
+    const total = Object.entries(votes).reduce((a,[k,v]) => a + (knownNames.includes(k) ? v : 0), 0);
+    const totalRaw = Object.values(votes).reduce((a,b) => a+b, 0);
+    if (totalRaw > total) console.log('Unmatched votes:', Object.entries(votes).filter(([k])=>!knownNames.includes(k)));
     const el = document.getElementById('vote-results');
     if (total === 0) {
       el.innerHTML = '<div style="text-align:center;color:#c8cdd8;font-size:14px;padding:16px">No votes cast yet — be the first!</div>';
