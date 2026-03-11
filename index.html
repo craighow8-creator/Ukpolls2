@@ -268,6 +268,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <div class="sec-label">📍 REGION</div><div id="region-content"></div>
     <div class="sec-label">🌍 ETHNICITY</div><div id="ethnicity-content"></div>
     <div class="sec-label">🗳 2024 NON-VOTERS</div><div id="nonvoter-content"></div>
+
     <div style="font-size:14px;color:#c8cdd8;text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common. Feb–Mar 2026.</div>
   </div>
 
@@ -524,6 +525,7 @@ function sp(id, btn) {
   document.getElementById('content').scrollTop = 0;
   btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
   if (id === 'trends') { setTimeout(renderTrends,50); setTimeout(renderTrends,300); }
+  if (id === 'demo') { setTimeout(initRegionalMap, 50); }
 }
 
 
@@ -539,7 +541,7 @@ function openCompare(){
   compareSelected=[];
   document.getElementById('compare-result').innerHTML='';
   document.getElementById('compare-picker').innerHTML=D.parties.map(function(p){
-    return '<div onclick="toggleCompare(\u0027'+p.name+'\u0027,this)" style="background:rgba(5,10,30,0.8);border:2px solid '+p.color+'40;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;">'
+    return '<div onclick="toggleCompare(\u0027'+p.name+'\u0027,this)" data-party="'+p.name+'" style="background:rgba(5,10,30,0.8);border:2px solid '+p.color+'40;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.15s;">'
       +'<div style="font-size:14px;color:'+p.color+';font-weight:700;margin-bottom:4px">'+p.name+'</div>'
       +'<div style="font-size:18px;font-weight:800;color:'+p.color+'">'+p.pct+'%</div>'
       +'</div>';
@@ -547,9 +549,103 @@ function openCompare(){
   document.getElementById('compare-modal').style.display='flex';
 }
 function closeCompare(){document.getElementById('compare-modal').style.display='none';}
-function toggleCompare(name,el){var idx=compareSelected.indexOf(name),p=D.parties.find(function(x){return x.name===name;});if(idx>-1){compareSelected.splice(idx,1);el.style.borderColor=p.color+'40';el.style.background='rgba(5,10,30,0.8)';}else if(compareSelected.length<2){compareSelected.push(name);el.style.borderColor=p.color;el.style.background='rgba(5,10,30,0.95)';}if(compareSelected.length===2)renderComparison();else document.getElementById('compare-result').innerHTML='';}
-function renderComparison(){var a=D.parties.find(function(p){return p.name===compareSelected[0];}),b=D.parties.find(function(p){return p.name===compareSelected[1];});var diff=Math.abs(a.pct-b.pct),ld=a.pct>b.pct?a:b,sd=Math.abs(a.seats-b.seats);var note=diff<=3?'Extremely tight - within margin of error.':diff<=8?'Meaningful but not decisive lead.':'Significant gap - major seat difference.';document.getElementById('compare-result').innerHTML='<div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;margin-top:4px"><div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:14px"><div style="text-align:center"><div style="font-size:14px;color:'+a.color+';font-weight:700">'+a.name+'</div><div style="font-size:32px;font-weight:900;color:'+a.color+'">'+a.pct+'%</div><div style="font-size:14px;color:#c8cdd8">~'+a.seats+' seats</div></div><div style="font-size:14px;color:#c8cdd8;font-weight:700">VS</div><div style="text-align:center"><div style="font-size:14px;color:'+b.color+';font-weight:700">'+b.name+'</div><div style="font-size:32px;font-weight:900;color:'+b.color+'">'+b.pct+'%</div><div style="font-size:14px;color:#c8cdd8">~'+b.seats+' seats</div></div></div><div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:12px;font-size:14px;color:#e8ecf4;line-height:1.6">'+ld.name+' leads by '+diff+' points (~'+sd+' seats). '+note+' Neither on course for a majority.</div></div>';}
+function toggleCompare(name, el) {
+  var idx = compareSelected.indexOf(name);
+  var p = D.parties.find(function(x){ return x.name===name; });
+  if(!p) return;
+  if (idx > -1) {
+    // Deselect
+    compareSelected.splice(idx, 1);
+    el.style.borderColor = p.color + '40';
+    el.style.background = 'rgba(5,10,30,0.8)';
+    document.getElementById('compare-result').innerHTML = '';
+  } else if (compareSelected.length < 2) {
+    compareSelected.push(name);
+    el.style.borderColor = p.color;
+    el.style.background = 'rgba(5,10,30,0.95)';
+    if (compareSelected.length === 2) renderComparison();
+  } else {
+    // Already 2 selected — replace the first one
+    var oldName = compareSelected[0];
+    compareSelected = [compareSelected[1], name];
+    // Reset all highlights then re-apply
+    document.querySelectorAll('#compare-picker > div').forEach(function(d) {
+      var dname = d.getAttribute('data-name');
+      var dp = D.parties.find(function(x){ return x.name===dname; });
+      if(!dp) return;
+      if(compareSelected.indexOf(dname) > -1) {
+        d.style.borderColor = dp.color;
+        d.style.background = 'rgba(5,10,30,0.95)';
+      } else {
+        d.style.borderColor = dp.color + '40';
+        d.style.background = 'rgba(5,10,30,0.8)';
+      }
+    });
+    renderComparison();
+  }
+}
+
+function renderComparison() {
+  var a = D.parties.find(function(p){ return p.name===compareSelected[0]; });
+  var b = D.parties.find(function(p){ return p.name===compareSelected[1]; });
+  if(!a || !b) return;
+
+  // Get leader data for each party
+  var leaderMap = {
+    'Reform UK': 'Reform UK', 'Labour': 'Labour', 'Conservative': 'Conservative',
+    'Green': 'Green Party', 'Lib Dem': 'Lib Dems', 'Restore Britain': 'Restore Britain', 'SNP': 'SNP'
+  };
+  var la = D.leaders.find(function(l){ return l.party === leaderMap[a.name] || l.party === a.name; });
+  var lb = D.leaders.find(function(l){ return l.party === leaderMap[b.name] || l.party === b.name; });
+
+  var diff = Math.abs(a.pct - b.pct);
+  var leader = a.pct > b.pct ? a : b;
+  var seatDiff = Math.abs((a.seats||0) - (b.seats||0));
+  var gapNote = diff <= 3 ? 'Extremely tight — within margin of error.' : diff <= 8 ? 'Meaningful but not decisive lead.' : 'Significant polling gap.';
+
+  function netBadge(l) {
+    if(!l || l.net === null) return '<span style="color:#c8cdd8">No data</span>';
+    var col = l.net > 0 ? '#3fb950' : '#f85149';
+    return '<span style="color:'+col+';font-weight:700">'+(l.net>0?'+':'')+l.net+'</span>';
+  }
+  function policyRow(emoji, label, textA, textB) {
+    return '<tr>'
+      +'<td style="padding:8px 6px;border-top:1px solid rgba(255,255,255,0.08);vertical-align:top;width:42%"><div style="font-size:13px;color:#e8ecf4;line-height:1.5">'+(textA||'—')+'</div></td>'
+      +'<td style="padding:8px 4px;border-top:1px solid rgba(255,255,255,0.08);text-align:center;vertical-align:top;width:16%"><div style="font-size:11px;color:#c8cdd8;white-space:nowrap">'+emoji+'<br>'+label+'</div></td>'
+      +'<td style="padding:8px 6px;border-top:1px solid rgba(255,255,255,0.08);vertical-align:top;width:42%"><div style="font-size:13px;color:#e8ecf4;line-height:1.5">'+(textB||'—')+'</div></td>'
+      +'</tr>';
+  }
+
+  var html = '<div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;margin-top:4px">'
+    // Polling header
+    + '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:12px">'
+    + '<div style="text-align:center"><div style="font-size:13px;color:'+a.color+';font-weight:700">'+a.name+'</div><div style="font-size:32px;font-weight:900;color:'+a.color+'">'+a.pct+'%</div><div style="font-size:13px;color:#c8cdd8">'+(a.seats!==null?'~'+a.seats+' seats':'—')+'</div></div>'
+    + '<div style="font-size:13px;color:#c8cdd8;font-weight:700;text-align:center">VS</div>'
+    + '<div style="text-align:center"><div style="font-size:13px;color:'+b.color+';font-weight:700">'+b.name+'</div><div style="font-size:32px;font-weight:900;color:'+b.color+'">'+b.pct+'%</div><div style="font-size:13px;color:#c8cdd8">'+(b.seats!==null?'~'+b.seats+' seats':'—')+'</div></div>'
+    + '</div>'
+    // Gap note
+    + '<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:10px;font-size:14px;color:#e8ecf4;text-align:center;margin-bottom:12px">'+leader.name+' leads by '+diff+' points. '+gapNote+'</div>'
+    // Leaders
+    + (la || lb ? '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:12px;background:rgba(255,255,255,0.04);border-radius:8px;padding:10px">'
+      + '<div style="text-align:center"><div style="font-size:13px;color:#c8cdd8;margin-bottom:2px">'+(la?la.name:'—')+'</div><div style="font-size:15px">Net: '+netBadge(la)+'</div></div>'
+      + '<div style="font-size:11px;color:#c8cdd8;text-align:center">👤<br>Leader</div>'
+      + '<div style="text-align:center"><div style="font-size:13px;color:#c8cdd8;margin-bottom:2px">'+(lb?lb.name:'—')+'</div><div style="font-size:15px">Net: '+netBadge(lb)+'</div></div>'
+      + '</div>' : '')
+    // Policy table
+    + '<table style="width:100%;border-collapse:collapse"><tbody>'
+    + policyRow('🛂','Immigration', la&&la.immigration, lb&&lb.immigration)
+    + policyRow('💷','Economy', la&&la.economy, lb&&lb.economy)
+    + policyRow('🏥','NHS', la&&la.nhs, lb&&lb.nhs)
+    + policyRow('🌿','Climate', la&&la.climate, lb&&lb.climate)
+    + '</tbody></table>'
+    + '</div>';
+
+  document.getElementById('compare-result').innerHTML = html;
+}
+
+
 (function(){var el=document.getElementById('content'),sY=0,pull=false,busy=false;el.addEventListener('touchstart',function(e){if(el.scrollTop===0){sY=e.touches[0].clientY;pull=true;}},{passive:true});el.addEventListener('touchmove',function(e){if(!pull||busy)return;var d=e.touches[0].clientY-sY;if(d>0&&d<70)el.style.paddingTop=(d*0.4)+'px';},{passive:true});el.addEventListener('touchend',function(){if(!pull)return;var d=parseInt(el.style.paddingTop)||0;el.style.paddingTop='';pull=false;if(d>20&&!busy){busy=true;refreshData();setTimeout(function(){busy=false;},3000);}});})();
+
 function setStatus(cls, txt) {
   document.getElementById('status-dot').className = 'ldot' + (cls === 'loading' ? ' spin' : '');
   const el = document.getElementById('status-txt');
