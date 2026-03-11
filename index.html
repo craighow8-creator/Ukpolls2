@@ -480,33 +480,39 @@ const D = {
      immigration:"Safe & legal routes for refugees. Opposes detention and deportation. Retain 5-year settlement route for all.",
      economy:"Wealth tax on assets over £10m. Cancel two-child benefit cap. Fund public services by taxing the super-rich.",
      nhs:"Reverse NHS privatisation. Mental health on par with physical health. Fund fully through wealth taxes.",
-     climate:"Net zero by 2045. Massive green jobs programme. No new oil and gas licences."},
+     climate:"Net zero by 2045. Massive green jobs programme. No new oil and gas licences.",
+     bio:"Born 1984 in London. Former actor and Green Party councillor in Edinburgh. Elected Green MSP for Lothian in 2021. Known for his passionate oratory and left-wing economics. Became Green Party of England & Wales co-leader in September 2025 following Adrian Ramsay's resignation."},
     {name:"Ed Davey",party:"Lib Dems",color:"#FAA61A",approve:28,disapprove:35,net:-7,
      immigration:"International cooperation on returns. Oppose ECHR withdrawal. Humane asylum processing.",
      economy:"Rejoin EU single market for goods. Replace business rates. PR voting reform.",
      nhs:"Extra £5bn/year for mental health. 8am GP appointment guarantee.",
-     climate:"Net zero by 2045. Ban new oil and gas. 10-year green infrastructure plan."},
+     climate:"Net zero by 2045. Ban new oil and gas. 10-year green infrastructure plan.",
+     bio:"Born 1965 in Nottinghamshire. Orphaned at 15, raised partly in care. Studied PPE at Oxford. Lib Dem MP for Kingston since 1997 (lost 2015, returned 2017). Former Secretary of State for Energy & Climate Change under the Coalition. Became Lib Dem leader in 2020. Known for his high-energy campaign stunts."},
     {name:"Nigel Farage",party:"Reform UK",color:"#12B7D4",approve:34,disapprove:51,net:-17,
      immigration:"Leave ECHR immediately. Intercept and deport all illegal arrivals. Abolish ILR. Full immigration freeze.",
      economy:"Abolish income tax up to £20k. Cut corporation tax to 15%. Abolish BBC licence fee. Scrap net zero.",
      nhs:"Cut NHS management by 50%. Recruit British-trained staff first. Zero waiting lists via private sector.",
-     climate:"Scrap all net zero targets. No new wind farms. Reinstate all North Sea oil and gas licences."},
+     climate:"Scrap all net zero targets. No new wind farms. Reinstate all North Sea oil and gas licences.",
+     bio:"Born 1964 in Kent. Former commodity broker turned politician. Founded UKIP's rise, led it 2006–2009 and 2010–2016. Key architect of the Brexit campaign. Founded the Brexit Party (2019) then Reform UK. Finally elected MP for Clacton in July 2024 at his eighth attempt. Became Reform UK leader in 2024."},
     {name:"Rupert Lowe",party:"Restore Britain",color:"#0D2A5C",approve:null,disapprove:null,net:null,
      note:"86% of UK adults could not identify Lowe (JL Partners, Feb 2026). However, Restore Britain is targeting the 42% who did not vote in 2024 — research suggests RB and Reform are the biggest beneficiaries among disengaged voters now returning to the ballot box. Recognition growing rapidly via social media.",
      immigration:"Zero net migration. Mass deportations. Withdraw from UN refugee convention.",
      economy:"Cut taxes for working people. Reduce foreign aid to zero. Prioritise British workers.",
      nhs:"Reduce NHS bureaucracy. Performance-based pay. British staff first.",
-     climate:"Abolish all green levies. Withdraw from Paris climate agreement."},
+     climate:"Abolish all green levies. Withdraw from Paris climate agreement.",
+     bio:"Born 1962. Former chairman of Southampton FC (1997–2006) and chairman of Queens Park Rangers. Businessman and investor. Elected Reform UK MP for Great Yarmouth in 2024, then expelled from Reform in March 2025 after a public falling out with Farage. Founded Restore Britain in early 2026."},
     {name:"Kemi Badenoch",party:"Conservative",color:"#0087DC",approve:24,disapprove:36,net:-12,
      immigration:"Extend settlement route to 10 years. Tougher visa rules. Deport foreign criminals after sentences.",
      economy:"Reduce state spending to 35% of GDP. Cut regulation. Planning reform for growth.",
      nhs:"Productivity reforms. Reduce management layers. Outcome-based targets.",
-     climate:"Net zero by 2050. Pro-nuclear energy. Oppose costly near-term targets."},
+     climate:"Net zero by 2050. Pro-nuclear energy. Oppose costly near-term targets.",
+     bio:"Born 1980 in Wimbledon, raised partly in Nigeria and the US. Software engineer before entering politics. MP for Saffron Walden since 2017. Served as Equalities Minister and Business Secretary under Sunak. Won the Conservative leadership contest in November 2024, becoming the first Black leader of a major UK party."},
     {name:"Keir Starmer",party:"Labour",color:"#E4003B",approve:20,disapprove:66,net:-46,
      immigration:"Border Security Command (£100m). Extend settlement to 10 years. 1,000 extra returns staff.",
      economy:"Fiscal rules: debt falling by 5th year. £40bn tax rises (Oct 2024). NHS and schools investment.",
      nhs:"40,000 extra appointments per week. Cut waiting lists. Mental health investment.",
-     climate:"Clean energy by 2030. GB Energy public company. Ban new North Sea licences."}
+     climate:"Clean energy by 2030. GB Energy public company. Ban new North Sea licences.",
+     bio:"Born 1962 in Surrey. Human rights barrister. Director of Public Prosecutions 2008–2013, knighted for services to law. MP for Holborn & St Pancras since 2015. Won Labour leadership in 2020. Led Labour to a 170-seat majority in July 2024 after 14 years in opposition. Approval ratings have collapsed since entering government."}
   ],
   polls: [
     {date:"5 Mar",pollster:"Survation",ref:29,lab:21,con:18,ld:10,grn:12,rb:null},
@@ -980,27 +986,38 @@ function renderLeaders() {
     {k:'nhs',         l:'🏥 NHS'},
     {k:'climate',     l:'🌿 CLIMATE'}
   ];
-  document.getElementById('leaders-content').innerHTML = D.leaders.map(l => `
-    <div class="lcard">
+  document.getElementById('leaders-content').innerHTML = D.leaders.map((l,li) => {
+    var initials = l.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2);
+    var bioId = 'bio-' + li;
+    var bioHtml = l.bio ? `<div style="margin-top:8px">
+      <button onclick="var el=document.getElementById('${bioId}');var btn=this;if(el.style.display==='none'){el.style.display='block';btn.textContent='▲ Hide bio';}else{el.style.display='none';btn.textContent='▼ About ${l.name.split(' ')[0]}'}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#c8cdd8;border-radius:20px;padding:4px 12px;font-size:13px;cursor:pointer;margin-bottom:6px">▼ About ${l.name.split(' ')[0]}</button>
+      <div id="${bioId}" style="display:none;font-size:13px;color:#c8cdd8;line-height:1.6;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px">${l.bio}</div>
+    </div>` : '';
+    return `<div class="lcard">
       <div class="lch">
-        <div>
-          <div class="lcname">${l.name}</div>
-          <div class="lcparty" style="color:${l.color}">${l.party}</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:48px;height:48px;border-radius:50%;background:${l.color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,0.2)">${initials}</div>
+          <div>
+            <div class="lcname">${l.name}</div>
+            <div class="lcparty" style="color:${l.color}">${l.party}</div>
+          </div>
         </div>
         <div style="text-align:right">
           <div class="lcnet" style="color:${l.net === null ? 'var(--muted)' : l.net > 0 ? 'var(--up)' : 'var(--down)'}">${l.net === null ? '—' : (l.net > 0 ? '+' : '') + l.net}</div>
           <div class="lcnl">${l.net === null ? 'LIMITED' : 'NET'}</div>
         </div>
       </div>
-      ${l.note ? `<div style="font-size:15px;color:#c8cdd8;line-height:1.6;margin-bottom:10px">${l.note}</div>` : `
-        <div class="abar"><div style="flex:${l.approve};background:#3fb95050"></div><div style="flex:${l.disapprove};background:#f8514950"></div></div>
+      ${bioHtml}
+      ${l.note ? `<div style="font-size:15px;color:#c8cdd8;line-height:1.6;margin-bottom:10px;margin-top:8px">${l.note}</div>` : `
+        <div class="abar" style="margin-top:10px"><div style="flex:${l.approve};background:#3fb95050"></div><div style="flex:${l.disapprove};background:#f8514950"></div></div>
         <div class="lcs"><span style="color:var(--up)">▲ ${l.approve}%</span><span style="color:var(--down)">▼ ${l.disapprove}%</span></div>`}
       ${topics.filter(t => l[t.k]).map(t => `
         <div class="psec">
           <div class="plbl">${t.l}</div>
           <div class="ptxt">${l[t.k]}</div>
         </div>`).join('')}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── Render Polls ──
