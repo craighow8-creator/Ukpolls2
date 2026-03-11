@@ -280,7 +280,6 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <div class="stitle">Leader Ratings</div>
     <div class="ssub">Net approval · latest polling</div>
     <div id="leaders-content"></div>
-    <div id="leaders-compare" style="display:none;margin-top:10px"></div>
   </div>
 
   <!-- POLLS -->
@@ -834,17 +833,24 @@ function selectLeaderCompare(partyName, btn) {
     }
   });
 
-  var el = document.getElementById('leaders-compare');
   if (leaderCompareSelected.length === 2) {
     compareSelected = leaderCompareSelected.slice();
-    el.style.display = 'block';
-    el.innerHTML = '<div class="card" style="padding:14px"><div style="font-size:13px;font-weight:700;color:#e8ecf4;margin-bottom:8px">⚖️ COMPARISON</div><div id="compare-result"></div></div>';
+    document.getElementById('leader-compare-modal').style.display = 'flex';
+    document.getElementById('leader-compare-result').innerHTML = '<div id="compare-result"></div>';
     renderComparison();
-    setTimeout(function(){ el.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
-  } else {
-    el.style.display = 'none';
   }
 }
+function closeLeaderCompare() {
+  document.getElementById('leader-compare-modal').style.display = 'none';
+  leaderCompareSelected = [];
+  document.querySelectorAll('[id^="lcmp-"]').forEach(function(b) {
+    b.style.background = 'rgba(255,255,255,0.08)';
+    b.style.color = '#c8cdd8';
+    b.style.borderColor = 'rgba(255,255,255,0.2)';
+    b.textContent = 'Compare';
+  });
+}
+
 function setStatus(cls, txt) {
   document.getElementById('status-dot').className = 'ldot' + (cls === 'loading' ? ' spin' : '');
   const el = document.getElementById('status-txt');
@@ -1272,5 +1278,16 @@ setTimeout(renderTrends, 100);
 </script>
 
 <script data-goatcounter="https://ukpolls.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+
+  <!-- Leader Compare Modal -->
+  <div id="leader-compare-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:16px">
+    <div style="background:rgba(5,10,30,0.98);border:1px solid rgba(255,255,255,0.15);border-radius:16px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:800;color:#fff">⚖️ Compare Parties</div>
+        <button onclick="closeLeaderCompare()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+      <div id="leader-compare-result"></div>
+    </div>
+  </div>
 </body>
 </html>
