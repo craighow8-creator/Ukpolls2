@@ -875,9 +875,10 @@ async function loadVoteResults() {
         <div style="font-size:36px;font-weight:800;color:#ffffff;text-shadow:0 2px 8px rgba(0,0,0,0.5)">${total.toLocaleString()}</div>
         <div style="font-size:14px;color:#c8cdd8;letter-spacing:1px;margin-top:2px">TOTAL VOTES CAST BY APP USERS</div>
       </div>
-      ${PARTIES_VOTE.filter(p => votes[p.name] || p.poll > 0).map(p => {
+      ${PARTIES_VOTE.filter(p => (votes[p.name]||0) > 0 || ['Reform UK','Labour','Conservative','Green','Lib Dem','SNP','Restore Britain'].includes(p.name)).map(p => {
         const userPct = total > 0 ? Math.round((votes[p.name]||0)/total*100) : 0;
-        const pollPct = p.poll || 0;
+        const POLL_MAP = {'Reform UK':27,'Labour':19,'Conservative':18,'Green':16,'Lib Dem':12,'SNP':3,'Restore Britain':7};
+        const pollPct = POLL_MAP[p.name] || 0;
         return `
           <div style="margin-bottom:12px">
             <div style="display:flex;justify-content:space-between;margin-bottom:4px">
