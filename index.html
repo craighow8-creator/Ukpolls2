@@ -1051,7 +1051,6 @@ function renderLeaders() {
             <div class="lcname">${l.name}</div>
             <div class="lcparty" style="color:${l.color}">${l.party}</div>
           </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         </div>
         <div style="text-align:right">
           <div class="lcnet" style="color:${l.net === null ? 'var(--muted)' : l.net > 0 ? 'var(--up)' : 'var(--down)'}">${l.net === null ? '—' : (l.net > 0 ? '+' : '') + l.net}</div>
