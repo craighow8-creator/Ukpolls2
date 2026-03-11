@@ -798,13 +798,10 @@ function renderMigration() {
 
 var leaderCompareSelected = [];
 
-function selectLeaderCompare(partyName, btn) {
-  // Map party name to D.parties name
-  var nameMap = {'Green Party':'Green','Lib Dems':'Lib Dem','Reform UK':'Reform UK','Restore Britain':'Restore Britain','Conservative':'Conservative','Labour':'Labour','SNP':'SNP'};
-  var mappedName = nameMap[partyName] || partyName;
-  var idx = leaderCompareSelected.indexOf(mappedName);
+function selectLeaderCompare(leaderIdx, btn) {
+  var idx = leaderCompareSelected.indexOf(leaderIdx);
 
-  // Reset all buttons
+  // Reset all buttons first
   document.querySelectorAll('[id^="lcmp-"]').forEach(function(b) {
     b.style.background = 'rgba(255,255,255,0.08)';
     b.style.color = '#c8cdd8';
@@ -816,39 +813,76 @@ function selectLeaderCompare(partyName, btn) {
     leaderCompareSelected.splice(idx, 1);
   } else {
     if (leaderCompareSelected.length >= 2) leaderCompareSelected.shift();
-    leaderCompareSelected.push(mappedName);
+    leaderCompareSelected.push(leaderIdx);
   }
 
-  // Re-highlight selected buttons
-  D.leaders.forEach(function(l, li) {
-    var mn = nameMap[l.party] || l.party;
-    if (leaderCompareSelected.indexOf(mn) > -1) {
-      var b = document.getElementById('lcmp-'+li);
-      if (b) {
-        b.style.background = l.color + '30';
-        b.style.color = l.color;
-        b.style.borderColor = l.color;
-        b.textContent = '✓ Selected';
-      }
+  // Highlight selected
+  leaderCompareSelected.forEach(function(i) {
+    var b = document.getElementById('lcmp-'+i);
+    var l = D.leaders[i];
+    if (b && l) {
+      b.style.background = l.color + '30';
+      b.style.color = l.color;
+      b.style.borderColor = l.color;
+      b.textContent = '✓ Selected';
     }
   });
 
   if (leaderCompareSelected.length === 2) {
-    compareSelected = leaderCompareSelected.slice();
-    var modal = document.getElementById('leader-compare-modal');
-    var result = document.getElementById('leader-compare-result');
-    modal.style.display = 'flex';
-    result.innerHTML = '<div id="compare-result"></div>';
-    // Render directly - DOM is synchronously updated above
-    var a = D.parties.find(function(p){ return p.name===compareSelected[0]; });
-    var b = D.parties.find(function(p){ return p.name===compareSelected[1]; });
-    if (a && b) {
-      renderComparison();
-    } else {
-      result.innerHTML = '<div style="color:#c8cdd8;font-size:14px;padding:16px;text-align:center">Could not find party data for: ' + compareSelected.join(', ') + '</div>';
-    }
+    var a = D.leaders[leaderCompareSelected[0]];
+    var b2 = D.leaders[leaderCompareSelected[1]];
+    document.getElementById('leader-compare-modal').style.display = 'flex';
+    document.getElementById('leader-compare-result').innerHTML = buildLeaderComparison(a, b2);
   }
 }
+
+function buildLeaderComparison(a, b) {
+  function netCol(n) { return n === null ? '#c8cdd8' : n > 0 ? '#3fb950' : '#f85149'; }
+  function netStr(n) { return n === null ? 'No data' : (n > 0 ? '+' : '') + n; }
+  function policyRow(emoji, label, ta, tb) {
+    return '<tr>'
+      + '<td style="padding:8px 6px;border-top:1px solid rgba(255,255,255,0.08);vertical-align:top;width:42%"><div style="font-size:13px;color:#e8ecf4;line-height:1.5">'+(ta||'—')+'</div></td>'
+      + '<td style="padding:8px 4px;border-top:1px solid rgba(255,255,255,0.08);text-align:center;vertical-align:middle;width:16%"><div style="font-size:11px;color:#c8cdd8">'+emoji+'<br>'+label+'</div></td>'
+      + '<td style="padding:8px 6px;border-top:1px solid rgba(255,255,255,0.08);vertical-align:top;width:42%"><div style="font-size:13px;color:#e8ecf4;line-height:1.5">'+(tb||'—')+'</div></td>'
+      + '</tr>';
+  }
+
+  // Find matching party poll data
+  var nameMap = {'Green Party':'Green','Lib Dems':'Lib Dem','Reform UK':'Reform UK','Restore Britain':'Restore Britain','Conservative':'Conservative','Labour':'Labour','SNP':'SNP'};
+  var pa = D.parties.find(function(p){ return p.name === (nameMap[a.party]||a.party); });
+  var pb = D.parties.find(function(p){ return p.name === (nameMap[b.party]||b.party); });
+
+  return '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:14px">'
+    + '<div style="text-align:center">'
+      + '<div style="width:44px;height:44px;border-radius:50%;background:'+a.color+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;margin:0 auto 6px">'+a.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'
+      + '<div style="font-size:14px;font-weight:800;color:'+a.color+'">'+a.name+'</div>'
+      + '<div style="font-size:12px;color:#c8cdd8">'+a.party+'</div>'
+      + (pa ? '<div style="font-size:22px;font-weight:900;color:'+a.color+';margin-top:4px">'+pa.pct+'%</div>' : '')
+    + '</div>'
+    + '<div style="font-size:13px;color:#c8cdd8;font-weight:700">VS</div>'
+    + '<div style="text-align:center">'
+      + '<div style="width:44px;height:44px;border-radius:50%;background:'+b.color+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;margin:0 auto 6px">'+b.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'
+      + '<div style="font-size:14px;font-weight:800;color:'+b.color+'">'+b.name+'</div>'
+      + '<div style="font-size:12px;color:#c8cdd8">'+b.party+'</div>'
+      + (pb ? '<div style="font-size:22px;font-weight:900;color:'+b.color+';margin-top:4px">'+pb.pct+'%</div>' : '')
+    + '</div>'
+    + '</div>'
+    // Leader approval
+    + '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;background:rgba(255,255,255,0.04);border-radius:8px;padding:10px;margin-bottom:12px">'
+      + '<div style="text-align:center"><div style="font-size:20px;font-weight:800;color:'+netCol(a.net)+'">'+netStr(a.net)+'</div><div style="font-size:11px;color:#c8cdd8">Net approval</div></div>'
+      + '<div style="font-size:11px;color:#c8cdd8;text-align:center;align-self:center">👤<br>Leader</div>'
+      + '<div style="text-align:center"><div style="font-size:20px;font-weight:800;color:'+netCol(b.net)+'">'+netStr(b.net)+'</div><div style="font-size:11px;color:#c8cdd8">Net approval</div></div>'
+    + '</div>'
+    // Policy table
+    + '<table style="width:100%;border-collapse:collapse"><tbody>'
+    + policyRow('🛂','Immigration', a.immigration, b.immigration)
+    + policyRow('💷','Economy', a.economy, b.economy)
+    + policyRow('🏥','NHS', a.nhs, b.nhs)
+    + policyRow('🌿','Climate', a.climate, b.climate)
+    + '</tbody></table>';
+}
+
+
 function closeLeaderCompare() {
   document.getElementById('leader-compare-modal').style.display = 'none';
   leaderCompareSelected = [];
@@ -1070,7 +1104,7 @@ function renderLeaders() {
         <div style="text-align:right">
           <div class="lcnet" style="color:${l.net === null ? 'var(--muted)' : l.net > 0 ? 'var(--up)' : 'var(--down)'}">${l.net === null ? '—' : (l.net > 0 ? '+' : '') + l.net}</div>
           <div class="lcnl">${l.net === null ? 'LIMITED' : 'NET'}</div>
-          <button onclick="selectLeaderCompare(\u0027${l.party}\u0027,this)" id="lcmp-${li}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:#c8cdd8;border-radius:20px;padding:3px 10px;font-size:12px;cursor:pointer;white-space:nowrap">Compare</button>
+          <button onclick="selectLeaderCompare(${li},this)" id="lcmp-${li}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:#c8cdd8;border-radius:20px;padding:3px 10px;font-size:12px;cursor:pointer;white-space:nowrap">Compare</button>
         </div>
       </div>
       ${bioHtml}
