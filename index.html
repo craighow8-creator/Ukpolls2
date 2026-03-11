@@ -835,9 +835,18 @@ function selectLeaderCompare(partyName, btn) {
 
   if (leaderCompareSelected.length === 2) {
     compareSelected = leaderCompareSelected.slice();
-    document.getElementById('leader-compare-modal').style.display = 'flex';
-    document.getElementById('leader-compare-result').innerHTML = '<div id="compare-result"></div>';
-    setTimeout(renderComparison, 50);
+    var modal = document.getElementById('leader-compare-modal');
+    var result = document.getElementById('leader-compare-result');
+    modal.style.display = 'flex';
+    result.innerHTML = '<div id="compare-result"></div>';
+    // Render directly - DOM is synchronously updated above
+    var a = D.parties.find(function(p){ return p.name===compareSelected[0]; });
+    var b = D.parties.find(function(p){ return p.name===compareSelected[1]; });
+    if (a && b) {
+      renderComparison();
+    } else {
+      result.innerHTML = '<div style="color:#c8cdd8;font-size:14px;padding:16px;text-align:center">Could not find party data for: ' + compareSelected.join(', ') + '</div>';
+    }
   }
 }
 function closeLeaderCompare() {
