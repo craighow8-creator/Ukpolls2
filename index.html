@@ -541,7 +541,7 @@ function openCompare(){
   compareSelected=[];
   document.getElementById('compare-result').innerHTML='';
   document.getElementById('compare-picker').innerHTML=D.parties.map(function(p){
-    return '<div onclick="toggleCompare(\u0027'+p.name+'\u0027,this)" data-party="'+p.name+'" style="background:rgba(5,10,30,0.8);border:2px solid '+p.color+'40;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.15s;">'
+    return '<div onclick="toggleCompare(\u0027'+p.name+'\u0027,this)" data-name="'+p.name+'" style="background:rgba(5,10,30,0.8);border:2px solid '+p.color+'40;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.15s;">'
       +'<div style="font-size:14px;color:'+p.color+';font-weight:700;margin-bottom:4px">'+p.name+'</div>'
       +'<div style="font-size:18px;font-weight:800;color:'+p.color+'">'+p.pct+'%</div>'
       +'</div>';
