@@ -551,39 +551,38 @@ function openCompare(){
 function closeCompare(){document.getElementById('compare-modal').style.display='none';}
 function toggleCompare(name, el) {
   var idx = compareSelected.indexOf(name);
-  var p = D.parties.find(function(x){ return x.name===name; });
-  if(!p) return;
+
   if (idx > -1) {
-    // Deselect
+    // Already selected — deselect it
     compareSelected.splice(idx, 1);
-    el.style.borderColor = p.color + '40';
-    el.style.background = 'rgba(5,10,30,0.8)';
+    resetPickerHighlights();
     document.getElementById('compare-result').innerHTML = '';
-  } else if (compareSelected.length < 2) {
-    compareSelected.push(name);
-    el.style.borderColor = p.color;
-    el.style.background = 'rgba(5,10,30,0.95)';
-    if (compareSelected.length === 2) renderComparison();
-  } else {
-    // Already 2 selected — replace the first one
-    var oldName = compareSelected[0];
-    compareSelected = [compareSelected[1], name];
-    // Reset all highlights then re-apply
-    document.querySelectorAll('#compare-picker > div').forEach(function(d) {
-      var dname = d.getAttribute('data-name');
-      var dp = D.parties.find(function(x){ return x.name===dname; });
-      if(!dp) return;
-      if(compareSelected.indexOf(dname) > -1) {
-        d.style.borderColor = dp.color;
-        d.style.background = 'rgba(5,10,30,0.95)';
-      } else {
-        d.style.borderColor = dp.color + '40';
-        d.style.background = 'rgba(5,10,30,0.8)';
-      }
-    });
-    renderComparison();
+    return;
   }
+
+  // Add to selection (max 2 — drop oldest if full)
+  if (compareSelected.length >= 2) compareSelected.shift();
+  compareSelected.push(name);
+
+  // Re-highlight all pickers based on current selection
+  resetPickerHighlights();
+
+  if (compareSelected.length === 2) renderComparison();
+  else document.getElementById('compare-result').innerHTML = '';
 }
+
+function resetPickerHighlights() {
+  document.querySelectorAll('#compare-picker > div').forEach(function(d) {
+    var dname = d.getAttribute('data-name');
+    var dp = D.parties.find(function(x){ return x.name===dname; });
+    if(!dp) return;
+    var isSelected = compareSelected.indexOf(dname) > -1;
+    d.style.borderColor = isSelected ? dp.color : dp.color + '40';
+    d.style.background = isSelected ? 'rgba(5,10,30,0.95)' : 'rgba(5,10,30,0.8)';
+    d.style.boxShadow = isSelected ? '0 0 0 2px ' + dp.color : 'none';
+  });
+}
+
 
 function renderComparison() {
   var a = D.parties.find(function(p){ return p.name===compareSelected[0]; });
