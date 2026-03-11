@@ -539,10 +539,10 @@ function sp(id, btn) {
 
 
 var APP_URL='https://craighow8-creator.github.io/Ukpolls2/';
-function openShare(){var top=D.parties[0];document.getElementById('share-preview-text').textContent='UK Poll Tracker: '+top.name+' leads on '+top.pct+'% - Hung Parliament projected. '+APP_URL;document.getElementById('share-modal').style.display='flex';}
+function openShare(){var p=D.parties;var txt='🇬🇧 UK Polls (Mar 2026): Reform UK '+p[0].pct+'% · Labour '+p[1].pct+'% · Con '+p[2].pct+'% · Green '+p[3].pct+'% · LD '+p[4].pct+'%. Track the polls: '+APP_URL;document.getElementById('share-preview-text').textContent=txt;document.getElementById('share-modal').style.display='flex';}
 function closeShare(){document.getElementById('share-modal').style.display='none';}
-function shareToX(){var top=D.parties[0];window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(top.name+' leads UK polls on '+top.pct+'% - Hung Parliament projected:')+encodeURIComponent(' ')+encodeURIComponent(APP_URL),'_blank');}
-function shareToWhatsApp(){var top=D.parties[0];window.open('https://wa.me/?text='+encodeURIComponent('UK Poll Tracker: '+top.name+' on '+top.pct+'%, Hung Parliament projected. '+APP_URL),'_blank');}
+function shareToX(){var p=D.parties;window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('🇬🇧 UK Polls Mar 2026: Reform UK '+p[0].pct+'% · Labour '+p[1].pct+'% · Con '+p[2].pct+'% · Green '+p[3].pct+'% · LD '+p[4].pct+'% '+APP_URL),'_blank');}
+function shareToWhatsApp(){var p=D.parties;window.open('https://wa.me/?text='+encodeURIComponent('🇬🇧 UK Polls (Mar 2026): Reform UK '+p[0].pct+'% · Labour '+p[1].pct+'% · Con '+p[2].pct+'% · Green '+p[3].pct+'% · LD '+p[4].pct+'%. Track the polls: '+APP_URL),'_blank');}
 function shareToFacebook(){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(APP_URL),'_blank');}
 function copyLink(){var btn=document.getElementById('copy-btn');navigator.clipboard.writeText(APP_URL).then(function(){btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy link';},2000);});}
 var compareSelected=[];
