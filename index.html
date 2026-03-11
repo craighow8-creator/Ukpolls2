@@ -55,8 +55,8 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
 /* ── Party grid ── */
 .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
 .pc{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 6px;border-top:3px solid;text-align:center;height:120px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;backdrop-filter:blur(6px);}
-.pca{font-size:14px;color:#e8ecf4;letter-spacing:1px;margin-bottom:4px;font-weight:600;}
-.pcp{font-size:24px;font-weight:800;line-height:1;text-shadow:-1px -1px 0 rgba(255,255,255,0.2),1px -1px 0 rgba(255,255,255,0.2),-1px 1px 0 rgba(255,255,255,0.2),1px 1px 0 rgba(255,255,255,0.2),0 0 8px rgba(255,255,255,0.15);}
+.pca{font-size:14px;color:#c8cdd8;letter-spacing:1px;margin-bottom:4px;}
+.pcp{font-size:24px;font-weight:800;line-height:1;}
 .pcc{font-size:14px;margin-top:3px;}
 .pcs{font-size:14px;color:#c8cdd8;margin-top:2px;}
 
@@ -269,7 +269,10 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <div class="sec-label">🌍 ETHNICITY</div><div id="ethnicity-content"></div>
     <div class="sec-label">🗳 2024 NON-VOTERS</div><div id="nonvoter-content"></div>
 
-    <div style="font-size:14px;color:#c8cdd8;text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common. Feb–Mar 2026.</div>
+
+    <div class="sec-label">🛂 NET MIGRATION</div>
+    <div id="migration-content"></div>
+    <div style="font-size:14px;color:#c8cdd8;text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common · ONS 2024. Feb–Mar 2026.</div>
   </div>
 
   <!-- LEADERS -->
@@ -525,7 +528,7 @@ function sp(id, btn) {
   document.getElementById('content').scrollTop = 0;
   btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
   if (id === 'trends') { setTimeout(renderTrends,50); setTimeout(renderTrends,300); }
-  if (id === 'demo') { setTimeout(initRegionalMap, 50); }
+  if (id === 'demo') { setTimeout(renderMigration, 50); }
 }
 
 
@@ -645,6 +648,147 @@ function renderComparison() {
 
 (function(){var el=document.getElementById('content'),sY=0,pull=false,busy=false;el.addEventListener('touchstart',function(e){if(el.scrollTop===0){sY=e.touches[0].clientY;pull=true;}},{passive:true});el.addEventListener('touchmove',function(e){if(!pull||busy)return;var d=e.touches[0].clientY-sY;if(d>0&&d<70)el.style.paddingTop=(d*0.4)+'px';},{passive:true});el.addEventListener('touchend',function(){if(!pull)return;var d=parseInt(el.style.paddingTop)||0;el.style.paddingTop='';pull=false;if(d>20&&!busy){busy=true;refreshData();setTimeout(function(){busy=false;},3000);}});})();
 
+
+// ── Migration Data ──
+var MIGRATION = {
+  // ONS year ending June 2024
+  fetchYear: 'Year ending June 2024 · ONS',
+  netTotal: 728000,
+  netPrev: 906000, // YE June 2023
+  netPrev2: 504000, // YE June 2022
+
+  byNationality: [
+    {name:'India',        net:126000, inflow:302000, outflow:176000, type:'work/study'},
+    {name:'Nigeria',      net:119000, inflow:148000, outflow:29000,  type:'study/family'},
+    {name:'China',        net:76000,  inflow:108000, outflow:32000,  type:'study'},
+    {name:'Pakistan',     net:51000,  inflow:75000,  outflow:24000,  type:'family/study'},
+    {name:'Zimbabwe',     net:48000,  inflow:56000,  outflow:8000,   type:'work/asylum'},
+    {name:'Bangladesh',   net:36000,  inflow:52000,  outflow:16000,  type:'family/study'},
+    {name:'Philippines',  net:34000,  inflow:45000,  outflow:11000,  type:'work/NHS'},
+    {name:'Sri Lanka',    net:28000,  inflow:38000,  outflow:10000,  type:'work/study'},
+    {name:'Hong Kong',    net:24000,  inflow:38000,  outflow:14000,  type:'BN(O) visa'},
+    {name:'South Africa', net:22000,  inflow:35000,  outflow:13000,  type:'work'},
+    {name:'EU citizens',  net:-86000, inflow:142000, outflow:228000, type:'various'},
+    {name:'British',      net:-131000,inflow:null,   outflow:null,   type:'emigration'},
+  ],
+
+  byVisa: [
+    {type:'Study',           n:298000, color:'#6366f1'},
+    {type:'Skilled Work',    n:189000, color:'#12B7D4'},
+    {type:'Family',          n:113000, color:'#FAA61A'},
+    {type:'Asylum/Humanity', n:84000,  color:'#f97316'},
+    {type:'BN(O) Hong Kong', n:24000,  color:'#E4003B'},
+    {type:'Other',           n:20000,  color:'#6b7280'},
+  ],
+
+  trend: [
+    {year:'2019', net:184000},
+    {year:'2020', net:87000},
+    {year:'2021', net:173000},
+    {year:'2022', net:504000},
+    {year:'2023', net:906000},
+    {year:'2024', net:728000},
+  ],
+
+  policies: [
+    {party:'Reform UK',      color:'#12B7D4', text:'Full immigration freeze. Leave ECHR. Intercept & deport all illegal arrivals. Zero net migration target.'},
+    {party:'Restore Britain',color:'#0D2A5C', text:'Zero net migration. Mass deportations. Withdraw from UN Refugee Convention.'},
+    {party:'Conservative',   color:'#0087DC', text:'Extend settlement route to 10 years. Tougher visa rules. Deport foreign criminals after sentence.'},
+    {party:'Labour',         color:'#E4003B', text:'Border Security Command. Raise salary thresholds. Reduce care/student visa dependants.'},
+    {party:'Lib Dem',        color:'#FAA61A', text:'International cooperation on returns. Oppose ECHR withdrawal. Humane asylum processing.'},
+    {party:'Green',          color:'#02A95B', text:'Safe & legal routes for refugees. Oppose detention. Retain 5-year settlement route for all.'},
+    {party:'SNP',            color:'#FFD700', text:'Scotland needs immigration to grow. Oppose UK-wide caps. Separate Scottish visa route.'},
+  ]
+};
+
+function renderMigration() {
+  var el = document.getElementById('migration-content');
+  if(!el) return;
+  var M = MIGRATION;
+  var maxNet = Math.max.apply(null, M.byNationality.map(function(n){ return Math.abs(n.net); }));
+  var totalVisa = M.byVisa.reduce(function(a,b){ return a+b.n; }, 0);
+  var trendMax = Math.max.apply(null, M.trend.map(function(t){ return t.net; }));
+  var change = M.netTotal - M.netPrev;
+  var changePct = Math.round(change / M.netPrev * 100);
+
+  el.innerHTML =
+    // Headline
+    '<div class="card" style="margin-bottom:10px;text-align:center;padding:16px">'
+      + '<div style="font-size:13px;color:#c8cdd8;letter-spacing:1px;margin-bottom:4px">NET MIGRATION · ' + M.fetchYear + '</div>'
+      + '<div style="font-size:44px;font-weight:900;color:#fff">' + (M.netTotal/1000).toFixed(0) + 'k</div>'
+      + '<div style="font-size:14px;color:' + (change<0?'#3fb950':'#f85149') + ';margin-top:4px">'
+        + (change<0?'▼ ':'▲ +') + Math.abs(change/1000).toFixed(0) + 'k vs previous year (' + changePct + '%)</div>'
+    + '</div>'
+
+    // Trend chart
+    + '<div class="card" style="margin-bottom:10px;padding:14px">'
+      + '<div style="font-size:13px;font-weight:700;color:#e8ecf4;margin-bottom:12px">📈 YEAR-ON-YEAR TREND</div>'
+      + '<div style="display:flex;align-items:flex-end;gap:6px;height:80px;margin-bottom:6px">'
+      + M.trend.map(function(t) {
+          var h = Math.round(t.net / trendMax * 75);
+          var isLatest = t.year === '2024';
+          return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'
+            + '<div style="font-size:10px;color:#c8cdd8;font-weight:700">' + (t.net/1000).toFixed(0) + 'k</div>'
+            + '<div style="width:100%;height:' + h + 'px;background:' + (isLatest?'#12B7D4':'rgba(99,102,241,0.6)') + ';border-radius:4px 4px 0 0;transition:height 0.5s"></div>'
+            + '</div>';
+        }).join('')
+      + '</div>'
+      + '<div style="display:flex;gap:6px">'
+      + M.trend.map(function(t){
+          return '<div style="flex:1;text-align:center;font-size:10px;color:#c8cdd8">' + t.year + '</div>';
+        }).join('')
+      + '</div>'
+    + '</div>'
+
+    // By nationality
+    + '<div class="card" style="margin-bottom:10px;padding:14px">'
+      + '<div style="font-size:13px;font-weight:700;color:#e8ecf4;margin-bottom:12px">🌍 NET MIGRATION BY NATIONALITY</div>'
+      + M.byNationality.map(function(n) {
+          var pct = Math.round(Math.abs(n.net) / maxNet * 100);
+          var isNeg = n.net < 0;
+          var col = isNeg ? '#f85149' : '#3fb950';
+          var label = (isNeg ? '−' : '+') + Math.abs(n.net/1000).toFixed(0) + 'k';
+          return '<div style="margin-bottom:9px">'
+            + '<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
+              + '<span style="font-size:13px;color:#e8ecf4;font-weight:600">' + n.name + '</span>'
+              + '<span style="font-size:13px;color:' + col + ';font-weight:700">' + label + '</span>'
+            + '</div>'
+            + '<div style="background:rgba(255,255,255,0.08);border-radius:4px;height:7px;overflow:hidden">'
+              + '<div style="width:' + pct + '%;background:' + col + ';height:100%;border-radius:4px"></div>'
+            + '</div>'
+            + '<div style="font-size:11px;color:#c8cdd8;margin-top:2px">' + n.type + '</div>'
+          + '</div>';
+        }).join('')
+    + '</div>'
+
+    // Visa breakdown
+    + '<div class="card" style="margin-bottom:10px;padding:14px">'
+      + '<div style="font-size:13px;font-weight:700;color:#e8ecf4;margin-bottom:12px">📋 ARRIVALS BY VISA TYPE</div>'
+      + M.byVisa.map(function(v) {
+          var pct = Math.round(v.n / totalVisa * 100);
+          return '<div style="margin-bottom:9px">'
+            + '<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
+              + '<span style="font-size:13px;color:#e8ecf4;font-weight:600">' + v.type + '</span>'
+              + '<span style="font-size:13px;color:' + v.color + ';font-weight:700">' + pct + '% · ' + (v.n/1000).toFixed(0) + 'k</span>'
+            + '</div>'
+            + '<div style="background:rgba(255,255,255,0.08);border-radius:4px;height:7px;overflow:hidden">'
+              + '<div style="width:' + pct + '%;background:' + v.color + ';height:100%;border-radius:4px"></div>'
+            + '</div>'
+          + '</div>';
+        }).join('')
+    + '</div>'
+
+    // Party policies
+    + '<div class="card" style="padding:14px">'
+      + '<div style="font-size:13px;font-weight:700;color:#e8ecf4;margin-bottom:12px">🗳 PARTY POLICIES ON MIGRATION</div>'
+      + M.policies.map(function(p) {
+          return '<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.08)">'
+            + '<div style="font-size:13px;font-weight:800;color:' + p.color + ';margin-bottom:4px">' + p.party + '</div>'
+            + '<div style="font-size:13px;color:#c8cdd8;line-height:1.5">' + p.text + '</div>'
+          + '</div>';
+        }).join('')
+    + '</div>';
+}
 function setStatus(cls, txt) {
   document.getElementById('status-dot').className = 'ldot' + (cls === 'loading' ? ' spin' : '');
   const el = document.getElementById('status-txt');
