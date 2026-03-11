@@ -176,7 +176,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
       </div>
       <div>
         <div class="htitle">UK Poll Tracker</div>
-        <div class="hsub" id="hdr-date">ALL PARTIES · 8 MAR 2026</div>
+        <div class="hsub" id="hdr-date">ALL PARTIES · 11 MAR 2026</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
@@ -374,13 +374,18 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <div class="stitle">AI Analyst</div>
     <div class="ssub">Ask anything about UK politics</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
-      <button class="chip" onclick="askAI('How do Reform UK and Restore Britain compare?')">Reform UK vs Restore Britain</button>
-      <button class="chip" onclick="askAI('Why are the Greens surging in the polls?')">Why are Greens rising?</button>
-      <button class="chip" onclick="askAI('Why are Muslim voters switching to the Greens?')">Muslim votes &amp; Greens</button>
-      <button class="chip" onclick="askAI('What happens in a hung parliament?')">Hung parliament</button>
-      <button class="chip" onclick="askAI('Can Labour recover under Keir Starmer?')">Can Labour recover?</button>
-      <button class="chip" onclick="askAI('Compare Nigel Farage and Rupert Lowe.')">Farage vs Lowe</button>
-      <button class="chip" onclick="askAI('Is a second general election coming?')">Second election?</button>
+      <button class="chip" onclick="askAI('Could there be an early general election before 2029? What would trigger one and how likely is it?')">Early election coming?</button>
+      <button class="chip" onclick="askAI('Is Keir Starmer\'s position as Prime Minister safe? What would it take for Labour to replace him?')">Is Starmer safe?</button>
+      <button class="chip" onclick="askAI('Reform UK is leading in the polls but has only 5 MPs. Can they actually win a general election?')">Can Reform UK win?</button>
+      <button class="chip" onclick="askAI('Why are the Greens surging to 16% and what is their ceiling?')">Green surge explained</button>
+      <button class="chip" onclick="askAI('Is Nigel Farage a threat to British democracy or a legitimate political voice?')">Farage — democrat or threat?</button>
+      <button class="chip" onclick="askAI('How does the UK\'s first-past-the-post system distort the will of voters in 2026?')">Is FPTP fair?</button>
+      <button class="chip" onclick="askAI('What would a Reform UK government actually look like in practice?')">Reform UK in power</button>
+      <button class="chip" onclick="askAI('Why has net migration stayed high despite both Labour and Conservative promises to cut it?')">Why is migration still high?</button>
+      <button class="chip" onclick="askAI('Could the Conservatives become irrelevant? Has Kemi Badenoch got what it takes?')">Tory survival</button>
+      <button class="chip" onclick="askAI('What is Restore Britain and is it a serious political party or a protest movement?')">What is Restore Britain?</button>
+      <button class="chip" onclick="askAI('How does current UK polling compare to the period before the 2024 general election?')">2024 vs now</button>
+      <button class="chip" onclick="askAI('If there was a hung parliament today, which parties would form a coalition and what would they have to give up?')">Hung parliament deals</button>
       <button class="chip" onclick="askAI('What does Reform UK stand for?')">What does Reform UK stand for?</button>
       <button class="chip" onclick="askAI('What does Restore Britain stand for?')">What does Restore Britain stand for?</button>
     </div>
@@ -1105,7 +1110,10 @@ function renderLeaders() {
           <div style="width:48px;height:48px;border-radius:50%;background:${l.color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,0.2)">${initials}</div>
           <div>
             <div class="lcname">${l.name}</div>
-            <div class="lcparty" style="color:${l.color}">${l.party}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <div class="lcparty" style="color:${l.color}">${l.party}</div>
+              ${({"Green Party":"https://www.greenparty.org.uk","Lib Dems":"https://www.libdems.org.uk","Reform UK":"https://www.reformparty.uk","Restore Britain":"https://www.restorebritain.org.uk","Conservative":"https://www.conservatives.com","Labour":"https://www.labour.org.uk","SNP":"https://www.snp.org"})[l.party] ? '<a href="'+({"Green Party":"https://www.greenparty.org.uk","Lib Dems":"https://www.libdems.org.uk","Reform UK":"https://www.reformparty.uk","Restore Britain":"https://www.restorebritain.org.uk","Conservative":"https://www.conservatives.com","Labour":"https://www.labour.org.uk","SNP":"https://www.snp.org"})[l.party]+'" target="_blank" style="font-size:11px;color:#c8cdd8;border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:2px 8px;text-decoration:none;white-space:nowrap">🌐 Website</a>' : ''}
+            </div>
           </div>
         </div>
         <div style="text-align:right">
