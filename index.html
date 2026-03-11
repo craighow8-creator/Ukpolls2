@@ -806,6 +806,21 @@ function initVotePage() {
   loadVoteResults();
 }
 
+var PARTIES_VOTE = [
+  {name:"Reform UK",color:"#12B7D4"},
+  {name:"Labour",color:"#E4003B"},
+  {name:"Conservative",color:"#0087DC"},
+  {name:"Green",color:"#02A95B"},
+  {name:"Lib Dem",color:"#FAA61A"},
+  {name:"Restore Britain",color:"#0D2A5C"},
+  {name:"SNP",color:"#FFD700"},
+  {name:"Plaid Cymru",color:"#3F8428"},
+  {name:"SDP",color:"#f4c542"},
+  {name:"UKIP",color:"#6B3FA0"},
+  {name:"Other",color:"#6b7280"},
+  {name:"Would not vote",color:"#4b5563"}
+];
+
 function renderVoteButtons() {
   const btns = document.getElementById('vote-buttons');
   const myVote = getMyVote();
