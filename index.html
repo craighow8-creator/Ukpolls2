@@ -55,8 +55,8 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
 /* ── Party grid ── */
 .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
 .pc{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 6px;border-top:3px solid;text-align:center;height:120px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;backdrop-filter:blur(6px);}
-.pca{font-size:14px;color:#c8cdd8;letter-spacing:1px;margin-bottom:4px;}
-.pcp{font-size:24px;font-weight:800;line-height:1;}
+.pca{font-size:14px;color:#e8ecf4;letter-spacing:1px;margin-bottom:4px;font-weight:600;}
+.pcp{font-size:24px;font-weight:800;line-height:1;text-shadow:-1px -1px 0 rgba(255,255,255,0.2),1px -1px 0 rgba(255,255,255,0.2),-1px 1px 0 rgba(255,255,255,0.2),1px 1px 0 rgba(255,255,255,0.2),0 0 8px rgba(255,255,255,0.15);}
 .pcc{font-size:14px;margin-top:3px;}
 .pcs{font-size:14px;color:#c8cdd8;margin-top:2px;}
 
@@ -810,7 +810,7 @@ function renderAge() {
       <div style="font-size:14px;color:#c8cdd8;margin-bottom:10px;font-weight:600;letter-spacing:1px">ESTIMATED INTENTION AMONG 2024 NON-VOTERS WHO NOW SAY THEY'D VOTE</div>
       ${[
         {label:'Reform',  color:'#12B7D4', pct:32, note:'Biggest beneficiary of returning non-voters'},
-        {label:'RB',      color:'#0D2A5C', pct:18, note:'Growing fast among disengaged voters'},
+        {label:'RB',      color:"#0D2A5C", pct:18, note:'Growing fast among disengaged voters'},
         {label:'Green',   color:'#02A95B', pct:16, note:''},
         {label:'Labour',  color:'#E4003B', pct:14, note:''},
         {label:'Con',     color:'#0087DC', pct:10, note:''},
