@@ -229,7 +229,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <div style="font-size:14px;color:#c8cdd8;text-align:center;margin-bottom:16px">326 seats needed for majority · <strong style="color:#fff">Hung Parliament</strong></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px">
       <div class="sec-label" style="margin:0">📋 CONTEXT</div>
-      <button onclick="openCompare()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:20px;padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;">Compare</button>
+
     </div>
     <div class="card" style="font-size:14px;line-height:1.8;color:#e8ecf4" id="ctx-text"></div>
     <div style="text-align:center;padding:16px 0 4px">
@@ -280,6 +280,7 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <div class="stitle">Leader Ratings</div>
     <div class="ssub">Net approval · latest polling</div>
     <div id="leaders-content"></div>
+    <div id="leaders-compare" style="display:none;margin-top:10px"></div>
   </div>
 
   <!-- POLLS -->
@@ -795,6 +796,55 @@ function renderMigration() {
         }).join('')
     + '</div>';
 }
+
+var leaderCompareSelected = [];
+
+function selectLeaderCompare(partyName, btn) {
+  // Map party name to D.parties name
+  var nameMap = {'Green Party':'Green','Lib Dems':'Lib Dem','Reform UK':'Reform UK','Restore Britain':'Restore Britain','Conservative':'Conservative','Labour':'Labour','SNP':'SNP'};
+  var mappedName = nameMap[partyName] || partyName;
+  var idx = leaderCompareSelected.indexOf(mappedName);
+
+  // Reset all buttons
+  document.querySelectorAll('[id^="lcmp-"]').forEach(function(b) {
+    b.style.background = 'rgba(255,255,255,0.08)';
+    b.style.color = '#c8cdd8';
+    b.style.borderColor = 'rgba(255,255,255,0.2)';
+    b.textContent = 'Compare';
+  });
+
+  if (idx > -1) {
+    leaderCompareSelected.splice(idx, 1);
+  } else {
+    if (leaderCompareSelected.length >= 2) leaderCompareSelected.shift();
+    leaderCompareSelected.push(mappedName);
+  }
+
+  // Re-highlight selected buttons
+  D.leaders.forEach(function(l, li) {
+    var mn = nameMap[l.party] || l.party;
+    if (leaderCompareSelected.indexOf(mn) > -1) {
+      var b = document.getElementById('lcmp-'+li);
+      if (b) {
+        b.style.background = l.color + '30';
+        b.style.color = l.color;
+        b.style.borderColor = l.color;
+        b.textContent = '✓ Selected';
+      }
+    }
+  });
+
+  var el = document.getElementById('leaders-compare');
+  if (leaderCompareSelected.length === 2) {
+    compareSelected = leaderCompareSelected.slice();
+    el.style.display = 'block';
+    el.innerHTML = '<div class="card" style="padding:14px"><div style="font-size:13px;font-weight:700;color:#e8ecf4;margin-bottom:8px">⚖️ COMPARISON</div><div id="compare-result"></div></div>';
+    renderComparison();
+    setTimeout(function(){ el.scrollIntoView({behavior:'smooth',block:'start'}); }, 100);
+  } else {
+    el.style.display = 'none';
+  }
+}
 function setStatus(cls, txt) {
   document.getElementById('status-dot').className = 'ldot' + (cls === 'loading' ? ' spin' : '');
   const el = document.getElementById('status-txt');
@@ -1001,10 +1051,12 @@ function renderLeaders() {
             <div class="lcname">${l.name}</div>
             <div class="lcparty" style="color:${l.color}">${l.party}</div>
           </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         </div>
         <div style="text-align:right">
           <div class="lcnet" style="color:${l.net === null ? 'var(--muted)' : l.net > 0 ? 'var(--up)' : 'var(--down)'}">${l.net === null ? '—' : (l.net > 0 ? '+' : '') + l.net}</div>
           <div class="lcnl">${l.net === null ? 'LIMITED' : 'NET'}</div>
+          <button onclick="selectLeaderCompare(\u0027${l.party}\u0027,this)" id="lcmp-${li}" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:#c8cdd8;border-radius:20px;padding:3px 10px;font-size:12px;cursor:pointer;white-space:nowrap">Compare</button>
         </div>
       </div>
       ${bioHtml}
