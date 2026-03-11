@@ -837,7 +837,7 @@ function selectLeaderCompare(partyName, btn) {
     compareSelected = leaderCompareSelected.slice();
     document.getElementById('leader-compare-modal').style.display = 'flex';
     document.getElementById('leader-compare-result').innerHTML = '<div id="compare-result"></div>';
-    renderComparison();
+    setTimeout(renderComparison, 50);
   }
 }
 function closeLeaderCompare() {
