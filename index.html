@@ -906,6 +906,46 @@ function closeLeaderCompare() {
   });
 }
 
+
+async function askAI(q) {
+  if (!q || !q.trim()) return;
+  var out = document.getElementById('ai-output');
+  var input = document.getElementById('ai-input');
+  input.value = q;
+  out.className = '';
+  out.innerHTML = '<div style="color:#c8cdd8;font-size:14px;animation:pulse 1s infinite">⏳ Thinking...</div>';
+
+  // Build context from app data
+  var ctx = 'You are a neutral, expert UK political analyst. Today is 11 March 2026. '
+    + 'Current polling averages: Reform UK 27%, Labour 19%, Conservative 18%, Green 16%, Lib Dem 12%, SNP 3%, Restore Britain 7%. '
+    + 'MRP seat projection: Reform UK 335, Conservative 92, Lib Dem 60, Green 52, Labour 41, SNP 44 — a hung parliament. '
+    + 'Keir Starmer net approval: -46. Nigel Farage: -17. Kemi Badenoch: -12. Zack Polanski: +8. '
+    + 'Key recent events: Mandelson-Epstein scandal, McSweeney resignation, Gorton & Denton by-election (Green win), Restore Britain launch. '
+    + 'Answer in clear, engaging prose. Be politically neutral but don\'t shy away from hard truths. Max 200 words.';
+
+  try {
+    var resp = await fetch(WORKER, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        system: ctx,
+        messages: [{role: 'user', content: q}]
+      })
+    });
+    var data = await resp.json();
+    var text = data.content && data.content[0] && data.content[0].text;
+    if (text) {
+      out.innerHTML = '<div style="font-size:15px;color:#e8ecf4;line-height:1.7">' + text.replace(/\n/g,'<br>') + '</div>';
+    } else {
+      out.innerHTML = '<div style="color:#f85149">Error: No response received.</div>';
+    }
+  } catch(e) {
+    out.innerHTML = '<div style="color:#f85149">Error: ' + e.message + '</div>';
+  }
+}
+
 function setStatus(cls, txt) {
   document.getElementById('status-dot').className = 'ldot' + (cls === 'loading' ? ' spin' : '');
   const el = document.getElementById('status-txt');
