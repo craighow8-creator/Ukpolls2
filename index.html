@@ -768,68 +768,21 @@ function renderPolls() {
   var KEYS=[{k:'ref',label:'Reform UK',color:'#12B7D4'},{k:'lab',label:'Labour',color:'#E4003B'},{k:'con',label:'Con',color:'#0087DC'},{k:'ld',label:'Lib Dem',color:'#FAA61A'},{k:'grn',label:'Green',color:'#02A95B'},{k:'rb',label:'RB',color:'#4a6fa5'}];
   document.getElementById('polls-cards').innerHTML=D.polls.map(function(p){
     var boxes=KEYS.filter(function(x){return p[x.k]!=null;}).map(function(x){
-      return '<div style="background:rgba(5,10,30,0.85);border:1px solid rgba(255,255,255,0.12);border-top:3px solid '+x.color+';border-radius:8px;padding:8px 4px;text-align:center;flex:1;min-width:46px">'
-        +'<div style="font-size:14px;color:#c8cdd8;margin-bottom:3px">'+x.label+'</div>'
-        +'<div style="font-size:18px;font-weight:800;color:'+x.color+'">'+p[x.k]+'%</div>'
+      return '<div style="background:rgba(5,10,30,0.85);border:1px solid rgba(255,255,255,0.12);border-top:3px solid '+x.color+';border-radius:8px;padding:8px 4px;text-align:center;flex:1;min-width:46px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-height:70px">'
+        +'<div style="font-size:13px;color:#c8cdd8;line-height:1.2">'+x.label+'</div>'
+        +'<div style="font-size:18px;font-weight:800;color:'+x.color+'">'+p[x.k]+'<span style="font-size:12px">%</span></div>'
         +'</div>';
     }).join('');
     return '<div class="card" style="margin-bottom:10px;padding:12px">'
       +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">'
-      +'<div style="font-size:16px;font-weight:800;color:#fff">'+p.pollster+'</div>'
+      +'<div style="font-size:17px;font-weight:800;color:#fff">'+p.pollster+'</div>'
       +'<div style="font-size:14px;color:#c8cdd8">'+p.date+'</div>'
-      +'</div><div style="display:flex;gap:5px;flex-wrap:wrap">'+boxes+'</div></div>';
+      +'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+boxes+'</div>'
+      +'</div>';
   }).join('');
 }
 
-// ── AI ──
-async function askAI(q) {
-  if (!q || !q.trim()) return;
-  document.getElementById('ai-input').value = '';
-  document.getElementById('ai-output').innerHTML = '<div class="ai-empty">Thinking...</div>';
-  const ctx = `You are a UK political analyst. Current polling (Mar 2026): Reform 26%, Green 19%, Labour 17%, Conservative 17%, Lib Dem 13%, Restore Britain 7%. Greens recently won Gorton & Denton by-election. Starmer net approval -49. Zack Polanski leads Greens. Answer concisely and analytically.`;
-  try {
-    const resp = await fetch(WORKER, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:ctx,messages:[{role:'user',content:q}]})
-    });
-    const data = await resp.json();
-    const txt = data.content?.[0]?.text || 'No response received.';
-    document.getElementById('ai-output').innerHTML = `<div class="ai-box">${txt.replace(/\n/g,'<br>')}</div>`;
-  } catch(e) {
-    document.getElementById('ai-output').innerHTML = '<div class="ai-empty">Could not connect. Try again.</div>';
-  }
-}
-
-async function refreshData() {
-  setStatus('loading','UPDATING');
-  try {
-    const resp = await fetch(WORKER, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:'Confirm you are online with one sentence.'}]})
-    });
-    const data = await resp.json();
-    if (data.content?.[0]?.text) setStatus('', 'LIVE');
-    else setStatus('error','CACHED');
-  } catch(e) { setStatus('error','CACHED'); }
-}
-
-// ── Vote ──
-const PARTIES_VOTE = [
-  {name:"Reform",          color:"#12B7D4", poll:27},
-  {name:"Labour",          color:"#E4003B", poll:19},
-  {name:"Conservative",    color:"#0087DC", poll:18},
-  {name:"Green",           color:"#02A95B", poll:16},
-  {name:"Lib Dem",         color:"#FAA61A", poll:12},
-  {name:"Restore Britain", color:"#4a6fa5", poll:7},
-  {name:"SNP",             color:"#FFD700", poll:3},
-  {name:"Plaid Cymru",     color:"#008142", poll:1},
-  {name:"SDP",             color:"#E30613", poll:1},
-  {name:"UKIP",            color:"#6D3177", poll:1},
-  {name:"Other",           color:"#7a8396", poll:2},
-  {name:"Would not vote",  color:"#555e72", poll:0},
-];
-
-// Generate or retrieve a permanent device ID
 function getDeviceId() {
   let id = localStorage.getItem('device_id');
   if (!id) {
