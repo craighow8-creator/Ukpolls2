@@ -3,6 +3,7 @@
 <head>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -220,7 +221,6 @@ body{background:transparent;color:#e8ecf4;font-family:'Nunito Sans',sans-serif;f
     <div class="ssub">6-month polling movement</div>
     <div class="card" style="padding:10px" id="trend-card">
       <canvas id="trend-chart" style="width:100%;display:block"></canvas>
-      <div id="trend-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px"></div>
     </div>
     <div class="sec-label">📈 LATEST MOVEMENT</div>
     <div class="card" id="movers-list"></div>
@@ -999,50 +999,72 @@ function renderTrends() {
       <div style="font-size:14px;color:#c8cdd8;white-space:nowrap;min-width:60px">${m.date}</div>
       <div style="font-size:14px">${m.text}</div>
     </div>`).join('');
-  const el = document.getElementById('trend-chart');
-  const W = el.parentElement.clientWidth - 28 || 600;
-  const H = Math.max(200, Math.min(400, W * 0.42));
-  el.width = W;
-  el.height = H;
-  el.style.height = H + 'px';
-  const c = el.getContext('2d');
-  const pad = {t:12, r:12, b:30, l:36};
-  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+
   const parties = ['Reform UK','Labour','Conservative','Lib Dem','Green'];
-  const colors = {"Reform UK":'#12B7D4',Labour:'#E4003B',Conservative:'#0087DC','Lib Dem':'#FAA61A',Green:'#02A95B'};
-  const months = D.trends.map(t => t.month);
-  let allV = [];
-  parties.forEach(p => D.trends.forEach(t => { if (t[p]) allV.push(t[p]); }));
-  const minV = Math.max(0, Math.min(...allV) - 2), maxV = Math.min(45, Math.max(...allV) + 2);
-  const xP = i => pad.l + i * (pw / (months.length - 1));
-  const yP = v => pad.t + ph - (v - minV) / (maxV - minV) * ph;
-  // Grid lines + labels
-  [10,15,20,25,30,35].filter(v => v >= minV && v <= maxV).forEach(v => {
-    c.beginPath(); c.strokeStyle = 'rgba(255,255,255,0.07)'; c.lineWidth = 1;
-    c.moveTo(pad.l, yP(v)); c.lineTo(W - pad.r, yP(v)); c.stroke();
-    c.fillStyle = '#7a8396'; c.font = '12px -apple-system,sans-serif';
-    c.textAlign = 'right'; c.fillText(v + '%', pad.l - 5, yP(v) + 4);
+  const colors = {'Reform UK':'#12B7D4',Labour:'#E4003B',Conservative:'#0087DC','Lib Dem':'#FAA61A',Green:'#02A95B'};
+  const labels = D.trends.map(t => t.month);
+
+  const datasets = parties.map(p => ({
+    label: p,
+    data: D.trends.map(t => t[p] ?? null),
+    borderColor: colors[p],
+    backgroundColor: colors[p] + '22',
+    pointBackgroundColor: colors[p],
+    pointRadius: 5,
+    pointHoverRadius: 7,
+    borderWidth: 2.5,
+    tension: 0.3,
+    fill: false,
+  }));
+
+  const el = document.getElementById('trend-chart');
+  if (window._trendChart) { window._trendChart.destroy(); }
+
+  window._trendChart = new Chart(el, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 2,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#c8cdd8',
+            font: { size: 12, family: "'Nunito Sans', sans-serif" },
+            usePointStyle: true,
+            pointStyleWidth: 10,
+            padding: 14,
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(5,10,30,0.95)',
+          borderColor: 'rgba(255,255,255,0.15)',
+          borderWidth: 1,
+          titleColor: '#fff',
+          bodyColor: '#c8cdd8',
+          padding: 10,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          ticks: { color: '#7a8396', font: { size: 12 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          ticks: { color: '#7a8396', font: { size: 12 }, callback: v => v + '%' },
+          suggestedMin: 8,
+          suggestedMax: 35,
+        }
+      }
+    }
   });
-  // Month labels
-  months.forEach((m, i) => {
-    c.fillStyle = '#7a8396'; c.font = '12px -apple-system,sans-serif';
-    c.textAlign = 'center'; c.fillText(m, xP(i), H - 8);
-  });
-  // Party lines + dots
-  parties.forEach(p => {
-    const pts = D.trends.map((t, i) => t[p] != null ? {x: xP(i), y: yP(t[p])} : null).filter(Boolean);
-    if (pts.length < 2) return;
-    c.beginPath(); c.strokeStyle = colors[p]; c.lineWidth = 3;
-    c.lineJoin = 'round'; c.lineCap = 'round';
-    c.moveTo(pts[0].x, pts[0].y);
-    pts.slice(1).forEach(pt => c.lineTo(pt.x, pt.y));
-    c.stroke();
-    pts.forEach(pt => {
-      c.beginPath(); c.fillStyle = colors[p];
-      c.arc(pt.x, pt.y, 4, 0, Math.PI * 2); c.fill();
-    });
-  });
-  document.getElementById('trend-legend').innerHTML = parties.map(p => `<span style="color:${colors[p]};font-size:14px">● ${p}</span>`).join('');
 }
 
 // Redraw chart on resize
