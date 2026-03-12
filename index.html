@@ -232,6 +232,11 @@ body {
   color: white;
 }
 
+@keyframes slideIn {
+  from { opacity:0; transform:translateY(-10px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
 /* ── Bottom Nav ── */
 #nav {
   flex-shrink: 0;
@@ -524,7 +529,7 @@ body {
       <div id="vote-buttons" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px"></div>
       <div id="vote-msg" style="text-align:center;font-size:16px;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px"></div>
     </div>
-    <div class="sec-label">📊 App Users vs Real Polls</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 10px"><div style="font-size:13px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-primary)">📊 App Users vs Real Polls</div><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">How you compare</div></div>
     <div class="card" id="vote-results">
       <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:16px;padding:20px">Loading results...</div>
     </div>
@@ -1355,16 +1360,26 @@ function setMyVote(party) { localStorage.setItem('my_vote', party); }
 function initVotePage() { renderVoteButtons(); loadVoteResults(); }
 
 var PARTIES_VOTE = [
-  {name:"Reform UK",color:"#12B7D4"},{name:"Labour",color:"#E4003B"},{name:"Conservative",color:"#0087DC"},
-  {name:"Green",color:"#02A95B"},{name:"Lib Dem",color:"#FAA61A"},{name:"Restore Britain",color:"#1a4a9e"},
-  {name:"SNP",color:"#FFD700"},{name:"Plaid Cymru",color:"#3F8428"},{name:"SDP",color:"#f4c542"},
-  {name:"UKIP",color:"#6B3FA0"},{name:"Other",color:"#6b7280"},{name:"Would not vote",color:"#9aa3b8"}
+  {name:"Reform UK",color:"#12B7D4",major:true},
+  {name:"Labour",color:"#E4003B",major:true},
+  {name:"Conservative",color:"#0087DC",major:true},
+  {name:"Green",color:"#02A95B",major:true},
+  {name:"Lib Dem",color:"#FAA61A",major:true},
+  {name:"Restore Britain",color:"#1a4a9e",major:true},
+  {name:"SNP",color:"#FFD700",major:false},
+  {name:"Plaid Cymru",color:"#3F8428",major:false},
+  {name:"SDP",color:"#f4c542",major:false},
+  {name:"UKIP",color:"#6B3FA0",major:false},
+  {name:"Other",color:"#6b7280",major:false},
+  {name:"Would not vote",color:"#9aa3b8",major:false}
 ];
+var _showAllParties = false;
 
 function renderVoteButtons() {
   const btns = document.getElementById('vote-buttons');
   const myVote = getMyVote();
-  btns.innerHTML = PARTIES_VOTE.map(p => {
+  const visible = _showAllParties ? PARTIES_VOTE : PARTIES_VOTE.filter(p => p.major || p.name === myVote);
+  btns.innerHTML = visible.map(p => {
     var sel = p.name === myVote;
     var bg = sel ? p.color + '18' : 'var(--md-sys-color-surface)';
     var border = sel ? '2px solid ' + p.color : '2px solid ' + p.color + '50';
@@ -1376,7 +1391,8 @@ function renderVoteButtons() {
       + '<div style="position:relative;font-size:15px;color:' + (sel ? p.color : 'var(--md-sys-color-on-surface)') + ';font-weight:' + (sel?'700':'500') + ';word-break:break-word;line-height:1.3">' + p.name + '</div>'
       + (sel ? '<div style="position:relative;font-size:13px;color:' + p.color + ';font-weight:700;letter-spacing:0.3px">✓ Selected</div>' : '')
       + '</div>';
-  }).join('');
+  }).join('')
+  + (!_showAllParties ? '<div onclick="_showAllParties=true;renderVoteButtons()" style="grid-column:1/-1;text-align:center;padding:10px;font-size:14px;color:var(--md-sys-color-primary);font-weight:700;cursor:pointer;border:2px dashed var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-large)">+ More parties</div>' : '');
   const msg = document.getElementById('vote-msg');
   const myV = getMyVote();
   if (myV) {
@@ -1391,10 +1407,60 @@ async function castVote(party) {
   const prevVote = getMyVote();
   setMyVote(party);
   renderVoteButtons();
+  showVoteSharePrompt(party);
   try {
     await fetch(WORKER + '/vote', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({party, deviceId, prevVote}) });
   } catch(e) {}
   loadVoteResults();
+}
+
+function showVoteSharePrompt(party) {
+  var existing = document.getElementById('vote-share-prompt');
+  if (existing) existing.remove();
+  var p = PARTIES_VOTE.find(x => x.name === party) || {color:'#012169'};
+  var el = document.createElement('div');
+  el.id = 'vote-share-prompt';
+  el.style.cssText = 'background:' + p.color + ';border-radius:20px;padding:16px 20px;margin-bottom:16px;'
+    + 'display:flex;align-items:center;justify-content:space-between;gap:12px;'
+    + 'box-shadow:0 4px 16px ' + p.color + '44;animation:slideIn 0.3s ease';
+  el.innerHTML = '<div style="color:#fff">'
+    + '<div style="font-size:13px;opacity:0.85;font-weight:600;margin-bottom:2px">You voted</div>'
+    + '<div style="font-size:20px;font-weight:800">' + party + '</div>'
+    + '</div>'
+    + '<button onclick="shareMyVote(\'' + party + '\')" style="background:#fff;color:' + p.color + ';border:none;'
+    + 'border-radius:50px;padding:10px 18px;font-size:14px;font-weight:800;'
+    + 'font-family:\'Nunito\',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0">'
+    + '🔗 Share my vote</button>';
+  var voteSection = document.getElementById('vote-section');
+  voteSection.parentNode.insertBefore(el, voteSection.nextSibling);
+}
+
+async function shareMyVote(party) {
+  var url = 'https://craighow8-creator.github.io/Ukpolls2/';
+  var text = 'I\'d vote ' + party + ' if there was a UK general election today.\n\nSee how app users compare to real polls 👇\n' + url;
+  try { await navigator.clipboard.writeText(text); } catch(e) {}
+  showToast('📋 Copied — ready to paste!');
+  if (navigator.share) {
+    try { await navigator.share({ title: '🇬🇧 UK Poll Tracker', text }); } catch(e) {}
+  }
+}
+
+function generateInsight(votes, total, POLL_MAP) {
+  if (total < 5) return '';
+  var biggest = {name:'', diff:0};
+  Object.entries(POLL_MAP).forEach(function([name, pollPct]) {
+    var appPct = total > 0 ? Math.round((votes[name]||0) / total * 100) : 0;
+    var diff = appPct - pollPct;
+    if (Math.abs(diff) > Math.abs(biggest.diff)) biggest = {name, diff, appPct, pollPct};
+  });
+  if (Math.abs(biggest.diff) < 3) return '';
+  var p = PARTIES_VOTE.find(x => x.name === biggest.name) || {color:'#012169'};
+  var direction = biggest.diff > 0 ? 'over' : 'under';
+  var multiple = biggest.pollPct > 0 ? (biggest.appPct / biggest.pollPct).toFixed(1) : null;
+  var text = biggest.diff > 0
+    ? '📊 App users back <strong style="color:' + p.color + '">' + biggest.name + '</strong> at ' + biggest.appPct + '% — ' + (multiple && multiple > 1.5 ? multiple + 'x their poll rating of ' + biggest.pollPct + '%' : biggest.diff + ' points above national polls')
+    : '📊 <strong style="color:' + p.color + '">' + biggest.name + '</strong> underperforms here vs polls — ' + biggest.appPct + '% app vs ' + biggest.pollPct + '% nationally';
+  return '<div style="background:var(--md-sys-color-tonal-navy);border-radius:14px;padding:12px 16px;margin-bottom:18px;font-size:15px;line-height:1.6;color:var(--md-sys-color-on-surface)">' + text + '</div>';
 }
 
 async function loadVoteResults() {
@@ -1418,6 +1484,7 @@ async function loadVoteResults() {
       + '<div style="font-size:44px;font-weight:900;color:var(--md-sys-color-primary);font-family:Nunito,sans-serif">' + total.toLocaleString() + '</div>'
       + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);letter-spacing:1.5px;margin-top:2px;font-weight:600;text-transform:uppercase">Total votes cast</div>'
       + '</div>'
+      + generateInsight(votes, total, POLL_MAP)
       + PARTIES_VOTE.filter(p => (votes[p.name]||0) > 0 || POLL_MAP[p.name]).sort((a,b) => (votes[b.name]||0) - (votes[a.name]||0)).map(p => {
         const n = votes[p.name] || 0;
         const userPct = total > 0 ? Math.round(n / total * 100) : 0;
