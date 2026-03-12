@@ -22,7 +22,7 @@ body{background:transparent;color:#e8ecf4;font-family:'Nunito Sans',sans-serif;f
 .hdr-left{display:flex;align-items:center;gap:10px;}
 .hdr-icon{width:36px;height:36px;background:linear-gradient(135deg,#012169,#C8102E);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
 .htitle{font-size:19px;font-weight:900;color:#fff;line-height:1.1;font-family:"Nunito",sans-serif;}
-.hsub{font-size:14px;color:#c8cdd8;letter-spacing:1px;margin-top:1px;}
+.hsub{font-size:13px;color:#c8cdd8;letter-spacing:0.8px;margin-top:1px;white-space:nowrap;}
 .live-badge{display:flex;align-items:center;gap:5px;background:#1a2e1a;border:1px solid #2d5a2d;border-radius:20px;padding:5px 10px;font-size:14px;font-weight:700;color:#3fb950;cursor:pointer;white-space:nowrap;}
 .ldot{width:7px;height:7px;border-radius:50%;background:#3fb950;}
 .ldot.spin{animation:pulse 1.5s infinite;}
@@ -121,8 +121,9 @@ body{background:transparent;color:#e8ecf4;font-family:'Nunito Sans',sans-serif;f
 /* ── Landscape ── */
 @media (orientation:landscape) and (max-height:500px){
   #hdr{padding:4px 14px;}
+  .hdr-left > div{display:flex;flex-direction:row;align-items:baseline;gap:6px;}
   .htitle{font-size:15px;}
-  .hsub{display:none;}
+  .hsub{font-size:12px;margin-top:0;white-space:nowrap;letter-spacing:0.5px;}
   .hdr-icon{width:28px;height:28px;font-size:15px;}
   .nb span{display:none;}
   .nb{padding:5px 2px;}
@@ -180,7 +181,7 @@ body{background:transparent;color:#e8ecf4;font-family:'Nunito Sans',sans-serif;f
       </div>
       <div>
         <div class="htitle">UK Poll Tracker</div>
-        <div class="hsub" id="hdr-date">ALL PARTIES · 11 MAR 2026</div>
+        <div class="hsub" id="hdr-date">11 MAR 2026</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
@@ -970,7 +971,7 @@ function renderOverview() {
   document.getElementById('overview-sub').textContent = '7-poll moving average · ' + D.fetchDate;
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}).toUpperCase();
-  document.getElementById('hdr-date').textContent = 'ALL PARTIES · ' + dateStr;
+  document.getElementById('hdr-date').textContent = dateStr;
   document.getElementById('party-grid').innerHTML = D.parties.map(p => `
     <div class="pc" style="border-top-color:${p.color}">
       <div class="pca">${p.name}</div>
