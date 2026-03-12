@@ -794,18 +794,19 @@ body {
 </div><!-- end #content -->
 
 <!-- Share Modal -->
-<div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.5);z-index:500;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeShare()">
-  <div style="background:var(--md-sys-color-surface-container);border-radius:28px 28px 0 0;padding:28px 24px calc(28px + env(safe-area-inset-bottom));width:100%;max-width:480px;">
-    <div style="width:32px;height:4px;background:var(--md-sys-color-outline-variant);border-radius:2px;margin:0 auto 20px"></div>
-    <div style="font-size:20px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:12px;font-family:'Nunito',sans-serif">Share UK Poll Tracker</div>
-    <div style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-large);padding:14px;font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.6;margin-bottom:18px" id="share-preview-text"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <button onclick="shareToX();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:16px;cursor:pointer;background:#000;color:#fff;font-family:'Nunito',sans-serif">X / Twitter</button>
-      <button onclick="shareToWhatsApp();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:16px;cursor:pointer;background:#25D366;color:#fff;font-family:'Nunito',sans-serif">WhatsApp</button>
-      <button onclick="shareToFacebook();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:16px;cursor:pointer;background:#1877F2;color:#fff;font-family:'Nunito',sans-serif">Facebook</button>
-      <button onclick="copyLink()" id="copy-btn" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:1.5px solid var(--md-sys-color-outline-variant);font-weight:700;font-size:16px;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:'Nunito',sans-serif">Copy link</button>
+<div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.6);z-index:500;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeShare()">
+  <div style="background:var(--md-sys-color-surface);border-radius:28px 28px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.12)">
+    <div style="width:36px;height:4px;background:var(--md-sys-color-outline-variant);border-radius:2px;margin:0 auto 20px"></div>
+    <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Share</div>
+    <div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:16px;font-family:'Nunito',sans-serif">UK Poll Tracker</div>
+    <div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;border-top:3px solid var(--md-sys-color-primary);padding:14px 16px;font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.7;margin-bottom:18px;font-style:italic" id="share-preview-text"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <button onclick="shareToX();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#000;color:#fff;font-family:'Nunito',sans-serif">𝕏 Twitter</button>
+      <button onclick="shareToWhatsApp();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#25D366;color:#fff;font-family:'Nunito',sans-serif">WhatsApp</button>
+      <button onclick="shareToFacebook();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#1877F2;color:#fff;font-family:'Nunito',sans-serif">Facebook</button>
+      <button onclick="copyLink()" id="copy-btn" style="padding:14px;border-radius:99px;border:2px solid var(--md-sys-color-outline-variant);font-weight:800;font-size:15px;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:'Nunito',sans-serif">📋 Copy</button>
     </div>
-    <button onclick="closeShare()" style="width:100%;padding:12px;background:transparent;color:var(--md-sys-color-on-surface-variant);border:none;font-size:16px;cursor:pointer;text-decoration:underline;font-family:'Nunito',sans-serif">Close</button>
+    <button onclick="closeShare()" style="width:100%;padding:12px;background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface-variant);border:none;font-size:15px;font-weight:700;cursor:pointer;border-radius:99px;font-family:'Nunito',sans-serif;margin-top:4px">Dismiss</button>
   </div>
 </div>
 
@@ -983,26 +984,91 @@ function sp(id, btn) {
 
 const APP_URL = 'https://craighow8-creator.github.io/Ukpolls2/';
 
+function generateShareText() {
+  var p = D.parties;
+  var leader = p[0];
+  var second = p[1];
+  var third = p[2];
+  var url = APP_URL;
+  var date = D.fetchDate;
+
+  // Find biggest mover (largest absolute change)
+  var bigMover = p.reduce(function(best, x) {
+    return x.change !== null && Math.abs(x.change) > Math.abs(best.change || 0) ? x : best;
+  }, {change: 0});
+
+  // Find closest gap between any two parties
+  var sorted = p.slice().sort(function(a,b) { return b.pct - a.pct; });
+  var minGap = 99, gapA, gapB;
+  for (var i = 0; i < sorted.length - 1; i++) {
+    var gap = sorted[i].pct - sorted[i+1].pct;
+    if (gap < minGap && sorted[i].pct > 5 && sorted[i+1].pct > 5) {
+      minGap = gap; gapA = sorted[i]; gapB = sorted[i+1];
+    }
+  }
+
+  // Labour position (expected to be 1st, interesting if not)
+  var labPos = p.findIndex(function(x) { return x.name === 'Labour'; }) + 1;
+  var labPct = (p.find(function(x) { return x.name === 'Labour'; }) || {}).pct;
+  var refPct = (p.find(function(x) { return x.name === 'Reform UK'; }) || {}).pct;
+  var grnPct = (p.find(function(x) { return x.name === 'Green'; }) || {}).pct;
+
+  // Pick the most interesting story
+  var story;
+
+  // Story 1: Labour not in top 2
+  if (labPos > 2) {
+    var posWord = labPos === 3 ? 'third' : labPos === 4 ? 'fourth' : 'fifth';
+    story = 'Labour have slipped to ' + posWord + ' place at ' + labPct + '% — ' + leader.name + ' lead on ' + leader.pct + '%. The political map is being redrawn 🗺️';
+  }
+  // Story 2: Big mover up or down
+  else if (bigMover.change && Math.abs(bigMover.change) >= 2) {
+    var dir = bigMover.change > 0 ? 'up' : 'down';
+    var emoji = bigMover.change > 0 ? '📈' : '📉';
+    story = bigMover.name + ' are ' + dir + ' ' + Math.abs(bigMover.change) + ' points to ' + bigMover.pct + '% ' + emoji + ' — ' + leader.name + ' still lead but the race is shifting';
+  }
+  // Story 3: Very tight race at the top
+  else if (minGap <= 2 && gapA && gapB) {
+    story = gapA.name + ' and ' + gapB.name + ' are virtually neck and neck — ' + gapA.pct + '% vs ' + gapB.pct + '%. Too close to call 👀';
+  }
+  // Story 4: Reform leading comfortably
+  else if (leader.name === 'Reform UK' && leader.pct - second.pct >= 5) {
+    story = 'Reform UK are pulling away from the pack on ' + leader.pct + '% — ' + second.pct + ' points clear of ' + second.name + '. A hung parliament looks likely 🇬🇧';
+  }
+  // Story 5: Greens unusually high
+  else if (grnPct >= 15) {
+    story = 'The Greens are at ' + grnPct + '% — their highest in modern polling history. ' + leader.name + ' still lead on ' + leader.pct + '% but this is a four-party race now 🌿';
+  }
+  // Fallback: clean summary
+  else {
+    story = leader.name + ' lead on ' + leader.pct + '% with ' + second.name + ' on ' + second.pct + '% and ' + third.name + ' on ' + third.pct + '%. A hung parliament on current polling 🇬🇧';
+  }
+
+  return story + '
+
+' + 'See the full picture 👇
+' + url;
+}
+
 function openShare() {
   try { window.goatcounter.count({path:'share-modal-open',title:'Share modal opened',event:true}); } catch(e) {}
-  var p = D.parties;
-  var txt = '🇬🇧 UK Polls (' + D.fetchDate + '): Reform UK ' + p[0].pct + '% · Labour ' + p[1].pct + '% · Con ' + p[2].pct + '% · Green ' + p[3].pct + '% · LD ' + p[4].pct + '%. Track the polls: ' + APP_URL;
+  var txt = generateShareText();
   document.getElementById('share-preview-text').textContent = txt;
   document.getElementById('share-modal').style.display = 'flex';
 }
 function closeShare() { document.getElementById('share-modal').style.display = 'none'; }
 function shareToX() {
   try { window.goatcounter.count({path:'share-twitter',title:'Share: share-twitter',event:true}); } catch(e) {}
-  var p = D.parties;
-  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('🇬🇧 UK Polls ' + D.fetchDate + ': Reform UK ' + p[0].pct + '% · Labour ' + p[1].pct + '% · Con ' + p[2].pct + '% · Green ' + p[3].pct + '% · LD ' + p[4].pct + '% ' + APP_URL), '_blank');
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(generateShareText()), '_blank');
 }
 function shareToWhatsApp() {
   try { window.goatcounter.count({path:'share-whatsapp',title:'Share: share-whatsapp',event:true}); } catch(e) {}
-  var p = D.parties;
-  window.open('https://wa.me/?text=' + encodeURIComponent('🇬🇧 UK Polls (' + D.fetchDate + '): Reform UK ' + p[0].pct + '% · Labour ' + p[1].pct + '% · Con ' + p[2].pct + '% · Green ' + p[3].pct + '% · LD ' + p[4].pct + '%. Track the polls: ' + APP_URL), '_blank');
+  window.open('https://wa.me/?text=' + encodeURIComponent(generateShareText()), '_blank');
 }
 function shareToFacebook() {
   try { window.goatcounter.count({path:'share-facebook',title:'Share: share-facebook',event:true}); } catch(e) {}
+  window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(APP_URL) + '&quote=' + encodeURIComponent(generateShareText()), '_blank');
+}); } catch(e) {}
   window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(APP_URL), '_blank');
 }
 function copyLink() {
