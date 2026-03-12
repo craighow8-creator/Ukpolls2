@@ -56,11 +56,13 @@ body{background:transparent;color:#e8ecf4;font-family:'Nunito Sans',sans-serif;f
 
 /* ── Party grid ── */
 .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.pc{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:12px 8px;border-top:3px solid;text-align:center;height:120px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;backdrop-filter:blur(6px);}
-.pca{font-size:14px;color:#c8cdd8;letter-spacing:1px;margin-bottom:4px;}
+.pc{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:12px 6px;border-top:3px solid;text-align:center;min-height:128px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;backdrop-filter:blur(6px);overflow:hidden;}
+.pca{font-size:11px;color:#c8cdd8;letter-spacing:0.5px;margin-bottom:2px;word-break:break-word;line-height:1.3;}
+.pcs{font-size:11px;color:#c8cdd8;margin-top:2px;white-space:nowrap;}
+.pca{font-size:11px;color:#c8cdd8;letter-spacing:0.5px;margin-bottom:2px;word-break:break-word;line-height:1.3;}
 .pcp{font-size:26px;font-weight:900;line-height:1;font-family:"Nunito",sans-serif;}
 .pcc{font-size:14px;margin-top:3px;}
-.pcs{font-size:14px;color:#c8cdd8;margin-top:2px;}
+
 
 /* ── Seat bar ── */
 .sbar{display:flex;height:40px;border-radius:16px;overflow:hidden;margin-bottom:8px;gap:2px;}
@@ -245,7 +247,7 @@ body{background:transparent;color:#e8ecf4;font-family:'Nunito Sans',sans-serif;f
 
     <div class="sec-label">🛂 NET MIGRATION</div>
     <div id="migration-content"></div>
-    <div style="font-size:14px;color:#c8cdd8;text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common · ONS 2024. Feb–Mar 2026.</div>
+    <div style="font-size:14px;color:#c8cdd8;text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common · ONS Nov 2025 (YE June 2025) · Home Office / Migration Observatory. Mar 2026.</div>
   </div>
 
   <!-- LEADERS -->
@@ -642,34 +644,24 @@ function renderComparison() {
 
 // ── Migration Data ──
 var MIGRATION = {
-  // ONS year ending June 2024
-  fetchYear: 'Year ending June 2024 · ONS',
-  netTotal: 728000,
-  netPrev: 906000, // YE June 2023
-  netPrev2: 504000, // YE June 2022
+  // ONS year ending June 2025 (published Nov 2025)
+  fetchYear: 'Year ending June 2025 · ONS',
+  netTotal: 204000,
+  netPrev: 649000, // YE June 2024 (revised down from 728k)
+  netPrev2: 906000, // YE June 2023
 
   byNationality: [
-    {name:'India',        net:126000, inflow:302000, outflow:176000, type:'work/study'},
-    {name:'Nigeria',      net:119000, inflow:148000, outflow:29000,  type:'study/family'},
-    {name:'China',        net:76000,  inflow:108000, outflow:32000,  type:'study'},
-    {name:'Pakistan',     net:51000,  inflow:75000,  outflow:24000,  type:'family/study'},
-    {name:'Zimbabwe',     net:48000,  inflow:56000,  outflow:8000,   type:'work/asylum'},
-    {name:'Bangladesh',   net:36000,  inflow:52000,  outflow:16000,  type:'family/study'},
-    {name:'Philippines',  net:34000,  inflow:45000,  outflow:11000,  type:'work/NHS'},
-    {name:'Sri Lanka',    net:28000,  inflow:38000,  outflow:10000,  type:'work/study'},
-    {name:'Hong Kong',    net:24000,  inflow:38000,  outflow:14000,  type:'BN(O) visa'},
-    {name:'South Africa', net:22000,  inflow:35000,  outflow:13000,  type:'work'},
-    {name:'EU citizens',  net:-86000, inflow:142000, outflow:228000, type:'various'},
-    {name:'British',      net:-131000,inflow:null,   outflow:null,   type:'emigration'},
+    {name:'Non-EU nationals', net:383000, inflow:670000, outflow:287000, type:'work/study/asylum'},
+    {name:'EU citizens',      net:-70000, inflow:85000,  outflow:155000, type:'various'},
+    {name:'British',          net:-109000,inflow:143000, outflow:252000, type:'emigration'},
   ],
 
   byVisa: [
-    {type:'Study',           n:298000, color:'#6366f1'},
-    {type:'Skilled Work',    n:189000, color:'#12B7D4'},
-    {type:'Family',          n:113000, color:'#FAA61A'},
-    {type:'Asylum/Humanity', n:84000,  color:'#f97316'},
-    {type:'BN(O) Hong Kong', n:24000,  color:'#E4003B'},
-    {type:'Other',           n:20000,  color:'#6b7280'},
+    {type:'Study',           n:440000, color:'#6366f1'},
+    {type:'Skilled Work',    n:175000, color:'#12B7D4'},
+    {type:'Family',          n:68000,  color:'#FAA61A'},
+    {type:'Asylum',          n:111000, color:'#f97316'},
+    {type:'Other',           n:35000,  color:'#6b7280'},
   ],
 
   trend: [
@@ -678,8 +670,23 @@ var MIGRATION = {
     {year:'2021', net:173000},
     {year:'2022', net:504000},
     {year:'2023', net:906000},
-    {year:'2024', net:728000},
+    {year:'2024', net:649000},
+    {year:'2025', net:204000},
   ],
+
+  smallBoats: {
+    total2025: 41500,
+    total2024: 36816,
+    total2018to2025: 196000,
+    topNationalities: ['Afghan','Syrian','Iranian','Iraqi','Eritrean'],
+    asylumClaimRate: 95,
+    grantRate: 68,
+    returned: 5000,
+    deaths2025: 24,
+    deaths2024: 73,
+    hotelCost: '£15bn over 10 years (NAO est.)',
+    note: 'Around ~1,000 crossed in Jan 2026. 193 returned to France under new pilot scheme by end of 2025.'
+  },
 
   policies: [
     {party:'Reform UK',      color:'#12B7D4', text:'Full immigration freeze. Leave ECHR. Intercept & deport all illegal arrivals. Zero net migration target.'},
@@ -717,7 +724,7 @@ function renderMigration() {
       + '<div style="display:flex;align-items:flex-end;gap:6px;height:80px;margin-bottom:6px">'
       + M.trend.map(function(t) {
           var h = Math.round(t.net / trendMax * 75);
-          var isLatest = t.year === '2024';
+          var isLatest = t.year === '2025';
           return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'
             + '<div style="font-size:10px;color:#c8cdd8;font-weight:700">' + (t.net/1000).toFixed(0) + 'k</div>'
             + '<div style="width:100%;height:' + h + 'px;background:' + (isLatest?'#12B7D4':'rgba(99,102,241,0.6)') + ';border-radius:4px 4px 0 0;transition:height 0.5s"></div>'
@@ -778,6 +785,39 @@ function renderMigration() {
             + '<div style="font-size:13px;color:#c8cdd8;line-height:1.5">' + p.text + '</div>'
           + '</div>';
         }).join('')
+    + '</div>'
+
+    // Small boats section
+    + '<div class="card" style="margin-bottom:10px;padding:14px">'
+      + '<div style="font-size:13px;font-weight:700;color:#e8ecf4;margin-bottom:12px">🚤 ILLEGAL CHANNEL CROSSINGS</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">'
+        + '<div style="background:rgba(248,113,74,0.1);border:1px solid rgba(248,113,74,0.3);border-radius:12px;padding:10px;text-align:center">'
+          + '<div style="font-size:22px;font-weight:900;color:#f97316">' + (M.smallBoats.total2025/1000).toFixed(1) + 'k</div>'
+          + '<div style="font-size:11px;color:#c8cdd8;margin-top:2px">Crossings in 2025</div>'
+          + '<div style="font-size:11px;color:#f85149;margin-top:1px">▲ 13% vs 2024</div>'
+        + '</div>'
+        + '<div style="background:rgba(248,113,74,0.1);border:1px solid rgba(248,113,74,0.3);border-radius:12px;padding:10px;text-align:center">'
+          + '<div style="font-size:22px;font-weight:900;color:#f97316">' + (M.smallBoats.total2018to2025/1000).toFixed(0) + 'k</div>'
+          + '<div style="font-size:11px;color:#c8cdd8;margin-top:2px">Total since 2018</div>'
+          + '<div style="font-size:11px;color:#c8cdd8;margin-top:1px">as of Mar 2026</div>'
+        + '</div>'
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px">'
+        + [
+            {label:'Asylum grant rate (small boat arrivals)', val: M.smallBoats.grantRate+'%', col:'#f97316'},
+            {label:'Claim asylum on arrival', val: M.smallBoats.asylumClaimRate+'%', col:'#FAA61A'},
+            {label:'Deaths crossing in 2025', val: M.smallBoats.deaths2025, col:'#f85149'},
+            {label:'Returned from UK (2018–2024)', val: (M.smallBoats.returned/1000).toFixed(0)+'k (3%)', col:'#9aa3b8'},
+          ].map(function(r){
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.07)">'
+              + '<span style="font-size:12px;color:#c8cdd8">' + r.label + '</span>'
+              + '<span style="font-size:13px;font-weight:800;color:' + r.col + '">' + r.val + '</span>'
+            + '</div>';
+          }).join('')
+      + '</div>'
+      + '<div style="font-size:12px;color:#c8cdd8;margin-bottom:6px"><strong style="color:#e8ecf4">Top nationalities:</strong> Afghan, Syrian, Iranian, Iraqi, Eritrean</div>'
+      + '<div style="font-size:12px;color:#c8cdd8;margin-bottom:6px"><strong style="color:#e8ecf4">Hotel/support cost:</strong> £15bn estimated over 10 years (NAO)</div>'
+      + '<div style="font-size:12px;color:#c8cdd8"><strong style="color:#e8ecf4">France returns pilot:</strong> 193 returned by end of 2025 out of ~16,000 arrivals (1%)</div>'
     + '</div>';
 }
 
