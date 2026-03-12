@@ -1012,7 +1012,7 @@ function renderTrends() {
     pointBackgroundColor: colors[p],
     pointRadius: 6,
     pointHoverRadius: 9,
-    borderWidth: 3,
+    borderWidth: 2,
     tension: 0.3,
     fill: false,
   }));
@@ -1027,25 +1027,37 @@ function renderTrends() {
       responsive: true,
       maintainAspectRatio: true,
       aspectRatio: 1.4,
+      animation: {
+        duration: 800,
+        easing: 'easeOutQuart',
+      },
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: {
           position: 'bottom',
           labels: {
-            color: '#c8cdd8',
-            font: { size: 13, family: "'Nunito Sans', sans-serif" },
-            boxWidth: 12,
-            boxHeight: 12,
-            padding: 20,
+            color: '#e8ecf4',
+            font: { size: 13, family: "'Nunito Sans', sans-serif", weight: '600' },
+            usePointStyle: true,
+            pointStyle: 'circle',
+            pointStyleWidth: 10,
+            padding: 18,
           }
         },
         tooltip: {
-          backgroundColor: 'rgba(5,10,30,0.95)',
-          borderColor: 'rgba(255,255,255,0.15)',
+          backgroundColor: 'rgba(15,20,45,0.96)',
+          borderColor: 'rgba(255,255,255,0.18)',
           borderWidth: 1,
-          titleColor: '#fff',
+          titleColor: '#ffffff',
+          titleFont: { size: 14, weight: '800', family: "'Nunito', sans-serif" },
           bodyColor: '#c8cdd8',
-          padding: 10,
+          bodyFont: { size: 13, family: "'Nunito Sans', sans-serif" },
+          padding: 14,
+          cornerRadius: 16,
+          caretSize: 6,
+          displayColors: true,
+          boxWidth: 10,
+          boxHeight: 10,
           callbacks: {
             label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%`
           }
@@ -1053,12 +1065,14 @@ function renderTrends() {
       },
       scales: {
         x: {
-          grid: { color: 'rgba(255,255,255,0.06)' },
-          ticks: { color: '#7a8396', font: { size: 13 }, padding: 6 }
+          grid: { color: 'rgba(255,255,255,0.1)', lineWidth: 1 },
+          border: { dash: [4, 4] },
+          ticks: { color: '#9aa3b8', font: { size: 13, family: "'Nunito Sans', sans-serif" }, padding: 8 }
         },
         y: {
-          grid: { color: 'rgba(255,255,255,0.06)' },
-          ticks: { color: '#7a8396', font: { size: 13 }, callback: v => v + '%', padding: 6 },
+          grid: { color: 'rgba(255,255,255,0.1)', lineWidth: 1 },
+          border: { dash: [4, 4] },
+          ticks: { color: '#9aa3b8', font: { size: 13, family: "'Nunito Sans', sans-serif" }, callback: v => v + '%', padding: 8 },
           suggestedMin: 8,
           suggestedMax: 35,
         }
