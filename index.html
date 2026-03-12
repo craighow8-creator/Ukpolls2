@@ -1514,6 +1514,7 @@ function renderAge() {
     {key:'LAB',label:'Labour',color:'#E4003B'},
     {key:'CON',label:'Con',color:'#0087DC'},
     {key:'LD',label:'LD',color:'#FAA61A'},
+    {key:'SNP',label:'SNP',color:'#C4922A'},
   ];
   function bars(elId, groups) {
     document.getElementById(elId).innerHTML = groups.map(g => {
@@ -1521,8 +1522,8 @@ function renderAge() {
       var maxPct = 0, leadColor = '#012169';
       parties.forEach(function(p) { if (g[p.key] > maxPct) { maxPct = g[p.key]; leadColor = p.color; } });
 
-      var barRows = parties.map(p => {
-        var pct = g[p.key] || 0;
+      var barRows = parties.filter(p => g[p.key] > 0).sort((a,b) => g[b.key] - g[a.key]).map(p => {
+        var pct = g[p.key];
         return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">'
           + '<div style="width:52px;font-size:13px;color:' + p.color + ';font-weight:700;flex-shrink:0;text-align:right;line-height:1.2">' + p.label + '</div>'
           + '<div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:12px;overflow:hidden">'
@@ -1569,7 +1570,7 @@ function renderAge() {
     {label:'Midlands',         REF:32,GRN:14,LAB:20,CON:18,LD:10},
     {label:'North of England', REF:30,GRN:16,LAB:22,CON:14,LD:11},
     {label:'Wales',            REF:24,GRN:14,LAB:26,CON:14,LD:12},
-    {label:'Scotland',         REF:14,GRN:10,LAB:28,CON:14,LD:8, note:'SNP ~28% not shown here'},
+    {label:'Scotland',         REF:14,GRN:10,LAB:28,CON:14,LD:8,SNP:28},
   ]);
   bars('ethnicity-content', [
     {label:'White British', REF:30,GRN:17,LAB:17,CON:17,LD:12},
@@ -1827,7 +1828,7 @@ function renderPollCards() {
 
   // One row per poll — each a mini seat-projection style bar
   var rows = D.polls.map(function(p) {
-    var segs = KEYS.filter(function(k) { return p[k.k] != null; }).map(function(k) {
+    var segs = KEYS.filter(function(k) { return p[k.k] != null; }).sort(function(a,b) { return p[b.k] - p[a.k]; }).map(function(k) {
       var pct = p[k.k];
       var show = pct >= 8;
       return '<div style="flex:' + pct + ';background:' + k.color + ';display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;min-width:2px">'
