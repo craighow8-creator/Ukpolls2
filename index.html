@@ -899,8 +899,9 @@ function renderComparison() {
 
 // ── AI ──
 function shareBtn(fullText) {
+  window._lastAIResponse = fullText;
   return '<div style="margin-top:14px;text-align:right">'
-    + '<button onclick="doShare(' + JSON.stringify(fullText) + ')" '
+    + '<button onclick="doShare()" '
     + 'style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;'
     + 'background:var(--md-sys-color-primary);color:#fff;border:none;'
     + 'border-radius:var(--md-sys-shape-corner-full);font-family:\'Nunito\',sans-serif;'
@@ -911,8 +912,9 @@ function shareBtn(fullText) {
     + '</svg>Share</button></div>';
 }
 
-async function doShare(text) {
+async function doShare() {
   var url = 'https://craighow8-creator.github.io/Ukpolls2/';
+  var text = window._lastAIResponse || '';
   var shareText = text.substring(0, 400) + (text.length > 400 ? '...' : '');
   if (navigator.share) {
     try {
