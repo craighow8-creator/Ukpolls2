@@ -232,10 +232,10 @@ body {
 .nb {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  padding: 8px 4px 6px;
+  padding: 10px 2px 8px;
   background: none; border: none;
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 10px; cursor: pointer;
+  font-size: 11px; cursor: pointer;
   gap: 3px; flex: 1;
   font-family: 'Nunito', sans-serif;
   font-weight: 500;
@@ -243,13 +243,13 @@ body {
   position: relative;
 }
 .nb svg {
-  width: 22px; height: 22px; stroke-width: 1.6;
+  width: 24px; height: 24px; stroke-width: 1.6;
   transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
 }
 .nb .nav-indicator {
   position: absolute;
   top: 6px;
-  width: 64px; height: 32px;
+  width: 88px; height: 34px;
   background: var(--md-sys-color-primary-container);
   border-radius: var(--md-sys-shape-corner-full);
   opacity: 0;
@@ -1012,7 +1012,7 @@ window.addEventListener('resize', () => {
 // ── Render Demographics ──
 function renderAge() {
   const parties = [
-    {key:'REF',label:'Reform UK',color:'#12B7D4'},
+    {key:'REF',label:'Ref UK',color:'#12B7D4'},
     {key:'GRN',label:'Green',color:'#02A95B'},
     {key:'LAB',label:'Labour',color:'#E4003B'},
     {key:'CON',label:'Con',color:'#0087DC'},
@@ -1024,7 +1024,7 @@ function renderAge() {
         <div style="font-size:16px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:12px">${g.label}</div>
         ${parties.map(p => `
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-            <div style="width:44px;font-size:15px;color:${p.color};font-weight:600;flex-shrink:0">${p.label}</div>
+            <div style="width:48px;font-size:13px;color:${p.color};font-weight:600;flex-shrink:0;line-height:1.2">${p.label}</div>
             <div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden">
               <div style="width:${g[p.key]}%;background:${p.color};height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>
             </div>
@@ -1083,7 +1083,7 @@ function renderAge() {
         {label:'LD',        color:'#FAA61A', pct:6,  note:''},
       ].map(p => `
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <div style="width:44px;font-size:15px;color:${p.color};font-weight:600;flex-shrink:0">${p.label}</div>
+          <div style="width:48px;font-size:13px;color:${p.color};font-weight:600;flex-shrink:0;line-height:1.2">${p.label}</div>
           <div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden">
             <div style="width:${p.pct}%;background:${p.color};height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>
           </div>
@@ -1188,10 +1188,10 @@ function renderVoteButtons() {
     var border = sel ? '2px solid ' + p.color : '2px solid ' + p.color + '50';
     var shadow = sel ? '0 0 0 2px ' + p.color + '40' : 'var(--md-elevation-1)';
     var count = (window._voteCache && window._voteCache[p.name]) || 0;
-    var wm = count > 0 ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:' + p.color + ';opacity:0.25;pointer-events:none">' + count + '</div>' : '';
+    var wm = count > 0 ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:' + p.color + ';opacity:0.22;pointer-events:none">' + count + '</div>' : '';
     return '<div onclick="castVote(\'' + p.name + '\')" style="background:' + bg + ';border:' + border + ';border-radius:var(--md-sys-shape-corner-large);padding:10px 6px 8px;text-align:center;cursor:pointer;box-shadow:' + shadow + ';transition:all 0.15s;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:56px;gap:3px;position:relative;overflow:hidden">'
       + wm
-      + '<div style="position:relative;font-size:13px;color:' + (sel ? p.color : 'var(--md-sys-color-on-surface)') + ';font-weight:' + (sel?'700':'500') + ';word-break:break-word;line-height:1.3">' + p.name + '</div>'
+      + '<div style="position:relative;font-size:15px;color:' + (sel ? p.color : 'var(--md-sys-color-on-surface)') + ';font-weight:' + (sel?'700':'500') + ';word-break:break-word;line-height:1.3">' + p.name + '</div>'
       + (sel ? '<div style="position:relative;font-size:13px;color:' + p.color + ';font-weight:700;letter-spacing:0.3px">✓ Selected</div>' : '')
       + '</div>';
   }).join('');
@@ -1216,12 +1216,15 @@ async function castVote(party) {
 }
 
 async function loadVoteResults() {
+  const el = document.getElementById('vote-results');
   try {
     const resp = await fetch(WORKER + '/votes');
-    const votes = await resp.json();
+    if (!resp.ok) { el.innerHTML = '<div style="padding:16px;font-size:15px;color:var(--md-sys-color-secondary)">Server error ' + resp.status + '</div>'; return; }
+    const raw = await resp.text();
+    let votes;
+    try { votes = JSON.parse(raw); } catch(e) { el.innerHTML = '<div style="padding:16px;font-size:15px;color:var(--md-sys-color-secondary)">Bad response: ' + raw.substring(0,80) + '</div>'; return; }
     const knownNames = PARTIES_VOTE.map(p => p.name);
-    const total = Object.entries(votes).reduce((a,[k,v]) => a + (knownNames.includes(k) ? v : 0), 0);
-    const el = document.getElementById('vote-results');
+    const total = Object.entries(votes).reduce((a,[k,v]) => a + (knownNames.includes(k) ? Number(v) : 0), 0);
     if (total === 0) {
       el.innerHTML = '<div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:16px;padding:20px">No votes yet — be the first!</div>';
       return;
@@ -1230,7 +1233,7 @@ async function loadVoteResults() {
     renderVoteButtons();
     const POLL_MAP = {'Reform UK':26,'Labour':19,'Conservative':18,'Green':17,'Lib Dem':12,'SNP':3,'Restore Britain':7};
     el.innerHTML = '<div style="text-align:center;margin-bottom:18px">'
-      + '<div style="font-size:40px;font-weight:900;color:var(--md-sys-color-primary);font-family:Nunito,sans-serif">' + total.toLocaleString() + '</div>'
+      + '<div style="font-size:44px;font-weight:900;color:var(--md-sys-color-primary);font-family:Nunito,sans-serif">' + total.toLocaleString() + '</div>'
       + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);letter-spacing:1.5px;margin-top:2px;font-weight:600;text-transform:uppercase">Total votes cast</div>'
       + '</div>'
       + PARTIES_VOTE.filter(p => (votes[p.name]||0) > 0 || POLL_MAP[p.name]).sort((a,b) => (votes[b.name]||0) - (votes[a.name]||0)).map(p => {
@@ -1249,19 +1252,19 @@ async function loadVoteResults() {
             + '<div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden">'
               + '<div style="width:' + userPct + '%;background:' + p.color + ';height:100%;border-radius:var(--md-sys-shape-corner-full);transition:width 0.6s ease"></div>'
             + '</div>'
-            + '<div style="width:30px;text-align:right;font-size:15px;font-weight:700;color:' + p.color + '">' + userPct + '%</div>'
+            + '<div style="width:36px;text-align:right;font-size:15px;font-weight:700;color:' + p.color + '">' + userPct + '%</div>'
           + '</div>' : '')
           + (pollPct ? '<div style="display:flex;gap:6px;align-items:center">'
             + '<div style="width:32px;font-size:13px;color:var(--md-sys-color-on-surface-variant)">Poll</div>'
             + '<div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:4px;overflow:hidden">'
               + '<div style="width:' + pollPct + '%;background:' + p.color + '60;height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>'
             + '</div>'
-            + '<div style="width:30px;text-align:right;font-size:13px;color:var(--md-sys-color-on-surface-variant)">' + pollPct + '%</div>'
+            + '<div style="width:36px;text-align:right;font-size:13px;color:var(--md-sys-color-on-surface-variant)">' + pollPct + '%</div>'
           + '</div>' : '')
           + '</div>';
       }).join('');
   } catch(e) {
-    document.getElementById('vote-results').innerHTML = '<div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:16px;padding:16px">Could not load results.</div>';
+    document.getElementById('vote-results').innerHTML = '<div style="text-align:center;font-size:15px;padding:16px;color:var(--md-sys-color-secondary)">Error: ' + e.message + '</div>';
   }
 }
 
@@ -1393,7 +1396,7 @@ function renderMigration() {
            {label:'Returned from UK (2018–2024)',val:(M.smallBoats.returned/1000).toFixed(0)+'k (3%)',col:'var(--md-sys-color-on-surface-variant)'},
           ].map(r =>
             '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
-            + '<span style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">' + r.label + '</span>'
+            + '<span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">' + r.label + '</span>'
             + '<span style="font-size:15px;font-weight:700;color:' + r.col + '">' + r.val + '</span>'
             + '</div>'
           ).join('')
