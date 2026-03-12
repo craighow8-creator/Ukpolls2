@@ -219,7 +219,7 @@ body{background:transparent;color:#e8ecf4;font-family:'Nunito Sans',sans-serif;f
   <div class="page" id="page-trends">
     <div class="stitle">Trends</div>
     <div class="ssub">6-month polling movement</div>
-    <div class="card" style="padding:10px" id="trend-card">
+    <div class="card" style="padding:16px" id="trend-card">
       <canvas id="trend-chart" style="width:100%;display:block"></canvas>
     </div>
     <div class="sec-label">📈 LATEST MOVEMENT</div>
@@ -1010,9 +1010,9 @@ function renderTrends() {
     borderColor: colors[p],
     backgroundColor: colors[p] + '22',
     pointBackgroundColor: colors[p],
-    pointRadius: 5,
-    pointHoverRadius: 7,
-    borderWidth: 2.5,
+    pointRadius: 6,
+    pointHoverRadius: 9,
+    borderWidth: 3,
     tension: 0.3,
     fill: false,
   }));
@@ -1026,17 +1026,17 @@ function renderTrends() {
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      aspectRatio: 2,
+      aspectRatio: 1.4,
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: {
           position: 'bottom',
           labels: {
             color: '#c8cdd8',
-            font: { size: 12, family: "'Nunito Sans', sans-serif" },
+            font: { size: 13, family: "'Nunito Sans', sans-serif" },
             usePointStyle: true,
-            pointStyleWidth: 10,
-            padding: 14,
+            pointStyleWidth: 12,
+            padding: 20,
           }
         },
         tooltip: {
@@ -1054,11 +1054,11 @@ function renderTrends() {
       scales: {
         x: {
           grid: { color: 'rgba(255,255,255,0.06)' },
-          ticks: { color: '#7a8396', font: { size: 12 } }
+          ticks: { color: '#7a8396', font: { size: 13 }, padding: 6 }
         },
         y: {
           grid: { color: 'rgba(255,255,255,0.06)' },
-          ticks: { color: '#7a8396', font: { size: 12 }, callback: v => v + '%' },
+          ticks: { color: '#7a8396', font: { size: 13 }, callback: v => v + '%', padding: 6 },
           suggestedMin: 8,
           suggestedMax: 35,
         }
