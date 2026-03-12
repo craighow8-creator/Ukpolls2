@@ -553,7 +553,7 @@ body {
     <div class="sec-label">🏛 Seat Projection</div>
     <div class="sbar" id="seat-bar"></div>
     <div id="seat-summary" style="font-size:15px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin:8px 0 12px;font-weight:500"></div>
-    <div class="card" style="border-top:4px solid var(--md-sys-color-outline-variant);padding:14px 16px;margin-bottom:16px">
+    <div class="card" style="border-top:4px solid var(--md-sys-color-outline-variant);padding:14px 16px;margin-bottom:4px">
       <div style="font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">⚖️ About First Past The Post</div>
       <div style="font-size:14px;line-height:1.7;color:var(--md-sys-color-on-surface)">Under FPTP, the UK's voting system, what matters is winning individual constituencies — not total votes. A party can win far more seats than its national vote share suggests if its support is geographically concentrated, and far fewer if its vote is spread thinly. That's why Reform UK at 26% projects to hundreds of seats while Labour at 19% projects to just ~41 — Reform's vote is more efficiently distributed across winnable seats. These seat estimates use a uniform national swing model and carry significant uncertainty.</div>
     </div>
@@ -1472,11 +1472,12 @@ function renderPolls() {
       + '</div>';
   }).join('');
   document.getElementById('ctx-text').textContent = D.context;
+  // Dynamic seat summary — replaces hardcoded "Hung Parliament" text
   var sumEl = document.getElementById('seat-summary');
   if (sumEl) {
     var ld = seatParties[0];
-    var short = 326 - ld.seats;
     var isOutright = ld.seats >= 326;
+    var short = 326 - ld.seats;
     sumEl.innerHTML = '326 seats needed for majority · <strong style="color:'
       + (isOutright ? ld.color : 'var(--md-sys-color-primary)') + '">'
       + (isOutright ? ld.name + ' outright majority' : 'Hung Parliament projected')
@@ -2591,17 +2592,18 @@ setTimeout(renderTrends, 100);
 
 </script>
 
-<script data-goatcounter="https://ukpolls.goatcounter.com/count" async src="//gc.zgo.at/count.js">
+<script data-goatcounter="https://ukpolls.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script>
 function shareExplainer() {
   var text = 'What are the May 2026 elections actually for?\n\n'
     + 'Not Westminster — these are local elections for councils across England and Scotland.\n\n'
     + '\u26a0\ufe0f Labour face potential wipeout in traditional strongholds\n'
-    + '\U0001f535 Reform UK\'s first real test: can polls translate to councillors?\n'
-    + '\U0001f7e2 Greens eyeing gains in cities after Gorton & Denton\n'
-    + '\U0001f3f4 Every Scottish council up for grabs\n\n'
-    + '\U0001f1ec\U0001f1e7 UK Poll Tracker\n' + APP_URL;
+    + '\u{1f535} Reform UK\'s first real test: can polls translate to councillors?\n'
+    + '\u{1f7e2} Greens eyeing gains in cities after Gorton & Denton\n'
+    + '\u{1f3f4} Every Scottish council up for grabs\n\n'
+    + '\u{1f1ec}\u{1f1e7} UK Poll Tracker\n' + APP_URL;
   try { navigator.clipboard.writeText(text); } catch(e) {}
-  showToast('\U0001f4cb Copied — ready to share!');
+  showToast('\u{1f4cb} Copied — ready to share!');
   if (navigator.share) {
     try { navigator.share({ title: 'May 2026 Elections Explained', text: text }); } catch(e) {}
   }
