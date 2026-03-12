@@ -898,6 +898,43 @@ function renderComparison() {
 }
 
 // ── AI ──
+function shareBtn(fullText) {
+  return '<div style="margin-top:14px;text-align:right">'
+    + '<button onclick="doShare(' + JSON.stringify(fullText) + ')" '
+    + 'style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;'
+    + 'background:var(--md-sys-color-primary);color:#fff;border:none;'
+    + 'border-radius:var(--md-sys-shape-corner-full);font-family:\'Nunito\',sans-serif;'
+    + 'font-size:14px;font-weight:700;cursor:pointer;box-shadow:var(--md-elevation-1)">'
+    + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
+    + '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>'
+    + '<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>'
+    + '</svg>Share</button></div>';
+}
+
+async function doShare(text) {
+  var url = 'https://craighow8-creator.github.io/Ukpolls2/';
+  var shareText = text.substring(0, 400) + (text.length > 400 ? '...' : '');
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: '🇬🇧 UK Poll Tracker',
+        text: shareText + '\n\n',
+        url: url
+      });
+    } catch(e) { if (e.name !== 'AbortError') fallbackCopy(shareText + '\n\n' + url); }
+  } else {
+    fallbackCopy(shareText + '\n\n' + url);
+  }
+}
+
+function fallbackCopy(text) {
+  navigator.clipboard.writeText(text).then(function() {
+    alert('Copied to clipboard!');
+  }).catch(function() {
+    alert('Share not supported on this browser.');
+  });
+}
+
 async function askParty(party, color) {
   var q = 'Give me a straight-talking, balanced briefing on why someone would vote ' + party + ' in the UK. '
     + 'Structure it exactly like this with these exact headings:\n'
@@ -951,7 +988,7 @@ async function askParty(party, color) {
         }
       });
       html += '</div></div>';
-      out.innerHTML = html;
+      out.innerHTML = html + shareBtn('Why vote ' + party + '? ' + text);
     } else {
       out.innerHTML = '<div style="color:var(--md-sys-color-secondary);padding:16px">Error: No response received.</div>';
     }
@@ -982,7 +1019,7 @@ async function askAI(q) {
     var data = await resp.json();
     var text = data.content && data.content[0] && data.content[0].text;
     if (text) {
-      out.innerHTML = '<div style="font-size:17px;color:var(--md-sys-color-on-surface);line-height:1.7">' + text.replace(/\n/g,'<br>') + '</div>';
+      out.innerHTML = '<div style="font-size:17px;color:var(--md-sys-color-on-surface);line-height:1.7">' + text.replace(/\n/g,'<br>') + '</div>' + shareBtn(q + '\n\n' + text);
       input.value = '';
     } else {
       out.innerHTML = '<div style="color:var(--md-sys-color-secondary)">Error: No response received.</div>';
