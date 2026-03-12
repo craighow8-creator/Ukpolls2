@@ -520,12 +520,12 @@ function sp(id, btn) {
 
 var APP_URL='https://craighow8-creator.github.io/Ukpolls2/';
 function openShare(){try{window.goatcounter.count({path:'share-modal-open',title:'Share modal opened',event:true});}catch(e){}
-var p=D.parties;var txt='🇬🇧 UK Polls (Mar 2026): Reform UK '+p[0].pct+'% · Labour '+p[1].pct+'% · Con '+p[2].pct+'% · Green '+p[3].pct+'% · LD '+p[4].pct+'%. Track the polls: '+APP_URL;document.getElementById('share-preview-text').textContent=txt;document.getElementById('share-modal').style.display='flex';}
+var p=D.parties;var txt='🇬🇧 UK Polls ('+D.fetchDate+'): Reform UK '+p[0].pct+'% · Labour '+p[1].pct+'% · Con '+p[2].pct+'% · Green '+p[3].pct+'% · LD '+p[4].pct+'%. Track the polls: '+APP_URL;document.getElementById('share-preview-text').textContent=txt;document.getElementById('share-modal').style.display='flex';}
 function closeShare(){document.getElementById('share-modal').style.display='none';}
 function shareToX(){try{window.goatcounter.count({path:'share-twitter',title:'Share: share-twitter',event:true});}catch(e){}
-var p=D.parties;window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('🇬🇧 UK Polls Mar 2026: Reform UK '+p[0].pct+'% · Labour '+p[1].pct+'% · Con '+p[2].pct+'% · Green '+p[3].pct+'% · LD '+p[4].pct+'% '+APP_URL),'_blank');}
+var p=D.parties;window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('🇬🇧 UK Polls '+D.fetchDate+': Reform UK '+p[0].pct+'% · Labour '+p[1].pct+'% · Con '+p[2].pct+'% · Green '+p[3].pct+'% · LD '+p[4].pct+'% '+APP_URL),'_blank');}
 function shareToWhatsApp(){try{window.goatcounter.count({path:'share-whatsapp',title:'Share: share-whatsapp',event:true});}catch(e){}
-var p=D.parties;window.open('https://wa.me/?text='+encodeURIComponent('🇬🇧 UK Polls (Mar 2026): Reform UK '+p[0].pct+'% · Labour '+p[1].pct+'% · Con '+p[2].pct+'% · Green '+p[3].pct+'% · LD '+p[4].pct+'%. Track the polls: '+APP_URL),'_blank');}
+var p=D.parties;window.open('https://wa.me/?text='+encodeURIComponent('🇬🇧 UK Polls ('+D.fetchDate+'): Reform UK '+p[0].pct+'% · Labour '+p[1].pct+'% · Con '+p[2].pct+'% · Green '+p[3].pct+'% · LD '+p[4].pct+'%. Track the polls: '+APP_URL),'_blank');}
 function shareToFacebook(){try{window.goatcounter.count({path:'share-facebook',title:'Share: share-facebook',event:true});}catch(e){}
 window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(APP_URL),'_blank');}
 function copyLink(){try{window.goatcounter.count({path:'share-copy',title:'Share: copy link',event:true});}catch(e){}
@@ -612,9 +612,9 @@ function renderComparison() {
   var html = '<div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;margin-top:4px">'
     // Polling header
     + '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:12px">'
-    + '<div style="text-align:center"><div style="font-size:13px;color:'+a.color+';font-weight:700">'+a.name+'</div><div style="font-size:32px;font-weight:900;color:'+a.color+'">'+a.pct+'%</div><div style="font-size:13px;color:#c8cdd8">'+(a.seats!==null?'~'+a.seats+' seats':'—')+'</div></div>'
+    + '<div style="text-align:center"><div style="font-size:13px;color:'+a.color+';font-weight:700">'+a.name+'</div><div style="font-size:32px;font-weight:900;color:'+a.color+'">'+a.pct+'%</div><div style="font-size:13px;color:#c8cdd8">'+(a.seats!==null?'~'+a.seats+(a.seats===1?' seat':' seats'):'—')+'</div></div>'
     + '<div style="font-size:13px;color:#c8cdd8;font-weight:700;text-align:center">VS</div>'
-    + '<div style="text-align:center"><div style="font-size:13px;color:'+b.color+';font-weight:700">'+b.name+'</div><div style="font-size:32px;font-weight:900;color:'+b.color+'">'+b.pct+'%</div><div style="font-size:13px;color:#c8cdd8">'+(b.seats!==null?'~'+b.seats+' seats':'—')+'</div></div>'
+    + '<div style="text-align:center"><div style="font-size:13px;color:'+b.color+';font-weight:700">'+b.name+'</div><div style="font-size:32px;font-weight:900;color:'+b.color+'">'+b.pct+'%</div><div style="font-size:13px;color:#c8cdd8">'+(b.seats!==null?'~'+b.seats+(b.seats===1?' seat':' seats'):'—')+'</div></div>'
     + '</div>'
     // Gap note
     + '<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:10px;font-size:14px;color:#e8ecf4;text-align:center;margin-bottom:12px">'+leader.name+' leads by '+diff+' points. '+gapNote+'</div>'
@@ -637,7 +637,7 @@ function renderComparison() {
 }
 
 
-(function(){var el=document.getElementById('content'),sY=0,pull=false,busy=false;el.addEventListener('touchstart',function(e){if(el.scrollTop===0){sY=e.touches[0].clientY;pull=true;}},{passive:true});el.addEventListener('touchmove',function(e){if(!pull||busy)return;var d=e.touches[0].clientY-sY;if(d>0&&d<70)el.style.paddingTop=(d*0.4)+'px';},{passive:true});el.addEventListener('touchend',function(){if(!pull)return;var d=parseInt(el.style.paddingTop)||0;el.style.paddingTop='';pull=false;if(d>20&&!busy){busy=true;refreshData();setTimeout(function(){busy=false;},3000);}});})();
+
 
 
 // ── Migration Data ──
