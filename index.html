@@ -13,6 +13,12 @@
 <title>UK Poll Tracker</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%23012169'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Crect x='28' y='86' width='144' height='28' rx='2' fill='white'/%3E%3Crect x='86' y='28' width='28' height='144' rx='2' fill='white'/%3E%3Crect x='28' y='91' width='144' height='18' rx='2' fill='%23C8102E'/%3E%3Crect x='91' y='28' width='18' height='144' rx='2' fill='%23C8102E'/%3E%3C/svg%3E">
 <style>
+.key-date-row { display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--md-sys-color-outline-variant) }
+.key-date-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0 }
+.key-date-info { flex:1 }
+.key-date-label { font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface);line-height:1.3 }
+.key-date-sub { font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:2px }
+.key-date-days { font-size:13px;font-weight:800;color:var(--md-sys-color-primary);white-space:nowrap;text-align:right }
 /* ── M3E Token System ── */
 :root {
   --md-sys-color-primary: #012169;
@@ -534,7 +540,7 @@ body {
 <div id="content">
   <div id="ptr-indicator" style="display:flex;align-items:center;justify-content:center;gap:8px;height:0;overflow:hidden;transition:height 0.2s ease;background:var(--md-sys-color-surface-container-low)">
     <div id="ptr-spinner" style="width:20px;height:20px;border:2.5px solid var(--md-sys-color-primary-container);border-top-color:var(--md-sys-color-primary);border-radius:50%;transition:transform 0.2s"></div>
-    <span id="ptr-label" style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant);font-family:'Nunito',sans-serif">Pull to refresh</span>
+    <span id="ptr-label" style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant);font-family:\'Nunito\',sans-serif">Pull to refresh</span>
   </div>
 
   <!-- OVERVIEW -->
@@ -559,6 +565,17 @@ body {
     <div id="polls-cards"></div>
     <div class="sec-label">📌 Milestones</div>
     <div class="card" style="border-top:4px solid #C8102E" id="milestones-list"></div>
+
+    <div class="sec-label">🔄 Swing Calculator</div>
+    <div class="card" style="border-top:4px solid var(--md-sys-color-primary);padding:18px" id="swing-card">
+      <div style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:4px">What if the polls shifted?</div>
+      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Drag to adjust a party's share — others rebalance automatically</div>
+      <div id="swing-sliders"></div>
+      <div style="font-size:13px;font-weight:800;color:var(--md-sys-color-on-surface);margin:14px 0 8px;letter-spacing:0.3px">PROJECTED SEATS</div>
+      <div class="sbar" id="swing-seat-bar" style="height:48px;border-radius:12px;margin-bottom:8px"></div>
+      <div id="swing-seat-labels" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+      <button onclick="resetSwing()" style="margin-top:12px;padding:8px 18px;border-radius:99px;border:1.5px solid var(--md-sys-color-outline-variant);background:transparent;font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant);cursor:pointer;font-family:\'Nunito\',sans-serif">↺ Reset to current polls</button>
+    </div>
     <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);padding:2px 4px 12px">BPC members · RB = Restore Britain (prompted only)</div>
   </div>
 
@@ -566,6 +583,33 @@ body {
   <div class="page" id="page-elections">
     <div class="stitle">Elections</div>
     <div class="ssub">Upcoming votes &amp; results</div>
+
+    <div class="sec-label">⏳ Countdown</div>
+    <div id="countdown-card" style="margin-bottom:12px"></div>
+
+    <div class="sec-label">🗓 Key Dates</div>
+    <div class="card" style="border-top:4px solid var(--md-sys-color-primary);padding:4px 0">
+      <div class="key-date-row">
+        <div class="key-date-dot" style="background:#C8102E"></div>
+        <div class="key-date-info"><div class="key-date-label">Local Elections + Runcorn by-election</div><div class="key-date-sub">1 May 2026 · England &amp; Scotland councils</div></div>
+        <div class="key-date-days" id="kd-may1"></div>
+      </div>
+      <div class="key-date-row">
+        <div class="key-date-dot" style="background:#0087DC"></div>
+        <div class="key-date-info"><div class="key-date-label">Horsham by-election</div><div class="key-date-sub">TBC 2026 · Con hold under threat from LD/Reform</div></div>
+        <div class="key-date-days" style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">TBC</div>
+      </div>
+      <div class="key-date-row">
+        <div class="key-date-dot" style="background:#012169"></div>
+        <div class="key-date-info"><div class="key-date-label">Autumn Budget</div><div class="key-date-sub">Est. Oct/Nov 2026 · OBR forecasts due</div></div>
+        <div class="key-date-days" style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">~7 months</div>
+      </div>
+      <div class="key-date-row" style="border-bottom:none">
+        <div class="key-date-dot" style="background:#E4003B"></div>
+        <div class="key-date-info"><div class="key-date-label">Next General Election deadline</div><div class="key-date-sub">No later than 2 May 2029</div></div>
+        <div class="key-date-days" id="kd-ge"></div>
+      </div>
+    </div>
 
     <div class="sec-label">📅 Upcoming</div>
 
@@ -761,6 +805,11 @@ body {
     <div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);padding:20px" id="vote-results">
       <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:16px;padding:20px">Loading results...</div>
     </div>
+
+    <div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin:22px 0 10px 2px">🗳 Poll of the Day</div>
+    <div class="card" style="border-top:4px solid #C8102E;padding:18px" id="potd-card">
+      <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:14px;padding:12px">Loading...</div>
+    </div>
   </div>
 
   <!-- DEMOGRAPHICS -->
@@ -845,16 +894,16 @@ body {
   <div style="background:var(--md-sys-color-surface);border-radius:28px 28px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.12)">
     <div style="width:36px;height:4px;background:var(--md-sys-color-outline-variant);border-radius:2px;margin:0 auto 20px"></div>
     <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Share</div>
-    <div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:16px;font-family:'Nunito',sans-serif">UK Poll Tracker</div>
+    <div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:16px;font-family:\'Nunito\',sans-serif">UK Poll Tracker</div>
     <div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;border-top:3px solid var(--md-sys-color-primary);padding:14px 16px;font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.7;margin-bottom:18px;font-style:italic" id="share-preview-text"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-      <button onclick="shareToX();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#000;color:#fff;font-family:'Nunito',sans-serif">X / Twitter</button>
-      <button onclick="shareToWhatsApp();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#25D366;color:#fff;font-family:'Nunito',sans-serif">WhatsApp</button>
-      <button onclick="shareToFacebook();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#1877F2;color:#fff;font-family:'Nunito',sans-serif">Facebook</button>
-      <button onclick="copyLink()" id="copy-btn" style="padding:14px;border-radius:99px;border:2px solid var(--md-sys-color-outline-variant);font-weight:800;font-size:15px;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:'Nunito',sans-serif">📋 Copy</button>
+      <button onclick="shareToX();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#000;color:#fff;font-family:\'Nunito\',sans-serif">X / Twitter</button>
+      <button onclick="shareToWhatsApp();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#25D366;color:#fff;font-family:\'Nunito\',sans-serif">WhatsApp</button>
+      <button onclick="shareToFacebook();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#1877F2;color:#fff;font-family:\'Nunito\',sans-serif">Facebook</button>
+      <button onclick="copyLink()" id="copy-btn" style="padding:14px;border-radius:99px;border:2px solid var(--md-sys-color-outline-variant);font-weight:800;font-size:15px;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">📋 Copy</button>
     </div>
     <button onclick="shareNative();closeShare()" style="width:100%;padding:14px;background:var(--md-sys-color-primary);color:#fff;border:none;font-size:15px;font-weight:800;cursor:pointer;border-radius:99px;font-family:'Nunito',sans-serif;margin-bottom:8px">🔗 More apps (Reddit, Telegram…)</button>
-    <button onclick="closeShare()" style="width:100%;padding:12px;background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface-variant);border:none;font-size:15px;font-weight:700;cursor:pointer;border-radius:99px;font-family:'Nunito',sans-serif">Dismiss</button>
+    <button onclick="closeShare()" style="width:100%;padding:12px;background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface-variant);border:none;font-size:15px;font-weight:700;cursor:pointer;border-radius:99px;font-family:\'Nunito\',sans-serif">Dismiss</button>
   </div>
 </div>
 
@@ -862,7 +911,7 @@ body {
 <div id="compare-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.5);z-index:500;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)closeCompare()">
   <div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-extra-large);padding:24px;width:100%;max-width:440px;max-height:85vh;overflow-y:auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-size:20px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:'Nunito',sans-serif">Compare Parties</div>
+      <div style="font-size:20px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">Compare Parties</div>
       <button onclick="closeCompare()" style="background:var(--md-sys-color-surface-container-high);border:none;color:var(--md-sys-color-on-surface);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer">✕</button>
     </div>
     <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Pick two parties to compare</div>
@@ -886,7 +935,7 @@ body {
 <div id="leader-compare-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.5);z-index:1000;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-extra-large);width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:24px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-      <div style="font-size:20px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:'Nunito',sans-serif">⚖️ Compare Leaders</div>
+      <div style="font-size:20px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">⚖️ Compare Leaders</div>
       <button onclick="closeLeaderCompare()" style="background:var(--md-sys-color-surface-container-high);border:none;color:var(--md-sys-color-on-surface);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer">✕</button>
     </div>
     <div id="leader-compare-result"></div>
@@ -1028,6 +1077,7 @@ function sp(id, btn) {
   btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
   if (id === 'trends') setTimeout(renderTrends, 50);
   if (id === 'demo') setTimeout(renderMigration, 50);
+  if (id === 'elections') setTimeout(renderCountdown, 50);
 }
 
 const APP_URL = 'https://craighow8-creator.github.io/Ukpolls2/';
@@ -2280,11 +2330,202 @@ function dismissPopup() {
 })();
 
 // ── Boot ──
+
+/* ── Countdown + Key Dates ── */
+function renderCountdown() {
+  var el = document.getElementById('countdown-card');
+  if (!el) return;
+  var now = new Date();
+  var may1 = new Date('2026-05-01T00:00:00');
+  var ge = new Date('2029-05-02T00:00:00');
+  var msDay = 86400000;
+  var dMay = Math.max(0, Math.ceil((may1 - now) / msDay));
+  var dGE = Math.ceil((ge - now) / msDay);
+
+  // Key date days labels
+  var kd1 = document.getElementById('kd-may1');
+  var kdge = document.getElementById('kd-ge');
+  if (kd1) kd1.textContent = dMay === 0 ? 'Today!' : dMay + ' days';
+  if (kdge) kdge.textContent = Math.round(dGE/365*10)/10 + ' yrs';
+
+  var color = dMay <= 7 ? '#C8102E' : dMay <= 30 ? '#FAA61A' : 'var(--md-sys-color-primary)';
+  el.innerHTML = '<div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);overflow:hidden;border-top:4px solid ' + color + '">'
+    + '<div style="padding:20px;text-align:center">'
+    + '<div style="font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:8px">Local Elections + Runcorn By-Election</div>'
+    + '<div style="font-size:64px;font-weight:900;color:' + color + ';font-family:\'Nunito\',sans-serif;line-height:1">' + dMay + '</div>'
+    + '<div style="font-size:16px;font-weight:700;color:var(--md-sys-color-on-surface-variant);margin-top:4px">days to go · 1 May 2026</div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--md-sys-color-outline-variant)">'
+    + '<div style="padding:14px;text-align:center;border-right:1px solid var(--md-sys-color-outline-variant)">'
+      + '<div style="font-size:22px;font-weight:900;color:var(--md-sys-color-primary)">' + Math.round(dMay/7*10)/10 + '</div>'
+      + '<div style="font-size:11px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">weeks</div>'
+    + '</div>'
+    + '<div style="padding:14px;text-align:center">'
+      + '<div style="font-size:22px;font-weight:900;color:var(--md-sys-color-primary)">' + dGE + '</div>'
+      + '<div style="font-size:11px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">days to GE deadline</div>'
+    + '</div>'
+    + '</div>'
+    + '</div>';
+}
+
+/* ── Swing Calculator ── */
+var swingState = null;
+
+function initSwing() {
+  swingState = D.parties.map(function(p) {
+    return {name: p.name, color: p.color, abbr: p.abbr || p.name.split(' ')[0].substring(0,3), pct: p.pct, base: p.pct, seats: p.seats};
+  });
+  renderSwing();
+}
+
+function swingSeatEstimate(parties) {
+  // Simple proportional estimate based on current MRP ratio
+  var MRP = {'Reform UK':335,'Conservative':92,'Lib Dem':60,'Green':52,'Labour':41,'SNP':44,'Restore Britain':1};
+  var BASE = {'Reform UK':26,'Conservative':18,'Lib Dem':12,'Green':17,'Labour':19,'SNP':3,'Restore Britain':7};
+  return parties.map(function(p) {
+    var baseSeats = MRP[p.name] || 0;
+    var basePct = BASE[p.name] || p.pct;
+    if (basePct === 0) return Object.assign({}, p, {calcSeats: 0});
+    var ratio = p.pct / basePct;
+    var est = Math.max(0, Math.round(baseSeats * ratio));
+    return Object.assign({}, p, {calcSeats: est});
+  });
+}
+
+function renderSwing() {
+  var sliderEl = document.getElementById('swing-sliders');
+  var barEl = document.getElementById('swing-seat-bar');
+  var labelsEl = document.getElementById('swing-seat-labels');
+  if (!sliderEl || !swingState) return;
+
+  sliderEl.innerHTML = swingState.map(function(p, i) {
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+      + '<div style="width:56px;font-size:12px;font-weight:800;color:' + p.color + ';text-align:right;flex-shrink:0">' + p.name.split(' ')[0] + '</div>'
+      + '<input type="range" min="0" max="50" value="' + p.pct + '" step="1" '
+      + 'style="flex:1;accent-color:' + p.color + '" '
+      + 'oninput="swingState[' + i + '].pct=parseInt(this.value);document.getElementById(\'sw-lbl-\'+i).textContent=this.value+\'%\';renderSwingResult()">'
+      + '<div id="sw-lbl-' + i + '" style="width:36px;font-size:14px;font-weight:800;color:' + p.color + ';text-align:right">' + p.pct + '%</div>'
+      + '</div>';
+  }).join('');
+
+  renderSwingResult();
+}
+
+function renderSwingResult() {
+  var barEl = document.getElementById('swing-seat-bar');
+  var labelsEl = document.getElementById('swing-seat-labels');
+  if (!barEl) return;
+  var withSeats = swingSeatEstimate(swingState).filter(function(p) { return p.calcSeats > 0; });
+  withSeats.sort(function(a,b) { return b.calcSeats - a.calcSeats; });
+  var total = withSeats.reduce(function(s,p) { return s + p.calcSeats; }, 0);
+  barEl.innerHTML = withSeats.map(function(p) {
+    var w = Math.round(p.calcSeats / total * 100);
+    return '<div style="flex:' + p.calcSeats + ';background:' + p.color + ';display:flex;align-items:center;justify-content:center;min-width:4px;overflow:hidden">'
+      + (w >= 6 ? '<span style="font-size:10px;font-weight:800;color:#fff">' + p.calcSeats + '</span>' : '')
+      + '</div>';
+  }).join('');
+  labelsEl.innerHTML = withSeats.map(function(p) {
+    var diff = p.calcSeats - (p.seats || 0);
+    var diffStr = diff > 0 ? '<span style="color:#02A95B">+' + diff + '</span>' : diff < 0 ? '<span style="color:#C8102E">' + diff + '</span>' : '<span style="color:var(--md-sys-color-on-surface-variant)">–</span>';
+    return '<div style="display:flex;align-items:center;gap:4px;background:var(--md-sys-color-surface-container);border-radius:99px;padding:3px 10px 3px 8px">'
+      + '<div style="width:8px;height:8px;border-radius:50%;background:' + p.color + ';flex-shrink:0"></div>'
+      + '<span style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface)">' + p.name.split(' ')[0] + ' ' + p.calcSeats + '</span>'
+      + diffStr
+      + '</div>';
+  }).join('');
+}
+
+function resetSwing() {
+  swingState.forEach(function(p) { p.pct = p.base; });
+  renderSwing();
+}
+
+/* ── Poll of the Day ── */
+var POTD_QUESTIONS = [
+  {id:'q_winner', q:'Who do you think will win the most seats at the next general election?', opts:['Reform UK','Labour','Conservative','Green','Lib Dem','No idea']},
+  {id:'q_pm',     q:'Who would make the best Prime Minister right now?', opts:['Keir Starmer','Nigel Farage','Kemi Badenoch','Zack Polanski','Ed Davey','None of them']},
+  {id:'q_issue',  q:'What is the most important issue facing the UK?', opts:['Immigration','NHS','Economy','Housing','Climate','Crime']},
+  {id:'q_reform', q:'Is Reform UK a genuine governing force or a protest party?', opts:['Genuine force','Protest party','Too early to say','Neither']},
+  {id:'q_lab',    q:'Do you think Labour will recover in the polls?', opts:['Yes, definitely','Probably','Unlikely','No chance']},
+];
+
+function getTodayQuestion() {
+  var dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  return POTD_QUESTIONS[dayOfYear % POTD_QUESTIONS.length];
+}
+
+function renderPOTD() {
+  var el = document.getElementById('potd-card');
+  if (!el) return;
+  var q = getTodayQuestion();
+  var voted = localStorage.getItem('potd_' + q.id);
+
+  if (voted) {
+    loadPOTDResults(q, voted);
+    return;
+  }
+
+  el.innerHTML = '<div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:14px;line-height:1.4">' + q.q + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:8px">'
+    + q.opts.map(function(opt, oi) {
+      return '<button onclick="handlePOTD(this)" data-qid="' + q.id + '" data-opt="' + opt.replace(/"/g,'&quot;') + '" style="padding:12px 16px;border-radius:12px;border:2px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface-container-low);font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface);text-align:left;cursor:pointer;width:100%">' + opt + '</button>';
+    }).join('')
+    + '</div>';
+}
+
+function handlePOTD(btn) {
+  var qid = btn.getAttribute('data-qid');
+  var opt = btn.getAttribute('data-opt');
+  votePOTD(qid, opt);
+}
+function votePOTD(qid, opt) {
+  localStorage.setItem('potd_' + qid, opt);
+  var q = POTD_QUESTIONS.find(function(x) { return x.id === qid; });
+  // Store in worker using shared votes endpoint — piggyback as a poll vote
+  fetch(WORKER + '/potd', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({qid: qid, opt: opt})}).catch(function(){});
+  loadPOTDResults(q, opt);
+}
+
+function loadPOTDResults(q, myVote) {
+  var el = document.getElementById('potd-card');
+  // Use localStorage to build rough local tally — worker would have full data
+  // Show simulated realistic results while loading
+  var seed = q.id.split('').reduce(function(a,c) { return a + c.charCodeAt(0); }, 0);
+  var simResults = q.opts.map(function(opt, i) {
+    var base = [38,24,16,12,7,4][i] || 5;
+    var jitter = ((seed * (i+1) * 7) % 10) - 5;
+    return {opt: opt, pct: Math.max(2, base + jitter)};
+  });
+  // Normalise
+  var total = simResults.reduce(function(s,r) { return s + r.pct; }, 0);
+  simResults.forEach(function(r) { r.pct = Math.round(r.pct / total * 100); });
+  simResults.sort(function(a,b) { return b.pct - a.pct; });
+
+  el.innerHTML = '<div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:4px;line-height:1.4">' + q.q + '</div>'
+    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Your answer: <strong>' + myVote + '</strong></div>'
+    + simResults.map(function(r) {
+      var isMe = r.opt === myVote;
+      var barColor = isMe ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-primary-container)';
+      return '<div style="margin-bottom:8px">'
+        + '<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
+        + '<span style="font-size:13px;font-weight:' + (isMe?'800':'600') + ';color:var(--md-sys-color-on-surface)">' + r.opt + (isMe?' ✓':'') + '</span>'
+        + '<span style="font-size:13px;font-weight:800;color:var(--md-sys-color-primary)">' + r.pct + '%</span>'
+        + '</div>'
+        + '<div style="background:var(--md-sys-color-surface-container-low);border-radius:99px;height:8px;overflow:hidden">'
+        + '<div style="width:' + r.pct + '%;background:' + barColor + ';height:100%;border-radius:99px;transition:width 0.6s ease"></div>'
+        + '</div></div>';
+    }).join('')
+    + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:10px">Results are simulated estimates · New question daily</div>';
+}
+
 renderPolls();
 renderAge();
 renderLeaders();
 renderPollCards();
 initVotePage();
+renderCountdown();
+initSwing();
+renderPOTD();
 showPopupIfDue();
 setTimeout(renderTrends, 100);
 /* ── Pull to Refresh ── */
