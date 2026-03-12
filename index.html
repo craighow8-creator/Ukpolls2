@@ -1034,8 +1034,8 @@ function renderTrends() {
           labels: {
             color: '#c8cdd8',
             font: { size: 13, family: "'Nunito Sans', sans-serif" },
-            usePointStyle: true,
-            pointStyleWidth: 12,
+            boxWidth: 12,
+            boxHeight: 12,
             padding: 20,
           }
         },
@@ -1065,9 +1065,12 @@ function renderTrends() {
       }
     }
   });
+  // Dismiss tooltip on touchend (mobile)
+  el.addEventListener('touchend', () => {
+    window._trendChart.tooltip.setActiveElements([], {x:0,y:0});
+    window._trendChart.update();
+  }, {passive: true});
 }
-
-// Redraw chart on resize
 window.addEventListener('resize', () => {
   if (document.getElementById('page-trends').classList.contains('active')) renderTrends();
 });
