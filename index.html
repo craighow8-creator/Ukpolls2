@@ -196,7 +196,7 @@ body{background:transparent;color:#e8ecf4;font-family:'Nunito Sans',sans-serif;f
   <!-- OVERVIEW -->
   <div class="page active" id="page-overview">
     <div class="stitle">Voting Intention</div>
-    <div class="ssub" id="overview-sub">7-poll moving average · 8 Mar 2026</div>
+    <div class="ssub" id="overview-sub">7-poll moving average</div>
     <div class="pgrid" id="party-grid"></div>
     <div class="sec-label">🏛 SEAT PROJECTION</div>
     <div class="sbar" id="seat-bar"></div>
@@ -922,7 +922,7 @@ async function askAI(q) {
   out.innerHTML = '<div style="color:#c8cdd8;font-size:14px;animation:pulse 1s infinite">⏳ Thinking...</div>';
 
   // Build context from app data
-  var ctx = 'You are a neutral, expert UK political analyst. Today is 12 March 2026. '
+  var ctx = 'You are a neutral, expert UK political analyst. Today is ' + D.fetchDate + '. '
     + 'Current polling averages: Reform UK 26%, Labour 19%, Conservative 18%, Green 17%, Lib Dem 12%, SNP 3%, Restore Britain 7% (FON prompted only). '
     + 'MRP seat projection: Reform UK 335, Conservative 92, Lib Dem 60, Green 52, Labour 41, SNP 44 — a hung parliament. '
     + 'Keir Starmer net approval: around -46. Nigel Farage: -17. Kemi Badenoch: -12. Zack Polanski: -8 to +11 (varies by pollster). '
@@ -965,9 +965,7 @@ function setStatus(cls, txt) {
 // ── Render Overview ──
 function renderOverview() {
   document.getElementById('overview-sub').textContent = '7-poll moving average · ' + D.fetchDate;
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}).toUpperCase();
-  document.getElementById('hdr-date').textContent = dateStr;
+  document.getElementById('hdr-date').textContent = D.fetchDate;
   document.getElementById('party-grid').innerHTML = D.parties.map(p => `
     <div class="pc" style="border-top-color:${p.color}">
       <div class="pca">${p.name}</div>
