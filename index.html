@@ -408,7 +408,7 @@ body{background:transparent;color:#e8ecf4;font-family:'Nunito Sans',sans-serif;f
   </div>
 </div>
 
-<!-- nav moved --> ── -->
+<!-- ── Nav ── -->
 
 <!-- ── Scrollable content ── -->
 
@@ -975,7 +975,7 @@ function renderOverview() {
       <div class="pcc" style="color:${p.change > 0 ? 'var(--up)' : p.change < 0 ? 'var(--down)' : 'var(--muted)'}">
         ${p.change > 0 ? '▲ +' + p.change : p.change < 0 ? '▼ ' + p.change : '– NC'}
       </div>
-      <div class="pcs">${p.seats !== null ? "~" + p.seats + " seats" : "various"}</div>
+      <div class="pcs">${p.seats !== null ? "~" + p.seats + (p.seats === 1 ? " seat" : " seats") : "various"}</div>
     </div>`).join('');
   document.getElementById('seat-bar').innerHTML = D.parties.filter(function(p){return p.seats !== null;}).map(p => `
     <div class="sseg" style="flex:${p.seats};background:${p.color};color:${p.name === 'SNP' ? '#000' : '#fff'}" title="${p.name}: ${p.seats}">
