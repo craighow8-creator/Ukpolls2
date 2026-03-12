@@ -915,17 +915,16 @@ function shareBtn(fullText) {
 async function doShare() {
   var url = 'https://craighow8-creator.github.io/Ukpolls2/';
   var text = window._lastAIResponse || '';
-  var shareText = text.substring(0, 400) + (text.length > 400 ? '...' : '');
+  var shareText = text + '\n\n🇬🇧 From UK Poll Tracker\n' + url;
   if (navigator.share) {
     try {
       await navigator.share({
         title: '🇬🇧 UK Poll Tracker',
-        text: shareText + '\n\n',
-        url: url
+        text: shareText
       });
-    } catch(e) { if (e.name !== 'AbortError') fallbackCopy(shareText + '\n\n' + url); }
+    } catch(e) { if (e.name !== 'AbortError') fallbackCopy(shareText); }
   } else {
-    fallbackCopy(shareText + '\n\n' + url);
+    fallbackCopy(shareText);
   }
 }
 
