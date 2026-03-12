@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -1230,7 +1230,7 @@ async function loadVoteResults() {
     renderVoteButtons();
     const POLL_MAP = {'Reform UK':26,'Labour':19,'Conservative':18,'Green':17,'Lib Dem':12,'SNP':3,'Restore Britain':7};
     el.innerHTML = '<div style="text-align:center;margin-bottom:18px">'
-      + '<div style="font-size:40px;font-weight:900;color:var(--md-sys-color-primary);font-family:'Nunito',sans-serif">' + total.toLocaleString() + '</div>'
+      + '<div style="font-size:40px;font-weight:900;color:var(--md-sys-color-primary);font-family:Nunito,sans-serif">' + total.toLocaleString() + '</div>'
       + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);letter-spacing:1.5px;margin-top:2px;font-weight:600;text-transform:uppercase">Total votes cast</div>'
       + '</div>'
       + PARTIES_VOTE.filter(p => (votes[p.name]||0) > 0 || POLL_MAP[p.name]).sort((a,b) => (votes[b.name]||0) - (votes[a.name]||0)).map(p => {
