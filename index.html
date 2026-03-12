@@ -916,24 +916,44 @@ async function doShare() {
   var url = 'https://craighow8-creator.github.io/Ukpolls2/';
   var text = window._lastAIResponse || '';
   var shareText = text + '\n\n🇬🇧 From UK Poll Tracker\n' + url;
+  // Always copy to clipboard first so user can paste into Facebook etc
+  try { await navigator.clipboard.writeText(shareText); } catch(e) {}
+  showToast('📋 Text copied — just paste it!');
   if (navigator.share) {
     try {
-      await navigator.share({
-        title: '🇬🇧 UK Poll Tracker',
-        text: shareText
-      });
-    } catch(e) { if (e.name !== 'AbortError') fallbackCopy(shareText); }
-  } else {
-    fallbackCopy(shareText);
+      await navigator.share({ title: '🇬🇧 UK Poll Tracker', text: shareText });
+    } catch(e) {}
   }
 }
 
 function fallbackCopy(text) {
   navigator.clipboard.writeText(text).then(function() {
-    alert('Copied to clipboard!');
+    showToast('📋 Copied to clipboard!');
   }).catch(function() {
-    alert('Share not supported on this browser.');
+    showToast('Share not supported on this browser.');
   });
+}
+
+function showToast(msg) {
+  var t = document.getElementById('share-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'share-toast';
+    t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);'
+      + 'background:#1a1a2e;color:#fff;padding:12px 22px;border-radius:50px;'
+      + 'font-family:\'Nunito\',sans-serif;font-size:14px;font-weight:700;'
+      + 'box-shadow:0 4px 16px rgba(0,0,0,0.25);z-index:999;'
+      + 'opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;white-space:nowrap';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() {
+    t.style.opacity = '0';
+    t.style.transform = 'translateX(-50%) translateY(20px)';
+  }, 3000);
 }
 
 async function askParty(party, color) {
