@@ -371,22 +371,51 @@ body {
 /* ── Elections ── */
 .ecard {
   background: var(--md-sys-color-surface);
-  border-radius: var(--md-sys-shape-corner-extra-large);
-  padding: 20px;
+  border-radius: 24px;
+  padding: 0;
   margin-bottom: 12px;
-  box-shadow: var(--md-elevation-1);
+  box-shadow: var(--md-elevation-2);
+  overflow: hidden;
 }
-.ed { font-size: 12px; color: var(--md-sys-color-secondary); font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }
-.et { font-size: 16px; font-weight: 700; color: var(--md-sys-color-on-surface); margin-bottom: 2px; font-family: 'Nunito', sans-serif; }
-.es { font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin-bottom: 10px; }
-.ex { font-size: 16px; color: var(--md-sys-color-on-surface); line-height: 1.7; margin-bottom: 10px; }
-.etags { display: flex; flex-wrap: wrap; gap: 6px; }
-.etag { font-size: 12px; padding: 4px 10px; border-radius: var(--md-sys-shape-corner-full); font-weight: 600; }
-.ri { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
-.rd { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.rp { width: 54px; font-size: 13px; font-weight: 600; }
-.rn { width: 40px; font-size: 14px; font-weight: 700; }
-.rm { font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+.ecard-inner { padding: 18px 18px 14px; }
+.ecard-accent { height: 4px; border-radius: 0; }
+.ed { font-size: 11px; color: var(--md-sys-color-on-surface-variant); font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.et { font-size: 18px; font-weight: 900; color: var(--md-sys-color-on-surface); margin-bottom: 3px; font-family: 'Nunito', sans-serif; }
+.es { font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin-bottom: 12px; font-weight: 600; }
+.ex { font-size: 15px; color: var(--md-sys-color-on-surface); line-height: 1.75; margin-bottom: 12px; }
+.etags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.etag { font-size: 12px; padding: 5px 12px; border-radius: 99px; font-weight: 700; }
+.ri { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+.ri:last-of-type { border-bottom: none; }
+.rd { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.rp { flex: 1; font-size: 14px; font-weight: 700; }
+.rn { width: 44px; font-size: 15px; font-weight: 800; text-align: right; }
+.rm { width: 70px; font-size: 12px; font-weight: 700; text-align: right; color: var(--md-sys-color-on-surface-variant); }
+.explainer-card {
+  background: var(--md-sys-color-surface);
+  border-radius: 24px;
+  padding: 18px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  box-shadow: var(--md-elevation-2);
+  border-top: 4px solid #012169;
+  overflow: hidden;
+}
+.explainer-body { display: none; margin-top: 14px; }
+.explainer-body.open { display: block; }
+.explainer-section {
+  border-radius: 0 14px 14px 0;
+  border-left: 3px solid;
+  padding: 11px 14px;
+  margin-bottom: 10px;
+}
+.explainer-section-label {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.8px;
+  text-transform: uppercase; margin-bottom: 5px;
+}
+.explainer-section-text {
+  font-size: 14px; line-height: 1.75; color: var(--md-sys-color-on-surface);
+}
 
 /* ── AI ── */
 .chip {
@@ -534,69 +563,141 @@ body {
   <!-- ELECTIONS -->
   <div class="page" id="page-elections">
     <div class="stitle">Elections</div>
-    <div class="ssub">Upcoming votes &amp; recent results</div>
+    <div class="ssub">Upcoming votes &amp; results</div>
+
     <div class="sec-label">📅 Upcoming</div>
-    <div class="ecard">
-      <div class="ed">1 MAY 2026</div>
-      <div class="et">Local Elections 2026</div>
-      <div class="es">England — county councils, unitaries &amp; mayoral contests</div>
-      <div class="ex">~1,600 seats across 23 councils. First major test of the Green surge and Reform UK's local strength. Key contests: West of England Mayor, Cambridgeshire &amp; Peterborough Mayor.</div>
-      <div class="etags">
-        <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK target</span>
-        <span class="etag" style="background:#02A95B15;color:#02A95B">Green surge test</span>
+
+    <!-- Explainer card -->
+    <div class="explainer-card" onclick="var b=document.getElementById('may-explainer');var a=document.getElementById('may-arrow');b.classList.toggle('open');a.textContent=b.classList.contains('open')?'▲':'▼'">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <div>
+          <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#012169;margin-bottom:4px">📖 Explainer · 1 May 2026</div>
+          <div style="font-size:17px;font-weight:900;color:var(--md-sys-color-on-surface);line-height:1.3">What are the May elections actually for?</div>
+          <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:3px">Not Westminster — here's what's really at stake</div>
+        </div>
+        <div id="may-arrow" style="width:32px;height:32px;border-radius:50%;background:#EEF1FA;display:flex;align-items:center;justify-content:center;font-size:14px;color:#012169;font-weight:800;flex-shrink:0">▼</div>
+      </div>
+      <div class="explainer-body" id="may-explainer">
+        <div style="font-size:15px;line-height:1.75;color:var(--md-sys-color-on-surface);margin-bottom:14px">
+          The May elections are <strong>not for Westminster seats</strong>. Voters choose councillors for county councils, metropolitan boroughs and unitary authorities across England — plus every council in Scotland.
+        </div>
+
+        <div class="explainer-section" style="border-color:#E4003B;background:#E4003B08">
+          <div class="explainer-section-label" style="color:#E4003B">⚠️ Labour's existential moment</div>
+          <div class="explainer-section-text">With Starmer at −46% approval and Labour polling third nationally, these are the first major test since the collapse. Losing councils held for decades would intensify pressure on his leadership ahead of the general election.</div>
+        </div>
+
+        <div class="explainer-section" style="border-color:#12B7D4;background:#12B7D408">
+          <div class="explainer-section-label" style="color:#0a8fa3">🔵 Reform UK's ground test</div>
+          <div class="explainer-section-text">Can 26% national polling translate into councillors? Local elections favour parties with strong ground operations — traditionally the Lib Dems and Conservatives. Reform have the votes on paper but turning supporters into a local campaign machine is a different challenge entirely.</div>
+        </div>
+
+        <div class="explainer-section" style="border-color:#02A95B;background:#02A95B08">
+          <div class="explainer-section-label" style="color:#02A95B">🟢 Green opportunity</div>
+          <div class="explainer-section-text">Fresh from winning Gorton &amp; Denton and polling at 17% nationally, the Greens could make significant gains in university cities and inner-city wards where their coalition of young and graduate voters is concentrated.</div>
+        </div>
+
+        <div class="explainer-section" style="border-color:#0087DC;background:#0087DC08">
+          <div class="explainer-section-label" style="color:#0087DC">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland — all councils up</div>
+          <div class="explainer-section-text">Every Scottish council is contested. The SNP's Westminster decline to 3% UK-wide may not reflect local strength, but a bad night north of the border would test whether their coalition is still holding.</div>
+        </div>
+
+        <div class="explainer-section" style="border-color:#0087DC;background:#0087DC08">
+          <div class="explainer-section-label" style="color:#0087DC">🏡 Conservatives defending 2021 peak</div>
+          <div class="explainer-section-text">Many of these seats were last fought in 2021–22 when the Conservatives were at their local high-water mark. They face defending gains made under Boris Johnson while their national vote has since collapsed — creating a painful mismatch.</div>
+        </div>
+
+        <button onclick="event.stopPropagation();shareExplainer()" style="width:100%;padding:12px;border-radius:50px;border:none;background:#012169;color:#fff;font-size:14px;font-weight:800;font-family:'Nunito',sans-serif;cursor:pointer;margin-top:6px">🔗 Share this explainer</button>
       </div>
     </div>
+
     <div class="ecard">
-      <div class="ed">1 MAY 2026</div>
-      <div class="et">Runcorn &amp; Helsby</div>
-      <div class="es">By-election — Labour hold (majority: 14,696)</div>
-      <div class="ex">Triggered by MP Mike Amesbury's resignation after assault video. Labour defending against a strong Reform UK challenge in this Red Wall seat.</div>
-      <div class="etags">
-        <span class="etag" style="background:#E4003B15;color:#c00030">Lab defend</span>
-        <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK target</span>
+      <div class="ecard-accent" style="background:linear-gradient(90deg,#12B7D4,#02A95B)"></div>
+      <div class="ecard-inner">
+        <div class="ed">1 MAY 2026</div>
+        <div class="et">Local Elections 2026</div>
+        <div class="es">England — county councils, unitaries &amp; mayoral contests</div>
+        <div class="ex">~1,600 seats across 23 councils. First major electoral test since Labour's polling collapse. Key mayoral contests: West of England, Cambridgeshire &amp; Peterborough.</div>
+        <div class="etags">
+          <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK target</span>
+          <span class="etag" style="background:#02A95B15;color:#02A95B">Green surge test</span>
+          <span class="etag" style="background:#E4003B15;color:#c00030">Lab existential</span>
+        </div>
       </div>
     </div>
+
     <div class="ecard">
-      <div class="ed">TBC 2026</div>
-      <div class="et">Horsham</div>
-      <div class="es">By-election — Conservative hold (majority: 3,027)</div>
-      <div class="ex">Jeremy Quin resigned on health grounds. Three-way marginal between Conservatives, Lib Dems and Reform UK.</div>
-      <div class="etags">
-        <span class="etag" style="background:#0087DC15;color:#006bb3">Con defend</span>
-        <span class="etag" style="background:#FAA61A15;color:#c07d00">LD target</span>
-        <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK threat</span>
+      <div class="ecard-accent" style="background:linear-gradient(90deg,#E4003B,#12B7D4)"></div>
+      <div class="ecard-inner">
+        <div class="ed">1 MAY 2026</div>
+        <div class="et">Runcorn &amp; Helsby</div>
+        <div class="es">By-election — Labour hold (majority: 14,696)</div>
+        <div class="ex">Triggered by Mike Amesbury's resignation after assault video. Labour defending a once-safe Red Wall seat against a strong Reform UK challenge. A loss here would be seismic.</div>
+        <div class="etags">
+          <span class="etag" style="background:#E4003B15;color:#c00030">Lab defend</span>
+          <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK target</span>
+        </div>
       </div>
     </div>
+
+    <div class="ecard">
+      <div class="ecard-accent" style="background:linear-gradient(90deg,#0087DC,#FAA61A,#12B7D4)"></div>
+      <div class="ecard-inner">
+        <div class="ed">TBC 2026</div>
+        <div class="et">Horsham</div>
+        <div class="es">By-election — Conservative hold (majority: 3,027)</div>
+        <div class="ex">Jeremy Quin resigned on health grounds. A genuine three-way fight between Conservatives, Lib Dems and Reform UK in a southern seat that could go any direction.</div>
+        <div class="etags">
+          <span class="etag" style="background:#0087DC15;color:#006bb3">Con defend</span>
+          <span class="etag" style="background:#FAA61A15;color:#c07d00">LD target</span>
+          <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK threat</span>
+        </div>
+      </div>
+    </div>
+
     <div class="sec-label">🗳 Recent Results</div>
+
     <div class="ecard">
-      <div class="ed">27 FEB 2026</div>
-      <div class="et">Gorton &amp; Denton</div>
-      <div class="es">By-election — <span style="color:#02A95B;font-weight:700">🟢 Green GAIN from Labour</span></div>
-      <div class="ri"><span class="rd" style="background:#02A95B"></span><span class="rp">Green</span><span class="rn">34.1%</span><span class="rm">+28.6% 🏆</span></div>
-      <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">29.4%</span><span class="rm">-24.7%</span></div>
-      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">19.8%</span><span class="rm">+19.8%</span></div>
-      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">7.2%</span><span class="rm">-16.4%</span></div>
-      <div class="ex" style="margin-top:10px;margin-bottom:0">Massive 28.6pt swing to Greens. Labour vote collapsed. Greens now have 5 MPs.</div>
+      <div class="ecard-accent" style="background:#02A95B"></div>
+      <div class="ecard-inner">
+        <div class="ed">27 FEB 2026</div>
+        <div class="et">Gorton &amp; Denton</div>
+        <div class="es">By-election — <span style="color:#02A95B;font-weight:800">🟢 Green GAIN from Labour</span></div>
+        <div class="ri"><span class="rd" style="background:#02A95B"></span><span class="rp">Green</span><span class="rn">34.1%</span><span class="rm">+28.6% 🏆</span></div>
+        <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">29.4%</span><span class="rm">−24.7%</span></div>
+        <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">19.8%</span><span class="rm">+19.8%</span></div>
+        <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">7.2%</span><span class="rm">−16.4%</span></div>
+        <div class="ex" style="margin-top:12px;margin-bottom:0">Massive 28.6pt swing to Greens. Labour vote collapsed in a seat they held since 1935. Greens now have 5 MPs.</div>
+      </div>
     </div>
+
     <div class="ecard">
-      <div class="ed">6 FEB 2025</div>
-      <div class="et">Kingswood</div>
-      <div class="es">By-election — <span style="color:#12B7D4;font-weight:700">🔵 Reform UK GAIN from Conservative</span></div>
-      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">38.7%</span><span class="rm">+38.7% 🏆</span></div>
-      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">26.1%</span><span class="rm">-21.3%</span></div>
-      <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">19.4%</span><span class="rm">-8.2%</span></div>
-      <div class="ex" style="margin-top:10px;margin-bottom:0">Reform UK's first by-election gain. Signalled collapse of Conservative vote in Leave-leaning seats.</div>
+      <div class="ecard-accent" style="background:#12B7D4"></div>
+      <div class="ecard-inner">
+        <div class="ed">6 FEB 2025</div>
+        <div class="et">Kingswood</div>
+        <div class="es">By-election — <span style="color:#12B7D4;font-weight:800">🔵 Reform UK GAIN from Conservative</span></div>
+        <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">38.7%</span><span class="rm">+38.7% 🏆</span></div>
+        <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">26.1%</span><span class="rm">−21.3%</span></div>
+        <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">19.4%</span><span class="rm">−8.2%</span></div>
+        <div class="ex" style="margin-top:12px;margin-bottom:0">Reform UK's first Westminster by-election gain. Signalled the collapse of the Conservative vote in Leave-leaning seats.</div>
+      </div>
     </div>
+
     <div class="ecard">
-      <div class="ed">10 OCT 2024</div>
-      <div class="et">Henley &amp; Thame</div>
-      <div class="es">By-election — <span style="color:#FAA61A;font-weight:700">🟡 Lib Dem HOLD</span></div>
-      <div class="ri"><span class="rd" style="background:#FAA61A"></span><span class="rp">Lib Dem</span><span class="rn">52.3%</span><span class="rm">+8.1% 🏆</span></div>
-      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">22.1%</span><span class="rm">-18.4%</span></div>
-      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">12.8%</span><span class="rm">+12.8%</span></div>
-      <div class="ex" style="margin-top:10px;margin-bottom:0">Lib Dems consolidating hold on southern Blue Wall seats.</div>
+      <div class="ecard-accent" style="background:#FAA61A"></div>
+      <div class="ecard-inner">
+        <div class="ed">10 OCT 2024</div>
+        <div class="et">Henley &amp; Thame</div>
+        <div class="es">By-election — <span style="color:#FAA61A;font-weight:800">🟡 Lib Dem HOLD</span></div>
+        <div class="ri"><span class="rd" style="background:#FAA61A"></span><span class="rp">Lib Dem</span><span class="rn">52.3%</span><span class="rm">+8.1% 🏆</span></div>
+        <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">22.1%</span><span class="rm">−18.4%</span></div>
+        <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">12.8%</span><span class="rm">+12.8%</span></div>
+        <div class="ex" style="margin-top:12px;margin-bottom:0">Lib Dems consolidating hold on southern Blue Wall seats formerly safe for Conservatives.</div>
+      </div>
     </div>
-    <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);text-align:center;padding:12px 0">Results approximate. Sources: BBC, Electoral Commission.</div>
+
+    <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);text-align:center;padding:12px 0 4px">Sources: BBC, Electoral Commission.</div>
   </div>
 
   <!-- VOTE -->
@@ -2081,6 +2182,21 @@ showPopupIfDue();
 setTimeout(renderTrends, 100);
 </script>
 
-<script data-goatcounter="https://ukpolls.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script data-goatcounter="https://ukpolls.goatcounter.com/count" async src="//gc.zgo.at/count.js">
+function shareExplainer() {
+  var text = 'What are the May 2026 elections actually for?\n\n'
+    + 'Not Westminster — these are local elections for councils across England and Scotland.\n\n'
+    + '\u26a0\ufe0f Labour face potential wipeout in traditional strongholds\n'
+    + '\U0001f535 Reform UK\'s first real test: can polls translate to councillors?\n'
+    + '\U0001f7e2 Greens eyeing gains in cities after Gorton & Denton\n'
+    + '\U0001f3f4 Every Scottish council up for grabs\n\n'
+    + '\U0001f1ec\U0001f1e7 UK Poll Tracker\n' + APP_URL;
+  try { navigator.clipboard.writeText(text); } catch(e) {}
+  showToast('\U0001f4cb Copied — ready to share!');
+  if (navigator.share) {
+    try { navigator.share({ title: 'May 2026 Elections Explained', text: text }); } catch(e) {}
+  }
+}
+</script>
 </body>
 </html>
