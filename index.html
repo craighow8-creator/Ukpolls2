@@ -1184,13 +1184,12 @@ function renderVoteButtons() {
   const myVote = getMyVote();
   btns.innerHTML = PARTIES_VOTE.map(p => {
     var sel = p.name === myVote;
-    var glow = sel ? ';box-shadow:0 0 0 3px ' + p.color + '60' : ';box-shadow:var(--md-elevation-1)';
-    var count = (window._voteCache && window._voteCache[p.name]) || 0;
-    var wm = count > 0 ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;color:' + p.color + ';opacity:0.15;pointer-events:none;font-family:\'Nunito\',sans-serif">' + count + '</div>' : '';
-    return '<div onclick="castVote(\'' + p.name + '\')" style="background:' + (sel ? p.color+'15' : 'var(--md-sys-color-surface)') + ';border-top:4px solid ' + p.color + ';border-radius:var(--md-sys-shape-corner-large);padding:12px 6px;text-align:center;cursor:pointer;position:relative;overflow:hidden' + glow + ';transition:all 0.2s">'
-      + wm
-      + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:500;word-break:break-word;line-height:1.3;margin-bottom:4px">' + p.name + '</div>'
-      + (sel ? '<div style="font-size:11px;color:' + p.color + ';font-weight:700">✓ Your vote</div>' : '')
+    var bg = sel ? p.color + '18' : 'var(--md-sys-color-surface)';
+    var border = sel ? '2px solid ' + p.color : '2px solid ' + p.color + '50';
+    var shadow = sel ? '0 0 0 2px ' + p.color + '40' : 'var(--md-elevation-1)';
+    return '<div onclick="castVote(\'' + p.name + '\')" style="background:' + bg + ';border:' + border + ';border-radius:var(--md-sys-shape-corner-large);padding:10px 6px 8px;text-align:center;cursor:pointer;box-shadow:' + shadow + ';transition:all 0.15s;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:56px;gap:3px">'
+      + '<div style="font-size:12px;color:' + (sel ? p.color : 'var(--md-sys-color-on-surface)') + ';font-weight:' + (sel?'700':'500') + ';word-break:break-word;line-height:1.3">' + p.name + '</div>'
+      + (sel ? '<div style="font-size:11px;color:' + p.color + ';font-weight:700;letter-spacing:0.3px">✓ Selected</div>' : '')
       + '</div>';
   }).join('');
 }
