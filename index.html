@@ -503,6 +503,7 @@ body {
   <div class="page active" id="page-polls">
     <div class="stitle">Polls</div>
     <div class="ssub" id="overview-sub">7-poll moving average</div>
+    <div id="freshness-pill" style="margin-bottom:4px"></div>
     <div id="race-leaders"></div>
     <div id="party-bars"></div>
     <div class="sec-label">🏛 Seat Projection</div>
@@ -1141,6 +1142,24 @@ async function askAI(q) {
 
 // ── Render Overview ──
 function renderPolls() {
+  // Freshness pill
+  var fpEl = document.getElementById('freshness-pill');
+  if (fpEl) {
+    var updated = D.fetchDate;
+    var daysAgo = 0;
+    try {
+      var parts = updated.split(' ');
+      var months = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+      var d = new Date(parseInt(parts[2]), months[parts[1]], parseInt(parts[0]));
+      daysAgo = Math.floor((Date.now() - d.getTime()) / 86400000);
+    } catch(e) {}
+    var freshColor = daysAgo <= 1 ? '#02A95B' : daysAgo <= 4 ? '#FAA61A' : '#C8102E';
+    var freshLabel = daysAgo === 0 ? 'Updated today' : daysAgo === 1 ? 'Updated yesterday' : 'Updated ' + daysAgo + ' days ago';
+    fpEl.innerHTML = '<div style="display:inline-flex;align-items:center;gap:6px;background:var(--md-sys-color-tonal-navy);border-radius:99px;padding:5px 12px">'
+      + '<div style="width:7px;height:7px;border-radius:50%;background:' + freshColor + ';flex-shrink:0"></div>'
+      + '<span style="font-size:12px;font-weight:700;color:var(--md-sys-color-primary)">' + freshLabel + ' · ' + updated + '</span>'
+      + '</div>';
+  }
   document.getElementById('overview-sub').textContent = '7-poll moving average · ' + D.fetchDate;
   document.getElementById('hdr-date').textContent = D.fetchDate.toUpperCase();
 
