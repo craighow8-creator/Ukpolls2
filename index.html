@@ -651,9 +651,18 @@ var MIGRATION = {
   netPrev2: 906000, // YE June 2023
 
   byNationality: [
-    {name:'Non-EU nationals', net:383000, inflow:670000, outflow:287000, type:'work/study/asylum'},
-    {name:'EU citizens',      net:-70000, inflow:85000,  outflow:155000, type:'various'},
-    {name:'British',          net:-109000,inflow:143000, outflow:252000, type:'emigration'},
+    {name:'India',        net:null, inflow:130000, type:'work/study (top source)'},
+    {name:'China',        net:null, inflow:100000, type:'study (24% of student visas)'},
+    {name:'Pakistan',     net:null, inflow:55000,  type:'study/family/work'},
+    {name:'Nigeria',      net:null, inflow:60000,  type:'work/study'},
+    {name:'Nepal',        net:null, inflow:21000,  type:'study (+89% rise)'},
+    {name:'Philippines',  net:null, inflow:18000,  type:'work/NHS'},
+    {name:'Afghanistan',  net:null, inflow:15000,  type:'asylum (top claimant)'},
+    {name:'Zimbabwe',     net:null, inflow:14000,  type:'work'},
+    {name:'Bangladesh',   net:null, inflow:13000,  type:'study/family'},
+    {name:'Sri Lanka',    net:null, inflow:11000,  type:'work/study'},
+    {name:'EU nationals', net:-70000, inflow:85000,  outflow:155000, type:'net outflow'},
+    {name:'British',      net:-109000,inflow:143000, outflow:252000, type:'net emigration'},
   ],
 
   byVisa: [
@@ -688,22 +697,12 @@ var MIGRATION = {
     note: 'Around ~1,000 crossed in Jan 2026. 193 returned to France under new pilot scheme by end of 2025.'
   },
 
-  policies: [
-    {party:'Reform UK',      color:'#12B7D4', text:'Full immigration freeze. Leave ECHR. Intercept & deport all illegal arrivals. Zero net migration target.'},
-    {party:'Restore Britain',color:'#1a4a9e', text:'Zero net migration. Mass deportations. Withdraw from UN Refugee Convention.'},
-    {party:'Conservative',   color:'#0087DC', text:'Extend settlement route to 10 years. Tougher visa rules. Deport foreign criminals after sentence.'},
-    {party:'Labour',         color:'#E4003B', text:'Border Security Command. Raise salary thresholds. Reduce care/student visa dependants.'},
-    {party:'Lib Dem',        color:'#FAA61A', text:'International cooperation on returns. Oppose ECHR withdrawal. Humane asylum processing.'},
-    {party:'Green',          color:'#02A95B', text:'Safe & legal routes for refugees. Oppose detention. Retain 5-year settlement route for all.'},
-    {party:'SNP',            color:'#FFD700', text:'Scotland needs immigration to grow. Oppose UK-wide caps. Separate Scottish visa route.'},
-  ]
 };
 
 function renderMigration() {
   var el = document.getElementById('migration-content');
   if(!el) return;
   var M = MIGRATION;
-  var maxNet = Math.max.apply(null, M.byNationality.map(function(n){ return Math.abs(n.net); }));
   var totalVisa = M.byVisa.reduce(function(a,b){ return a+b.n; }, 0);
   var trendMax = Math.max.apply(null, M.trend.map(function(t){ return t.net; }));
   var change = M.netTotal - M.netPrev;
@@ -740,19 +739,23 @@ function renderMigration() {
 
     // By nationality
     + '<div class="card" style="margin-bottom:10px;padding:14px">'
-      + '<div style="font-size:13px;font-weight:700;color:#e8ecf4;margin-bottom:12px">🌍 NET MIGRATION BY NATIONALITY</div>'
+      + '<div style="font-size:13px;font-weight:700;color:#e8ecf4;margin-bottom:12px">🌍 TOP NATIONALITIES (INFLOW)</div>'
       + M.byNationality.map(function(n) {
-          var pct = Math.round(Math.abs(n.net) / maxNet * 100);
-          var isNeg = n.net < 0;
-          var col = isNeg ? '#f85149' : '#3fb950';
-          var label = (isNeg ? '−' : '+') + Math.abs(n.net/1000).toFixed(0) + 'k';
+          var maxInflow = 130000;
+          var hasNet = n.net != null;
+          var isNeg = hasNet && n.net < 0;
+          var barVal = n.inflow || Math.abs(n.net || 0);
+          var pct = Math.round(barVal / maxInflow * 100);
+          var netLabel = hasNet ? ((isNeg ? '\u2212' : '+') + Math.abs(n.net/1000).toFixed(0) + 'k net') : (n.inflow/1000).toFixed(0) + 'k arrivals';
+          var col = hasNet ? (isNeg ? '#f85149' : '#9aa3b8') : '#12B7D4';
+          var barCol = hasNet && isNeg ? '#f85149' : hasNet ? '#9aa3b8' : '#12B7D4';
           return '<div style="margin-bottom:9px">'
             + '<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
               + '<span style="font-size:13px;color:#e8ecf4;font-weight:600">' + n.name + '</span>'
-              + '<span style="font-size:13px;color:' + col + ';font-weight:700">' + label + '</span>'
+              + '<span style="font-size:12px;color:' + col + ';font-weight:700">' + netLabel + '</span>'
             + '</div>'
             + '<div style="background:rgba(255,255,255,0.08);border-radius:4px;height:7px;overflow:hidden">'
-              + '<div style="width:' + pct + '%;background:' + col + ';height:100%;border-radius:4px"></div>'
+              + '<div style="width:' + pct + '%;background:' + barCol + ';height:100%;border-radius:4px"></div>'
             + '</div>'
             + '<div style="font-size:11px;color:#c8cdd8;margin-top:2px">' + n.type + '</div>'
           + '</div>';
@@ -760,6 +763,7 @@ function renderMigration() {
     + '</div>'
 
     // Visa breakdown
+
     + '<div class="card" style="margin-bottom:10px;padding:14px">'
       + '<div style="font-size:13px;font-weight:700;color:#e8ecf4;margin-bottom:12px">📋 ARRIVALS BY VISA TYPE</div>'
       + M.byVisa.map(function(v) {
@@ -776,15 +780,6 @@ function renderMigration() {
         }).join('')
     + '</div>'
 
-    // Party policies
-    + '<div class="card" style="padding:14px">'
-      + '<div style="font-size:13px;font-weight:700;color:#e8ecf4;margin-bottom:12px">🗳 PARTY POLICIES ON MIGRATION</div>'
-      + M.policies.map(function(p) {
-          return '<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.08)">'
-            + '<div style="font-size:13px;font-weight:800;color:' + p.color + ';margin-bottom:4px">' + p.party + '</div>'
-            + '<div style="font-size:13px;color:#c8cdd8;line-height:1.5">' + p.text + '</div>'
-          + '</div>';
-        }).join('')
     + '</div>'
 
     // Small boats section
