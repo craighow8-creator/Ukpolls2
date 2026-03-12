@@ -1187,56 +1187,79 @@ function renderVoteButtons() {
     var bg = sel ? p.color + '18' : 'var(--md-sys-color-surface)';
     var border = sel ? '2px solid ' + p.color : '2px solid ' + p.color + '50';
     var shadow = sel ? '0 0 0 2px ' + p.color + '40' : 'var(--md-elevation-1)';
-    return '<div onclick="castVote(\'' + p.name + '\')" style="background:' + bg + ';border:' + border + ';border-radius:var(--md-sys-shape-corner-large);padding:10px 6px 8px;text-align:center;cursor:pointer;box-shadow:' + shadow + ';transition:all 0.15s;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:56px;gap:3px">'
-      + '<div style="font-size:12px;color:' + (sel ? p.color : 'var(--md-sys-color-on-surface)') + ';font-weight:' + (sel?'700':'500') + ';word-break:break-word;line-height:1.3">' + p.name + '</div>'
-      + (sel ? '<div style="font-size:11px;color:' + p.color + ';font-weight:700;letter-spacing:0.3px">✓ Selected</div>' : '')
+    var count = (window._voteCache && window._voteCache[p.name]) || 0;
+    var wm = count > 0 ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:' + p.color + ';opacity:0.25;pointer-events:none">' + count + '</div>' : '';
+    return '<div onclick="castVote(\'' + p.name + '\')" style="background:' + bg + ';border:' + border + ';border-radius:var(--md-sys-shape-corner-large);padding:10px 6px 8px;text-align:center;cursor:pointer;box-shadow:' + shadow + ';transition:all 0.15s;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:56px;gap:3px;position:relative;overflow:hidden">'
+      + wm
+      + '<div style="position:relative;font-size:12px;color:' + (sel ? p.color : 'var(--md-sys-color-on-surface)') + ';font-weight:' + (sel?'700':'500') + ';word-break:break-word;line-height:1.3">' + p.name + '</div>'
+      + (sel ? '<div style="position:relative;font-size:11px;color:' + p.color + ';font-weight:700;letter-spacing:0.3px">✓ Selected</div>' : '')
       + '</div>';
   }).join('');
+  const msg = document.getElementById('vote-msg');
+  const myV = getMyVote();
+  if (myV) {
+    msg.innerHTML = 'Your vote: <strong style="color:var(--md-sys-color-primary)">' + myV + '</strong> &nbsp;·&nbsp; <span style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">Tap any party to change</span>';
+  } else {
+    msg.textContent = 'Tap a party to cast your vote';
+  }
 }
 
 async function castVote(party) {
   const deviceId = getDeviceId();
-  const oldVote = getMyVote();
+  const prevVote = getMyVote();
   setMyVote(party);
   renderVoteButtons();
-  document.getElementById('vote-msg').textContent = oldVote === party ? 'Vote confirmed!' : oldVote ? 'Vote changed to ' + party + '!' : 'Voted for ' + party + '!';
   try {
-    await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'vote',party,deviceId,oldVote}) });
-    loadVoteResults();
+    await fetch(WORKER + '/vote', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({party, deviceId, prevVote}) });
   } catch(e) {}
+  loadVoteResults();
 }
 
 async function loadVoteResults() {
   try {
-    const resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'getVotes'}) });
-    const data = await resp.json();
-    if (!data.votes) return;
-    window._voteCache = data.votes;
+    const resp = await fetch(WORKER + '/votes');
+    const votes = await resp.json();
+    const knownNames = PARTIES_VOTE.map(p => p.name);
+    const total = Object.entries(votes).reduce((a,[k,v]) => a + (knownNames.includes(k) ? v : 0), 0);
+    const el = document.getElementById('vote-results');
+    if (total === 0) {
+      el.innerHTML = '<div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:14px;padding:20px">No votes yet — be the first!</div>';
+      return;
+    }
+    window._voteCache = votes;
     renderVoteButtons();
-    const total = Object.values(data.votes).reduce((a,b) => a+b, 0);
-    if (total === 0) return;
-    document.getElementById('vote-results').innerHTML = PARTIES_VOTE.filter(p => data.votes[p.name] > 0).sort((a,b) => (data.votes[b.name]||0) - (data.votes[a.name]||0)).map(p => {
-      var n = data.votes[p.name] || 0;
-      var pct = Math.round(n / total * 100);
-      var poll = D.parties.find(x => x.name === p.name);
-      var pollPct = poll ? poll.pct : null;
-      return `<div style="margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:14px;color:${p.color};font-weight:600">${p.name}</span>
-          <span style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface)">${pct}% <span style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">(${n})</span></span>
-        </div>
-        <div style="background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden;margin-bottom:4px">
-          <div style="width:${pct}%;background:${p.color};height:100%;border-radius:var(--md-sys-shape-corner-full);transition:width 0.6s ease"></div>
-        </div>
-        ${pollPct !== null ? `<div style="display:flex;gap:4px;align-items:center">
-          <div style="width:36px;font-size:12px;color:var(--md-sys-color-on-surface-variant)">Polls</div>
-          <div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:4px;overflow:hidden">
-            <div style="width:${pollPct}%;background:${p.color}50;height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>
-          </div>
-          <div style="width:28px;font-size:12px;color:var(--md-sys-color-on-surface-variant);text-align:right">${pollPct}%</div>
-        </div>` : ''}
-      </div>`;
-    }).join('');
+    const POLL_MAP = {'Reform UK':26,'Labour':19,'Conservative':18,'Green':17,'Lib Dem':12,'SNP':3,'Restore Britain':7};
+    el.innerHTML = '<div style="text-align:center;margin-bottom:18px">'
+      + '<div style="font-size:40px;font-weight:900;color:var(--md-sys-color-primary);font-family:'Nunito',sans-serif">' + total.toLocaleString() + '</div>'
+      + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);letter-spacing:1.5px;margin-top:2px;font-weight:600;text-transform:uppercase">Total votes cast</div>'
+      + '</div>'
+      + PARTIES_VOTE.filter(p => (votes[p.name]||0) > 0 || POLL_MAP[p.name]).sort((a,b) => (votes[b.name]||0) - (votes[a.name]||0)).map(p => {
+        const n = votes[p.name] || 0;
+        const userPct = total > 0 ? Math.round(n / total * 100) : 0;
+        const pollPct = POLL_MAP[p.name] || 0;
+        if (n === 0 && pollPct === 0) return '';
+        return '<div style="margin-bottom:14px">'
+          + '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+            + '<span style="font-size:14px;color:' + p.color + ';font-weight:600">' + p.name + '</span>'
+            + '<span style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">'
+              + (n > 0 ? userPct + '% app · ' : '') + (pollPct ? pollPct + '% polls' : '') + '</span>'
+          + '</div>'
+          + (n > 0 ? '<div style="display:flex;gap:6px;align-items:center;margin-bottom:3px">'
+            + '<div style="width:32px;font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:600">App</div>'
+            + '<div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden">'
+              + '<div style="width:' + userPct + '%;background:' + p.color + ';height:100%;border-radius:var(--md-sys-shape-corner-full);transition:width 0.6s ease"></div>'
+            + '</div>'
+            + '<div style="width:30px;text-align:right;font-size:13px;font-weight:700;color:' + p.color + '">' + userPct + '%</div>'
+          + '</div>' : '')
+          + (pollPct ? '<div style="display:flex;gap:6px;align-items:center">'
+            + '<div style="width:32px;font-size:11px;color:var(--md-sys-color-on-surface-variant)">Poll</div>'
+            + '<div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:4px;overflow:hidden">'
+              + '<div style="width:' + pollPct + '%;background:' + p.color + '60;height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>'
+            + '</div>'
+            + '<div style="width:30px;text-align:right;font-size:12px;color:var(--md-sys-color-on-surface-variant)">' + pollPct + '%</div>'
+          + '</div>' : '')
+          + '</div>';
+      }).join('');
   } catch(e) {
     document.getElementById('vote-results').innerHTML = '<div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:14px;padding:16px">Could not load results.</div>';
   }
