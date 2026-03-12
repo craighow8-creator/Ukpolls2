@@ -1,275 +1,532 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#012169">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FFFBFE">
 <title>UK Poll Tracker</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%230a0d12'/%3E%3Ccircle cx='100' cy='100' r='72' fill='%23012169'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Crect x='28' y='86' width='144' height='28' rx='2' fill='white'/%3E%3Crect x='86' y='28' width='28' height='144' rx='2' fill='white'/%3E%3Crect x='28' y='91' width='144' height='18' rx='2' fill='%23C8102E'/%3E%3Crect x='91' y='28' width='18' height='144' rx='2' fill='%23C8102E'/%3E%3Crect x='52' y='118' width='14' height='28' rx='3' fill='%2312B7D4' opacity='.95'/%3E%3Crect x='70' y='105' width='14' height='41' rx='3' fill='%2302A95B' opacity='.95'/%3E%3Crect x='88' y='112' width='14' height='34' rx='3' fill='%23E4003B' opacity='.95'/%3E%3Crect x='106' y='112' width='14' height='34' rx='3' fill='%230087DC' opacity='.95'/%3E%3Crect x='124' y='120' width='14' height='26' rx='3' fill='%23FAA61A' opacity='.95'/%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%230a0d12'/%3E%3Ccircle cx='100' cy='100' r='72' fill='%23012169'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Crect x='28' y='86' width='144' height='28' rx='2' fill='white'/%3E%3Crect x='86' y='28' width='28' height='144' rx='2' fill='white'/%3E%3Crect x='28' y='91' width='144' height='18' rx='2' fill='%23C8102E'/%3E%3Crect x='91' y='28' width='18' height='144' rx='2' fill='%23C8102E'/%3E%3Crect x='52' y='118' width='14' height='28' rx='3' fill='%2312B7D4' opacity='.95'/%3E%3Crect x='70' y='105' width='14' height='41' rx='3' fill='%2302A95B' opacity='.95'/%3E%3Crect x='88' y='112' width='14' height='34' rx='3' fill='%23E4003B' opacity='.95'/%3E%3Crect x='106' y='112' width='14' height='34' rx='3' fill='%230087DC' opacity='.95'/%3E%3Crect x='124' y='120' width='14' height='26' rx='3' fill='%23FAA61A' opacity='.95'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%23012169'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='white' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='28' y1='28' x2='172' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Cline x1='172' y1='28' x2='28' y2='172' stroke='%23C8102E' stroke-width='11' stroke-linecap='round'/%3E%3Crect x='28' y='86' width='144' height='28' rx='2' fill='white'/%3E%3Crect x='86' y='28' width='28' height='144' rx='2' fill='white'/%3E%3Crect x='28' y='91' width='144' height='18' rx='2' fill='%23C8102E'/%3E%3Crect x='91' y='28' width='18' height='144' rx='2' fill='%23C8102E'/%3E%3C/svg%3E">
 <style>
-:root{--bg:#0d1117;--surface:#1a1f2e;--border:#2d3548;--dim:#e8ecf4;--muted:#9aa3b8;--up:#3fb950;--down:#f85149;}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:17px;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased;}
+/* ── M3E Token System ── */
+:root {
+  --md-sys-color-primary: #012169;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #dde3ff;
+  --md-sys-color-on-primary-container: #001257;
+  --md-sys-color-secondary: #C8102E;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #ffdad7;
+  --md-sys-color-on-secondary-container: #410005;
+  --md-sys-color-surface: #FFFBFE;
+  --md-sys-color-surface-variant: #E7E0EC;
+  --md-sys-color-on-surface: #1C1B1F;
+  --md-sys-color-on-surface-variant: #49454F;
+  --md-sys-color-outline: #79747E;
+  --md-sys-color-outline-variant: #CAC4D0;
+  --md-sys-color-surface-container-low: #F7F2FA;
+  --md-sys-color-surface-container: #F3EEF6;
+  --md-sys-color-surface-container-high: #ECE6F0;
+  --md-sys-color-surface-container-highest: #E6E0E9;
+  --md-sys-color-tonal-navy: #EEF1FA;
+  --md-sys-color-tonal-red: #FFF0EE;
+  --up: #1a7f37;
+  --down: #C8102E;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 16px;
+  --md-sys-shape-corner-large: 24px;
+  --md-sys-shape-corner-extra-large: 32px;
+  --md-sys-shape-corner-full: 50px;
+  --md-elevation-1: 0 1px 2px rgba(0,0,0,0.08), 0 1px 3px 1px rgba(0,0,0,0.06);
+  --md-elevation-2: 0 1px 2px rgba(0,0,0,0.1), 0 2px 6px 2px rgba(0,0,0,0.08);
+  --md-elevation-3: 0 4px 8px 3px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 16px;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
 
 /* ── Header ── */
-#hdr{padding:10px 14px 8px;background:rgba(1,33,105,0.7);border-bottom:1px solid rgba(255,255,255,0.15);flex-shrink:0;position:relative;z-index:10;backdrop-filter:blur(8px);}
-.hdr-row{display:flex;align-items:center;justify-content:space-between;}
-.hdr-left{display:flex;align-items:center;gap:10px;}
-.hdr-icon{width:36px;height:36px;background:linear-gradient(135deg,#012169,#C8102E);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
-.htitle{font-size:19px;font-weight:800;color:#fff;line-height:1.1;}
-.hsub{font-size:14px;color:#c8cdd8;letter-spacing:1px;margin-top:1px;}
-.live-badge{display:flex;align-items:center;gap:5px;background:#1a2e1a;border:1px solid #2d5a2d;border-radius:20px;padding:5px 10px;font-size:14px;font-weight:700;color:#3fb950;cursor:pointer;white-space:nowrap;}
-.ldot{width:7px;height:7px;border-radius:50%;background:#3fb950;}
-.ldot.spin{animation:pulse 1.5s infinite;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.ltxt.loading{color:#FAA61A;}
-.ltxt.error{color:#c8cdd8;}
+#hdr {
+  padding: 12px 16px 10px;
+  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.hdr-row { display: flex; align-items: center; justify-content: space-between; }
+.hdr-left { display: flex; align-items: center; gap: 12px; }
+.hdr-icon {
+  width: 40px; height: 40px;
+  border-radius: var(--md-sys-shape-corner-medium);
+  overflow: hidden; flex-shrink: 0;
+  box-shadow: var(--md-elevation-1);
+}
+.htitle {
+  font-size: 18px; font-weight: 700;
+  color: var(--md-sys-color-primary);
+  line-height: 1.1;
+  font-family: 'Nunito', sans-serif;
+  letter-spacing: -0.3px;
+}
+.hsub {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 1px;
+  white-space: nowrap;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+.hdr-actions { display: flex; gap: 8px; align-items: center; }
+.btn-share {
+  background: var(--md-sys-color-tonal-navy);
+  color: var(--md-sys-color-primary);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--md-sys-shape-corner-full);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  font-family: 'Nunito Sans', sans-serif;
+  transition: background 0.2s;
+}
+.btn-share:active { background: var(--md-sys-color-primary-container); }
+.btn-support {
+  background: var(--md-sys-color-secondary);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--md-sys-shape-corner-full);
+  font-size: 13px; font-weight: 600;
+  cursor: pointer;
+  font-family: 'Nunito Sans', sans-serif;
+  text-decoration: none;
+  display: inline-flex; align-items: center;
+  white-space: nowrap;
+  box-shadow: var(--md-elevation-1);
+  transition: box-shadow 0.2s;
+}
+.btn-support:active { box-shadow: none; }
 
 /* ── Content ── */
-#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;position:relative;z-index:5;}
+#content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  min-height: 0;
+  background: var(--md-sys-color-surface-container-low);
+  padding-bottom: 80px;
+}
 
 /* ── Pages ── */
-.page{display:none;padding:14px 14px 24px;}
-.page.active{animation:fadeIn 0.18s ease;}
-.page.active{display:block;}
-
-/* ── Nav ── */
-#nav{flex-shrink:0;background:rgba(1,33,105,0.75);border-bottom:1px solid rgba(255,255,255,0.2);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative;z-index:10;backdrop-filter:blur(8px);}
-#nav::-webkit-scrollbar{display:none;}
-#nav-inner{display:inline-flex;min-width:100%;}
-.nb{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 16px;background:none;border:none;border-bottom:3px solid transparent;color:#c8cdd8;font-size:14px;cursor:pointer;gap:4px;white-space:nowrap;flex-shrink:0;}
-.nb svg{width:18px;height:18px;stroke-width:1.8;}
-.nb.active{color:#fff;border-bottom-color:#f85149;}
-.nb.active svg{stroke:#fff;}
+.page { display: none; padding: 16px 16px 24px; }
+.page.active { display: block; animation: m3eFadeIn 0.22s cubic-bezier(0.2,0,0,1); }
+@keyframes m3eFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ── Cards ── */
-.card{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;margin-bottom:12px;font-size:14px;backdrop-filter:blur(6px);}
-.stitle{font-size:24px;font-weight:800;margin-bottom:4px;color:#ffffff;}
-.ssub{font-size:15px;color:#c8cdd8;margin-bottom:14px;}
-.sec-label{font-size:14px;letter-spacing:1.5px;color:#c8cdd8;margin:16px 0 8px;font-weight:600;}
+.card {
+  background: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  padding: 20px;
+  margin-bottom: 12px;
+  box-shadow: var(--md-elevation-1);
+}
+.card-tonal {
+  background: var(--md-sys-color-tonal-navy);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  padding: 20px;
+  margin-bottom: 12px;
+}
+.stitle {
+  font-size: 28px; font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--md-sys-color-primary);
+  font-family: 'Nunito', sans-serif;
+  letter-spacing: -0.5px;
+}
+.ssub {
+  font-size: 14px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 16px;
+  font-weight: 400;
+}
+.sec-label {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 20px 0 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
 
-/* ── Party grid ── */
-.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.pc{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px 6px;border-top:3px solid;text-align:center;height:120px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;backdrop-filter:blur(6px);}
-.pca{font-size:14px;color:#c8cdd8;letter-spacing:1px;margin-bottom:4px;}
-.pcp{font-size:24px;font-weight:800;line-height:1;}
-.pcc{font-size:14px;margin-top:3px;}
-.pcs{font-size:14px;color:#c8cdd8;margin-top:2px;}
+/* ── Party Grid ── */
+.pgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.pc {
+  background: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-large);
+  padding: 14px 8px;
+  border-top: 4px solid;
+  text-align: center;
+  min-height: 130px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: space-between;
+  box-shadow: var(--md-elevation-1);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.pc:active { transform: scale(0.97); box-shadow: none; }
+.pca { font-size: 11px; color: var(--md-sys-color-on-surface-variant); font-weight: 500; word-break: break-word; line-height: 1.3; }
+.pcp { font-size: 28px; font-weight: 700; line-height: 1; font-family: 'Nunito', sans-serif; }
+.pcc { font-size: 13px; margin-top: 2px; font-weight: 600; }
+.pcs { font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
 
-/* ── Seat bar ── */
-.sbar{display:flex;height:36px;border-radius:8px;overflow:hidden;margin-bottom:6px;}
-.sseg{display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;overflow:hidden;}
+/* ── Seat Bar ── */
+.sbar {
+  display: flex;
+  height: 44px;
+  border-radius: var(--md-sys-shape-corner-full);
+  overflow: hidden;
+  margin-bottom: 10px;
+  gap: 2px;
+  box-shadow: var(--md-elevation-1);
+}
+.sseg {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; overflow: hidden;
+  color: white;
+}
 
-/* ── Leaders ── */
-.lcard{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;margin-bottom:10px;backdrop-filter:blur(6px);}
-.lch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-.lcname{font-size:20px;font-weight:800;color:#fff;}
-.lcparty{font-size:15px;margin-top:2px;}
-.lcnet{font-size:26px;font-weight:800;line-height:1;}
-.lcnl{font-size:14px;color:#c8cdd8;text-align:right;letter-spacing:1px;}
-.abar{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-bottom:6px;}
-.lcs{display:flex;gap:12px;font-size:15px;margin-bottom:2px;}
-.psec{border-top:1px solid var(--border);padding-top:8px;margin-top:8px;}
-.plbl{font-size:14px;color:#c8cdd8;letter-spacing:1px;margin-bottom:4px;font-weight:600;}
-.ptxt{font-size:16px;color:#e8ecf4;line-height:1.6;}
+/* ── Bottom Nav ── */
+#nav {
+  flex-shrink: 0;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--md-sys-color-surface);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  z-index: 20;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.06);
+}
+#nav-inner { display: flex; width: 100%; position: relative; }
+.nb {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 8px 4px 6px;
+  background: none; border: none;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 10px; cursor: pointer;
+  gap: 3px; flex: 1;
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 500;
+  transition: color 0.2s;
+  position: relative;
+}
+.nb svg {
+  width: 22px; height: 22px; stroke-width: 1.6;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.nb .nav-indicator {
+  position: absolute;
+  top: 6px;
+  width: 64px; height: 32px;
+  background: var(--md-sys-color-primary-container);
+  border-radius: var(--md-sys-shape-corner-full);
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: -1;
+}
+.nb.active { color: var(--md-sys-color-primary); }
+.nb.active .nav-indicator { opacity: 1; }
+.nb.active svg { transform: scale(1.1); stroke: var(--md-sys-color-primary); }
 
-/* ── Polls table ── */
-.ptable{width:100%;border-collapse:collapse;font-size:14px;}
-.ptable th{font-size:14px;color:#c8cdd8;letter-spacing:1px;padding:5px 3px;text-align:center;border-bottom:1px solid var(--border);}
-.ptable td{padding:8px 3px;text-align:center;border-bottom:1px solid var(--border);font-size:14px;}
-.pill{display:inline-block;padding:2px 5px;border-radius:4px;font-weight:700;font-size:14px;}
+/* ── Leader Cards ── */
+.lcard {
+  background: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  padding: 20px;
+  margin-bottom: 12px;
+  box-shadow: var(--md-elevation-1);
+}
+.lch { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.lcname { font-size: 20px; font-weight: 700; color: var(--md-sys-color-on-surface); font-family: 'Nunito', sans-serif; }
+.lcparty { font-size: 14px; margin-top: 2px; font-weight: 500; }
+.lcnet { font-size: 28px; font-weight: 700; line-height: 1; font-family: 'Nunito', sans-serif; }
+.lcnl { font-size: 11px; color: var(--md-sys-color-on-surface-variant); text-align: right; letter-spacing: 1px; font-weight: 600; }
+.abar { display: flex; height: 8px; border-radius: var(--md-sys-shape-corner-full); overflow: hidden; margin-bottom: 8px; }
+.lcs { display: flex; gap: 16px; font-size: 14px; margin-bottom: 4px; font-weight: 500; }
+.psec { border-top: 1px solid var(--md-sys-color-outline-variant); padding-top: 10px; margin-top: 10px; }
+.plbl { font-size: 11px; color: var(--md-sys-color-on-surface-variant); letter-spacing: 1.5px; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; }
+.ptxt { font-size: 15px; color: var(--md-sys-color-on-surface); line-height: 1.6; }
 
 /* ── Elections ── */
-.ecard{background:rgba(5,10,30,0.72);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;margin-bottom:10px;backdrop-filter:blur(6px);}
-.ed{font-size:14px;color:#c8cdd8;margin-bottom:3px;}
-.et{font-size:15px;font-weight:800;color:#fff;margin-bottom:2px;}
-.es{font-size:14px;color:#c8cdd8;margin-bottom:8px;}
-.ex{font-size:14px;color:var(--dim);line-height:1.6;margin-bottom:8px;}
-.etags{display:flex;flex-wrap:wrap;gap:6px;}
-.etag{font-size:14px;padding:3px 8px;border-radius:6px;}
-.ri{display:flex;align-items:center;gap:6px;padding:3px 0;}
-.rd{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.rp{width:52px;font-size:14px;font-weight:600;}
-.rn{width:38px;font-size:14px;font-weight:800;}
-.rm{font-size:14px;color:#c8cdd8;}
+.ecard {
+  background: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  padding: 20px;
+  margin-bottom: 12px;
+  box-shadow: var(--md-elevation-1);
+}
+.ed { font-size: 12px; color: var(--md-sys-color-secondary); font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }
+.et { font-size: 16px; font-weight: 700; color: var(--md-sys-color-on-surface); margin-bottom: 2px; font-family: 'Nunito', sans-serif; }
+.es { font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin-bottom: 10px; }
+.ex { font-size: 14px; color: var(--md-sys-color-on-surface); line-height: 1.6; margin-bottom: 10px; }
+.etags { display: flex; flex-wrap: wrap; gap: 6px; }
+.etag { font-size: 12px; padding: 4px 10px; border-radius: var(--md-sys-shape-corner-full); font-weight: 600; }
+.ri { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.rd { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.rp { width: 54px; font-size: 13px; font-weight: 600; }
+.rn { width: 40px; font-size: 14px; font-weight: 700; }
+.rm { font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
 
 /* ── AI ── */
-.chip{font-size:15px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:7px 12px;font-size:14px;cursor:pointer;color:var(--dim);}
-.ai-box{background:var(--surface);border-radius:12px;padding:14px;font-size:14px;line-height:1.7;}
-.ai-empty{text-align:center;padding:24px;color:#c8cdd8;font-size:14px;}
+.chip {
+  font-size: 13px;
+  background: var(--md-sys-color-surface);
+  border: 1.5px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-full);
+  padding: 8px 16px;
+  cursor: pointer;
+  color: var(--md-sys-color-primary);
+  font-family: 'Nunito Sans', sans-serif;
+  font-weight: 500;
+  box-shadow: var(--md-elevation-1);
+  transition: background 0.15s, border-color 0.15s;
+}
+.chip:active { background: var(--md-sys-color-tonal-navy); border-color: var(--md-sys-color-primary); }
+.ai-empty { text-align: center; padding: 32px 20px; color: var(--md-sys-color-on-surface-variant); font-size: 14px; }
 
 /* ── Support Popup ── */
-#support-popup{display:none;position:fixed;inset:0;background:#000000bb;z-index:1000;align-items:center;justify-content:center;padding:20px;}
-#support-popup.show{display:flex;}
-.popup-box{background:#1a1f2e;border:1px solid #2d3548;border-radius:20px;padding:28px 24px;max-width:320px;width:100%;text-align:center;animation:popIn 0.3s ease;}
-@keyframes popIn{from{transform:scale(0.85);opacity:0}to{transform:scale(1);opacity:1}}
-.popup-icon{font-size:44px;margin-bottom:10px;}
-.popup-title{font-size:20px;font-weight:800;color:#fff;margin-bottom:8px;}
-.popup-body{font-size:14px;color:#c8cdd8;line-height:1.6;margin-bottom:20px;}
-.popup-btn{display:block;width:100%;padding:13px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;border:none;margin-bottom:10px;}
-.popup-yes{background:#ff5e5b;color:#fff;}
-.popup-no{background:transparent;color:#c8cdd8;font-size:14px;text-decoration:underline;}
+#support-popup { display: none; position: fixed; inset: 0; background: rgba(28,27,31,0.5); z-index: 1000; align-items: flex-end; justify-content: center; padding: 0; }
+#support-popup.show { display: flex; }
+.popup-box {
+  background: var(--md-sys-color-surface-container);
+  border-radius: 28px 28px 0 0;
+  padding: 32px 24px calc(32px + env(safe-area-inset-bottom));
+  width: 100%; max-width: 480px;
+  text-align: center;
+  animation: slideUp 0.35s cubic-bezier(0.05,0.7,0.1,1);
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes popIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.popup-icon { font-size: 48px; margin-bottom: 12px; }
+.popup-title { font-size: 22px; font-weight: 700; color: var(--md-sys-color-on-surface); margin-bottom: 8px; font-family: 'Nunito', sans-serif; }
+.popup-body { font-size: 14px; color: var(--md-sys-color-on-surface-variant); line-height: 1.6; margin-bottom: 24px; }
+.popup-btn { display: block; width: 100%; padding: 14px; border-radius: var(--md-sys-shape-corner-full); font-weight: 700; font-size: 15px; cursor: pointer; border: none; margin-bottom: 10px; font-family: 'Nunito Sans', sans-serif; }
+.popup-yes { background: var(--md-sys-color-secondary); color: #fff; }
+.popup-no { background: transparent; color: var(--md-sys-color-on-surface-variant); font-size: 14px; text-decoration: underline; }
 
 /* ── Landscape ── */
-@media (orientation:landscape) and (max-height:500px){
-  #hdr{padding:4px 14px;}
-  .htitle{font-size:15px;}
-  .hsub{display:none;}
-  .hdr-icon{width:28px;height:28px;font-size:15px;}
-  .nb span{display:none;}
-  .nb{padding:5px 2px;}
-  .page{padding:8px 14px 10px;}
-  .stitle{font-size:17px;}
+@media (orientation: landscape) and (max-height: 500px) {
+  #hdr { padding: 4px 16px; }
+  .hdr-left > div { display: flex; flex-direction: row; align-items: baseline; gap: 8px; }
+  .htitle { font-size: 16px; }
+  .hsub { font-size: 11px; margin-top: 0; }
+  .hdr-icon { width: 28px; height: 28px; }
+  .nb { padding: 4px 2px; font-size: 9px; }
+  .page { padding: 8px 12px 10px; }
+  .stitle { font-size: 20px; }
 }
+
+/* ── Polls table ── */
+.ptable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ptable th { font-size: 11px; color: var(--md-sys-color-on-surface-variant); letter-spacing: 1px; padding: 6px 3px; text-align: center; border-bottom: 1px solid var(--md-sys-color-outline-variant); font-weight: 600; text-transform: uppercase; }
+.ptable td { padding: 10px 3px; text-align: center; border-bottom: 1px solid var(--md-sys-color-outline-variant); font-size: 13px; }
+
+/* ── Divider ── */
+.m3-divider { height: 1px; background: var(--md-sys-color-outline-variant); margin: 8px 0; }
+
+/* ── Tonal chip tags ── */
+.tonal-tag { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: var(--md-sys-shape-corner-full); font-size: 12px; font-weight: 600; }
+
 </style>
 </head>
 <body>
 
-<!-- Union Jack Background -->
-<div style="position:fixed;inset:0;z-index:0;overflow:hidden;">
-  <svg viewBox="0 0 60 40" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%">
-    <!-- Blue field -->
-    <rect width="60" height="40" fill="#012169"/>
-    <!-- White diagonals (St Andrew) -->
-    <line x1="0" y1="0" x2="60" y2="40" stroke="white" stroke-width="8"/>
-    <line x1="60" y1="0" x2="0" y2="40" stroke="white" stroke-width="8"/>
-    <!-- Red diagonals (St Patrick) - offset -->
-    <line x1="0" y1="0" x2="60" y2="40" stroke="#C8102E" stroke-width="4"/>
-    <line x1="60" y1="0" x2="0" y2="40" stroke="#C8102E" stroke-width="4"/>
-    <!-- White cross (St George) -->
-    <rect x="0" y="15" width="60" height="10" fill="white"/>
-    <rect x="25" y="0" width="10" height="40" fill="white"/>
-    <!-- Red cross (St George) -->
-    <rect x="0" y="17" width="60" height="6" fill="#C8102E"/>
-    <rect x="27" y="0" width="6" height="40" fill="#C8102E"/>
-  </svg>
-  <!-- Dark overlay -->
-  <div style="position:absolute;inset:0;background:rgba(0,0,0,0.78)"></div>
-</div>
-
-<!-- ── Header ── -->
+<!-- Header -->
 <div id="hdr">
   <div class="hdr-row">
     <div class="hdr-left">
       <div class="hdr-icon">
-        <svg viewBox="0 0 200 200" width="36" height="36" style="border-radius:8px">
-          <rect width="200" height="200" rx="40" fill="#0a0d12"/>
-          <circle cx="100" cy="100" r="72" fill="#012169"/>
-          <line x1="28" y1="28" x2="172" y2="172" stroke="white" stroke-width="20" stroke-linecap="round"/>
-          <line x1="172" y1="28" x2="28" y2="172" stroke="white" stroke-width="20" stroke-linecap="round"/>
-          <line x1="28" y1="28" x2="172" y2="172" stroke="#C8102E" stroke-width="11" stroke-linecap="round"/>
-          <line x1="172" y1="28" x2="28" y2="172" stroke="#C8102E" stroke-width="11" stroke-linecap="round"/>
-          <rect x="28" y="86" width="144" height="28" rx="2" fill="white"/>
-          <rect x="86" y="28" width="28" height="144" rx="2" fill="white"/>
-          <rect x="28" y="91" width="144" height="18" rx="2" fill="#C8102E"/>
-          <rect x="91" y="28" width="18" height="144" rx="2" fill="#C8102E"/>
-          <rect x="52" y="118" width="14" height="28" rx="3" fill="#12B7D4" opacity=".95"/>
-          <rect x="70" y="105" width="14" height="41" rx="3" fill="#02A95B" opacity=".95"/>
-          <rect x="88" y="112" width="14" height="34" rx="3" fill="#E4003B" opacity=".95"/>
-          <rect x="106" y="112" width="14" height="34" rx="3" fill="#0087DC" opacity=".95"/>
-          <rect x="124" y="120" width="14" height="26" rx="3" fill="#FAA61A" opacity=".95"/>
+        <svg viewBox="0 0 200 200" width="40" height="40">
+          <rect width="200" height="200" fill="#012169"/>
+          <line x1="0" y1="0" x2="200" y2="200" stroke="white" stroke-width="28"/>
+          <line x1="200" y1="0" x2="0" y2="200" stroke="white" stroke-width="28"/>
+          <line x1="0" y1="0" x2="200" y2="200" stroke="#C8102E" stroke-width="16"/>
+          <line x1="200" y1="0" x2="0" y2="200" stroke="#C8102E" stroke-width="16"/>
+          <rect x="0" y="82" width="200" height="36" fill="white"/>
+          <rect x="82" y="0" width="36" height="200" fill="white"/>
+          <rect x="0" y="90" width="200" height="20" fill="#C8102E"/>
+          <rect x="90" y="0" width="20" height="200" fill="#C8102E"/>
         </svg>
       </div>
       <div>
         <div class="htitle">UK Poll Tracker</div>
-        <div class="hsub" id="hdr-date">ALL PARTIES · 8 MAR 2026</div>
+        <div class="hsub" id="hdr-date">12 MAR 2026</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button onclick="openShare()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:5px 10px;border-radius:20px;font-size:14px;font-weight:700;cursor:pointer;">Share</button>
-      <a href="https://ko-fi.com/craighowe" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#FF5E5B;color:#fff;text-decoration:none;padding:5px 10px;border-radius:20px;font-size:14px;font-weight:700;white-space:nowrap;">Support</a>
+    <div class="hdr-actions">
+      <button class="btn-share" onclick="openShare()">Share</button>
+      <a href="https://ko-fi.com/craighowe" target="_blank" class="btn-support">Support</a>
     </div>
   </div>
 </div>
-
-<div id="nav"><div id="nav-inner">
-  <button class="nb active" onclick="sp('overview',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-    Overview
-  </button>
-  <button class="nb" onclick="sp('trends',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    Trends
-  </button>
-  <button class="nb" onclick="sp('elections',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-    Elections
-  </button>
-  <button class="nb" onclick="sp('vote',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-    Vote
-  </button>
-  <button class="nb" onclick="sp('demo',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    Demo
-  </button>
-  <button class="nb" onclick="sp('leaders',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    Leaders
-  </button>
-  <button class="nb" onclick="sp('ai',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-    AI
-  </button>
-</div></div>
 
 <div id="content">
 
   <!-- OVERVIEW -->
   <div class="page active" id="page-overview">
     <div class="stitle">Voting Intention</div>
-    <div class="ssub" id="overview-sub">7-poll moving average · 8 Mar 2026</div>
+    <div class="ssub" id="overview-sub">7-poll moving average</div>
     <div class="pgrid" id="party-grid"></div>
-    <div class="sec-label">🏛 SEAT PROJECTION</div>
+    <div class="sec-label">🏛 Seat Projection</div>
     <div class="sbar" id="seat-bar"></div>
-    <div style="font-size:14px;color:#c8cdd8;text-align:center;margin-bottom:16px">326 seats needed for majority · <strong style="color:#fff">Hung Parliament</strong></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 8px">
-      <div class="sec-label" style="margin:0">📋 CONTEXT</div>
-      <button onclick="openCompare()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:20px;padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;">Compare</button>
-    </div>
-    <div class="card" style="font-size:14px;line-height:1.8;color:#e8ecf4" id="ctx-text"></div>
-    <div style="text-align:center;padding:16px 0 4px">
-      <a href="https://ko-fi.com/craighowe" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:#FF5E5B;color:#fff;text-decoration:none;padding:11px 20px;border-radius:12px;font-weight:700;font-size:14px;">
+    <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin-bottom:20px;font-weight:500">326 seats needed for majority · <strong style="color:var(--md-sys-color-primary)">Hung Parliament</strong></div>
+    <div class="sec-label">📋 Context</div>
+    <div class="card" style="font-size:14px;line-height:1.8;color:var(--md-sys-color-on-surface)" id="ctx-text"></div>
+    <div style="text-align:center;padding:20px 0 4px">
+      <a href="https://ko-fi.com/craighowe" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--md-sys-color-secondary);color:#fff;text-decoration:none;padding:14px 28px;border-radius:var(--md-sys-shape-corner-full);font-weight:700;font-size:14px;box-shadow:var(--md-elevation-2);">
         ❤️ Support this app
       </a>
-      <div style="font-size:14px;color:#c8cdd8;margin-top:8px">If you find this useful, a coffee keeps it running!</div>
+      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:10px">A coffee keeps it running!</div>
     </div>
   </div>
 
   <!-- TRENDS -->
   <div class="page" id="page-trends">
-    <div class="stitle">Trends
-    <div class="sec-label" id="polls-anchor">📋 RECENT POLLS</div>
-    <div id="polls-cards"></div>
-    <div style="font-size:14px;color:#c8cdd8;padding:2px 2px 8px">BPC members · RB = Restore Britain (prompted only)</div>
-  </div>
+    <div class="stitle">Trends</div>
     <div class="ssub">6-month polling movement</div>
-    <div class="card" style="padding:10px" id="trend-card">
+    <div class="card" style="padding:20px" id="trend-card">
       <canvas id="trend-chart" style="width:100%;display:block"></canvas>
-      <div id="trend-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px"></div>
+      <div id="trend-legend" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center"></div>
     </div>
-    <div class="sec-label">📈 LATEST MOVEMENT</div>
+    <div class="sec-label">📈 Latest Movement</div>
     <div class="card" id="movers-list"></div>
-    <div class="sec-label">📌 MILESTONES</div>
+    <div class="sec-label">📌 Milestones</div>
     <div class="card" id="milestones-list"></div>
+    <div class="sec-label" id="polls-anchor">📋 Recent Polls</div>
+    <div id="polls-cards"></div>
+    <div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);padding:2px 4px 12px">BPC members · RB = Restore Britain (prompted only)</div>
+  </div>
+
+  <!-- ELECTIONS -->
+  <div class="page" id="page-elections">
+    <div class="stitle">Elections</div>
+    <div class="ssub">Upcoming votes &amp; recent results</div>
+    <div class="sec-label">📅 Upcoming</div>
+    <div class="ecard">
+      <div class="ed">1 MAY 2026</div>
+      <div class="et">Local Elections 2026</div>
+      <div class="es">England — county councils, unitaries &amp; mayoral contests</div>
+      <div class="ex">~1,600 seats across 23 councils. First major test of the Green surge and Reform UK's local strength. Key contests: West of England Mayor, Cambridgeshire &amp; Peterborough Mayor.</div>
+      <div class="etags">
+        <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK target</span>
+        <span class="etag" style="background:#02A95B15;color:#02A95B">Green surge test</span>
+      </div>
+    </div>
+    <div class="ecard">
+      <div class="ed">1 MAY 2026</div>
+      <div class="et">Runcorn &amp; Helsby</div>
+      <div class="es">By-election — Labour hold (majority: 14,696)</div>
+      <div class="ex">Triggered by MP Mike Amesbury's resignation after assault video. Labour defending against a strong Reform UK challenge in this Red Wall seat.</div>
+      <div class="etags">
+        <span class="etag" style="background:#E4003B15;color:#c00030">Lab defend</span>
+        <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK target</span>
+      </div>
+    </div>
+    <div class="ecard">
+      <div class="ed">TBC 2026</div>
+      <div class="et">Horsham</div>
+      <div class="es">By-election — Conservative hold (majority: 3,027)</div>
+      <div class="ex">Jeremy Quin resigned on health grounds. Three-way marginal between Conservatives, Lib Dems and Reform UK.</div>
+      <div class="etags">
+        <span class="etag" style="background:#0087DC15;color:#006bb3">Con defend</span>
+        <span class="etag" style="background:#FAA61A15;color:#c07d00">LD target</span>
+        <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK threat</span>
+      </div>
+    </div>
+    <div class="sec-label">🗳 Recent Results</div>
+    <div class="ecard">
+      <div class="ed">27 FEB 2026</div>
+      <div class="et">Gorton &amp; Denton</div>
+      <div class="es">By-election — <span style="color:#02A95B;font-weight:700">🟢 Green GAIN from Labour</span></div>
+      <div class="ri"><span class="rd" style="background:#02A95B"></span><span class="rp">Green</span><span class="rn">34.1%</span><span class="rm">+28.6% 🏆</span></div>
+      <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">29.4%</span><span class="rm">-24.7%</span></div>
+      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">19.8%</span><span class="rm">+19.8%</span></div>
+      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">7.2%</span><span class="rm">-16.4%</span></div>
+      <div class="ex" style="margin-top:10px;margin-bottom:0">Massive 28.6pt swing to Greens. Labour vote collapsed. Greens now have 5 MPs.</div>
+    </div>
+    <div class="ecard">
+      <div class="ed">6 FEB 2025</div>
+      <div class="et">Kingswood</div>
+      <div class="es">By-election — <span style="color:#12B7D4;font-weight:700">🔵 Reform UK GAIN from Conservative</span></div>
+      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">38.7%</span><span class="rm">+38.7% 🏆</span></div>
+      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">26.1%</span><span class="rm">-21.3%</span></div>
+      <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">19.4%</span><span class="rm">-8.2%</span></div>
+      <div class="ex" style="margin-top:10px;margin-bottom:0">Reform UK's first by-election gain. Signalled collapse of Conservative vote in Leave-leaning seats.</div>
+    </div>
+    <div class="ecard">
+      <div class="ed">10 OCT 2024</div>
+      <div class="et">Henley &amp; Thame</div>
+      <div class="es">By-election — <span style="color:#FAA61A;font-weight:700">🟡 Lib Dem HOLD</span></div>
+      <div class="ri"><span class="rd" style="background:#FAA61A"></span><span class="rp">Lib Dem</span><span class="rn">52.3%</span><span class="rm">+8.1% 🏆</span></div>
+      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">22.1%</span><span class="rm">-18.4%</span></div>
+      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">12.8%</span><span class="rm">+12.8%</span></div>
+      <div class="ex" style="margin-top:10px;margin-bottom:0">Lib Dems consolidating hold on southern Blue Wall seats.</div>
+    </div>
+    <div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);text-align:center;padding:12px 0">Results approximate. Sources: BBC, Electoral Commission.</div>
+  </div>
+
+  <!-- VOTE -->
+  <div class="page" id="page-vote">
+    <div class="stitle">Your Vote</div>
+    <div class="ssub">How would you vote? One vote per device.</div>
+    <div style="text-align:center;font-size:13px;color:#c07d00;background:#FAA61A18;border-radius:var(--md-sys-shape-corner-medium);padding:10px;margin-bottom:14px;font-weight:600">🇬🇧 UK voters only please</div>
+    <div id="vote-section">
+      <div class="sec-label">🗳 Cast Your Vote</div>
+      <div id="vote-buttons" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px"></div>
+      <div id="vote-msg" style="text-align:center;font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px"></div>
+    </div>
+    <div class="sec-label">📊 App Users vs Real Polls</div>
+    <div class="card" id="vote-results">
+      <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:14px;padding:20px">Loading results...</div>
+    </div>
+    <div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);text-align:center;padding:4px 0">One vote per device · Change your mind anytime · Totals never reset</div>
   </div>
 
   <!-- DEMOGRAPHICS -->
   <div class="page" id="page-demo">
     <div class="stitle">Demographics</div>
     <div class="ssub">Voting intention by group · YouGov/Ipsos/MiC 2026</div>
-    <div class="sec-label">👤 AGE GROUP</div><div id="age-content"></div>
-    <div class="sec-label">🏠 SOCIAL CLASS</div><div id="class-content"></div>
-    <div class="sec-label">🎓 EDUCATION</div><div id="edu-content"></div>
-    <div class="sec-label">📍 REGION</div><div id="region-content"></div>
-    <div class="sec-label">🌍 ETHNICITY</div><div id="ethnicity-content"></div>
-    <div class="sec-label">🗳 2024 NON-VOTERS</div><div id="nonvoter-content"></div>
-
-    <div style="font-size:14px;color:#c8cdd8;text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common. Feb–Mar 2026.</div>
+    <div class="sec-label">👤 Age Group</div><div id="age-content"></div>
+    <div class="sec-label">🏠 Social Class</div><div id="class-content"></div>
+    <div class="sec-label">🎓 Education</div><div id="edu-content"></div>
+    <div class="sec-label">📍 Region</div><div id="region-content"></div>
+    <div class="sec-label">🌍 Ethnicity</div><div id="ethnicity-content"></div>
+    <div class="sec-label">🗳 2024 Non-Voters</div><div id="nonvoter-content"></div>
+    <div class="sec-label">🛂 Net Migration</div>
+    <div id="migration-content"></div>
+    <div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common · ONS Nov 2025 · Home Office / Migration Observatory. Mar 2026.</div>
   </div>
 
   <!-- LEADERS -->
@@ -279,197 +536,167 @@ body{background:transparent;color:#e8ecf4;font-family:-apple-system,BlinkMacSyst
     <div id="leaders-content"></div>
   </div>
 
-  <!-- POLLS -->
-
-  <div class="page" id="page-elections">
-    <div class="stitle">Elections</div>
-    <div class="ssub">Upcoming votes &amp; recent results</div>
-    <div class="sec-label">📅 UPCOMING</div>
-    <div class="ecard">
-      <div class="ed">1 May 2026</div>
-      <div class="et">Local Elections 2026</div>
-      <div class="es">England — county councils, unitaries &amp; mayoral contests</div>
-      <div class="ex">~1,600 seats across 23 councils. First major test of the Green surge and Reform's local strength. Key contests: West of England Mayor, Cambridgeshire &amp; Peterborough Mayor.</div>
-      <div class="etags">
-        <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform target</span>
-        <span class="etag" style="background:#02A95B20;color:#02A95B">Green surge test</span>
-      </div>
-    </div>
-    <div class="ecard">
-      <div class="ed">1 May 2026</div>
-      <div class="et">Runcorn &amp; Helsby</div>
-      <div class="es">By-election — Labour hold (majority: 14,696)</div>
-      <div class="ex">Triggered by MP Mike Amesbury's resignation after assault video. Labour defending against a strong Reform challenge in this Red Wall seat.</div>
-      <div class="etags">
-        <span class="etag" style="background:#E4003B20;color:#E4003B">Lab defend</span>
-        <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform target</span>
-      </div>
-    </div>
-    <div class="ecard">
-      <div class="ed">TBC 2026</div>
-      <div class="et">Horsham</div>
-      <div class="es">By-election — Conservative hold (majority: 3,027)</div>
-      <div class="ex">Jeremy Quin resigned on health grounds. Three-way marginal between Conservatives, Lib Dems and Reform.</div>
-      <div class="etags">
-        <span class="etag" style="background:#0087DC20;color:#0087DC">Con defend</span>
-        <span class="etag" style="background:#FAA61A20;color:#FAA61A">LD target</span>
-        <span class="etag" style="background:#12B7D420;color:#12B7D4">Reform threat</span>
-      </div>
-    </div>
-    <div class="sec-label">🗳 RECENT RESULTS</div>
-    <div class="ecard">
-      <div class="ed">27 Feb 2026</div>
-      <div class="et">Gorton &amp; Denton</div>
-      <div class="es">By-election — <span style="color:#02A95B;font-weight:600">🟢 Green GAIN from Labour</span></div>
-      <div class="ri"><span class="rd" style="background:#02A95B"></span><span class="rp">Green</span><span class="rn">34.1%</span><span class="rm">+28.6% 🏆</span></div>
-      <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">29.4%</span><span class="rm">-24.7%</span></div>
-      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform</span><span class="rn">19.8%</span><span class="rm">+19.8%</span></div>
-      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">7.2%</span><span class="rm">-16.4%</span></div>
-      <div class="ex" style="margin-top:8px;margin-bottom:0">Massive 28.6pt swing to Greens. Labour vote collapsed. Greens now have 5 MPs. Zack Polanski campaigned in person.</div>
-    </div>
-    <div class="ecard">
-      <div class="ed">6 Feb 2025</div>
-      <div class="et">Kingswood</div>
-      <div class="es">By-election — <span style="color:#12B7D4;font-weight:600">🔵 Reform GAIN from Conservative</span></div>
-      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform</span><span class="rn">38.7%</span><span class="rm">+38.7% 🏆</span></div>
-      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">26.1%</span><span class="rm">-21.3%</span></div>
-      <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">19.4%</span><span class="rm">-8.2%</span></div>
-      <div class="ex" style="margin-top:8px;margin-bottom:0">Reform's first by-election gain. Signalled collapse of Conservative vote in Leave-leaning seats.</div>
-    </div>
-    <div class="ecard">
-      <div class="ed">10 Oct 2024</div>
-      <div class="et">Henley &amp; Thame</div>
-      <div class="es">By-election — <span style="color:#FAA61A;font-weight:600">🟡 Lib Dem HOLD</span></div>
-      <div class="ri"><span class="rd" style="background:#FAA61A"></span><span class="rp">Lib Dem</span><span class="rn">52.3%</span><span class="rm">+8.1% 🏆</span></div>
-      <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">22.1%</span><span class="rm">-18.4%</span></div>
-      <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform</span><span class="rn">12.8%</span><span class="rm">+12.8%</span></div>
-      <div class="ex" style="margin-top:8px;margin-bottom:0">Lib Dems consolidating hold on southern Blue Wall seats.</div>
-    </div>
-    <div style="font-size:14px;color:#c8cdd8;text-align:center;padding:12px 0">Results approximate. Sources: BBC, Electoral Commission.</div>
-  </div>
-
-  <!-- VOTE -->
-  <div class="page" id="page-vote">
-    <div class="stitle">Your Vote</div>
-    <div class="ssub">How would you vote? One vote per device — change anytime.</div>
-    <div id="vote-section">
-      <div class="sec-label">🗳 CAST YOUR VOTE</div>
-      <div id="vote-buttons" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px"></div>
-      <div id="vote-msg" style="text-align:center;font-size:14px;color:#c8cdd8;margin-bottom:16px"></div>
-    </div>
-    <div class="sec-label">📊 APP USERS VS REAL POLLS</div>
-    <div class="card" id="vote-results">
-      <div style="text-align:center;color:#c8cdd8;font-size:14px;padding:16px">Loading results...</div>
-    </div>
-    <div style="font-size:14px;color:#c8cdd8;text-align:center;padding:4px 0">One vote per device · Change your mind anytime · Totals never reset</div>
-  </div>
-
   <!-- AI -->
   <div class="page" id="page-ai">
     <div class="stitle">AI Analyst</div>
     <div class="ssub">Ask anything about UK politics</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
-      <button class="chip" onclick="askAI('How do Reform UK and Restore Britain compare?')">Reform UK vs Restore Britain</button>
-      <button class="chip" onclick="askAI('Why are the Greens surging in the polls?')">Why are Greens rising?</button>
-      <button class="chip" onclick="askAI('Why are Muslim voters switching to the Greens?')">Muslim votes &amp; Greens</button>
-      <button class="chip" onclick="askAI('What happens in a hung parliament?')">Hung parliament</button>
-      <button class="chip" onclick="askAI('Can Labour recover under Keir Starmer?')">Can Labour recover?</button>
-      <button class="chip" onclick="askAI('Compare Nigel Farage and Rupert Lowe.')">Farage vs Lowe</button>
-      <button class="chip" onclick="askAI('Is a second general election coming?')">Second election?</button>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+      <button class="chip" onclick="askAI('Could there be an early general election before 2029? What would trigger one and how likely is it?')">Early election coming?</button>
+      <button class="chip" onclick="askAI('Is Keir Starmer\'s position as Prime Minister safe? What would it take for Labour to replace him?')">Is Starmer safe?</button>
+      <button class="chip" onclick="askAI('Reform UK is leading in the polls but has only 5 MPs. Can they actually win a general election?')">Can Reform UK win?</button>
+      <button class="chip" onclick="askAI('Why are the Greens surging to 16% and what is their ceiling?')">Green surge explained</button>
+      <button class="chip" onclick="askAI('Is Nigel Farage a threat to British democracy or a legitimate political voice?')">Farage — democrat or threat?</button>
+      <button class="chip" onclick="askAI('How does the UK\'s first-past-the-post system distort the will of voters in 2026?')">Is FPTP fair?</button>
+      <button class="chip" onclick="askAI('What would a Reform UK government actually look like in practice?')">Reform UK in power</button>
+      <button class="chip" onclick="askAI('Why has net migration stayed high despite both Labour and Conservative promises to cut it?')">Why is migration still high?</button>
+      <button class="chip" onclick="askAI('Could the Conservatives become irrelevant? Has Kemi Badenoch got what it takes?')">Tory survival</button>
+      <button class="chip" onclick="askAI('What is Restore Britain and is it a serious political party or a protest movement?')">What is Restore Britain?</button>
+      <button class="chip" onclick="askAI('How does current UK polling compare to the period before the 2024 general election?')">2024 vs now</button>
+      <button class="chip" onclick="askAI('If there was a hung parliament today, which parties would form a coalition and what would they have to give up?')">Hung parliament deals</button>
       <button class="chip" onclick="askAI('What does Reform UK stand for?')">What does Reform UK stand for?</button>
       <button class="chip" onclick="askAI('What does Restore Britain stand for?')">What does Restore Britain stand for?</button>
     </div>
     <div id="ai-output" class="ai-empty">Ask a question above or type below</div>
-    <div style="display:flex;gap:8px;margin-top:12px">
+    <div style="display:flex;gap:8px;margin-top:14px">
       <input id="ai-input" type="text" placeholder="Ask about UK politics..."
-        style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--dim);font-size:14px;outline:none;"
+        style="flex:1;background:var(--md-sys-color-surface);border:1.5px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);padding:12px 16px;color:var(--md-sys-color-on-surface);font-size:14px;outline:none;font-family:'Nunito Sans',sans-serif;"
         onkeydown="if(event.key==='Enter')askAI(this.value)">
       <button onclick="askAI(document.getElementById('ai-input').value)"
-        style="background:#12B7D4;border:none;border-radius:10px;padding:10px 16px;color:#000;font-weight:700;cursor:pointer;font-size:14px;">Ask</button>
+        style="background:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:12px 20px;color:#fff;font-weight:700;cursor:pointer;font-size:14px;font-family:'Nunito Sans',sans-serif;box-shadow:var(--md-elevation-1);">Ask</button>
     </div>
   </div>
 
 </div><!-- end #content -->
 
-<!-- Support Popup -->
-<div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;align-items:flex-end;justify-content:center;padding:16px;" onclick="if(event.target===this)closeShare()">
-  <div style="background:rgba(10,15,35,0.98);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:24px;width:100%;max-width:420px;backdrop-filter:blur(16px);">
-    <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:10px">Share UK Poll Tracker</div>
-    <div style="background:rgba(255,255,255,0.06);border-radius:10px;padding:12px;font-size:14px;color:#e8ecf4;line-height:1.6;margin-bottom:16px" id="share-preview-text"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <button onclick="shareToX();closeShare()" style="padding:12px;border-radius:12px;border:none;font-weight:700;font-size:14px;cursor:pointer;background:#000;color:#fff">X / Twitter</button>
-      <button onclick="shareToWhatsApp();closeShare()" style="padding:12px;border-radius:12px;border:none;font-weight:700;font-size:14px;cursor:pointer;background:#25D366;color:#fff">WhatsApp</button>
-      <button onclick="shareToFacebook();closeShare()" style="padding:12px;border-radius:12px;border:none;font-weight:700;font-size:14px;cursor:pointer;background:#1877F2;color:#fff">Facebook</button>
-      <button onclick="copyLink()" id="copy-btn" style="padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);font-weight:700;font-size:14px;cursor:pointer;background:rgba(255,255,255,0.1);color:#fff">Copy link</button>
+<!-- Share Modal -->
+<div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.5);z-index:500;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeShare()">
+  <div style="background:var(--md-sys-color-surface-container);border-radius:28px 28px 0 0;padding:28px 24px calc(28px + env(safe-area-inset-bottom));width:100%;max-width:480px;">
+    <div style="width:32px;height:4px;background:var(--md-sys-color-outline-variant);border-radius:2px;margin:0 auto 20px"></div>
+    <div style="font-size:20px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:12px;font-family:'Nunito',sans-serif">Share UK Poll Tracker</div>
+    <div style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-large);padding:14px;font-size:13px;color:var(--md-sys-color-on-surface);line-height:1.6;margin-bottom:18px" id="share-preview-text"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <button onclick="shareToX();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:14px;cursor:pointer;background:#000;color:#fff;font-family:'Nunito Sans',sans-serif">X / Twitter</button>
+      <button onclick="shareToWhatsApp();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:14px;cursor:pointer;background:#25D366;color:#fff;font-family:'Nunito Sans',sans-serif">WhatsApp</button>
+      <button onclick="shareToFacebook();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:14px;cursor:pointer;background:#1877F2;color:#fff;font-family:'Nunito Sans',sans-serif">Facebook</button>
+      <button onclick="copyLink()" id="copy-btn" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:1.5px solid var(--md-sys-color-outline-variant);font-weight:700;font-size:14px;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:'Nunito Sans',sans-serif">Copy link</button>
     </div>
-    <button onclick="closeShare()" style="width:100%;padding:10px;background:transparent;color:#c8cdd8;border:none;font-size:14px;cursor:pointer;text-decoration:underline">Close</button>
+    <button onclick="closeShare()" style="width:100%;padding:12px;background:transparent;color:var(--md-sys-color-on-surface-variant);border:none;font-size:14px;cursor:pointer;text-decoration:underline;font-family:'Nunito Sans',sans-serif">Close</button>
   </div>
 </div>
-<div id="compare-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)closeCompare()">
-  <div style="background:rgba(10,15,35,0.98);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:20px;width:100%;max-width:420px;max-height:85vh;overflow-y:auto;backdrop-filter:blur(16px);">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="font-size:18px;font-weight:800;color:#fff">Compare Parties</div>
-      <button onclick="closeCompare()" style="background:none;border:none;color:#c8cdd8;font-size:24px;cursor:pointer;line-height:1">&#x2715;</button>
+
+<!-- Compare Modal -->
+<div id="compare-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.5);z-index:500;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)closeCompare()">
+  <div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-extra-large);padding:24px;width:100%;max-width:440px;max-height:85vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:20px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:'Nunito',sans-serif">Compare Parties</div>
+      <button onclick="closeCompare()" style="background:var(--md-sys-color-surface-container-high);border:none;color:var(--md-sys-color-on-surface);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer">✕</button>
     </div>
-    <div style="font-size:14px;color:#c8cdd8;margin-bottom:12px">Pick two parties to compare</div>
-    <div id="compare-picker" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:16px"></div>
+    <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Pick two parties to compare</div>
+    <div id="compare-picker" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px"></div>
     <div id="compare-result"></div>
   </div>
 </div>
+
+<!-- Support Popup -->
 <div id="support-popup">
   <div class="popup-box">
     <div class="popup-icon">☕</div>
     <div class="popup-title">Enjoying UK Poll Tracker?</div>
-    <div class="popup-body">This app is free to use and updated daily. If you find it useful, a small contribution helps keep it running!</div>
+    <div class="popup-body">This app is free and updated daily. A small contribution helps keep it running!</div>
     <a href="https://ko-fi.com/craighowe" target="_blank" class="popup-btn popup-yes" onclick="dismissPopup()">❤️ Support this app</a>
     <button class="popup-btn popup-no" onclick="dismissPopup()">Maybe later</button>
   </div>
 </div>
 
-<!-- nav moved --> ── -->
+<!-- Leader Compare Modal -->
+<div id="leader-compare-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.5);z-index:1000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-extra-large);width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:20px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:'Nunito',sans-serif">⚖️ Compare Leaders</div>
+      <button onclick="closeLeaderCompare()" style="background:var(--md-sys-color-surface-container-high);border:none;color:var(--md-sys-color-on-surface);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div id="leader-compare-result"></div>
+  </div>
+</div>
 
-<!-- ── Scrollable content ── -->
-
-
+<!-- Nav -->
+<div id="nav"><div id="nav-inner">
+  <button class="nb active" onclick="sp('overview',this)">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Overview
+  </button>
+  <button class="nb" onclick="sp('trends',this)">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Trends
+  </button>
+  <button class="nb" onclick="sp('elections',this)">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Elections
+  </button>
+  <button class="nb" onclick="sp('vote',this)">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 10V19a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V10"/><polyline points="4 10 12 3 20 10"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="12" y1="7" x2="12" y2="14"/></svg>
+    Vote
+  </button>
+  <button class="nb" onclick="sp('demo',this)">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Demo
+  </button>
+  <button class="nb" onclick="sp('leaders',this)">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Leaders
+  </button>
+  <button class="nb" onclick="sp('ai',this)">
+    <div class="nav-indicator"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    AI
+  </button>
+</div></div>
 
 <script>
 const WORKER = 'https://throbbing-base-05b6.craighow8.workers.dev';
 
 const D = {
-  fetchDate: "11 Mar 2026",
+  fetchDate: "12 Mar 2026",
   parties: [
-    {name:"Reform",abbr:"REF",pct:27,change:0,seats:335,color:"#12B7D4"},
-    {name:"Labour",abbr:"LAB",pct:19,change:1,seats:41,color:"#E4003B"},
-    {name:"Green",abbr:"GRN",pct:16,change:0,seats:52,color:"#02A95B"},
-    {name:"Conservative",abbr:"CON",pct:18,change:1,seats:92,color:"#0087DC"},
+    {name:"Reform UK",abbr:"REF",pct:26,change:-1,seats:335,color:"#12B7D4"},
+    {name:"Labour",abbr:"LAB",pct:19,change:0,seats:41,color:"#E4003B"},
+    {name:"Green",abbr:"GRN",pct:17,change:1,seats:52,color:"#02A95B"},
+    {name:"Conservative",abbr:"CON",pct:18,change:0,seats:92,color:"#0087DC"},
     {name:"Lib Dem",abbr:"LD",pct:12,change:0,seats:60,color:"#FAA61A"},
     {name:"SNP",abbr:"SNP",pct:3,change:0,seats:44,color:"#FFF95D"},
-    {name:"Restore Britain",abbr:"RB",pct:7,change:0,seats:1,color:"#0D2A5C"},
+    {name:"Restore Britain",abbr:"RB",pct:7,change:0,seats:1,color:"#1a4a9e"},
     {name:"Other",abbr:"OTH",pct:5,change:0,seats:null,color:"#6b7280"}
   ],
-  context: "Reform leads on ~27% (7-poll avg, 11 Mar 2026). The average is stable but the picture varies sharply by pollster — Survation and Opinium both put Reform on 29%, while YouGov has them on just 23%. Greens on 16% average but 21% in YouGov and Find Out Now. Labour at 19% average. Opinium (4-6 Mar): 80% of public fear being drawn into Middle East conflict, 60% expect the economy to worsen. Electoral Calculus MRP: Reform 335 seats — projected majority.",
+  context: "Reform UK leads on ~26% (7-poll avg, 12 Mar 2026). YouGov (8-9 Mar) put Reform on 23% with Conservatives and Greens both on 19% — unusually tight. Focaldata (6-10 Mar): Reform 27%, Labour 20%. Greens averaging 17% — near historic highs. Restore Britain at 7% in Find Out Now prompted polls; officially registered as a party on 4 March. Starmer approved use of UK bases for US strikes on Iran — broke with Trump, who attacked him publicly. Labour scored first-ever council by-election gain from Reform UK (Murton, Durham, 5 Mar). Electoral Calculus MRP: Reform UK 335 seats — projected majority.",
   trends: [
-    {month:"Sep",Reform:28,Labour:22,Conservative:20,"Lib Dem":12,Green:10},
-    {month:"Oct",Reform:29,Labour:21,Conservative:19,"Lib Dem":12,Green:11},
-    {month:"Nov",Reform:30,Labour:20,Conservative:19,"Lib Dem":13,Green:11},
-    {month:"Dec",Reform:29,Labour:21,Conservative:18,"Lib Dem":13,Green:11},
-    {month:"Jan",Reform:28,Labour:20,Conservative:18,"Lib Dem":13,Green:13},
-    {month:"Feb",Reform:27,Labour:18,Conservative:17,"Lib Dem":13,Green:17},
-    {month:"Mar",Reform:27,Labour:19,Conservative:18,"Lib Dem":12,Green:16}
+    {month:"Sep","Reform UK":28,Labour:22,Conservative:20,"Lib Dem":12,Green:10},
+    {month:"Oct","Reform UK":29,Labour:21,Conservative:19,"Lib Dem":12,Green:11},
+    {month:"Nov","Reform UK":30,Labour:20,Conservative:19,"Lib Dem":13,Green:11},
+    {month:"Dec","Reform UK":29,Labour:21,Conservative:18,"Lib Dem":13,Green:11},
+    {month:"Jan","Reform UK":28,Labour:20,Conservative:18,"Lib Dem":13,Green:13},
+    {month:"Feb","Reform UK":27,Labour:18,Conservative:17,"Lib Dem":13,Green:17},
+    {month:"Mar","Reform UK":26,Labour:19,Conservative:18,"Lib Dem":12,Green:17}
   ],
   milestones: [
-    {date:"11 Mar",text:"7-poll average unchanged: Reform 27%, Labour 19%, Green 16%, Con 18% — no new polls today"},
-    {date:"10 Mar",text:"Opinium: 80% fear UK being drawn into Middle East conflict; 60% expect economy to worsen in 2026"},
-    {date:"10 Mar",text:"Reform 27%, Labour 19%, Green 16%, Con 18% — multi-party squeeze continues"},
-    {date:"Mar 2026",text:"42% didn't vote in 2024 — Reform & RB leading among returning non-voters (Find Out Now)"},
-    {date:"5 Mar",text:"Survation: Reform 29%, Labour 21% — largest parties still far apart"},
-    {date:"1-2 Mar",text:"YouGov puts Greens 2nd on 21% — highest ever"},
+    {date:"12 Mar",text:"7-poll avg: Reform UK 26% (▼1), Green 17% (▲1) — Con and Green both on 19% in latest YouGov"},
+    {date:"8-9 Mar",text:"YouGov: Reform 23%, Con 19%, Green 19%, Lab 17% — three-way squeeze unlike any previous poll"},
+    {date:"6-10 Mar",text:"Focaldata: Reform 27%, Lab 20%, Con 18%, LD 14% — Labour running second in this pollster"},
+    {date:"5 Mar",text:"Labour wins Murton ward (Durham) from Reform UK — first ever Labour council gain from Reform"},
+    {date:"4 Mar",text:"Restore Britain officially registered as a political party — polling 7% in Find Out Now prompted polls"},
+    {date:"1 Mar",text:"Starmer approves US use of UK bases for Iran strikes. Trump publicly attacks Starmer, says he lacks Churchill's courage"},
+    {date:"1-2 Mar",text:"YouGov puts Greens 2nd on 21% — highest ever recorded"},
     {date:"26 Feb",text:"Greens win Gorton & Denton by-election — 5th MP"},
-    {date:"Feb 2026",text:"Restore Britain launches — 7-10% in prompted polls"},
-    {date:"Sep 2025",text:"Zack Polanski elected Green Party leader"},
-    {date:"May 2025",text:"Reform opens sustained polling lead"},
-    {date:"Mar 2025",text:"Rupert Lowe expelled from Reform UK"},
-    {date:"Jan 2025",text:"Reform neck-and-neck with Labour nationally"},
+    {date:"Feb 2026",text:"Restore Britain launches — 7-10% in prompted polls; support skews young and ex-non-voter"},
+    {date:"Sep 2025",text:"Zack Polanski elected Green Party leader with 85% of the vote"},
+    {date:"May 2025",text:"Reform UK opens sustained polling lead"},
+    {date:"Mar 2025",text:"Rupert Lowe expelled from Reform UK after criticising Farage"},
+    {date:"Jan 2025",text:"Reform UK neck-and-neck with Labour nationally"},
     {date:"Jul 2024",text:"Labour win GE with 33.7% — 170-seat majority"}
   ],
   leaders: [
@@ -477,266 +704,307 @@ const D = {
      immigration:"Safe & legal routes for refugees. Opposes detention and deportation. Retain 5-year settlement route for all.",
      economy:"Wealth tax on assets over £10m. Cancel two-child benefit cap. Fund public services by taxing the super-rich.",
      nhs:"Reverse NHS privatisation. Mental health on par with physical health. Fund fully through wealth taxes.",
-     climate:"Net zero by 2045. Massive green jobs programme. No new oil and gas licences."},
+     climate:"Net zero by 2045. Massive green jobs programme. No new oil and gas licences.",
+     bio:"Born David Paulden on 2 November 1982 in Salford. Changed his name at 18 to restore his family's original Jewish surname, which had been anglicised to avoid antisemitism. Studied at Aberystwyth University and drama school in the US. Worked in community theatre, hospitality, and as a hypnotherapist before entering politics. Joined the Greens in 2017 after leaving the Lib Dems. Elected to the London Assembly in 2021. Deputy Green leader 2022–2025. Won the leadership in September 2025 with 85% of the vote — the first Jewish leader of a Westminster party since Ed Miliband. Under his leadership, Green membership has tripled to over 200,000 and the party won the Gorton & Denton by-election in February 2026."},
     {name:"Ed Davey",party:"Lib Dems",color:"#FAA61A",approve:28,disapprove:35,net:-7,
      immigration:"International cooperation on returns. Oppose ECHR withdrawal. Humane asylum processing.",
      economy:"Rejoin EU single market for goods. Replace business rates. PR voting reform.",
      nhs:"Extra £5bn/year for mental health. 8am GP appointment guarantee.",
-     climate:"Net zero by 2045. Ban new oil and gas. 10-year green infrastructure plan."},
+     climate:"Net zero by 2045. Ban new oil and gas. 10-year green infrastructure plan.",
+     bio:"Born 25 December 1965 in Mansfield, Nottinghamshire. His father died when Ed was four; his mother died of cancer when he was 15, having cared for her through her illness. He and his wife now care for their severely disabled son. Studied PPE at Oxford and economics at Birkbeck. Lib Dem MP for Kingston & Surbiton 1997–2015, losing his seat in the coalition backlash. Knighted 2016. Returned to parliament 2017. Secretary of State for Energy & Climate Change 2012–2015. Became Lib Dem leader in 2020. Led the party to its best-ever result in 2024 — 72 seats, highest for a third party since 1923. Known for his headline-grabbing campaign stunts."},
     {name:"Nigel Farage",party:"Reform UK",color:"#12B7D4",approve:34,disapprove:51,net:-17,
-     immigration:"Leave ECHR immediately. Intercept and deport all illegal arrivals. Abolish ILR. Full immigration freeze.",
-     economy:"Abolish income tax up to £20k. Cut corporation tax to 15%. Abolish BBC licence fee. Scrap net zero.",
+     immigration:"Leave ECHR immediately. Intercept and deport all illegal arrivals. Abolish ILR. Full immigration freeze. Zia Yusuf named shadow Home Secretary.",
+     economy:"Abolish income tax up to £20k. Cut corporation tax to 15%. Reinstate 2-child benefit cap. Shadow Chancellor Robert Jenrick pledges mass tax code review.",
      nhs:"Cut NHS management by 50%. Recruit British-trained staff first. Zero waiting lists via private sector.",
-     climate:"Scrap all net zero targets. No new wind farms. Reinstate all North Sea oil and gas licences."},
-    {name:"Rupert Lowe",party:"Restore Britain",color:"#0D2A5C",approve:null,disapprove:null,net:null,
-     note:"86% of UK adults could not identify Lowe (JL Partners, Feb 2026). However, Restore Britain is targeting the 42% who did not vote in 2024 — research suggests RB and Reform are the biggest beneficiaries among disengaged voters now returning to the ballot box. Recognition growing rapidly via social media.",
-     immigration:"Zero net migration. Mass deportations. Withdraw from UN refugee convention.",
-     economy:"Cut taxes for working people. Reduce foreign aid to zero. Prioritise British workers.",
-     nhs:"Reduce NHS bureaucracy. Performance-based pay. British staff first.",
-     climate:"Abolish all green levies. Withdraw from Paris climate agreement."},
+     climate:"Scrap all net zero targets. No new wind farms. Reinstate all North Sea oil and gas licences.",
+     bio:"Born 3 April 1964 in Farnborough, Kent. Former commodity broker in the City. A lifelong Eurosceptic, he co-founded the Brexit Party (later Reform UK) in 2019 after leading UKIP from 2006–2016. His campaigning was central to the 2016 Brexit referendum result. Elected MP for Clacton at his eighth attempt in July 2024. Became Reform UK leader again in June 2024. Reform has led every national poll since May 2025. In February 2026 he announced a formal shadow cabinet including Robert Jenrick as shadow chancellor, Richard Tice as shadow deputy PM, Zia Yusuf on home affairs, and Suella Braverman on education — all former Tory figures."},
+    {name:"Rupert Lowe",party:"Restore Britain",color:"#1a4a9e",approve:null,disapprove:null,net:null,
+     note:"86% of UK adults could not identify Lowe (JL Partners, Feb 2026). However, Restore Britain is targeting the 42% who did not vote in 2024 — research suggests RB and Reform UK are the biggest beneficiaries among disengaged voters now returning to the ballot box. Recognition growing rapidly via social media.",
+     immigration:"Zero net migration. Mass deportations. Withdraw from UN Refugee Convention. Leave ECHR immediately. All illegal arrivals intercepted and returned.",
+     economy:"Cut taxes for working people. Reduce foreign aid to zero. Prioritise British workers. End globalist trade deals that harm UK industry.",
+     nhs:"Reduce NHS bureaucracy drastically. Performance-based pay. British-trained staff first. End health tourism.",
+     climate:"Abolish all green levies. Withdraw from Paris climate agreement. Reinstate North Sea oil and gas licences. No new wind farms.",
+     bio:"Born 1962. Former chairman of Southampton FC (1997–2006) and QPR. Elected Reform UK MP for Great Yarmouth in July 2024. In March 2025 he publicly criticised Farage's leadership style as running \"a protest party led by the Messiah\", leading to his expulsion from Reform UK. Founded Restore Britain in early 2026, targeting the 42% of voters who did not vote in 2024. As of February 2026, 86% of UK adults could not identify him — but the party is growing rapidly on social media."},
     {name:"Kemi Badenoch",party:"Conservative",color:"#0087DC",approve:24,disapprove:36,net:-12,
      immigration:"Extend settlement route to 10 years. Tougher visa rules. Deport foreign criminals after sentences.",
      economy:"Reduce state spending to 35% of GDP. Cut regulation. Planning reform for growth.",
      nhs:"Productivity reforms. Reduce management layers. Outcome-based targets.",
-     climate:"Net zero by 2050. Pro-nuclear energy. Oppose costly near-term targets."},
+     climate:"Net zero by 2050. Pro-nuclear energy. Oppose costly near-term targets.",
+     bio:"Born Olukemi Olufunto Adegoke on 2 January 1980 in Wimbledon. Her mother came to the UK for medical treatment and gave birth here. Grew up between Nigeria and the US; returned to the UK at 16 with very little money and worked at McDonald's while completing her A-levels. Studied Computer Systems Engineering at Sussex University and later law at Birkbeck. Worked as a software engineer, then at Coutts & Co and The Spectator. MP for North West Essex since 2017. The first Black woman and first Black person to lead the Conservative Party, elected leader in November 2024. Known for her outspoken anti-woke stance and sharp PMQs performances."},
     {name:"Keir Starmer",party:"Labour",color:"#E4003B",approve:20,disapprove:66,net:-46,
-     immigration:"Border Security Command (£100m). Extend settlement to 10 years. 1,000 extra returns staff.",
+     immigration:"Border Security Command (£100m). Tougher rules on student visa dependants. Raise salary thresholds for skilled workers. Extend settlement to 10 years. 1,000 extra returns staff.",
      economy:"Fiscal rules: debt falling by 5th year. £40bn tax rises (Oct 2024). NHS and schools investment.",
      nhs:"40,000 extra appointments per week. Cut waiting lists. Mental health investment.",
-     climate:"Clean energy by 2030. GB Energy public company. Ban new North Sea licences."}
+     climate:"Clean energy by 2030. GB Energy public company. Ban new North Sea licences.",
+     bio:"Born 2 September 1962 in Surrey. Human rights barrister who defended high-profile cases including death row prisoners in the Caribbean. Director of Public Prosecutions 2008–2013, knighted for services to law. MP for Holborn & St Pancras since 2015. Won the Labour leadership in April 2020. Led Labour to a 170-seat majority in July 2024 after 14 years in opposition. His approval ratings have collapsed since entering government — the most unpopular PM since Ipsos records began in 1977. In February 2026, the Mandelson-Epstein scandal triggered the resignation of his chief of staff Morgan McSweeney, communications director Tim Allan, and cabinet secretary Chris Wormald. Scottish Labour leader Anas Sarwar publicly called on him to resign."}
   ],
   polls: [
-    {date:"5 Mar",pollster:"Survation",ref:29,lab:21,con:18,ld:10,grn:12,rb:null},
-    {date:"4-6 Mar",pollster:"Opinium",ref:29,lab:21,con:16,ld:10,grn:14,rb:null},
-    {date:"4-6 Mar",pollster:"Find Out Now",ref:27,lab:15,con:17,ld:10,grn:21,rb:7},
-    {date:"4-5 Mar",pollster:"BMG",ref:27,lab:20,con:18,ld:12,grn:14,rb:null},
-    {date:"2-5 Mar",pollster:"JL Partners",ref:27,lab:20,con:20,ld:12,grn:14,rb:null},
-    {date:"1-2 Mar",pollster:"YouGov",ref:23,lab:16,con:16,ld:14,grn:21,rb:null},
-    {date:"27 Feb-2 Mar",pollster:"More in Common",ref:29,lab:18,con:19,ld:14,grn:14,rb:null}
-  ]
+    {date:"8-9 Mar",  pollster:"YouGov",      ref:23,lab:17,con:19,ld:14,grn:19,rb:null},
+    {date:"6-10 Mar", pollster:"Focaldata",    ref:27,lab:20,con:18,ld:14,grn:13,rb:null},
+    {date:"5 Mar",    pollster:"Survation",    ref:29,lab:21,con:18,ld:10,grn:12,rb:null},
+    {date:"4-6 Mar",  pollster:"Opinium",      ref:29,lab:21,con:16,ld:10,grn:14,rb:null},
+    {date:"4-6 Mar",  pollster:"Find Out Now", ref:27,lab:15,con:17,ld:10,grn:21,rb:7},
+    {date:"4-5 Mar",  pollster:"BMG",          ref:27,lab:20,con:18,ld:12,grn:14,rb:null},
+    {date:"2-5 Mar",  pollster:"JL Partners",  ref:27,lab:20,con:20,ld:12,grn:14,rb:null},
+  ],
 };
 
 // ── Tab switching ──
 function sp(id, btn) {
-  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
-  document.querySelectorAll('.nb').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   btn.classList.add('active');
   document.getElementById('content').scrollTop = 0;
   btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
-  if (id === 'trends') { setTimeout(renderTrends,50); setTimeout(renderTrends,300); }
-  if (id === 'demo') { setTimeout(initRegionalMap, 50); }
+  if (id === 'trends') setTimeout(renderTrends, 50);
+  if (id === 'demo') setTimeout(renderMigration, 50);
 }
 
+const APP_URL = 'https://craighow8-creator.github.io/Ukpolls2/';
 
-var APP_URL='https://craighow8-creator.github.io/Ukpolls2/';
-function openShare(){var top=D.parties[0];document.getElementById('share-preview-text').textContent='UK Poll Tracker: '+top.name+' leads on '+top.pct+'% - Hung Parliament projected. '+APP_URL;document.getElementById('share-modal').style.display='flex';}
-function closeShare(){document.getElementById('share-modal').style.display='none';}
-function shareToX(){var top=D.parties[0];window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(top.name+' leads UK polls on '+top.pct+'% - Hung Parliament projected:')+encodeURIComponent(' ')+encodeURIComponent(APP_URL),'_blank');}
-function shareToWhatsApp(){var top=D.parties[0];window.open('https://wa.me/?text='+encodeURIComponent('UK Poll Tracker: '+top.name+' on '+top.pct+'%, Hung Parliament projected. '+APP_URL),'_blank');}
-function shareToFacebook(){window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(APP_URL),'_blank');}
-function copyLink(){var btn=document.getElementById('copy-btn');navigator.clipboard.writeText(APP_URL).then(function(){btn.textContent='Copied!';setTimeout(function(){btn.textContent='Copy link';},2000);});}
-var compareSelected=[];
-function openCompare(){
-  compareSelected=[];
-  document.getElementById('compare-result').innerHTML='';
-  document.getElementById('compare-picker').innerHTML=D.parties.map(function(p){
-    return '<div onclick="toggleCompare(\u0027'+p.name+'\u0027,this)" data-name="'+p.name+'" style="background:rgba(5,10,30,0.8);border:2px solid '+p.color+'40;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all 0.15s;">'
-      +'<div style="font-size:14px;color:'+p.color+';font-weight:700;margin-bottom:4px">'+p.name+'</div>'
-      +'<div style="font-size:18px;font-weight:800;color:'+p.color+'">'+p.pct+'%</div>'
-      +'</div>';
-  }).join('');
-  document.getElementById('compare-modal').style.display='flex';
+function openShare() {
+  try { window.goatcounter.count({path:'share-modal-open',title:'Share modal opened',event:true}); } catch(e) {}
+  var p = D.parties;
+  var txt = '🇬🇧 UK Polls (' + D.fetchDate + '): Reform UK ' + p[0].pct + '% · Labour ' + p[1].pct + '% · Con ' + p[2].pct + '% · Green ' + p[3].pct + '% · LD ' + p[4].pct + '%. Track the polls: ' + APP_URL;
+  document.getElementById('share-preview-text').textContent = txt;
+  document.getElementById('share-modal').style.display = 'flex';
 }
-function closeCompare(){document.getElementById('compare-modal').style.display='none';}
+function closeShare() { document.getElementById('share-modal').style.display = 'none'; }
+function shareToX() {
+  try { window.goatcounter.count({path:'share-twitter',title:'Share: share-twitter',event:true}); } catch(e) {}
+  var p = D.parties;
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('🇬🇧 UK Polls ' + D.fetchDate + ': Reform UK ' + p[0].pct + '% · Labour ' + p[1].pct + '% · Con ' + p[2].pct + '% · Green ' + p[3].pct + '% · LD ' + p[4].pct + '% ' + APP_URL), '_blank');
+}
+function shareToWhatsApp() {
+  try { window.goatcounter.count({path:'share-whatsapp',title:'Share: share-whatsapp',event:true}); } catch(e) {}
+  var p = D.parties;
+  window.open('https://wa.me/?text=' + encodeURIComponent('🇬🇧 UK Polls (' + D.fetchDate + '): Reform UK ' + p[0].pct + '% · Labour ' + p[1].pct + '% · Con ' + p[2].pct + '% · Green ' + p[3].pct + '% · LD ' + p[4].pct + '%. Track the polls: ' + APP_URL), '_blank');
+}
+function shareToFacebook() {
+  try { window.goatcounter.count({path:'share-facebook',title:'Share: share-facebook',event:true}); } catch(e) {}
+  window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(APP_URL), '_blank');
+}
+function copyLink() {
+  try { window.goatcounter.count({path:'share-copy',title:'Share: copy link',event:true}); } catch(e) {}
+  var btn = document.getElementById('copy-btn');
+  navigator.clipboard.writeText(APP_URL).then(() => { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy link'; }, 2000); });
+}
+
+// ── Compare ──
+var compareSelected = [];
+function openCompare() {
+  compareSelected = [];
+  document.getElementById('compare-result').innerHTML = '';
+  document.getElementById('compare-picker').innerHTML = D.parties.map((p, i) =>
+    '<div onclick="toggleCompare(\'' + p.name + '\',this)" data-name="' + p.name + '" style="background:var(--md-sys-color-surface);border:2px solid ' + p.color + '40;border-radius:var(--md-sys-shape-corner-large);padding:12px 6px;text-align:center;cursor:pointer;transition:all 0.15s;box-shadow:var(--md-elevation-1)">'
+    + '<div style="font-size:13px;color:' + p.color + ';font-weight:700;margin-bottom:4px">' + p.name + '</div>'
+    + '<div style="font-size:20px;font-weight:700;color:' + p.color + ';font-family:\'Nunito\',sans-serif">' + p.pct + '%</div>'
+    + '</div>'
+  ).join('');
+  document.getElementById('compare-modal').style.display = 'flex';
+}
+function closeCompare() { document.getElementById('compare-modal').style.display = 'none'; }
 function toggleCompare(name, el) {
   var idx = compareSelected.indexOf(name);
-
-  if (idx > -1) {
-    // Already selected — deselect it
-    compareSelected.splice(idx, 1);
-    resetPickerHighlights();
-    document.getElementById('compare-result').innerHTML = '';
-    return;
-  }
-
-  // Add to selection (max 2 — drop oldest if full)
+  if (idx > -1) { compareSelected.splice(idx, 1); resetPickerHighlights(); document.getElementById('compare-result').innerHTML = ''; return; }
   if (compareSelected.length >= 2) compareSelected.shift();
   compareSelected.push(name);
-
-  // Re-highlight all pickers based on current selection
   resetPickerHighlights();
-
   if (compareSelected.length === 2) renderComparison();
   else document.getElementById('compare-result').innerHTML = '';
 }
-
 function resetPickerHighlights() {
-  document.querySelectorAll('#compare-picker > div').forEach(function(d) {
+  document.querySelectorAll('#compare-picker > div').forEach(d => {
     var dname = d.getAttribute('data-name');
-    var dp = D.parties.find(function(x){ return x.name===dname; });
-    if(!dp) return;
-    var isSelected = compareSelected.indexOf(dname) > -1;
-    d.style.borderColor = isSelected ? dp.color : dp.color + '40';
-    d.style.background = isSelected ? 'rgba(5,10,30,0.95)' : 'rgba(5,10,30,0.8)';
-    d.style.boxShadow = isSelected ? '0 0 0 2px ' + dp.color : 'none';
+    var dp = D.parties.find(x => x.name === dname);
+    if (!dp) return;
+    var isSel = compareSelected.indexOf(dname) > -1;
+    d.style.borderColor = isSel ? dp.color : dp.color + '40';
+    d.style.background = isSel ? dp.color + '15' : 'var(--md-sys-color-surface)';
+    d.style.boxShadow = isSel ? '0 0 0 2px ' + dp.color : 'var(--md-elevation-1)';
   });
 }
-
-
 function renderComparison() {
-  var a = D.parties.find(function(p){ return p.name===compareSelected[0]; });
-  var b = D.parties.find(function(p){ return p.name===compareSelected[1]; });
-  if(!a || !b) return;
-
-  // Get leader data for each party
-  var leaderMap = {
-    'Reform UK': 'Reform UK', 'Labour': 'Labour', 'Conservative': 'Conservative',
-    'Green': 'Green Party', 'Lib Dem': 'Lib Dems', 'Restore Britain': 'Restore Britain', 'SNP': 'SNP'
-  };
-  var la = D.leaders.find(function(l){ return l.party === leaderMap[a.name] || l.party === a.name; });
-  var lb = D.leaders.find(function(l){ return l.party === leaderMap[b.name] || l.party === b.name; });
-
+  var a = D.parties.find(p => p.name === compareSelected[0]);
+  var b = D.parties.find(p => p.name === compareSelected[1]);
+  if (!a || !b) return;
+  var leaderMap = {'Reform UK':'Reform UK','Labour':'Labour','Conservative':'Conservative','Green':'Green Party','Lib Dem':'Lib Dems','Restore Britain':'Restore Britain','SNP':'SNP'};
+  var la = D.leaders.find(l => l.party === leaderMap[a.name] || l.party === a.name);
+  var lb = D.leaders.find(l => l.party === leaderMap[b.name] || l.party === b.name);
   var diff = Math.abs(a.pct - b.pct);
   var leader = a.pct > b.pct ? a : b;
-  var seatDiff = Math.abs((a.seats||0) - (b.seats||0));
   var gapNote = diff <= 3 ? 'Extremely tight — within margin of error.' : diff <= 8 ? 'Meaningful but not decisive lead.' : 'Significant polling gap.';
-
   function netBadge(l) {
-    if(!l || l.net === null) return '<span style="color:#c8cdd8">No data</span>';
-    var col = l.net > 0 ? '#3fb950' : '#f85149';
-    return '<span style="color:'+col+';font-weight:700">'+(l.net>0?'+':'')+l.net+'</span>';
+    if (!l || l.net === null) return '<span style="color:var(--md-sys-color-on-surface-variant)">No data</span>';
+    var col = l.net > 0 ? '#1a7f37' : '#C8102E';
+    return '<span style="color:' + col + ';font-weight:700">' + (l.net > 0 ? '+' : '') + l.net + '</span>';
   }
   function policyRow(emoji, label, textA, textB) {
     return '<tr>'
-      +'<td style="padding:8px 6px;border-top:1px solid rgba(255,255,255,0.08);vertical-align:top;width:42%"><div style="font-size:13px;color:#e8ecf4;line-height:1.5">'+(textA||'—')+'</div></td>'
-      +'<td style="padding:8px 4px;border-top:1px solid rgba(255,255,255,0.08);text-align:center;vertical-align:top;width:16%"><div style="font-size:11px;color:#c8cdd8;white-space:nowrap">'+emoji+'<br>'+label+'</div></td>'
-      +'<td style="padding:8px 6px;border-top:1px solid rgba(255,255,255,0.08);vertical-align:top;width:42%"><div style="font-size:13px;color:#e8ecf4;line-height:1.5">'+(textB||'—')+'</div></td>'
-      +'</tr>';
+      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:13px;line-height:1.5">' + (textA||'—') + '</div></td>'
+      + '<td style="padding:10px 4px;border-top:1px solid var(--md-sys-color-outline-variant);text-align:center;vertical-align:top;width:16%"><div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);white-space:nowrap">' + emoji + '<br>' + label + '</div></td>'
+      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:13px;line-height:1.5">' + (textB||'—') + '</div></td>'
+      + '</tr>';
   }
-
-  var html = '<div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;margin-top:4px">'
-    // Polling header
-    + '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:12px">'
-    + '<div style="text-align:center"><div style="font-size:13px;color:'+a.color+';font-weight:700">'+a.name+'</div><div style="font-size:32px;font-weight:900;color:'+a.color+'">'+a.pct+'%</div><div style="font-size:13px;color:#c8cdd8">'+(a.seats!==null?'~'+a.seats+' seats':'—')+'</div></div>'
-    + '<div style="font-size:13px;color:#c8cdd8;font-weight:700;text-align:center">VS</div>'
-    + '<div style="text-align:center"><div style="font-size:13px;color:'+b.color+';font-weight:700">'+b.name+'</div><div style="font-size:32px;font-weight:900;color:'+b.color+'">'+b.pct+'%</div><div style="font-size:13px;color:#c8cdd8">'+(b.seats!==null?'~'+b.seats+' seats':'—')+'</div></div>'
+  document.getElementById('compare-result').innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:14px">'
+    + '<div style="text-align:center"><div style="font-size:13px;color:' + a.color + ';font-weight:700">' + a.name + '</div><div style="font-size:32px;font-weight:700;color:' + a.color + ';font-family:\'Nunito\',sans-serif">' + a.pct + '%</div><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">' + (a.seats!==null?'~'+a.seats+(a.seats===1?' seat':' seats'):'—') + '</div></div>'
+    + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-weight:700;text-align:center">VS</div>'
+    + '<div style="text-align:center"><div style="font-size:13px;color:' + b.color + ';font-weight:700">' + b.name + '</div><div style="font-size:32px;font-weight:700;color:' + b.color + ';font-family:\'Nunito\',sans-serif">' + b.pct + '%</div><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">' + (b.seats!==null?'~'+b.seats+(b.seats===1?' seat':' seats'):'—') + '</div></div>'
     + '</div>'
-    // Gap note
-    + '<div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:10px;font-size:14px;color:#e8ecf4;text-align:center;margin-bottom:12px">'+leader.name+' leads by '+diff+' points. '+gapNote+'</div>'
-    // Leaders
-    + (la || lb ? '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:12px;background:rgba(255,255,255,0.04);border-radius:8px;padding:10px">'
-      + '<div style="text-align:center"><div style="font-size:13px;color:#c8cdd8;margin-bottom:2px">'+(la?la.name:'—')+'</div><div style="font-size:15px">Net: '+netBadge(la)+'</div></div>'
-      + '<div style="font-size:11px;color:#c8cdd8;text-align:center">👤<br>Leader</div>'
-      + '<div style="text-align:center"><div style="font-size:13px;color:#c8cdd8;margin-bottom:2px">'+(lb?lb.name:'—')+'</div><div style="font-size:15px">Net: '+netBadge(lb)+'</div></div>'
+    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-medium);padding:12px;font-size:13px;color:var(--md-sys-color-on-surface);text-align:center;margin-bottom:14px">' + leader.name + ' leads by ' + diff + ' points. ' + gapNote + '</div>'
+    + (la || lb ? '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:14px;background:var(--md-sys-color-surface-container-low);border-radius:var(--md-sys-shape-corner-medium);padding:12px">'
+      + '<div style="text-align:center"><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:2px">' + (la?la.name:'—') + '</div><div style="font-size:15px">Net: ' + netBadge(la) + '</div></div>'
+      + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);text-align:center">👤<br>Leader</div>'
+      + '<div style="text-align:center"><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:2px">' + (lb?lb.name:'—') + '</div><div style="font-size:15px">Net: ' + netBadge(lb) + '</div></div>'
       + '</div>' : '')
-    // Policy table
     + '<table style="width:100%;border-collapse:collapse"><tbody>'
     + policyRow('🛂','Immigration', la&&la.immigration, lb&&lb.immigration)
     + policyRow('💷','Economy', la&&la.economy, lb&&lb.economy)
     + policyRow('🏥','NHS', la&&la.nhs, lb&&lb.nhs)
     + policyRow('🌿','Climate', la&&la.climate, lb&&lb.climate)
-    + '</tbody></table>'
-    + '</div>';
-
-  document.getElementById('compare-result').innerHTML = html;
+    + '</tbody></table>';
 }
 
-
-(function(){var el=document.getElementById('content'),sY=0,pull=false,busy=false;el.addEventListener('touchstart',function(e){if(el.scrollTop===0){sY=e.touches[0].clientY;pull=true;}},{passive:true});el.addEventListener('touchmove',function(e){if(!pull||busy)return;var d=e.touches[0].clientY-sY;if(d>0&&d<70)el.style.paddingTop=(d*0.4)+'px';},{passive:true});el.addEventListener('touchend',function(){if(!pull)return;var d=parseInt(el.style.paddingTop)||0;el.style.paddingTop='';pull=false;if(d>20&&!busy){busy=true;refreshData();setTimeout(function(){busy=false;},3000);}});})();
-
-function setStatus(cls, txt) {
-  document.getElementById('status-dot').className = 'ldot' + (cls === 'loading' ? ' spin' : '');
-  const el = document.getElementById('status-txt');
-  el.className = 'ltxt' + (cls ? ' ' + cls : '');
-  el.textContent = txt;
+// ── AI ──
+async function askAI(q) {
+  if (!q || !q.trim()) return;
+  var out = document.getElementById('ai-output');
+  var input = document.getElementById('ai-input');
+  input.value = q;
+  out.className = '';
+  out.innerHTML = '<div style="color:var(--md-sys-color-on-surface-variant);font-size:14px;text-align:center;padding:20px">⏳ Thinking...</div>';
+  var ctx = 'You are a neutral, expert UK political analyst. Today is ' + D.fetchDate + '. '
+    + 'Current polling averages: Reform UK 26%, Labour 19%, Conservative 18%, Green 17%, Lib Dem 12%, SNP 3%, Restore Britain 7% (FON prompted only). '
+    + 'MRP seat projection: Reform UK 335, Conservative 92, Lib Dem 60, Green 52, Labour 41, SNP 44 — a hung parliament. '
+    + 'Keir Starmer net approval: around -46. Nigel Farage: -17. Kemi Badenoch: -12. Zack Polanski: -8 to +11 (varies by pollster). '
+    + 'Key recent events: YouGov (8-9 Mar) put Reform 23%, Con 19%, Green 19% — unusually tight three-way. '
+    + 'Starmer approved US use of UK bases for Iran strikes; Trump attacked Starmer publicly. '
+    + 'Labour won first ever council by-election gain from Reform UK (Murton, Durham, 5 Mar). '
+    + 'Restore Britain officially registered as a party (4 Mar), polling 7% in prompted polls. '
+    + 'Answer in clear, engaging prose. Be politically neutral but don\'t shy away from hard truths. Max 200 words.';
+  try {
+    var resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,system:ctx,messages:[{role:'user',content:q}]}) });
+    var data = await resp.json();
+    var text = data.content && data.content[0] && data.content[0].text;
+    if (text) {
+      out.innerHTML = '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.7">' + text.replace(/\n/g,'<br>') + '</div>';
+      input.value = '';
+    } else {
+      out.innerHTML = '<div style="color:var(--md-sys-color-secondary)">Error: No response received.</div>';
+    }
+  } catch(e) {
+    out.innerHTML = '<div style="color:var(--md-sys-color-secondary)">Error: ' + e.message + '</div>';
+  }
 }
 
 // ── Render Overview ──
 function renderOverview() {
   document.getElementById('overview-sub').textContent = '7-poll moving average · ' + D.fetchDate;
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}).toUpperCase();
-  document.getElementById('hdr-date').textContent = 'ALL PARTIES · ' + dateStr;
+  document.getElementById('hdr-date').textContent = D.fetchDate.toUpperCase();
   document.getElementById('party-grid').innerHTML = D.parties.map(p => `
     <div class="pc" style="border-top-color:${p.color}">
       <div class="pca">${p.name}</div>
-      <div class="pcp" style="color:${p.color}">${p.pct}<small style="font-size:14px">%</small></div>
-      <div class="pcc" style="color:${p.change > 0 ? 'var(--up)' : p.change < 0 ? 'var(--down)' : 'var(--muted)'}">
-        ${p.change > 0 ? '▲ +' + p.change : p.change < 0 ? '▼ ' + p.change : '– NC'}
+      <div class="pcp" style="color:${p.color}">${p.pct}<small style="font-size:13px">%</small></div>
+      <div class="pcc" style="color:${p.change > 0 ? 'var(--up)' : p.change < 0 ? 'var(--down)' : 'var(--md-sys-color-on-surface-variant)'}">
+        ${p.change > 0 ? '▲ +'+p.change : p.change < 0 ? '▼ '+p.change : '– NC'}
       </div>
-      <div class="pcs">${p.seats !== null ? "~" + p.seats + " seats" : "various"}</div>
+      <div class="pcs">${p.seats !== null ? '~'+p.seats+(p.seats===1?' seat':' seats') : 'various'}</div>
     </div>`).join('');
-  document.getElementById('seat-bar').innerHTML = D.parties.filter(function(p){return p.seats !== null;}).map(p => `
-    <div class="sseg" style="flex:${p.seats};background:${p.color};color:${p.name === 'SNP' ? '#000' : '#fff'}" title="${p.name}: ${p.seats}">
+  document.getElementById('seat-bar').innerHTML = D.parties.filter(p => p.seats !== null).map(p => `
+    <div class="sseg" style="flex:${p.seats};background:${p.color};color:${p.name==='SNP'?'#000':'#fff'}" title="${p.name}: ${p.seats}">
       ${p.seats > 15 ? p.abbr : ''}
     </div>`).join('');
   document.getElementById('ctx-text').textContent = D.context;
-  var wim=document.getElementById('what-it-means');
-  if(wim){var ld=D.parties[0],short=326-ld.seats;wim.innerHTML='<strong>What this means:</strong> On current polling, <span style="color:'+ld.color+';font-weight:700">'+ld.name+'</span>'+(ld.seats>=326?' projects to an outright majority (~'+ld.seats+' seats).':' would be largest party (~'+ld.seats+' seats) but <strong>'+short+' short of a majority</strong> — a <strong>hung parliament</strong>, needing a coalition or deal to govern.');}
+  var wim = document.getElementById('what-it-means');
+  if (wim) { var ld = D.parties[0], short = 326 - ld.seats; wim.innerHTML = '<strong>What this means:</strong> On current polling, <span style="color:'+ld.color+';font-weight:700">'+ld.name+'</span>'+(ld.seats>=326?' projects to an outright majority (~'+ld.seats+' seats).':' would be largest party (~'+ld.seats+' seats) but <strong>'+short+' short of a majority</strong> — a <strong>hung parliament</strong>.'); }
 }
 
 // ── Render Trends ──
 function renderTrends() {
-  document.getElementById('movers-list').innerHTML = D.parties.filter(p => p.name !== 'SNP').sort((a, b) => b.pct - a.pct).map(p => {
+  document.getElementById('movers-list').innerHTML = D.parties.filter(p => p.name !== 'SNP').sort((a,b) => b.pct - a.pct).map(p => {
     const c = p.change || 0;
-    return `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
-      <span style="color:${p.color};font-weight:700">${p.name}</span>
-      <span>${p.pct}% <span style="color:${c > 0 ? 'var(--up)' : c < 0 ? 'var(--down)' : 'var(--muted)'}">${c > 0 ? '▲ +' + c : c < 0 ? '▼ ' + c : '–'}</span></span>
+    return `<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)">
+      <span style="color:${p.color};font-weight:600">${p.name}</span>
+      <span style="font-weight:500">${p.pct}% <span style="color:${c>0?'var(--up)':c<0?'var(--down)':'var(--md-sys-color-on-surface-variant)'}">${c>0?'▲ +'+c:c<0?'▼ '+c:'–'}</span></span>
     </div>`;
   }).join('');
   document.getElementById('milestones-list').innerHTML = D.milestones.map(m => `
-    <div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:14px;color:#c8cdd8;white-space:nowrap;min-width:60px">${m.date}</div>
-      <div style="font-size:14px">${m.text}</div>
+    <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)">
+      <div style="font-size:12px;color:var(--md-sys-color-secondary);white-space:nowrap;min-width:60px;font-weight:700;padding-top:2px">${m.date}</div>
+      <div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.5">${m.text}</div>
     </div>`).join('');
-  const el = document.getElementById('trend-chart');
-  const W = el.parentElement.clientWidth - 28 || 600;
-  const H = Math.max(200, Math.min(400, W * 0.42));
-  el.width = W;
-  el.height = H;
-  el.style.height = H + 'px';
-  const c = el.getContext('2d');
-  const pad = {t:12, r:12, b:30, l:36};
-  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
-  const parties = ['Reform','Labour','Conservative','Lib Dem','Green'];
-  const colors = {Reform:'#12B7D4',Labour:'#E4003B',Conservative:'#0087DC','Lib Dem':'#FAA61A',Green:'#02A95B'};
-  const months = D.trends.map(t => t.month);
-  let allV = [];
-  parties.forEach(p => D.trends.forEach(t => { if (t[p]) allV.push(t[p]); }));
-  const minV = Math.max(0, Math.min(...allV) - 2), maxV = Math.min(45, Math.max(...allV) + 2);
-  const xP = i => pad.l + i * (pw / (months.length - 1));
-  const yP = v => pad.t + ph - (v - minV) / (maxV - minV) * ph;
-  // Grid lines + labels
-  [10,15,20,25,30,35].filter(v => v >= minV && v <= maxV).forEach(v => {
-    c.beginPath(); c.strokeStyle = 'rgba(255,255,255,0.07)'; c.lineWidth = 1;
-    c.moveTo(pad.l, yP(v)); c.lineTo(W - pad.r, yP(v)); c.stroke();
-    c.fillStyle = '#7a8396'; c.font = '12px -apple-system,sans-serif';
-    c.textAlign = 'right'; c.fillText(v + '%', pad.l - 5, yP(v) + 4);
-  });
-  // Month labels
-  months.forEach((m, i) => {
-    c.fillStyle = '#7a8396'; c.font = '12px -apple-system,sans-serif';
-    c.textAlign = 'center'; c.fillText(m, xP(i), H - 8);
-  });
-  // Party lines + dots
-  parties.forEach(p => {
-    const pts = D.trends.map((t, i) => t[p] != null ? {x: xP(i), y: yP(t[p])} : null).filter(Boolean);
-    if (pts.length < 2) return;
-    c.beginPath(); c.strokeStyle = colors[p]; c.lineWidth = 3;
-    c.lineJoin = 'round'; c.lineCap = 'round';
-    c.moveTo(pts[0].x, pts[0].y);
-    pts.slice(1).forEach(pt => c.lineTo(pt.x, pt.y));
-    c.stroke();
-    pts.forEach(pt => {
-      c.beginPath(); c.fillStyle = colors[p];
-      c.arc(pt.x, pt.y, 4, 0, Math.PI * 2); c.fill();
-    });
-  });
-  document.getElementById('trend-legend').innerHTML = parties.map(p => `<span style="color:${colors[p]};font-size:14px">● ${p}</span>`).join('');
-}
 
-// Redraw chart on resize
+  const parties = ['Reform UK','Labour','Conservative','Lib Dem','Green'];
+  const colors = {'Reform UK':'#12B7D4',Labour:'#E4003B',Conservative:'#0087DC','Lib Dem':'#FAA61A',Green:'#02A95B'};
+  const labels = D.trends.map(t => t.month);
+  const datasets = parties.map(p => ({
+    label: p,
+    data: D.trends.map(t => t[p] ?? null),
+    borderColor: colors[p],
+    backgroundColor: colors[p] + '18',
+    pointBackgroundColor: colors[p],
+    pointRadius: 5, pointHoverRadius: 7,
+    borderWidth: 2,
+    tension: 0.3, fill: false,
+  }));
+  const el = document.getElementById('trend-chart');
+  if (window._trendChart) window._trendChart.destroy();
+  window._trendChart = new Chart(el, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: true, aspectRatio: 1.4,
+      animation: { duration: 600, easing: 'easeOutCubic' },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(28,27,31,0.92)',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          titleColor: '#ffffff',
+          titleFont: { size: 14, weight: '700', family: "'Nunito Sans', sans-serif" },
+          bodyColor: '#e8ecf4',
+          bodyFont: { size: 13, family: "'Nunito Sans', sans-serif" },
+          padding: 14, cornerRadius: 16, caretSize: 6,
+          displayColors: true, boxWidth: 10, boxHeight: 10,
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%` }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(0,0,0,0.06)', lineWidth: 1 },
+          border: { dash: [4,4] },
+          ticks: { color: '#79747E', font: { size: 13, family: "'Nunito Sans',sans-serif" }, padding: 8 }
+        },
+        y: {
+          grid: { color: 'rgba(0,0,0,0.06)', lineWidth: 1 },
+          border: { dash: [4,4] },
+          ticks: { color: '#79747E', font: { size: 13, family: "'Nunito Sans',sans-serif" }, callback: v => v + '%', padding: 8 },
+          suggestedMin: 8, suggestedMax: 35,
+        }
+      }
+    }
+  });
+  document.getElementById('trend-legend').innerHTML = parties.map((p,i) =>
+    `<button onclick="toggleTrendParty(${i})" id="tlegend-${i}"
+      style="background:${colors[p]};color:#fff;border:none;border-radius:50px;padding:6px 14px;
+      font-size:13px;font-weight:600;font-family:'Nunito Sans',sans-serif;cursor:pointer;
+      transition:opacity 0.2s,transform 0.15s;opacity:1">${p}</button>`
+  ).join('');
+}
+function toggleTrendParty(i) {
+  const chart = window._trendChart;
+  const meta = chart.getDatasetMeta(i);
+  meta.hidden = !meta.hidden;
+  const btn = document.getElementById('tlegend-' + i);
+  btn.style.opacity = meta.hidden ? '0.3' : '1';
+  btn.style.transform = meta.hidden ? 'scale(0.92)' : 'scale(1)';
+  chart.tooltip.setActiveElements([], {x:0,y:0});
+  chart.update();
+}
 window.addEventListener('resize', () => {
   if (document.getElementById('page-trends').classList.contains('active')) renderTrends();
 });
@@ -744,7 +1012,7 @@ window.addEventListener('resize', () => {
 // ── Render Demographics ──
 function renderAge() {
   const parties = [
-    {key:'REF',label:'Reform',color:'#12B7D4'},
+    {key:'REF',label:'Reform UK',color:'#12B7D4'},
     {key:'GRN',label:'Green',color:'#02A95B'},
     {key:'LAB',label:'Labour',color:'#E4003B'},
     {key:'CON',label:'Con',color:'#0087DC'},
@@ -752,17 +1020,17 @@ function renderAge() {
   ];
   function bars(elId, groups) {
     document.getElementById(elId).innerHTML = groups.map(g => `
-      <div class="lcard" style="margin-bottom:8px">
-        <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:10px">${g.label}</div>
+      <div class="lcard" style="margin-bottom:10px">
+        <div style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:12px">${g.label}</div>
         ${parties.map(p => `
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <div style="width:42px;font-size:14px;color:${p.color};font-weight:700;flex-shrink:0">${p.label}</div>
-            <div style="flex:1;background:var(--border);border-radius:4px;height:8px;overflow:hidden">
-              <div style="width:${g[p.key]}%;background:${p.color};height:100%;border-radius:4px"></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:44px;font-size:13px;color:${p.color};font-weight:600;flex-shrink:0">${p.label}</div>
+            <div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden">
+              <div style="width:${g[p.key]}%;background:${p.color};height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>
             </div>
-            <div style="width:30px;text-align:right;font-size:14px;font-weight:700;color:${p.color}">${g[p.key]}%</div>
+            <div style="width:32px;text-align:right;font-size:13px;font-weight:700;color:${p.color}">${g[p.key]}%</div>
           </div>`).join('')}
-        ${g.note ? `<div style="font-size:14px;color:#c8cdd8;margin-top:4px">${g.note}</div>` : ''}
+        ${g.note ? `<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:6px;font-style:italic">${g.note}</div>` : ''}
       </div>`).join('');
   }
   bars('age-content', [
@@ -770,28 +1038,28 @@ function renderAge() {
     {label:'25–34', REF:20,GRN:28,LAB:22,CON:10,LD:13},
     {label:'35–44', REF:24,GRN:22,LAB:20,CON:14,LD:13},
     {label:'45–54', REF:28,GRN:16,LAB:17,CON:18,LD:16},
-    {label:'55–64', REF:34,GRN:12,LAB:16,CON:20,LD:13, note:'Reform strongest age group'},
+    {label:'55–64', REF:34,GRN:12,LAB:16,CON:20,LD:13, note:'Reform UK strongest age group'},
     {label:'65+',   REF:31,GRN:8, LAB:15,CON:22,LD:14},
   ]);
   bars('class-content', [
-    {label:'AB — Professional/managerial', REF:20,GRN:24,LAB:18,CON:20,LD:18, note:'Higher earners split Green/Con/Reform roughly equally'},
+    {label:'AB — Professional/managerial', REF:20,GRN:24,LAB:18,CON:20,LD:18, note:'Higher earners split Green/Con/Reform UK roughly equally'},
     {label:'C1 — Clerical/supervisory',    REF:26,GRN:19,LAB:18,CON:18,LD:14},
-    {label:'C2 — Skilled working class',   REF:32,GRN:14,LAB:18,CON:16,LD:11, note:'Reform dominate — big shift from Labour'},
+    {label:'C2 — Skilled working class',   REF:32,GRN:14,LAB:18,CON:16,LD:11, note:'Reform UK dominate — big shift from Labour'},
     {label:'DE — Semi/unskilled',          REF:30,GRN:16,LAB:20,CON:12,LD:10, note:'Labour retain most ground here'},
   ]);
   bars('edu-content', [
     {label:'Degree educated',      REF:16,GRN:28,LAB:22,CON:16,LD:18, note:'Graduates strongly favour Greens and Labour'},
-    {label:'Non-degree educated',  REF:33,GRN:13,LAB:15,CON:18,LD:11, note:'Reform lead by 20pts+ among non-graduates'},
+    {label:'Non-degree educated',  REF:33,GRN:13,LAB:15,CON:18,LD:11, note:'Reform UK lead by 20pts+ among non-graduates'},
     {label:'In education (16–21)', REF:12,GRN:35,LAB:20,CON:8, LD:14, note:'Greens dominate among students'},
   ]);
   bars('region-content', [
     {label:'London',           REF:16,GRN:26,LAB:26,CON:14,LD:14, note:'Lab/Green split the capital'},
     {label:'South East',       REF:26,GRN:18,LAB:14,CON:20,LD:18},
     {label:'South West',       REF:24,GRN:20,LAB:14,CON:18,LD:20},
-    {label:'Midlands',         REF:32,GRN:14,LAB:20,CON:18,LD:10, note:'Reform heartland'},
+    {label:'Midlands',         REF:32,GRN:14,LAB:20,CON:18,LD:10},
     {label:'North of England', REF:30,GRN:16,LAB:22,CON:14,LD:11},
     {label:'Wales',            REF:24,GRN:14,LAB:26,CON:14,LD:12},
-    {label:'Scotland',         REF:14,GRN:10,LAB:28,CON:14,LD:8,  note:'SNP ~28% not shown here'},
+    {label:'Scotland',         REF:14,GRN:10,LAB:28,CON:14,LD:8, note:'SNP ~28% not shown here'},
   ]);
   bars('ethnicity-content', [
     {label:'White British', REF:30,GRN:17,LAB:17,CON:17,LD:12},
@@ -799,225 +1067,423 @@ function renderAge() {
     {label:'Black British', REF:8, GRN:22,LAB:44,CON:10,LD:10, note:'Labour dominant but Greens making inroads'},
     {label:'Mixed/Other',   REF:18,GRN:26,LAB:24,CON:12,LD:14},
   ]);
-
-  // Non-voter section — different structure, manual HTML
   document.getElementById('nonvoter-content').innerHTML = `
-    <div class="lcard" style="margin-bottom:8px">
-      <div style="font-size:14px;font-weight:800;color:#fff;margin-bottom:8px">Where are 2024's non-voters going?</div>
-      <div style="font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:12px">
-        42% of eligible voters did not vote in the 2024 General Election. Research by Find Out Now shows that among people who didn't vote in 2024 but now say they would <em>"definitely vote"</em>, Reform UK and Restore Britain are picking up the largest share — driven by long-term disillusionment with the major parties.
+    <div class="lcard" style="margin-bottom:10px">
+      <div style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:10px">Where are 2024's non-voters going?</div>
+      <div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.7;margin-bottom:14px">
+        42% of eligible voters did not vote in the 2024 General Election. Among those who didn't vote but now say they would <em>"definitely vote"</em>, Reform UK and Restore Britain are picking up the largest share.
       </div>
-      <div style="font-size:14px;color:#c8cdd8;margin-bottom:10px;font-weight:600;letter-spacing:1px">ESTIMATED INTENTION AMONG 2024 NON-VOTERS WHO NOW SAY THEY'D VOTE</div>
+      <div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-bottom:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase">Estimated intention among 2024 non-voters who now say they'd vote</div>
       ${[
-        {label:'Reform',  color:'#12B7D4', pct:32, note:'Biggest beneficiary of returning non-voters'},
-        {label:'RB',      color:'#0D2A5C', pct:18, note:'Growing fast among disengaged voters'},
-        {label:'Green',   color:'#02A95B', pct:16, note:''},
-        {label:'Labour',  color:'#E4003B', pct:14, note:''},
-        {label:'Con',     color:'#0087DC', pct:10, note:''},
-        {label:'LD',      color:'#FAA61A', pct:6,  note:''},
+        {label:'Reform UK', color:'#12B7D4', pct:32, note:'Biggest beneficiary of returning non-voters'},
+        {label:'RB',        color:'#1a4a9e', pct:18, note:'Growing fast among disengaged voters'},
+        {label:'Green',     color:'#02A95B', pct:16, note:''},
+        {label:'Labour',    color:'#E4003B', pct:14, note:''},
+        {label:'Con',       color:'#0087DC', pct:10, note:''},
+        {label:'LD',        color:'#FAA61A', pct:6,  note:''},
       ].map(p => `
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <div style="width:42px;font-size:14px;color:${p.color};font-weight:700;flex-shrink:0">${p.label}</div>
-          <div style="flex:1;background:var(--border);border-radius:4px;height:8px;overflow:hidden">
-            <div style="width:${p.pct}%;background:${p.color};height:100%;border-radius:4px"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div style="width:44px;font-size:13px;color:${p.color};font-weight:600;flex-shrink:0">${p.label}</div>
+          <div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden">
+            <div style="width:${p.pct}%;background:${p.color};height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>
           </div>
-          <div style="width:30px;text-align:right;font-size:14px;font-weight:700;color:${p.color}">${p.pct}%</div>
+          <div style="width:32px;text-align:right;font-size:13px;font-weight:700;color:${p.color}">${p.pct}%</div>
         </div>
-        ${p.note ? `<div style="font-size:14px;color:#c8cdd8;margin-bottom:4px;padding-left:50px">${p.note}</div>` : ''}`).join('')}
-      <div style="font-size:14px;color:#c8cdd8;margin-top:8px">Source: Find Out Now, JL Partners. Estimates based on prompted polling of previous non-voters.</div>
+        ${p.note ? `<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;padding-left:52px;font-style:italic">${p.note}</div>` : ''}`).join('')}
+      <div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:10px">Source: Find Out Now, JL Partners.</div>
     </div>`;
 }
 
 // ── Render Leaders ──
 function renderLeaders() {
   const topics = [
-    {k:'immigration', l:'🛂 IMMIGRATION'},
-    {k:'economy',     l:'💷 ECONOMY'},
+    {k:'immigration', l:'🛂 Immigration'},
+    {k:'economy',     l:'💷 Economy'},
     {k:'nhs',         l:'🏥 NHS'},
-    {k:'climate',     l:'🌿 CLIMATE'}
+    {k:'climate',     l:'🌿 Climate'}
   ];
-  document.getElementById('leaders-content').innerHTML = D.leaders.map(l => `
-    <div class="lcard">
+  var PARTY_URLS = {"Green Party":"https://www.greenparty.org.uk","Lib Dems":"https://www.libdems.org.uk","Reform UK":"https://www.reformparty.uk","Restore Britain":"https://www.restorebritain.org.uk","Conservative":"https://www.conservatives.com","Labour":"https://www.labour.org.uk","SNP":"https://www.snp.org"};
+  document.getElementById('leaders-content').innerHTML = D.leaders.map((l, li) => {
+    var initials = l.name.split(' ').map(w => w[0]).join('').slice(0,2);
+    var bioId = 'bio-' + li;
+    var bioHtml = l.bio ? `<div style="margin-top:10px">
+      <button onclick="var el=document.getElementById('${bioId}');var btn=this;if(el.style.display==='none'){el.style.display='block';btn.textContent='▲ Hide bio';}else{el.style.display='none';btn.textContent='▼ About ${l.name.split(' ')[0]}'}"
+        style="background:var(--md-sys-color-tonal-navy);border:none;color:var(--md-sys-color-primary);border-radius:var(--md-sys-shape-corner-full);padding:6px 14px;font-size:13px;cursor:pointer;font-weight:600;font-family:'Nunito Sans',sans-serif">▼ About ${l.name.split(' ')[0]}</button>
+      <div id="${bioId}" style="display:none;font-size:13px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;padding:12px;background:var(--md-sys-color-surface-container-low);border-radius:var(--md-sys-shape-corner-medium);margin-top:8px">${l.bio}</div>
+    </div>` : '';
+    return `<div class="lcard">
       <div class="lch">
-        <div>
-          <div class="lcname">${l.name}</div>
-          <div class="lcparty" style="color:${l.color}">${l.party}</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:50px;height:50px;border-radius:50%;background:${l.color};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;">${initials}</div>
+          <div>
+            <div class="lcname">${l.name}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px">
+              <div class="lcparty" style="color:${l.color}">${l.party}</div>
+              ${PARTY_URLS[l.party] ? `<a href="${PARTY_URLS[l.party]}" target="_blank" style="font-size:11px;color:var(--md-sys-color-primary);background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-full);padding:2px 10px;text-decoration:none;white-space:nowrap;font-weight:600">🌐 Website</a>` : ''}
+            </div>
+          </div>
         </div>
         <div style="text-align:right">
-          <div class="lcnet" style="color:${l.net === null ? 'var(--muted)' : l.net > 0 ? 'var(--up)' : 'var(--down)'}">${l.net === null ? '—' : (l.net > 0 ? '+' : '') + l.net}</div>
-          <div class="lcnl">${l.net === null ? 'LIMITED' : 'NET'}</div>
+          <div class="lcnet" style="color:${l.net===null?'var(--md-sys-color-on-surface-variant)':l.net>0?'var(--up)':'var(--down)'}">${l.net===null?'—':(l.net>0?'+':'')+l.net}</div>
+          <div class="lcnl">${l.net===null?'LIMITED':'NET'}</div>
+          <button onclick="selectLeaderCompare(${li},this)" id="lcmp-${li}" style="background:var(--md-sys-color-tonal-navy);border:none;color:var(--md-sys-color-primary);border-radius:var(--md-sys-shape-corner-full);padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-weight:600;font-family:'Nunito Sans',sans-serif;margin-top:4px">Compare</button>
         </div>
       </div>
-      ${l.note ? `<div style="font-size:15px;color:#c8cdd8;line-height:1.6;margin-bottom:10px">${l.note}</div>` : `
-        <div class="abar"><div style="flex:${l.approve};background:#3fb95050"></div><div style="flex:${l.disapprove};background:#f8514950"></div></div>
+      ${bioHtml}
+      ${l.note ? `<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;margin-bottom:10px;margin-top:10px;background:var(--md-sys-color-surface-container-low);border-radius:var(--md-sys-shape-corner-medium);padding:12px">${l.note}</div>` : `
+        <div class="abar" style="margin-top:12px"><div style="flex:${l.approve};background:#1a7f3740"></div><div style="flex:${l.disapprove};background:#C8102E30"></div></div>
         <div class="lcs"><span style="color:var(--up)">▲ ${l.approve}%</span><span style="color:var(--down)">▼ ${l.disapprove}%</span></div>`}
       ${topics.filter(t => l[t.k]).map(t => `
         <div class="psec">
           <div class="plbl">${t.l}</div>
           <div class="ptxt">${l[t.k]}</div>
         </div>`).join('')}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ── Render Polls ──
 function renderPolls() {
-  var KEYS=[{k:'ref',label:'Reform UK',color:'#12B7D4'},{k:'lab',label:'Labour',color:'#E4003B'},{k:'con',label:'Con',color:'#0087DC'},{k:'ld',label:'Lib Dem',color:'#FAA61A'},{k:'grn',label:'Green',color:'#02A95B'},{k:'rb',label:'RB',color:'#4a6fa5'}];
-  document.getElementById('polls-cards').innerHTML=D.polls.map(function(p){
-    var boxes=KEYS.filter(function(x){return p[x.k]!=null;}).map(function(x){
-      return '<div style="background:rgba(5,10,30,0.85);border:1px solid rgba(255,255,255,0.12);border-top:3px solid '+x.color+';border-radius:8px;padding:8px 4px;text-align:center;flex:1;min-width:46px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-height:70px">'
-        +'<div style="font-size:13px;color:#c8cdd8;line-height:1.2">'+x.label+'</div>'
-        +'<div style="font-size:18px;font-weight:800;color:'+x.color+'">'+p[x.k]+'<span style="font-size:12px">%</span></div>'
-        +'</div>';
-    }).join('');
-    return '<div class="card" style="margin-bottom:10px;padding:12px">'
-      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">'
-      +'<div style="font-size:17px;font-weight:800;color:#fff">'+p.pollster+'</div>'
-      +'<div style="font-size:14px;color:#c8cdd8">'+p.date+'</div>'
-      +'</div>'
-      +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+boxes+'</div>'
-      +'</div>';
+  var KEYS = [{k:'ref',label:'Reform UK',color:'#12B7D4'},{k:'lab',label:'Labour',color:'#E4003B'},{k:'con',label:'Con',color:'#0087DC'},{k:'ld',label:'Lib Dem',color:'#FAA61A'},{k:'grn',label:'Green',color:'#02A95B'},{k:'rb',label:'RB',color:'#1a4a9e'}];
+  document.getElementById('polls-cards').innerHTML = D.polls.map(p => {
+    var boxes = KEYS.filter(x => p[x.k] != null).map(x =>
+      '<div style="background:var(--md-sys-color-surface-container-low);border-top:3px solid ' + x.color + ';border-radius:var(--md-sys-shape-corner-medium);padding:10px 4px;text-align:center;flex:1;min-width:46px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-height:68px">'
+      + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);line-height:1.2;font-weight:500">' + x.label + '</div>'
+      + '<div style="font-size:18px;font-weight:700;color:' + x.color + ';font-family:\'Nunito\',sans-serif">' + p[x.k] + '<span style="font-size:11px">%</span></div>'
+      + '</div>'
+    ).join('');
+    return '<div class="card" style="margin-bottom:10px;padding:16px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">'
+      + '<div style="font-size:16px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">' + p.pollster + '</div>'
+      + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:500">' + p.date + '</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap">' + boxes + '</div>'
+      + '</div>';
   }).join('');
 }
 
+// ── Vote Page ──
 function getDeviceId() {
   let id = localStorage.getItem('device_id');
-  if (!id) {
-    id = 'dev_' + Math.random().toString(36).substr(2,9) + Date.now().toString(36);
-    localStorage.setItem('device_id', id);
-  }
+  if (!id) { id = 'dev_' + Math.random().toString(36).substring(2,11) + Date.now().toString(36); localStorage.setItem('device_id', id); }
   return id;
 }
-
-function getMyVote() {
-  return localStorage.getItem('my_vote');
-}
-
-function setMyVote(party) {
-  localStorage.setItem('my_vote', party);
-}
-
-function initVotePage() {
-  renderVoteButtons();
-  loadVoteResults();
-}
+function getMyVote() { return localStorage.getItem('my_vote'); }
+function setMyVote(party) { localStorage.setItem('my_vote', party); }
+function initVotePage() { renderVoteButtons(); loadVoteResults(); }
 
 var PARTIES_VOTE = [
-  {name:"Reform UK",color:"#12B7D4"},
-  {name:"Labour",color:"#E4003B"},
-  {name:"Conservative",color:"#0087DC"},
-  {name:"Green",color:"#02A95B"},
-  {name:"Lib Dem",color:"#FAA61A"},
-  {name:"Restore Britain",color:"#0D2A5C"},
-  {name:"SNP",color:"#FFD700"},
-  {name:"Plaid Cymru",color:"#3F8428"},
-  {name:"SDP",color:"#f4c542"},
-  {name:"UKIP",color:"#6B3FA0"},
-  {name:"Other",color:"#6b7280"},
-  {name:"Would not vote",color:"#4b5563"}
+  {name:"Reform UK",color:"#12B7D4"},{name:"Labour",color:"#E4003B"},{name:"Conservative",color:"#0087DC"},
+  {name:"Green",color:"#02A95B"},{name:"Lib Dem",color:"#FAA61A"},{name:"Restore Britain",color:"#1a4a9e"},
+  {name:"SNP",color:"#FFD700"},{name:"Plaid Cymru",color:"#3F8428"},{name:"SDP",color:"#f4c542"},
+  {name:"UKIP",color:"#6B3FA0"},{name:"Other",color:"#6b7280"},{name:"Would not vote",color:"#9aa3b8"}
 ];
 
 function renderVoteButtons() {
   const btns = document.getElementById('vote-buttons');
   const myVote = getMyVote();
-  btns.innerHTML = PARTIES_VOTE.map(function(p) {
+  btns.innerHTML = PARTIES_VOTE.map(p => {
     var sel = p.name === myVote;
-    var glow = sel ? ';box-shadow:0 0 0 2px ' + p.color : '';
+    var glow = sel ? ';box-shadow:0 0 0 3px ' + p.color + '60' : ';box-shadow:var(--md-elevation-1)';
     var count = (window._voteCache && window._voteCache[p.name]) || 0;
-    var wm = count > 0 ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:900;color:' + p.color + ';opacity:0.45;pointer-events:none">' + count + '</div>' : '';
-    return '<div onclick="castVote(\'' + p.name + '\')" class="pc" style="border-top-color:' + p.color + ';cursor:pointer;position:relative;overflow:hidden' + glow + '">'
+    var wm = count > 0 ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700;color:' + p.color + ';opacity:0.15;pointer-events:none;font-family:\'Nunito\',sans-serif">' + count + '</div>' : '';
+    return '<div onclick="castVote(\'' + p.name + '\')" style="background:' + (sel ? p.color+'15' : 'var(--md-sys-color-surface)') + ';border-top:4px solid ' + p.color + ';border-radius:var(--md-sys-shape-corner-large);padding:12px 6px;text-align:center;cursor:pointer;position:relative;overflow:hidden' + glow + ';transition:all 0.2s">'
       + wm
-      + '<div style="position:relative;font-size:14px;color:#c8cdd8;margin-bottom:6px;min-height:28px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.2">' + p.name + '</div>'
-      + '<div style="position:relative;font-size:22px;font-weight:800;color:' + p.color + '">' + (sel ? '&#10003;' : '&#8212;') + '</div>'
-      + '<div style="position:relative;font-size:14px;color:#c8cdd8;margin-top:4px;min-height:14px">' + (sel ? 'Your vote' : '') + '</div>'
+      + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:500;word-break:break-word;line-height:1.3;margin-bottom:4px">' + p.name + '</div>'
+      + (sel ? '<div style="font-size:11px;color:' + p.color + ';font-weight:700">✓ Your vote</div>' : '')
       + '</div>';
   }).join('');
-  const msg = document.getElementById('vote-msg');
-  if (myVote) {
-    msg.innerHTML = `Your current vote: <strong style="color:#fff">${myVote}</strong> &nbsp;·&nbsp; <span style="color:#c8cdd8;font-size:14px">Tap any party to change it</span>`;
-  } else {
-    msg.textContent = 'Tap a party to cast your vote';
-  }
 }
 
 async function castVote(party) {
   const deviceId = getDeviceId();
-  const prevVote = getMyVote();
+  const oldVote = getMyVote();
   setMyVote(party);
   renderVoteButtons();
+  document.getElementById('vote-msg').textContent = oldVote === party ? 'Vote confirmed!' : oldVote ? 'Vote changed to ' + party + '!' : 'Voted for ' + party + '!';
   try {
-    await fetch(WORKER + '/vote', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({party, deviceId, prevVote})
-    });
+    await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'vote',party,deviceId,oldVote}) });
+    loadVoteResults();
   } catch(e) {}
-  loadVoteResults();
 }
 
 async function loadVoteResults() {
   try {
-    const resp = await fetch(WORKER + '/votes');
-    const votes = await resp.json();
-    const total = Object.values(votes).reduce((a,b) => a+b, 0);
-    const el = document.getElementById('vote-results');
-    if (total === 0) {
-      el.innerHTML = '<div style="text-align:center;color:#c8cdd8;font-size:14px;padding:16px">No votes cast yet — be the first!</div>';
-      return;
-    }
-    window._voteCache = votes;
+    const resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'getVotes'}) });
+    const data = await resp.json();
+    if (!data.votes) return;
+    window._voteCache = data.votes;
     renderVoteButtons();
-    el.innerHTML = `
-      <div style="text-align:center;margin-bottom:16px">
-        <div style="font-size:36px;font-weight:800;color:#ffffff;text-shadow:0 2px 8px rgba(0,0,0,0.5)">${total.toLocaleString()}</div>
-        <div style="font-size:14px;color:#c8cdd8;letter-spacing:1px;margin-top:2px">TOTAL VOTES CAST BY APP USERS</div>
-      </div>
-      ${PARTIES_VOTE.filter(p => (votes[p.name]||0) > 0 || ['Reform UK','Labour','Conservative','Green','Lib Dem','SNP','Restore Britain'].includes(p.name)).map(p => {
-        const userPct = total > 0 ? Math.round((votes[p.name]||0)/total*100) : 0;
-        const POLL_MAP = {'Reform UK':27,'Labour':19,'Conservative':18,'Green':16,'Lib Dem':12,'SNP':3,'Restore Britain':7};
-        const pollPct = POLL_MAP[p.name] || 0;
-        return `
-          <div style="margin-bottom:12px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="color:${p.color};font-weight:700;font-size:14px">${p.name}</span>
-              <span style="font-size:14px;color:#c8cdd8">${userPct}% app · ${pollPct}% real polls</span>
-            </div>
-            <div style="display:flex;gap:4px;align-items:center">
-              <div style="width:36px;font-size:14px;color:#c8cdd8">App</div>
-              <div style="flex:1;background:var(--border);border-radius:4px;height:8px;overflow:hidden">
-                <div style="width:${userPct}%;background:${p.color};height:100%;border-radius:4px;transition:width 0.5s"></div>
-              </div>
-              <div style="width:28px;font-size:14px;font-weight:700;color:${p.color};text-align:right">${userPct}%</div>
-            </div>
-            ${pollPct > 0 ? `
-            <div style="display:flex;gap:4px;align-items:center;margin-top:3px">
-              <div style="width:36px;font-size:14px;color:#c8cdd8">Polls</div>
-              <div style="flex:1;background:var(--border);border-radius:4px;height:4px;overflow:hidden">
-                <div style="width:${pollPct}%;background:${p.color}60;height:100%;border-radius:4px"></div>
-              </div>
-              <div style="width:28px;font-size:14px;color:#c8cdd8;text-align:right">${pollPct}%</div>
-            </div>` : ''}
-          </div>`;
-      }).join('')}`;
+    const total = Object.values(data.votes).reduce((a,b) => a+b, 0);
+    if (total === 0) return;
+    document.getElementById('vote-results').innerHTML = PARTIES_VOTE.filter(p => data.votes[p.name] > 0).sort((a,b) => (data.votes[b.name]||0) - (data.votes[a.name]||0)).map(p => {
+      var n = data.votes[p.name] || 0;
+      var pct = Math.round(n / total * 100);
+      var poll = D.parties.find(x => x.name === p.name);
+      var pollPct = poll ? poll.pct : null;
+      return `<div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:14px;color:${p.color};font-weight:600">${p.name}</span>
+          <span style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface)">${pct}% <span style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">(${n})</span></span>
+        </div>
+        <div style="background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden;margin-bottom:4px">
+          <div style="width:${pct}%;background:${p.color};height:100%;border-radius:var(--md-sys-shape-corner-full);transition:width 0.6s ease"></div>
+        </div>
+        ${pollPct !== null ? `<div style="display:flex;gap:4px;align-items:center">
+          <div style="width:36px;font-size:12px;color:var(--md-sys-color-on-surface-variant)">Polls</div>
+          <div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:4px;overflow:hidden">
+            <div style="width:${pollPct}%;background:${p.color}50;height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>
+          </div>
+          <div style="width:28px;font-size:12px;color:var(--md-sys-color-on-surface-variant);text-align:right">${pollPct}%</div>
+        </div>` : ''}
+      </div>`;
+    }).join('');
   } catch(e) {
-    document.getElementById('vote-results').innerHTML = '<div style="text-align:center;color:#c8cdd8;font-size:14px;padding:16px">Could not load results.</div>';
+    document.getElementById('vote-results').innerHTML = '<div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:14px;padding:16px">Could not load results.</div>';
   }
+}
+
+// ── Migration ──
+var MIGRATION = {
+  fetchYear: 'Year ending June 2025 · ONS',
+  netTotal: 204000, netPrev: 649000, netPrev2: 906000,
+  byNationality: [
+    {name:'India',        net:null, inflow:130000, type:'work/study (top source)'},
+    {name:'China',        net:null, inflow:100000, type:'study (24% of student visas)'},
+    {name:'Pakistan',     net:null, inflow:55000,  type:'study/family/work'},
+    {name:'Nigeria',      net:null, inflow:60000,  type:'work/study'},
+    {name:'Nepal',        net:null, inflow:21000,  type:'study (+89% rise)'},
+    {name:'Philippines',  net:null, inflow:18000,  type:'work/NHS'},
+    {name:'Afghanistan',  net:null, inflow:15000,  type:'asylum (top claimant)'},
+    {name:'Zimbabwe',     net:null, inflow:14000,  type:'work'},
+    {name:'Bangladesh',   net:null, inflow:13000,  type:'study/family'},
+    {name:'Sri Lanka',    net:null, inflow:11000,  type:'work/study'},
+    {name:'EU nationals', net:-70000,  inflow:85000,  outflow:155000, type:'net outflow'},
+    {name:'British',      net:-109000, inflow:143000, outflow:252000, type:'net emigration'},
+  ],
+  byVisa: [
+    {type:'Study',        n:440000, color:'#6366f1'},
+    {type:'Skilled Work', n:175000, color:'#12B7D4'},
+    {type:'Family',       n:68000,  color:'#FAA61A'},
+    {type:'Asylum',       n:111000, color:'#f97316'},
+    {type:'Other',        n:35000,  color:'#6b7280'},
+  ],
+  trend: [
+    {year:'2019',net:184000},{year:'2020',net:87000},{year:'2021',net:173000},
+    {year:'2022',net:504000},{year:'2023',net:906000},{year:'2024',net:649000},{year:'2025',net:204000},
+  ],
+  smallBoats: {
+    total2025:41500, total2024:36816, total2018to2025:196000,
+    topNationalities:['Afghan','Syrian','Iranian','Iraqi','Eritrean'],
+    asylumClaimRate:95, grantRate:68, returned:5000, deaths2025:24, deaths2024:73,
+    hotelCost:'£15bn over 10 years (NAO est.)',
+    note:'Around ~1,000 crossed in Jan 2026. 193 returned to France under new pilot scheme by end of 2025.'
+  },
+};
+
+function renderMigration() {
+  var el = document.getElementById('migration-content');
+  if (!el) return;
+  var M = MIGRATION;
+  var totalVisa = M.byVisa.reduce((a,b) => a+b.n, 0);
+  var trendMax = Math.max(...M.trend.map(t => t.net));
+  var change = M.netTotal - M.netPrev;
+  var changePct = Math.round(change / M.netPrev * 100);
+  el.innerHTML =
+    '<div class="card" style="margin-bottom:12px;text-align:center;padding:24px">'
+      + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);letter-spacing:1.5px;margin-bottom:6px;font-weight:600;text-transform:uppercase">Net Migration · ' + M.fetchYear + '</div>'
+      + '<div style="font-size:48px;font-weight:700;color:var(--md-sys-color-primary);font-family:\'Nunito\',sans-serif">' + (M.netTotal/1000).toFixed(0) + 'k</div>'
+      + '<div style="font-size:14px;color:' + (change<0?'var(--up)':'var(--down)') + ';margin-top:6px;font-weight:600">'
+        + (change<0?'▼ ':'▲ +') + Math.abs(change/1000).toFixed(0) + 'k vs previous year (' + changePct + '%)</div>'
+    + '</div>'
+    + '<div class="card" style="margin-bottom:12px;padding:18px">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px;letter-spacing:0.5px">📈 YEAR-ON-YEAR TREND</div>'
+      + '<div style="display:flex;align-items:flex-end;gap:6px;height:80px;margin-bottom:8px">'
+      + M.trend.map(t => {
+          var h = Math.round(t.net / trendMax * 75);
+          var isLatest = t.year === '2025';
+          return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'
+            + '<div style="font-size:10px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + (t.net/1000).toFixed(0) + 'k</div>'
+            + '<div style="width:100%;height:' + h + 'px;background:' + (isLatest?'var(--md-sys-color-primary)':'var(--md-sys-color-primary-container)') + ';border-radius:4px 4px 0 0"></div>'
+            + '</div>';
+        }).join('')
+      + '</div>'
+      + '<div style="display:flex;gap:6px">'
+      + M.trend.map(t => '<div style="flex:1;text-align:center;font-size:10px;color:var(--md-sys-color-on-surface-variant)">' + t.year + '</div>').join('')
+      + '</div>'
+    + '</div>'
+    + '<div class="card" style="margin-bottom:12px;padding:18px">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px">🌍 TOP NATIONALITIES (INFLOW)</div>'
+      + M.byNationality.map(n => {
+          var maxInflow = 130000;
+          var hasNet = n.net != null;
+          var isNeg = hasNet && n.net < 0;
+          var barVal = n.inflow || Math.abs(n.net || 0);
+          var pct = Math.round(barVal / maxInflow * 100);
+          var netLabel = hasNet ? ((isNeg?'−':'+')+Math.abs(n.net/1000).toFixed(0)+'k net') : (n.inflow/1000).toFixed(0)+'k arrivals';
+          var col = hasNet ? (isNeg?'var(--down)':'var(--md-sys-color-on-surface-variant)') : 'var(--md-sys-color-primary)';
+          var barCol = hasNet&&isNeg ? '#C8102E' : hasNet ? 'var(--md-sys-color-outline)' : 'var(--md-sys-color-primary)';
+          return '<div style="margin-bottom:10px">'
+            + '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+              + '<span style="font-size:13px;color:var(--md-sys-color-on-surface);font-weight:600">' + n.name + '</span>'
+              + '<span style="font-size:12px;color:' + col + ';font-weight:700">' + netLabel + '</span>'
+            + '</div>'
+            + '<div style="background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:7px;overflow:hidden">'
+              + '<div style="width:' + pct + '%;background:' + barCol + ';height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>'
+            + '</div>'
+            + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">' + n.type + '</div>'
+          + '</div>';
+        }).join('')
+    + '</div>'
+    + '<div class="card" style="margin-bottom:12px;padding:18px">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px">📋 ARRIVALS BY VISA TYPE</div>'
+      + M.byVisa.map(v => {
+          var pct = Math.round(v.n / totalVisa * 100);
+          return '<div style="margin-bottom:10px">'
+            + '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+              + '<span style="font-size:13px;color:var(--md-sys-color-on-surface);font-weight:600">' + v.type + '</span>'
+              + '<span style="font-size:13px;color:' + v.color + ';font-weight:700">' + pct + '% · ' + (v.n/1000).toFixed(0) + 'k</span>'
+            + '</div>'
+            + '<div style="background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden">'
+              + '<div style="width:' + pct + '%;background:' + v.color + ';height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>'
+            + '</div>'
+          + '</div>';
+        }).join('')
+    + '</div>'
+    + '<div class="card" style="margin-bottom:12px;padding:18px">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px">🚤 ILLEGAL CHANNEL CROSSINGS</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
+        + '<div style="background:var(--md-sys-color-tonal-red);border-radius:var(--md-sys-shape-corner-large);padding:14px;text-align:center">'
+          + '<div style="font-size:24px;font-weight:700;color:#c05000;font-family:\'Nunito\',sans-serif">' + (M.smallBoats.total2025/1000).toFixed(1) + 'k</div>'
+          + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">Crossings in 2025</div>'
+          + '<div style="font-size:11px;color:var(--down);margin-top:2px;font-weight:600">▲ ' + Math.round((M.smallBoats.total2025-M.smallBoats.total2024)/M.smallBoats.total2024*100) + '% vs 2024</div>'
+        + '</div>'
+        + '<div style="background:var(--md-sys-color-tonal-red);border-radius:var(--md-sys-shape-corner-large);padding:14px;text-align:center">'
+          + '<div style="font-size:24px;font-weight:700;color:#c05000;font-family:\'Nunito\',sans-serif">' + (M.smallBoats.total2018to2025/1000).toFixed(0) + 'k</div>'
+          + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">Total since 2018</div>'
+          + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">as of ' + D.fetchDate + '</div>'
+        + '</div>'
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:0;margin-bottom:12px">'
+        + [{label:'Asylum grant rate (small boat arrivals)',val:M.smallBoats.grantRate+'%',col:'#f97316'},
+           {label:'Claim asylum on arrival',val:M.smallBoats.asylumClaimRate+'%',col:'#FAA61A'},
+           {label:'Deaths crossing in 2025',val:M.smallBoats.deaths2025,col:'var(--down)'},
+           {label:'Returned from UK (2018–2024)',val:(M.smallBoats.returned/1000).toFixed(0)+'k (3%)',col:'var(--md-sys-color-on-surface-variant)'},
+          ].map(r =>
+            '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
+            + '<span style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">' + r.label + '</span>'
+            + '<span style="font-size:13px;font-weight:700;color:' + r.col + '">' + r.val + '</span>'
+            + '</div>'
+          ).join('')
+      + '</div>'
+      + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px"><strong style="color:var(--md-sys-color-on-surface)">Top nationalities:</strong> Afghan, Syrian, Iranian, Iraqi, Eritrean</div>'
+      + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px"><strong style="color:var(--md-sys-color-on-surface)">Hotel/support cost:</strong> £15bn estimated over 10 years (NAO)</div>'
+      + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant)"><strong style="color:var(--md-sys-color-on-surface)">France returns pilot:</strong> 193 returned by end of 2025 out of ~16,000 arrivals (1%)</div>'
+    + '</div>';
+}
+
+// ── Leader Compare ──
+var leaderCompareSelected = [];
+function selectLeaderCompare(leaderIdx, btn) {
+  var idx = leaderCompareSelected.indexOf(leaderIdx);
+  document.querySelectorAll('[id^="lcmp-"]').forEach(b => {
+    b.style.background = 'var(--md-sys-color-tonal-navy)';
+    b.style.color = 'var(--md-sys-color-primary)';
+    b.textContent = 'Compare';
+  });
+  if (idx > -1) { leaderCompareSelected.splice(idx, 1); } else {
+    if (leaderCompareSelected.length >= 2) leaderCompareSelected.shift();
+    leaderCompareSelected.push(leaderIdx);
+  }
+  leaderCompareSelected.forEach(i => {
+    var b = document.getElementById('lcmp-' + i);
+    var l = D.leaders[i];
+    if (b && l) { b.style.background = l.color + '20'; b.style.color = l.color; b.textContent = '✓ Selected'; }
+  });
+  if (leaderCompareSelected.length === 2) {
+    document.getElementById('leader-compare-modal').style.display = 'flex';
+    document.getElementById('leader-compare-result').innerHTML = buildLeaderComparison(D.leaders[leaderCompareSelected[0]], D.leaders[leaderCompareSelected[1]]);
+  }
+}
+function closeLeaderCompare() {
+  document.getElementById('leader-compare-modal').style.display = 'none';
+  leaderCompareSelected = [];
+  document.querySelectorAll('[id^="lcmp-"]').forEach(b => {
+    b.style.background = 'var(--md-sys-color-tonal-navy)';
+    b.style.color = 'var(--md-sys-color-primary)';
+    b.textContent = 'Compare';
+  });
+}
+function buildLeaderComparison(a, b) {
+  function netCol(n) { return n===null?'var(--md-sys-color-on-surface-variant)':n>0?'var(--up)':'var(--down)'; }
+  function netStr(n) { return n===null?'No data':(n>0?'+':'')+n; }
+  function policyRow(emoji, label, ta, tb) {
+    return '<tr>'
+      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:13px;line-height:1.5">'+(ta||'—')+'</div></td>'
+      + '<td style="padding:10px 4px;border-top:1px solid var(--md-sys-color-outline-variant);text-align:center;vertical-align:middle;width:16%"><div style="font-size:11px;color:var(--md-sys-color-on-surface-variant)">'+emoji+'<br>'+label+'</div></td>'
+      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:13px;line-height:1.5">'+(tb||'—')+'</div></td>'
+      + '</tr>';
+  }
+  var nameMap = {'Green Party':'Green','Lib Dems':'Lib Dem','Reform UK':'Reform UK','Restore Britain':'Restore Britain','Conservative':'Conservative','Labour':'Labour','SNP':'SNP'};
+  var pa = D.parties.find(p => p.name===(nameMap[a.party]||a.party));
+  var pb = D.parties.find(p => p.name===(nameMap[b.party]||b.party));
+  return '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:16px">'
+    + '<div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:'+a.color+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;margin:0 auto 6px">'+a.name.split(' ').map(w=>w[0]).join('').slice(0,2)+'</div><div style="font-size:13px;font-weight:700;color:'+a.color+'">'+a.name+'</div><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">'+a.party+'</div>'+(pa?'<div style="font-size:22px;font-weight:700;color:'+a.color+';font-family:\'Nunito\',sans-serif;margin-top:4px">'+pa.pct+'%</div>':'')+'</div>'
+    + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-weight:700">VS</div>'
+    + '<div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:'+b.color+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;margin:0 auto 6px">'+b.name.split(' ').map(w=>w[0]).join('').slice(0,2)+'</div><div style="font-size:13px;font-weight:700;color:'+b.color+'">'+b.name+'</div><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">'+b.party+'</div>'+(pb?'<div style="font-size:22px;font-weight:700;color:'+b.color+';font-family:\'Nunito\',sans-serif;margin-top:4px">'+pb.pct+'%</div>':'')+'</div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;background:var(--md-sys-color-surface-container-low);border-radius:var(--md-sys-shape-corner-medium);padding:12px;margin-bottom:14px">'
+      + '<div style="text-align:center"><div style="font-size:22px;font-weight:700;color:'+netCol(a.net)+';font-family:\'Nunito\',sans-serif">'+netStr(a.net)+'</div><div style="font-size:11px;color:var(--md-sys-color-on-surface-variant)">Net approval</div></div>'
+      + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);text-align:center;align-self:center">👤<br>Leader</div>'
+      + '<div style="text-align:center"><div style="font-size:22px;font-weight:700;color:'+netCol(b.net)+';font-family:\'Nunito\',sans-serif">'+netStr(b.net)+'</div><div style="font-size:11px;color:var(--md-sys-color-on-surface-variant)">Net approval</div></div>'
+    + '</div>'
+    + '<table style="width:100%;border-collapse:collapse"><tbody>'
+    + policyRow('🛂','Immigration',a.immigration,b.immigration)
+    + policyRow('💷','Economy',a.economy,b.economy)
+    + policyRow('🏥','NHS',a.nhs,b.nhs)
+    + policyRow('🌿','Climate',a.climate,b.climate)
+    + '</tbody></table>';
 }
 
 // ── Support Popup ──
 function showPopupIfDue() {
   const last = localStorage.getItem('popup_shown');
   const now = Date.now();
-  const oneMonth = 7 * 24 * 60 * 60 * 1000; // once a week
-  if (!last || (now - parseInt(last)) > oneMonth) {
-    setTimeout(() => {
-      document.getElementById('support-popup').classList.add('show');
-    }, 2 * 60 * 1000); // 2 minutes
+  const oneWeek = 7 * 24 * 60 * 60 * 1000;
+  if (!last || (now - parseInt(last)) > oneWeek) {
+    setTimeout(() => { document.getElementById('support-popup').classList.add('show'); }, 2 * 60 * 1000);
   }
 }
-
 function dismissPopup() {
   document.getElementById('support-popup').classList.remove('show');
   localStorage.setItem('popup_shown', Date.now().toString());
 }
+
+// ── Swipe Navigation ──
+(function(){
+  var TABS = ['overview','trends','elections','vote','demo','leaders','ai'];
+  var content = document.getElementById('content');
+  var sx = 0, sy = 0;
+  content.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
+  content.addEventListener('touchend', e => {
+    var dx = e.changedTouches[0].clientX - sx;
+    var dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.8) return;
+    var activeBtn = document.querySelector('.nb.active');
+    if (!activeBtn) return;
+    var oc = activeBtn.getAttribute('onclick') || '';
+    var cur = '';
+    TABS.forEach(t => { if (oc.indexOf(t) > -1) cur = t; });
+    if (!cur) return;
+    var idx = TABS.indexOf(cur);
+    var nextIdx = dx < 0 ? Math.min(idx+1, TABS.length-1) : Math.max(idx-1, 0);
+    if (nextIdx === idx) return;
+    var btns = document.querySelectorAll('.nb');
+    for (var i = 0; i < btns.length; i++) {
+      if ((btns[i].getAttribute('onclick')||'').indexOf(TABS[nextIdx]) > -1) { sp(TABS[nextIdx], btns[i]); break; }
+    }
+  }, {passive:true});
+})();
 
 // ── Boot ──
 renderOverview();
@@ -1025,35 +1491,8 @@ renderAge();
 renderLeaders();
 renderPolls();
 initVotePage();
-// Render trends after layout settles
+showPopupIfDue();
 setTimeout(renderTrends, 100);
-
-
-(function(){
-  var TABS = ['overview','trends','elections','vote','demo','leaders','ai'];
-  var content = document.getElementById('content');
-  var sx = 0, sy = 0;
-  content.addEventListener('touchstart', function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
-  content.addEventListener('touchend', function(e){
-    var dx = e.changedTouches[0].clientX - sx;
-    var dy = e.changedTouches[0].clientY - sy;
-    if(Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.8) return;
-    var activeBtn = document.querySelector('.nb.active');
-    if(!activeBtn) return;
-    var oc = activeBtn.getAttribute('onclick') || '';
-    var cur = '';
-    TABS.forEach(function(t){ if(oc.indexOf(t) > -1) cur = t; });
-    if(!cur) return;
-    var idx = TABS.indexOf(cur);
-    var nextIdx = dx < 0 ? Math.min(idx+1, TABS.length-1) : Math.max(idx-1, 0);
-    if(nextIdx === idx) return;
-    var nextId = TABS[nextIdx];
-    var btns = document.querySelectorAll('.nb');
-    for(var i=0;i<btns.length;i++){
-      if((btns[i].getAttribute('onclick')||'').indexOf(nextId) > -1){ sp(nextId, btns[i]); break; }
-    }
-  },{passive:true});
-})();
 </script>
 
 <script data-goatcounter="https://ukpolls.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
