@@ -292,6 +292,7 @@ body {
 
 /* ── AI ── */
 .chip {
+  flex-shrink: 0;
   font-size: 13px;
   background: var(--md-sys-color-surface);
   border: 1.5px solid var(--md-sys-color-outline-variant);
@@ -564,7 +565,7 @@ body {
     <!-- TODAY'S STORIES SECTION -->
     <div style="margin-bottom:16px">
       <div style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface-variant);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px">In the news · <span id="ai-news-date" style="color:var(--md-sys-color-secondary)"></span></div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch">
         <!-- AI CHIPS START -->
         <button class="chip" onclick="askAI('Starmer refused Trump\'s request to use UK bases for Iran strikes, then partially reversed — did he handle the Iran crisis well or has he damaged the UK-US special relationship?')">Starmer & the Iran crisis</button>
         <button class="chip" onclick="askAI('Nigel Farage initially demanded Britain back Trump\'s Iran strikes, then U-turned completely — what does this tell us about his judgment and whether Reform UK is ready to govern?')">Farage\'s Iran U-turn</button>
@@ -582,8 +583,8 @@ body {
       </div>
     </div>
 
-    <!-- OUTPUT -->
-    <div id="ai-output" class="ai-empty">Tap a party for a full briefing, or a news story above</div>
+    <!-- OUTPUT - moved up, right after sections -->
+    <div id="ai-output" class="ai-empty" style="min-height:56px">Tap a party for a briefing, or swipe the news →</div>
 
     <!-- INPUT -->
     <div style="display:flex;gap:8px;margin-top:14px">
@@ -910,6 +911,7 @@ async function askParty(party, color) {
   var out = document.getElementById('ai-output');
   out.className = '';
   out.innerHTML = '<div style="text-align:center;padding:24px;color:var(--md-sys-color-on-surface-variant);font-size:16px">⏳ Building briefing...</div>';
+  out.scrollIntoView({behavior:'smooth', block:'nearest'});
 
   var ctx = 'You are a neutral, expert UK political analyst. Today is ' + D.fetchDate + '. '
     + 'Current polling: Reform UK 26%, Labour 19%, Conservative 18%, Green 17%, Lib Dem 12%, SNP 3%, Restore Britain 7%. '
@@ -965,6 +967,7 @@ async function askAI(q) {
   input.value = q;
   out.className = '';
   out.innerHTML = '<div style="color:var(--md-sys-color-on-surface-variant);font-size:16px;text-align:center;padding:20px">⏳ Thinking...</div>';
+  out.scrollIntoView({behavior:'smooth', block:'nearest'});
   var ctx = 'You are a neutral, expert UK political analyst. Today is ' + D.fetchDate + '. '
     + 'Current polling averages: Reform UK 26%, Labour 19%, Conservative 18%, Green 17%, Lib Dem 12%, SNP 3%, Restore Britain 7% (FON prompted only). '
     + 'MRP seat projection: Reform UK 335, Conservative 92, Lib Dem 60, Green 52, Labour 41, SNP 44 — a hung parliament. '
