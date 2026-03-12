@@ -1394,7 +1394,8 @@ function renderLeaders() {
     var policyPills = '<div class="policy-pills">'
       + topics.filter(t => l[t.k]).map(t =>
         '<button class="policy-pill" id="pp-' + li + '-' + t.k + '" '
-        + 'onclick="togglePolicy(' + li + ',\'' + t.k + '\',' + JSON.stringify(l.color) + ')" '
+        + 'data-li="' + li + '" data-key="' + t.k + '" data-color="' + l.color + '" '
+        + 'onclick="togglePolicy(this.dataset.li, this.dataset.key, this.dataset.color)" '
         + 'style="background:' + l.color + '18;color:' + l.color + '">'
         + t.emoji + ' ' + t.l.split(' ')[1] + '</button>'
       ).join('')
@@ -1494,14 +1495,15 @@ function toggleBio(li) {
 }
 
 function togglePolicy(li, key, color) {
+  li = String(li);
   var detail = document.getElementById('pd-' + li + '-' + key);
   var pill = document.getElementById('pp-' + li + '-' + key);
+  if (!detail || !pill) return;
   var isOpen = detail.classList.contains('open');
-  // Close all other policies for this leader
   ['immigration','economy','nhs','climate'].forEach(function(k) {
     var d = document.getElementById('pd-' + li + '-' + k);
     var p = document.getElementById('pp-' + li + '-' + k);
-    if (d) { d.classList.remove('open'); }
+    if (d) d.classList.remove('open');
     if (p && k !== key) { p.classList.remove('active'); p.style.background = color + '18'; p.style.color = color; }
   });
   if (!isOpen) {
