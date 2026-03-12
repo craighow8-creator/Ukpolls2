@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -51,7 +51,7 @@
 body {
   background: var(--md-sys-color-surface);
   color: var(--md-sys-color-on-surface);
-  font-family: 'Nunito Sans', sans-serif;
+  font-family: 'Nunito', sans-serif;
   font-size: 16px;
   height: 100vh;
   height: 100dvh;
@@ -102,7 +102,7 @@ body {
   border-radius: var(--md-sys-shape-corner-full);
   font-size: 13px; font-weight: 600;
   cursor: pointer;
-  font-family: 'Nunito Sans', sans-serif;
+  font-family: 'Nunito', sans-serif;
   transition: background 0.2s;
 }
 .btn-share:active { background: var(--md-sys-color-primary-container); }
@@ -114,7 +114,7 @@ body {
   border-radius: var(--md-sys-shape-corner-full);
   font-size: 13px; font-weight: 600;
   cursor: pointer;
-  font-family: 'Nunito Sans', sans-serif;
+  font-family: 'Nunito', sans-serif;
   text-decoration: none;
   display: inline-flex; align-items: center;
   white-space: nowrap;
@@ -237,7 +237,7 @@ body {
   color: var(--md-sys-color-on-surface-variant);
   font-size: 10px; cursor: pointer;
   gap: 3px; flex: 1;
-  font-family: 'Nunito Sans', sans-serif;
+  font-family: 'Nunito', sans-serif;
   font-weight: 500;
   transition: color 0.2s;
   position: relative;
@@ -308,7 +308,7 @@ body {
   padding: 8px 16px;
   cursor: pointer;
   color: var(--md-sys-color-primary);
-  font-family: 'Nunito Sans', sans-serif;
+  font-family: 'Nunito', sans-serif;
   font-weight: 500;
   box-shadow: var(--md-elevation-1);
   transition: background 0.15s, border-color 0.15s;
@@ -332,7 +332,7 @@ body {
 .popup-icon { font-size: 48px; margin-bottom: 12px; }
 .popup-title { font-size: 22px; font-weight: 700; color: var(--md-sys-color-on-surface); margin-bottom: 8px; font-family: 'Nunito', sans-serif; }
 .popup-body { font-size: 14px; color: var(--md-sys-color-on-surface-variant); line-height: 1.6; margin-bottom: 24px; }
-.popup-btn { display: block; width: 100%; padding: 14px; border-radius: var(--md-sys-shape-corner-full); font-weight: 700; font-size: 15px; cursor: pointer; border: none; margin-bottom: 10px; font-family: 'Nunito Sans', sans-serif; }
+.popup-btn { display: block; width: 100%; padding: 14px; border-radius: var(--md-sys-shape-corner-full); font-weight: 700; font-size: 15px; cursor: pointer; border: none; margin-bottom: 10px; font-family: 'Nunito', sans-serif; }
 .popup-yes { background: var(--md-sys-color-secondary); color: #fff; }
 .popup-no { background: transparent; color: var(--md-sys-color-on-surface-variant); font-size: 14px; text-decoration: underline; }
 
@@ -559,10 +559,10 @@ body {
     <div id="ai-output" class="ai-empty">Ask a question above or type below</div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <input id="ai-input" type="text" placeholder="Ask about UK politics..."
-        style="flex:1;background:var(--md-sys-color-surface);border:1.5px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);padding:12px 16px;color:var(--md-sys-color-on-surface);font-size:14px;outline:none;font-family:'Nunito Sans',sans-serif;"
+        style="flex:1;background:var(--md-sys-color-surface);border:1.5px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);padding:12px 16px;color:var(--md-sys-color-on-surface);font-size:14px;outline:none;font-family:'Nunito',sans-serif;"
         onkeydown="if(event.key==='Enter')askAI(this.value)">
       <button onclick="askAI(document.getElementById('ai-input').value)"
-        style="background:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:12px 20px;color:#fff;font-weight:700;cursor:pointer;font-size:14px;font-family:'Nunito Sans',sans-serif;box-shadow:var(--md-elevation-1);">Ask</button>
+        style="background:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:12px 20px;color:#fff;font-weight:700;cursor:pointer;font-size:14px;font-family:'Nunito',sans-serif;box-shadow:var(--md-elevation-1);">Ask</button>
     </div>
   </div>
 
@@ -575,12 +575,12 @@ body {
     <div style="font-size:20px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:12px;font-family:'Nunito',sans-serif">Share UK Poll Tracker</div>
     <div style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-large);padding:14px;font-size:13px;color:var(--md-sys-color-on-surface);line-height:1.6;margin-bottom:18px" id="share-preview-text"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <button onclick="shareToX();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:14px;cursor:pointer;background:#000;color:#fff;font-family:'Nunito Sans',sans-serif">X / Twitter</button>
-      <button onclick="shareToWhatsApp();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:14px;cursor:pointer;background:#25D366;color:#fff;font-family:'Nunito Sans',sans-serif">WhatsApp</button>
-      <button onclick="shareToFacebook();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:14px;cursor:pointer;background:#1877F2;color:#fff;font-family:'Nunito Sans',sans-serif">Facebook</button>
-      <button onclick="copyLink()" id="copy-btn" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:1.5px solid var(--md-sys-color-outline-variant);font-weight:700;font-size:14px;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:'Nunito Sans',sans-serif">Copy link</button>
+      <button onclick="shareToX();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:14px;cursor:pointer;background:#000;color:#fff;font-family:'Nunito',sans-serif">X / Twitter</button>
+      <button onclick="shareToWhatsApp();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:14px;cursor:pointer;background:#25D366;color:#fff;font-family:'Nunito',sans-serif">WhatsApp</button>
+      <button onclick="shareToFacebook();closeShare()" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:none;font-weight:700;font-size:14px;cursor:pointer;background:#1877F2;color:#fff;font-family:'Nunito',sans-serif">Facebook</button>
+      <button onclick="copyLink()" id="copy-btn" style="padding:14px;border-radius:var(--md-sys-shape-corner-full);border:1.5px solid var(--md-sys-color-outline-variant);font-weight:700;font-size:14px;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:'Nunito',sans-serif">Copy link</button>
     </div>
-    <button onclick="closeShare()" style="width:100%;padding:12px;background:transparent;color:var(--md-sys-color-on-surface-variant);border:none;font-size:14px;cursor:pointer;text-decoration:underline;font-family:'Nunito Sans',sans-serif">Close</button>
+    <button onclick="closeShare()" style="width:100%;padding:12px;background:transparent;color:var(--md-sys-color-on-surface-variant);border:none;font-size:14px;cursor:pointer;text-decoration:underline;font-family:'Nunito',sans-serif">Close</button>
   </div>
 </div>
 
@@ -965,9 +965,9 @@ function renderTrends() {
           borderColor: 'rgba(255,255,255,0.1)',
           borderWidth: 1,
           titleColor: '#ffffff',
-          titleFont: { size: 14, weight: '700', family: "'Nunito Sans', sans-serif" },
+          titleFont: { size: 14, weight: '700', family: "'Nunito', sans-serif" },
           bodyColor: '#e8ecf4',
-          bodyFont: { size: 13, family: "'Nunito Sans', sans-serif" },
+          bodyFont: { size: 13, family: "'Nunito', sans-serif" },
           padding: 14, cornerRadius: 16, caretSize: 6,
           displayColors: true, boxWidth: 10, boxHeight: 10,
           callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%` }
@@ -977,12 +977,12 @@ function renderTrends() {
         x: {
           grid: { color: 'rgba(0,0,0,0.06)', lineWidth: 1 },
           border: { dash: [4,4] },
-          ticks: { color: '#79747E', font: { size: 13, family: "'Nunito Sans',sans-serif" }, padding: 8 }
+          ticks: { color: '#79747E', font: { size: 13, family: "'Nunito',sans-serif" }, padding: 8 }
         },
         y: {
           grid: { color: 'rgba(0,0,0,0.06)', lineWidth: 1 },
           border: { dash: [4,4] },
-          ticks: { color: '#79747E', font: { size: 13, family: "'Nunito Sans',sans-serif" }, callback: v => v + '%', padding: 8 },
+          ticks: { color: '#79747E', font: { size: 13, family: "'Nunito',sans-serif" }, callback: v => v + '%', padding: 8 },
           suggestedMin: 8, suggestedMax: 35,
         }
       }
@@ -991,7 +991,7 @@ function renderTrends() {
   document.getElementById('trend-legend').innerHTML = parties.map((p,i) =>
     `<button onclick="toggleTrendParty(${i})" id="tlegend-${i}"
       style="background:${colors[p]};color:#fff;border:none;border-radius:50px;padding:6px 14px;
-      font-size:13px;font-weight:600;font-family:'Nunito Sans',sans-serif;cursor:pointer;
+      font-size:13px;font-weight:600;font-family:'Nunito',sans-serif;cursor:pointer;
       transition:opacity 0.2s,transform 0.15s;opacity:1">${p}</button>`
   ).join('');
 }
@@ -1108,7 +1108,7 @@ function renderLeaders() {
     var bioId = 'bio-' + li;
     var bioHtml = l.bio ? `<div style="margin-top:10px">
       <button onclick="var el=document.getElementById('${bioId}');var btn=this;if(el.style.display==='none'){el.style.display='block';btn.textContent='▲ Hide bio';}else{el.style.display='none';btn.textContent='▼ About ${l.name.split(' ')[0]}'}"
-        style="background:var(--md-sys-color-tonal-navy);border:none;color:var(--md-sys-color-primary);border-radius:var(--md-sys-shape-corner-full);padding:6px 14px;font-size:13px;cursor:pointer;font-weight:600;font-family:'Nunito Sans',sans-serif">▼ About ${l.name.split(' ')[0]}</button>
+        style="background:var(--md-sys-color-tonal-navy);border:none;color:var(--md-sys-color-primary);border-radius:var(--md-sys-shape-corner-full);padding:6px 14px;font-size:13px;cursor:pointer;font-weight:600;font-family:'Nunito',sans-serif">▼ About ${l.name.split(' ')[0]}</button>
       <div id="${bioId}" style="display:none;font-size:13px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;padding:12px;background:var(--md-sys-color-surface-container-low);border-radius:var(--md-sys-shape-corner-medium);margin-top:8px">${l.bio}</div>
     </div>` : '';
     return `<div class="lcard">
@@ -1126,7 +1126,7 @@ function renderLeaders() {
         <div style="text-align:right">
           <div class="lcnet" style="color:${l.net===null?'var(--md-sys-color-on-surface-variant)':l.net>0?'var(--up)':'var(--down)'}">${l.net===null?'—':(l.net>0?'+':'')+l.net}</div>
           <div class="lcnl">${l.net===null?'LIMITED':'NET'}</div>
-          <button onclick="selectLeaderCompare(${li},this)" id="lcmp-${li}" style="background:var(--md-sys-color-tonal-navy);border:none;color:var(--md-sys-color-primary);border-radius:var(--md-sys-shape-corner-full);padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-weight:600;font-family:'Nunito Sans',sans-serif;margin-top:4px">Compare</button>
+          <button onclick="selectLeaderCompare(${li},this)" id="lcmp-${li}" style="background:var(--md-sys-color-tonal-navy);border:none;color:var(--md-sys-color-primary);border-radius:var(--md-sys-shape-corner-full);padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap;font-weight:600;font-family:'Nunito',sans-serif;margin-top:4px">Compare</button>
         </div>
       </div>
       ${bioHtml}
