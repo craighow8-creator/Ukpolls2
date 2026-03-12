@@ -514,7 +514,7 @@ function sp(id, btn) {
   btn.classList.add('active');
   document.getElementById('content').scrollTop = 0;
   btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
-  if (id === 'trends') { setTimeout(renderTrends,50); setTimeout(renderTrends,300); }
+  if (id === 'trends') { setTimeout(renderTrends, 50); }
   if (id === 'demo') { setTimeout(renderMigration, 50); }
 }
 
@@ -1029,8 +1029,8 @@ function renderTrends() {
       maintainAspectRatio: true,
       aspectRatio: 1.4,
       animation: {
-        duration: 800,
-        easing: 'easeOutQuart',
+        duration: 600,
+        easing: 'easeOutCubic',
       },
       interaction: { mode: 'index', intersect: false },
       plugins: {
