@@ -947,6 +947,7 @@ async function askAI(q) {
     var text = data.content && data.content[0] && data.content[0].text;
     if (text) {
       out.innerHTML = '<div style="font-size:15px;color:#e8ecf4;line-height:1.7">' + text.replace(/\n/g,'<br>') + '</div>';
+      input.value = '';
     } else {
       out.innerHTML = '<div style="color:#f85149">Error: No response received.</div>';
     }
@@ -1144,6 +1145,7 @@ function renderLeaders() {
     {k:'nhs',         l:'🏥 NHS'},
     {k:'climate',     l:'🌿 CLIMATE'}
   ];
+  var PARTY_URLS = {"Green Party":"https://www.greenparty.org.uk","Lib Dems":"https://www.libdems.org.uk","Reform UK":"https://www.reformparty.uk","Restore Britain":"https://www.restorebritain.org.uk","Conservative":"https://www.conservatives.com","Labour":"https://www.labour.org.uk","SNP":"https://www.snp.org"};
   document.getElementById('leaders-content').innerHTML = D.leaders.map((l,li) => {
     var initials = l.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2);
     var bioId = 'bio-' + li;
@@ -1159,7 +1161,7 @@ function renderLeaders() {
             <div class="lcname">${l.name}</div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
               <div class="lcparty" style="color:${l.color}">${l.party}</div>
-              ${({"Green Party":"https://www.greenparty.org.uk","Lib Dems":"https://www.libdems.org.uk","Reform UK":"https://www.reformparty.uk","Restore Britain":"https://www.restorebritain.org.uk","Conservative":"https://www.conservatives.com","Labour":"https://www.labour.org.uk","SNP":"https://www.snp.org"})[l.party] ? '<a href="'+({"Green Party":"https://www.greenparty.org.uk","Lib Dems":"https://www.libdems.org.uk","Reform UK":"https://www.reformparty.uk","Restore Britain":"https://www.restorebritain.org.uk","Conservative":"https://www.conservatives.com","Labour":"https://www.labour.org.uk","SNP":"https://www.snp.org"})[l.party]+'" target="_blank" style="font-size:11px;color:#c8cdd8;border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:2px 8px;text-decoration:none;white-space:nowrap">🌐 Website</a>' : ''}
+              ${PARTY_URLS[l.party] ? '<a href="'+PARTY_URLS[l.party]+'" target="_blank" style="font-size:11px;color:#c8cdd8;border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:2px 8px;text-decoration:none;white-space:nowrap">🌐 Website</a>' : ''}
             </div>
           </div>
         </div>
@@ -1205,7 +1207,7 @@ function renderPolls() {
 function getDeviceId() {
   let id = localStorage.getItem('device_id');
   if (!id) {
-    id = 'dev_' + Math.random().toString(36).substr(2,9) + Date.now().toString(36);
+    id = 'dev_' + Math.random().toString(36).substring(2,11) + Date.now().toString(36);
     localStorage.setItem('device_id', id);
   }
   return id;
@@ -1408,7 +1410,7 @@ setTimeout(renderTrends, 100);
     Elections
   </button>
   <button class="nb" onclick="sp('vote',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M9 11V7a3 3 0 0 1 6 0v4"/><line x1="12" y1="15" x2="12" y2="17"/></svg>
     Vote
   </button>
   <button class="nb" onclick="sp('demo',this)">
