@@ -813,7 +813,8 @@ body {
       <button onclick="shareToFacebook();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#1877F2;color:#fff;font-family:'Nunito',sans-serif">Facebook</button>
       <button onclick="copyLink()" id="copy-btn" style="padding:14px;border-radius:99px;border:2px solid var(--md-sys-color-outline-variant);font-weight:800;font-size:15px;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:'Nunito',sans-serif">📋 Copy</button>
     </div>
-    <button onclick="closeShare()" style="width:100%;padding:12px;background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface-variant);border:none;font-size:15px;font-weight:700;cursor:pointer;border-radius:99px;font-family:'Nunito',sans-serif;margin-top:4px">Dismiss</button>
+    <button onclick="shareNative();closeShare()" style="width:100%;padding:14px;background:var(--md-sys-color-primary);color:#fff;border:none;font-size:15px;font-weight:800;cursor:pointer;border-radius:99px;font-family:'Nunito',sans-serif;margin-bottom:8px">🔗 More apps (Reddit, Telegram…)</button>
+    <button onclick="closeShare()" style="width:100%;padding:12px;background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface-variant);border:none;font-size:15px;font-weight:700;cursor:pointer;border-radius:99px;font-family:'Nunito',sans-serif">Dismiss</button>
   </div>
 </div>
 
@@ -1072,6 +1073,14 @@ function shareToWhatsApp() {
 function shareToFacebook() {
   try { window.goatcounter.count({path:'share-facebook',title:'Share: share-facebook',event:true}); } catch(e) {}
   window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(APP_URL) + '&quote=' + encodeURIComponent(generateShareText()), '_blank');
+}
+function shareNative() {
+  try { window.goatcounter.count({path:'share-native',title:'Share: native sheet',event:true}); } catch(e) {}
+  if (navigator.share) {
+    navigator.share({ title: '🇬🇧 UK Poll Tracker', text: generateShareText(), url: APP_URL }).catch(function() {});
+  } else {
+    navigator.clipboard.writeText(generateShareText()).then(function() { alert('Copied to clipboard!'); });
+  }
 }
 function copyLink() {
   try { window.goatcounter.count({path:'share-copy',title:'Share: copy link',event:true}); } catch(e) {}
