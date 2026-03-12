@@ -144,10 +144,11 @@ body {
 /* ── Cards ── */
 .card {
   background: var(--md-sys-color-surface);
-  border-radius: var(--md-sys-shape-corner-extra-large);
+  border-radius: 24px;
   padding: 20px;
   margin-bottom: 12px;
-  box-shadow: var(--md-elevation-1);
+  box-shadow: var(--md-elevation-2);
+  overflow: hidden;
 }
 .card-tonal {
   background: var(--md-sys-color-tonal-navy);
@@ -539,22 +540,22 @@ body {
     <div class="sbar" id="seat-bar"></div>
     <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin-bottom:20px;font-weight:500">326 seats needed for majority · <strong style="color:var(--md-sys-color-primary)">Hung Parliament</strong></div>
     <div class="sec-label">📋 Context</div>
-    <div class="card" style="font-size:16px;line-height:1.8;color:var(--md-sys-color-on-surface)" id="ctx-text"></div>
+    <div class="card" style="font-size:16px;line-height:1.8;color:var(--md-sys-color-on-surface);border-top:4px solid var(--md-sys-color-primary)" id="ctx-text"></div>
 
     <div class="sec-label">📈 6-Month Trend</div>
-    <div class="card" style="padding:20px" id="trend-card">
+    <div class="card" style="padding:20px;border-top:4px solid var(--md-sys-color-primary)" id="trend-card">
       <canvas id="trend-chart" style="width:100%;display:block"></canvas>
       <div id="trend-legend" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center"></div>
     </div>
     <div class="sec-label">📌 Milestones</div>
-    <div class="card" id="milestones-list"></div>
+    <div class="card" style="border-top:4px solid #C8102E" id="milestones-list"></div>
     <div class="sec-label" id="polls-anchor">📋 Recent Polls</div>
     <div id="polls-cards"></div>
     <div style="font-size:13px;color:var(--md-sys-co  <!-- ELECTIONS -->"trend-chart" style="width:100%;display:block"></canvas>
       <div id="trend-legend" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center"></div>
     </div>
     <div class="sec-label">📌 Milestones</div>
-    <div class="card" id="milestones-list"></div>
+    <div class="card" style="border-top:4px solid #C8102E" id="milestones-list"></div>
     <div class="sec-label" id="polls-anchor">📋 Recent Polls</div>
     <div id="polls-cards"></div>
     <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);padding:2px 4px 12px">BPC members · RB = Restore Britain (prompted only)</div>
@@ -749,8 +750,8 @@ body {
     <div class="ssub">Straight-talking briefings on UK politics</div>
 
     <!-- PARTY BRIEFING SECTION -->
-    <div style="margin-bottom:20px">
-      <div style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface-variant);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px">Why vote for...</div>
+    <div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);overflow:hidden;border-top:4px solid var(--md-sys-color-primary);padding:18px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:12px">🗳 Why vote for...</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         <button class="party-btn" style="--pc:#C8102E" onclick="askParty('Labour','#C8102E')">Labour</button>
         <button class="party-btn" style="--pc:#12B7D4" onclick="askParty('Reform UK','#12B7D4')">Reform UK</button>
@@ -763,9 +764,9 @@ body {
     </div>
 
     <!-- TODAY'S STORIES SECTION -->
-    <div style="margin-bottom:16px">
-      <div style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface-variant);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px">In the news · <span id="ai-news-date" style="color:var(--md-sys-color-secondary)"></span></div>
-      <div style="display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch">
+    <div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);overflow:hidden;border-top:4px solid #C8102E;padding:18px 18px 12px;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:12px">📰 In the news · <span id="ai-news-date" style="color:var(--md-sys-color-secondary);font-size:12px;font-weight:600"></span></div>
+      <div style="display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch">
         <!-- AI CHIPS START -->
         <button class="chip" onclick="askAI('Starmer refused Trump\'s request to use UK bases for Iran strikes, then partially reversed — did he handle the Iran crisis well or has he damaged the UK-US special relationship?')">Starmer & the Iran crisis</button>
         <button class="chip" onclick="askAI('Nigel Farage initially demanded Britain back Trump\'s Iran strikes, then U-turned completely — what does this tell us about his judgment and whether Reform UK is ready to govern?')">Farage\'s Iran U-turn</button>
@@ -784,15 +785,15 @@ body {
     </div>
 
     <!-- OUTPUT - moved up, right after sections -->
-    <div id="ai-output" class="ai-empty" style="min-height:56px">Tap a party for a briefing, or swipe the news →</div>
+    <div id="ai-output" class="ai-empty" style="min-height:56px;background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-1);border-top:4px solid var(--md-sys-color-outline-variant)">Tap a party for a briefing, or swipe the news →</div>
 
     <!-- INPUT -->
-    <div style="display:flex;gap:8px;margin-top:14px">
+    <div style="display:flex;gap:8px;margin-top:12px">
       <input id="ai-input" type="text" placeholder="Ask about UK politics..."
-        style="flex:1;background:var(--md-sys-color-surface);border:1.5px solid var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);padding:12px 16px;color:var(--md-sys-color-on-surface);font-size:16px;outline:none;font-family:'Nunito',sans-serif;"
+        style="flex:1;background:var(--md-sys-color-surface);border:2px solid var(--md-sys-color-outline-variant);border-radius:99px;padding:13px 18px;color:var(--md-sys-color-on-surface);font-size:16px;outline:none;font-family:'Nunito',sans-serif;box-shadow:var(--md-elevation-1);"
         onkeydown="if(event.key==='Enter')askAI(this.value)">
       <button onclick="askAI(document.getElementById('ai-input').value)"
-        style="background:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:12px 20px;color:#fff;font-weight:700;cursor:pointer;font-size:16px;font-family:'Nunito',sans-serif;box-shadow:var(--md-elevation-1);">Ask</button>
+        style="background:var(--md-sys-color-primary);border:none;border-radius:99px;padding:13px 22px;color:#fff;font-weight:800;cursor:pointer;font-size:15px;font-family:'Nunito',sans-serif;box-shadow:var(--md-elevation-2);white-space:nowrap;">Ask</button>
     </div>
   </div>
 
@@ -1479,10 +1480,10 @@ function renderAge() {
   document.getElementById('nonvoter-content').innerHTML = `
     <div style="background:var(--md-sys-color-surface);border-radius:20px;box-shadow:var(--md-elevation-1);margin-bottom:10px;overflow:hidden;border-top:3px solid #12B7D4">
       <div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:10px;padding:14px 16px 0">Where are 2024's non-voters going?</div>
-      <div style="font-size:16px;color:var(--md-sys-color-on-surface);line-height:1.7;margin-bottom:14px">
+      <div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75;margin-bottom:14px;padding:0 16px">
         42% of eligible voters did not vote in the 2024 General Election. Among those who didn't vote but now say they would <em>"definitely vote"</em>, Reform UK and Restore Britain are picking up the largest share.
       </div>
-      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase">Estimated intention among 2024 non-voters who now say they'd vote</div>
+      <div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:0 16px">Estimated intention among 2024 non-voters who now say they'd vote</div>
       ${[
         {label:'Reform UK', color:'#12B7D4', pct:32, note:'Biggest beneficiary of returning non-voters'},
         {label:'RB',        color:'#1a4a9e', pct:18, note:'Growing fast among disengaged voters'},
@@ -1491,15 +1492,15 @@ function renderAge() {
         {label:'Con',       color:'#0087DC', pct:10, note:''},
         {label:'LD',        color:'#FAA61A', pct:6,  note:''},
       ].map(p => `
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 16px">
           <div style="width:72px;font-size:13px;color:${p.color};font-weight:700;flex-shrink:0;line-height:1.2">${p.label}</div>
           <div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:12px;overflow:hidden">
             <div style="width:${p.pct}%;background:${p.color};height:100%;border-radius:99px"></div>
           </div>
           <div style="width:32px;text-align:right;font-size:15px;font-weight:700;color:${p.color}">${p.pct}%</div>
         </div>
-        ${p.note ? `<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;padding-left:52px;font-style:italic">${p.note}</div>` : ''}`).join('')}
-      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:10px;padding-bottom:14px">Source: Find Out Now, JL Partners.</div>
+        ${p.note ? `<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;padding-left:88px;font-style:italic">${p.note}</div>` : ''}`).join('')}
+      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:10px;padding:0 16px 16px">Source: Find Out Now, JL Partners.</div>
     </div>`;
 }
 
@@ -1758,7 +1759,7 @@ function renderPollCards() {
     + '</div>';
 
   document.getElementById('polls-cards').innerHTML =
-    '<div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);padding:18px">'
+    '<div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);padding:18px;border-top:4px solid var(--md-sys-color-primary)">'
     + '<div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:2px">Recent polls</div>'
     + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px">Bars show each party\'s share per pollster</div>'
     + rows
@@ -1799,11 +1800,12 @@ function renderVoteButtons() {
   btns.innerHTML = visible.map(p => {
     var sel = p.name === myVote;
     var bg = sel ? p.color + '18' : 'var(--md-sys-color-surface)';
-    var border = sel ? '2px solid ' + p.color : '2px solid ' + p.color + '50';
-    var shadow = sel ? '0 0 0 2px ' + p.color + '40' : 'var(--md-elevation-1)';
+    var border = 'none';
+    var shadow = sel ? 'var(--md-elevation-2)' : 'var(--md-elevation-1)';
+    var topBorder = 'border-top:4px solid ' + (sel ? p.color : p.color + '90') + ';';
     var count = (window._voteCache && window._voteCache[p.name]) || 0;
     var wm = count > 0 ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:' + p.color + ';opacity:0.22;pointer-events:none">' + count + '</div>' : '';
-    return '<div onclick="castVote(\'' + p.name + '\')" style="background:' + bg + ';border:' + border + ';border-radius:20px;padding:16px 12px;text-align:center;cursor:pointer;box-shadow:' + shadow + ';transition:all 0.15s;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:72px;gap:4px;position:relative;overflow:hidden">'
+    return '<div onclick="castVote(\'' + p.name + '\')" style="background:' + bg + ';' + topBorder + 'border-radius:20px;padding:16px 12px;text-align:center;cursor:pointer;box-shadow:' + shadow + ';transition:all 0.15s;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:72px;gap:4px;position:relative;overflow:hidden">'
       + wm
       + '<div style="position:relative;font-size:16px;color:' + (sel ? p.color : 'var(--md-sys-color-on-surface)') + ';font-weight:800;word-break:break-word;line-height:1.3">' + p.name + '</div>'
       + (sel ? '<div style="position:relative;font-size:12px;color:' + p.color + ';font-weight:800;letter-spacing:0.5px">✓ Your vote</div>' : '')
