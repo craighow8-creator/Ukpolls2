@@ -221,6 +221,7 @@ body{background:transparent;color:#e8ecf4;font-family:'Nunito Sans',sans-serif;f
     <div class="ssub">6-month polling movement</div>
     <div class="card" style="padding:16px" id="trend-card">
       <canvas id="trend-chart" style="width:100%;display:block"></canvas>
+      <div id="trend-legend" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-content:center"></div>
     </div>
     <div class="sec-label">📈 LATEST MOVEMENT</div>
     <div class="card" id="movers-list"></div>
@@ -1033,17 +1034,7 @@ function renderTrends() {
       },
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: '#e8ecf4',
-            font: { size: 13, family: "'Nunito Sans', sans-serif", weight: '600' },
-            usePointStyle: true,
-            pointStyle: 'circle',
-            pointStyleWidth: 10,
-            padding: 18,
-          }
-        },
+        legend: { display: false },
         tooltip: {
           backgroundColor: 'rgba(15,20,45,0.96)',
           borderColor: 'rgba(255,255,255,0.18)',
@@ -1079,8 +1070,27 @@ function renderTrends() {
       }
     }
   });
+
+  // Custom pill legend
+  const legendEl = document.getElementById('trend-legend');
+  legendEl.innerHTML = parties.map((p, i) =>
+    `<button onclick="toggleTrendParty(${i})" id="tlegend-${i}"
+      style="background:${colors[p]};color:#fff;border:none;border-radius:50px;padding:6px 14px;
+      font-size:13px;font-weight:700;font-family:'Nunito Sans',sans-serif;cursor:pointer;
+      transition:opacity 0.2s,transform 0.15s;opacity:1">${p}</button>`
+  ).join('');
 }
-window.addEventListener('resize', () => {
+
+function toggleTrendParty(i) {
+  const chart = window._trendChart;
+  const meta = chart.getDatasetMeta(i);
+  meta.hidden = !meta.hidden;
+  const btn = document.getElementById('tlegend-' + i);
+  btn.style.opacity = meta.hidden ? '0.3' : '1';
+  btn.style.transform = meta.hidden ? 'scale(0.92)' : 'scale(1)';
+  chart.tooltip.setActiveElements([], {x:0,y:0});
+  chart.update();
+}
   if (document.getElementById('page-trends').classList.contains('active')) renderTrends();
 });
 
