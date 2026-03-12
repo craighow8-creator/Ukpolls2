@@ -169,12 +169,14 @@ body {
   font-weight: 400;
 }
 .sec-label {
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  color: var(--md-sys-color-on-surface-variant);
-  margin: 20px 0 10px;
-  font-weight: 600;
-  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  color: var(--md-sys-color-on-surface);
+  margin: 22px 0 10px 2px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* ── Party Grid ── */
@@ -219,17 +221,19 @@ body {
 /* ── Seat Bar ── */
 .sbar {
   display: flex;
-  height: 44px;
-  border-radius: var(--md-sys-shape-corner-full);
+  height: 58px;
+  border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
   gap: 2px;
-  box-shadow: var(--md-elevation-1);
+  box-shadow: var(--md-elevation-2);
+  background: var(--md-sys-color-outline-variant);
 }
 .sseg {
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700; overflow: hidden;
-  color: white;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; overflow: hidden;
+  color: white; gap: 2px; line-height: 1;
+  transition: flex 0.4s ease;
 }
 
 @keyframes slideIn {
@@ -1178,10 +1182,16 @@ function renderPolls() {
       </div>`;
     }).join('')
     + '</div>';
-  document.getElementById('seat-bar').innerHTML = D.parties.filter(p => p.seats !== null).map(p => `
-    <div class="sseg" style="flex:${p.seats};background:${p.color};color:${p.name==='SNP'?'#000':'#fff'}" title="${p.name}: ${p.seats}">
-      ${p.seats > 15 ? p.abbr : ''}
-    </div>`).join('');
+  var seatParties = D.parties.filter(p => p.seats !== null).sort((a,b) => b.seats - a.seats);
+  var totalSeats = seatParties.reduce((s,p) => s+p.seats, 0);
+  document.getElementById('seat-bar').innerHTML = seatParties.map(p => {
+    var pct = (p.seats / totalSeats * 100).toFixed(1);
+    var textColor = p.name === 'SNP' ? '#1a1a1a' : '#fff';
+    return `<div class="sseg" style="flex:${p.seats};background:${p.color};color:${textColor}" title="${p.name}: ~${p.seats} seats">`
+      + (p.seats > 25 ? `<span style="font-size:12px;font-weight:800;letter-spacing:0.3px">${p.abbr}</span><span style="font-size:11px;opacity:0.9">${p.seats}</span>` 
+         : p.seats > 10 ? `<span style="font-size:10px;font-weight:800">${p.seats}</span>` : '')
+      + '</div>';
+  }).join('');
   document.getElementById('ctx-text').textContent = D.context;
   var wim = document.getElementById('what-it-means');
   if (wim) { var ld = D.parties[0], short = 326 - ld.seats; wim.innerHTML = '<strong>What this means:</strong> On current polling, <span style="color:'+ld.color+';font-weight:700">'+ld.name+'</span>'+(ld.seats>=326?' projects to an outright majority (~'+ld.seats+' seats).':' would be largest party (~'+ld.seats+' seats) but <strong>'+short+' short of a majority</strong> — a <strong>hung parliament</strong>.'); }
@@ -1281,19 +1291,32 @@ function renderAge() {
     {key:'LD',label:'LD',color:'#FAA61A'},
   ];
   function bars(elId, groups) {
-    document.getElementById(elId).innerHTML = groups.map(g => `
-      <div class="lcard" style="margin-bottom:10px">
-        <div style="font-size:16px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:12px">${g.label}</div>
-        ${parties.map(p => `
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-            <div style="width:48px;font-size:13px;color:${p.color};font-weight:600;flex-shrink:0;line-height:1.2">${p.label}</div>
-            <div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden">
-              <div style="width:${g[p.key]}%;background:${p.color};height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>
-            </div>
-            <div style="width:32px;text-align:right;font-size:15px;font-weight:700;color:${p.color}">${g[p.key]}%</div>
-          </div>`).join('')}
-        ${g.note ? `<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:6px;font-style:italic">${g.note}</div>` : ''}
-      </div>`).join('');
+    document.getElementById(elId).innerHTML = groups.map(g => {
+      // Find the leading party for this group
+      var maxPct = 0, leadColor = '#012169';
+      parties.forEach(function(p) { if (g[p.key] > maxPct) { maxPct = g[p.key]; leadColor = p.color; } });
+
+      var barRows = parties.map(p => {
+        var pct = g[p.key] || 0;
+        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">'
+          + '<div style="width:52px;font-size:13px;color:' + p.color + ';font-weight:700;flex-shrink:0;text-align:right;line-height:1.2">' + p.label + '</div>'
+          + '<div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:12px;overflow:hidden">'
+          + '<div style="width:' + pct + '%;background:' + p.color + ';height:100%;border-radius:99px;transition:width 0.4s ease"></div>'
+          + '</div>'
+          + '<div style="width:36px;text-align:right;font-size:14px;font-weight:800;color:' + p.color + '">' + pct + '%</div>'
+          + '</div>';
+      }).join('');
+
+      return '<div style="background:var(--md-sys-color-surface);border-radius:20px;box-shadow:var(--md-elevation-1);margin-bottom:10px;overflow:hidden;border-top:3px solid ' + leadColor + '">'
+        + '<div style="padding:14px 16px 4px;display:flex;justify-content:space-between;align-items:center">'
+        + '<div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface)">' + g.label + '</div>'
+        + '</div>'
+        + '<div style="padding:4px 16px 14px">'
+        + barRows
+        + (g.note ? '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:6px;font-style:italic;line-height:1.5">' + g.note + '</div>' : '')
+        + '</div>'
+        + '</div>';
+    }).join('');
   }
   bars('age-content', [
     {label:'18–24', REF:18,GRN:32,LAB:20,CON:8,LD:12, note:'Greens dominate youngest voters'},
@@ -1330,8 +1353,8 @@ function renderAge() {
     {label:'Mixed/Other',   REF:18,GRN:26,LAB:24,CON:12,LD:14},
   ]);
   document.getElementById('nonvoter-content').innerHTML = `
-    <div class="lcard" style="margin-bottom:10px">
-      <div style="font-size:16px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:10px">Where are 2024's non-voters going?</div>
+    <div style="background:var(--md-sys-color-surface);border-radius:20px;box-shadow:var(--md-elevation-1);margin-bottom:10px;overflow:hidden;border-top:3px solid #12B7D4">
+      <div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:10px;padding:14px 16px 0">Where are 2024's non-voters going?</div>
       <div style="font-size:16px;color:var(--md-sys-color-on-surface);line-height:1.7;margin-bottom:14px">
         42% of eligible voters did not vote in the 2024 General Election. Among those who didn't vote but now say they would <em>"definitely vote"</em>, Reform UK and Restore Britain are picking up the largest share.
       </div>
@@ -1345,14 +1368,14 @@ function renderAge() {
         {label:'LD',        color:'#FAA61A', pct:6,  note:''},
       ].map(p => `
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <div style="width:48px;font-size:13px;color:${p.color};font-weight:600;flex-shrink:0;line-height:1.2">${p.label}</div>
-          <div style="flex:1;background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden">
-            <div style="width:${p.pct}%;background:${p.color};height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>
+          <div style="width:72px;font-size:13px;color:${p.color};font-weight:700;flex-shrink:0;line-height:1.2">${p.label}</div>
+          <div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:12px;overflow:hidden">
+            <div style="width:${p.pct}%;background:${p.color};height:100%;border-radius:99px"></div>
           </div>
           <div style="width:32px;text-align:right;font-size:15px;font-weight:700;color:${p.color}">${p.pct}%</div>
         </div>
         ${p.note ? `<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;padding-left:52px;font-style:italic">${p.note}</div>` : ''}`).join('')}
-      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:10px">Source: Find Out Now, JL Partners.</div>
+      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:10px;padding-bottom:14px">Source: Find Out Now, JL Partners.</div>
     </div>`;
 }
 
@@ -1568,22 +1591,55 @@ async function shareLeader(li) {
 
 // ── Render Poll Cards ──
 function renderPollCards() {
-  var KEYS = [{k:'ref',label:'Reform UK',color:'#12B7D4'},{k:'lab',label:'Labour',color:'#E4003B'},{k:'con',label:'Con',color:'#0087DC'},{k:'ld',label:'Lib Dem',color:'#FAA61A'},{k:'grn',label:'Green',color:'#02A95B'},{k:'rb',label:'RB',color:'#1a4a9e'}];
-  document.getElementById('polls-cards').innerHTML = D.polls.map(p => {
-    var boxes = KEYS.filter(x => p[x.k] != null).map(x =>
-      '<div style="background:var(--md-sys-color-surface-container-low);border-top:3px solid ' + x.color + ';border-radius:var(--md-sys-shape-corner-medium);padding:10px 4px;text-align:center;flex:1;min-width:46px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-height:68px">'
-      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);line-height:1.2;font-weight:500">' + x.label + '</div>'
-      + '<div style="font-size:18px;font-weight:700;color:' + x.color + ';font-family:\'Nunito\',sans-serif">' + p[x.k] + '<span style="font-size:13px">%</span></div>'
+  var KEYS = [
+    {k:'ref', label:'Reform UK', abbr:'Ref', color:'#12B7D4'},
+    {k:'lab', label:'Labour',    abbr:'Lab', color:'#E4003B'},
+    {k:'con', label:'Con',       abbr:'Con', color:'#0087DC'},
+    {k:'grn', label:'Green',     abbr:'Grn', color:'#02A95B'},
+    {k:'ld',  label:'Lib Dem',   abbr:'LD',  color:'#FAA61A'},
+    {k:'rb',  label:'RB',        abbr:'RB',  color:'#1a4a9e'}
+  ];
+
+  // One row per poll — each a mini seat-projection style bar
+  var rows = D.polls.map(function(p) {
+    var total = KEYS.reduce(function(s,k) { return s + (p[k.k] || 0); }, 0);
+    var segs = KEYS.filter(function(k) { return p[k.k] != null; }).map(function(k) {
+      var pct = p[k.k];
+      var show = pct >= 8;
+      return '<div style="flex:' + pct + ';background:' + k.color + ';display:flex;align-items:center;justify-content:center;gap:1px;flex-direction:column;overflow:hidden;min-width:' + (pct >= 5 ? '2px' : '2px') + '">'
+        + (show ? '<span style="font-size:10px;font-weight:800;color:#fff;line-height:1;opacity:0.95">' + k.abbr + '</span>' : '')
+        + (show ? '<span style="font-size:10px;font-weight:700;color:#fff;opacity:0.9">' + pct + '</span>' : '')
+        + '</div>';
+    }).join('');
+
+    return '<div style="margin-bottom:10px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'
+      + '<span style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface)">' + p.pollster + '</span>'
+      + '<span style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + p.date + '</span>'
       + '</div>'
-    ).join('');
-    return '<div class="card" style="margin-bottom:10px;padding:16px">'
-      + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">'
-      + '<div style="font-size:17px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">' + p.pollster + '</div>'
-      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-weight:500">' + p.date + '</div>'
+      + '<div style="display:flex;height:44px;border-radius:12px;overflow:hidden;gap:1.5px;background:var(--md-sys-color-outline-variant)">'
+      + segs
       + '</div>'
-      + '<div style="display:flex;gap:6px;flex-wrap:wrap">' + boxes + '</div>'
       + '</div>';
   }).join('');
+
+  // Party colour key
+  var key = '<div style="display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--md-sys-color-outline-variant)">'
+    + KEYS.map(function(k) {
+      return '<div style="display:flex;align-items:center;gap:5px">'
+        + '<div style="width:10px;height:10px;border-radius:3px;background:' + k.color + '"></div>'
+        + '<span style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">' + k.label + '</span>'
+        + '</div>';
+    }).join('')
+    + '</div>';
+
+  document.getElementById('polls-cards').innerHTML =
+    '<div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);padding:18px">'
+    + '<div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:2px">Recent polls</div>'
+    + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px">Bars show each party\'s share per pollster</div>'
+    + rows
+    + key
+    + '</div>';
 }
 
 // ── Vote Page ──
