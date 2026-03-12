@@ -421,18 +421,18 @@ body{background:transparent;color:#e8ecf4;font-family:'Nunito Sans',sans-serif;f
 const WORKER = 'https://throbbing-base-05b6.craighow8.workers.dev';
 
 const D = {
-  fetchDate: "11 Mar 2026",
+  fetchDate: "12 Mar 2026",
   parties: [
-    {name:"Reform UK",abbr:"REF",pct:27,change:0,seats:335,color:"#12B7D4"},
-    {name:"Labour",abbr:"LAB",pct:19,change:1,seats:41,color:"#E4003B"},
-    {name:"Green",abbr:"GRN",pct:16,change:0,seats:52,color:"#02A95B"},
-    {name:"Conservative",abbr:"CON",pct:18,change:1,seats:92,color:"#0087DC"},
+    {name:"Reform UK",abbr:"REF",pct:26,change:-1,seats:335,color:"#12B7D4"},
+    {name:"Labour",abbr:"LAB",pct:19,change:0,seats:41,color:"#E4003B"},
+    {name:"Green",abbr:"GRN",pct:17,change:1,seats:52,color:"#02A95B"},
+    {name:"Conservative",abbr:"CON",pct:18,change:0,seats:92,color:"#0087DC"},
     {name:"Lib Dem",abbr:"LD",pct:12,change:0,seats:60,color:"#FAA61A"},
     {name:"SNP",abbr:"SNP",pct:3,change:0,seats:44,color:"#FFF95D"},
     {name:"Restore Britain",abbr:"RB",pct:7,change:0,seats:1,color:"#1a4a9e"},
     {name:"Other",abbr:"OTH",pct:5,change:0,seats:null,color:"#6b7280"}
   ],
-  context: "Reform UK leads on ~27% (7-poll avg, 11 Mar 2026). The average is stable but the picture varies sharply by pollster — Survation and Opinium both put Reform UK on 29%, while YouGov has them on just 23%. Greens on 16% average but 21% in YouGov and Find Out Now. Labour at 19% average. Opinium (4-6 Mar): 80% of public fear being drawn into Middle East conflict, 60% expect the economy to worsen. Electoral Calculus MRP: Reform UK 335 seats — projected majority.",
+  context: "Reform UK leads on ~26% (7-poll avg, 12 Mar 2026). YouGov (8-9 Mar) put Reform on 23% with Conservatives and Greens both on 19% — unusually tight. Focaldata (6-10 Mar): Reform 27%, Labour 20%. Greens averaging 17% — near historic highs. Restore Britain at 7% in Find Out Now prompted polls; officially registered as a party on 4 March. Starmer approved use of UK bases for US strikes on Iran — broke with Trump, who attacked him publicly. Labour scored first-ever council by-election gain from Reform UK (Murton, Durham, 5 Mar). Electoral Calculus MRP: Reform UK 335 seats — projected majority.",
   trends: [
     {month:"Sep","Reform UK":28,Labour:22,Conservative:20,"Lib Dem":12,Green:10},
     {month:"Oct","Reform UK":29,Labour:21,Conservative:19,"Lib Dem":12,Green:11},
@@ -440,20 +440,21 @@ const D = {
     {month:"Dec","Reform UK":29,Labour:21,Conservative:18,"Lib Dem":13,Green:11},
     {month:"Jan","Reform UK":28,Labour:20,Conservative:18,"Lib Dem":13,Green:13},
     {month:"Feb","Reform UK":27,Labour:18,Conservative:17,"Lib Dem":13,Green:17},
-    {month:"Mar","Reform UK":27,Labour:19,Conservative:18,"Lib Dem":12,Green:16}
+    {month:"Mar","Reform UK":26,Labour:19,Conservative:18,"Lib Dem":12,Green:17}
   ],
   milestones: [
-    {date:"11 Mar",text:"7-poll average unchanged: Reform UK 27%, Labour 19%, Green 16%, Con 18% — no new polls today"},
-    {date:"10 Mar",text:"Opinium: 80% fear UK being drawn into Middle East conflict; 60% expect economy to worsen in 2026"},
-    {date:"10 Mar",text:"Reform UK 27%, Labour 19%, Green 16%, Con 18% — multi-party squeeze continues"},
-    {date:"Mar 2026",text:"42% didn't vote in 2024 — Reform UK & RB leading among returning non-voters (Find Out Now)"},
-    {date:"5 Mar",text:"Survation: Reform UK 29%, Labour 21% — largest parties still far apart"},
-    {date:"1-2 Mar",text:"YouGov puts Greens 2nd on 21% — highest ever"},
+    {date:"12 Mar",text:"7-poll avg: Reform UK 26% (▼1), Green 17% (▲1) — Con and Green both on 19% in latest YouGov"},
+    {date:"8-9 Mar",text:"YouGov: Reform 23%, Con 19%, Green 19%, Lab 17% — three-way squeeze unlike any previous poll"},
+    {date:"6-10 Mar",text:"Focaldata: Reform 27%, Lab 20%, Con 18%, LD 14% — Labour running second in this pollster"},
+    {date:"5 Mar",text:"Labour wins Murton ward (Durham) from Reform UK — first ever Labour council gain from Reform"},
+    {date:"4 Mar",text:"Restore Britain officially registered as a political party — polling 7% in Find Out Now prompted polls"},
+    {date:"1 Mar",text:"Starmer approves US use of UK bases for Iran strikes. Trump publicly attacks Starmer, says he lacks Churchill's courage"},
+    {date:"1-2 Mar",text:"YouGov puts Greens 2nd on 21% — highest ever recorded"},
     {date:"26 Feb",text:"Greens win Gorton & Denton by-election — 5th MP"},
-    {date:"Feb 2026",text:"Restore Britain launches — 7-10% in prompted polls"},
-    {date:"Sep 2025",text:"Zack Polanski elected Green Party leader"},
+    {date:"Feb 2026",text:"Restore Britain launches — 7-10% in prompted polls; support skews young and ex-non-voter"},
+    {date:"Sep 2025",text:"Zack Polanski elected Green Party leader with 85% of the vote"},
     {date:"May 2025",text:"Reform UK opens sustained polling lead"},
-    {date:"Mar 2025",text:"Rupert Lowe expelled from Reform UK"},
+    {date:"Mar 2025",text:"Rupert Lowe expelled from Reform UK after criticising Farage"},
     {date:"Jan 2025",text:"Reform UK neck-and-neck with Labour nationally"},
     {date:"Jul 2024",text:"Labour win GE with 33.7% — 170-seat majority"}
   ],
@@ -497,14 +498,14 @@ const D = {
      bio:"Born 2 September 1962 in Surrey. Human rights barrister who defended high-profile cases including death row prisoners in the Caribbean. Director of Public Prosecutions 2008–2013, knighted for services to law. MP for Holborn & St Pancras since 2015. Won the Labour leadership in April 2020. Led Labour to a 170-seat majority in July 2024 after 14 years in opposition. His approval ratings have collapsed since entering government — the most unpopular PM since Ipsos records began in 1977. In February 2026, the Mandelson-Epstein scandal triggered the resignation of his chief of staff Morgan McSweeney, communications director Tim Allan, and cabinet secretary Chris Wormald. Scottish Labour leader Anas Sarwar publicly called on him to resign."}
   ],
   polls: [
-    {date:"5 Mar",pollster:"Survation",ref:29,lab:21,con:18,ld:10,grn:12,rb:null},
-    {date:"4-6 Mar",pollster:"Opinium",ref:29,lab:21,con:16,ld:10,grn:14,rb:null},
-    {date:"4-6 Mar",pollster:"Find Out Now",ref:27,lab:15,con:17,ld:10,grn:21,rb:7},
-    {date:"4-5 Mar",pollster:"BMG",ref:27,lab:20,con:18,ld:12,grn:14,rb:null},
-    {date:"2-5 Mar",pollster:"JL Partners",ref:27,lab:20,con:20,ld:12,grn:14,rb:null},
-    {date:"1-2 Mar",pollster:"YouGov",ref:23,lab:16,con:16,ld:14,grn:21,rb:null},
-    {date:"27 Feb-2 Mar",pollster:"More in Common",ref:29,lab:18,con:19,ld:14,grn:14,rb:null}
-  ]
+    {date:"8-9 Mar",  pollster:"YouGov",         ref:23,lab:17,con:19,ld:14,grn:19,rb:null},
+    {date:"6-10 Mar", pollster:"Focaldata",       ref:27,lab:20,con:18,ld:14,grn:13,rb:null},
+    {date:"5 Mar",    pollster:"Survation",        ref:29,lab:21,con:18,ld:10,grn:12,rb:null},
+    {date:"4-6 Mar",  pollster:"Opinium",          ref:29,lab:21,con:16,ld:10,grn:14,rb:null},
+    {date:"4-6 Mar",  pollster:"Find Out Now",     ref:27,lab:15,con:17,ld:10,grn:21,rb:7},
+    {date:"4-5 Mar",  pollster:"BMG",              ref:27,lab:20,con:18,ld:12,grn:14,rb:null},
+    {date:"2-5 Mar",  pollster:"JL Partners",      ref:27,lab:20,con:20,ld:12,grn:14,rb:null},
+  ],
 };
 
 // ── Tab switching ──
@@ -924,11 +925,14 @@ async function askAI(q) {
   out.innerHTML = '<div style="color:#c8cdd8;font-size:14px;animation:pulse 1s infinite">⏳ Thinking...</div>';
 
   // Build context from app data
-  var ctx = 'You are a neutral, expert UK political analyst. Today is 11 March 2026. '
-    + 'Current polling averages: Reform UK 27%, Labour 19%, Conservative 18%, Green 16%, Lib Dem 12%, SNP 3%, Restore Britain 7%. '
+  var ctx = 'You are a neutral, expert UK political analyst. Today is 12 March 2026. '
+    + 'Current polling averages: Reform UK 26%, Labour 19%, Conservative 18%, Green 17%, Lib Dem 12%, SNP 3%, Restore Britain 7% (FON prompted only). '
     + 'MRP seat projection: Reform UK 335, Conservative 92, Lib Dem 60, Green 52, Labour 41, SNP 44 — a hung parliament. '
-    + 'Keir Starmer net approval: -46. Nigel Farage: -17. Kemi Badenoch: -12. Zack Polanski: +8. '
-    + 'Key recent events: Mandelson-Epstein scandal, McSweeney resignation, Gorton & Denton by-election (Green win), Restore Britain launch. '
+    + 'Keir Starmer net approval: around -46. Nigel Farage: -17. Kemi Badenoch: -12. Zack Polanski: -8 to +11 (varies by pollster). '
+    + 'Key recent events: YouGov (8-9 Mar) put Reform 23%, Con 19%, Green 19% — unusually tight three-way. '
+    + 'Starmer approved US use of UK bases for Iran strikes; Trump attacked Starmer publicly. '
+    + 'Labour won first ever council by-election gain from Reform UK (Murton, Durham, 5 Mar). '
+    + 'Restore Britain officially registered as a party (4 Mar), polling 7% in prompted polls. '
     + 'Answer in clear, engaging prose. Be politically neutral but don\'t shy away from hard truths. Max 200 words.';
 
   try {
