@@ -125,6 +125,9 @@ body {
 .btn-support:active { box-shadow: none; }
 
 /* ── Content ── */
+@keyframes ptr-spin {
+  to { transform: rotate(360deg); }
+}
 #content {
   flex: 1;
   overflow-y: auto;
@@ -529,6 +532,10 @@ body {
 </div>
 
 <div id="content">
+  <div id="ptr-indicator" style="display:flex;align-items:center;justify-content:center;gap:8px;height:0;overflow:hidden;transition:height 0.2s ease;background:var(--md-sys-color-surface-container-low)">
+    <div id="ptr-spinner" style="width:20px;height:20px;border:2.5px solid var(--md-sys-color-primary-container);border-top-color:var(--md-sys-color-primary);border-radius:50%;transition:transform 0.2s"></div>
+    <span id="ptr-label" style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant);font-family:'Nunito',sans-serif">Pull to refresh</span>
+  </div>
 
   <!-- OVERVIEW -->
   <div class="page active" id="page-polls">
@@ -2242,6 +2249,55 @@ renderPollCards();
 initVotePage();
 showPopupIfDue();
 setTimeout(renderTrends, 100);
+/* ── Pull to Refresh ── */
+(function() {
+  var el = document.getElementById('content');
+  var indicator = document.getElementById('ptr-indicator');
+  var spinner = document.getElementById('ptr-spinner');
+  var label = document.getElementById('ptr-label');
+  var startY = 0, currentY = 0, pulling = false, triggered = false;
+  var THRESHOLD = 72;
+
+  el.addEventListener('touchstart', function(e) {
+    if (el.scrollTop === 0) {
+      startY = e.touches[0].clientY;
+      pulling = true;
+      triggered = false;
+    }
+  }, {passive: true});
+
+  el.addEventListener('touchmove', function(e) {
+    if (!pulling) return;
+    currentY = e.touches[0].clientY;
+    var dist = Math.min(currentY - startY, 120);
+    if (dist <= 0) { pulling = false; return; }
+    var h = Math.min(dist * 0.6, 56);
+    indicator.style.height = h + 'px';
+    var progress = Math.min(dist / THRESHOLD, 1);
+    spinner.style.transform = 'rotate(' + (progress * 300) + 'deg)';
+    if (dist >= THRESHOLD && !triggered) {
+      triggered = true;
+      label.textContent = 'Release to refresh';
+      spinner.style.borderTopColor = 'var(--md-sys-color-primary)';
+    } else if (dist < THRESHOLD) {
+      triggered = false;
+      label.textContent = 'Pull to refresh';
+    }
+  }, {passive: true});
+
+  el.addEventListener('touchend', function() {
+    if (!pulling) return;
+    pulling = false;
+    if (triggered) {
+      label.textContent = 'Refreshing...';
+      spinner.style.animation = 'ptr-spin 0.6s linear infinite';
+      setTimeout(function() { window.location.reload(); }, 400);
+    } else {
+      indicator.style.height = '0';
+    }
+  });
+})();
+
 </script>
 
 <script data-goatcounter="https://ukpolls.goatcounter.com/count" async src="//gc.zgo.at/count.js">
