@@ -973,6 +973,7 @@ body {
 
 <script>
 const WORKER = 'https://throbbing-base-05b6.craighow8.workers.dev';
+const APP_TOKEN = 'afc1e6a1834e52b57a583ad850daeb3e5d41440952946f594b20fb3c9dc96542';
 
 const D = {
   fetchDate: "13 Mar 2026",
@@ -1336,7 +1337,7 @@ async function askParty(party, color) {
     + 'Always state policies as plain facts. Never editoralise. Be equally tough and fair on all parties.';
 
   try {
-    var resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json'},
+    var resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json','X-App-Token':APP_TOKEN},
       body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:600, system:ctx, messages:[{role:'user',content:q}]}) });
     var data = await resp.json();
     var text = data.content && data.content[0] && data.content[0].text;
@@ -1396,7 +1397,7 @@ async function askAI(q) {
     + 'Restore Britain officially registered as a party (4 Mar), polling 7% in prompted polls. '
     + 'Answer in clear, engaging prose. Be politically neutral but don\'t shy away from hard truths. Max 200 words.';
   try {
-    var resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,system:ctx,messages:[{role:'user',content:q}]}) });
+    var resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json','X-App-Token':APP_TOKEN}, body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,system:ctx,messages:[{role:'user',content:q}]}) });
     var data = await resp.json();
     var text = data.content && data.content[0] && data.content[0].text;
     if (text) {
@@ -1930,7 +1931,7 @@ async function leaderAITake(li) {
     + 'Cover: their current political trajectory, their biggest strength, and their biggest weakness. '
     + 'Be direct, neutral, and analytical. No fluff.';
   try {
-    var resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json'},
+    var resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json','X-App-Token':APP_TOKEN},
       body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:200,
         system:'You are a sharp UK political analyst. Be concise and direct. Today is ' + D.fetchDate + '.',
         messages:[{role:'user',content:q}]}) });
@@ -2070,7 +2071,7 @@ async function castVote(party) {
   renderVoteButtons();
   showVoteSharePrompt(party);
   try {
-    await fetch(WORKER + '/vote', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({party, deviceId, prevVote}) });
+    await fetch(WORKER + '/vote', { method:'POST', headers:{'Content-Type':'application/json','X-App-Token':APP_TOKEN}, body: JSON.stringify({party, deviceId, prevVote}) });
   } catch(e) {}
   loadVoteResults();
 }
@@ -2129,7 +2130,7 @@ function generateInsight(votes, total, POLL_MAP) {
 async function loadVoteResults() {
   const el = document.getElementById('vote-results');
   try {
-    const resp = await fetch(WORKER + '/votes');
+    const resp = await fetch(WORKER + '/votes', {headers:{'X-App-Token':APP_TOKEN}});
     if (!resp.ok) { el.innerHTML = '<div style="padding:16px;font-size:18px;color:var(--md-sys-color-secondary)">Server error ' + resp.status + '</div>'; return; }
     const raw = await resp.text();
     let votes;
@@ -2511,7 +2512,7 @@ function votePOTD(qid, opt) {
   var q = POTD_QUESTIONS.find(function(x) { return x.id === qid; });
   fetch(WORKER + '/potd-vote', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', 'X-App-Token': APP_TOKEN},
     body: JSON.stringify({qid: qid, option: opt, deviceId: getDeviceId()})
   })
   .then(function(r) { return r.json(); })
@@ -2520,7 +2521,7 @@ function votePOTD(qid, opt) {
 }
 
 function loadPOTDResults(q, myVote) {
-  fetch(WORKER + '/potd-results?qid=' + encodeURIComponent(q.id))
+  fetch(WORKER + '/potd-results?qid=' + encodeURIComponent(q.id), {headers:{'X-App-Token':APP_TOKEN}})
     .then(function(r) { return r.json(); })
     .then(function(votes) { renderPOTDResults(q, myVote, votes); })
     .catch(function() { renderPOTDResults(q, myVote, null); });
