@@ -2425,32 +2425,53 @@ function handlePOTD(btn) {
   var opt = btn.getAttribute('data-opt');
   votePOTD(qid, opt);
 }
+function getDeviceId() {
+  var id = localStorage.getItem('potd_device_id');
+  if (!id) { id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('potd_device_id', id); }
+  return id;
+}
+
 function votePOTD(qid, opt) {
   localStorage.setItem('potd_' + qid, opt);
   var q = POTD_QUESTIONS.find(function(x) { return x.id === qid; });
-  // Store in worker using shared votes endpoint — piggyback as a poll vote
-  fetch(WORKER + '/potd', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({qid: qid, opt: opt})}).catch(function(){});
-  loadPOTDResults(q, opt);
+  fetch(WORKER + '/potd-vote', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({qid: qid, option: opt, deviceId: getDeviceId()})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) { renderPOTDResults(q, opt, data.votes); })
+  .catch(function() { renderPOTDResults(q, opt, null); });
 }
 
 function loadPOTDResults(q, myVote) {
+  fetch(WORKER + '/potd-results?qid=' + encodeURIComponent(q.id))
+    .then(function(r) { return r.json(); })
+    .then(function(votes) { renderPOTDResults(q, myVote, votes); })
+    .catch(function() { renderPOTDResults(q, myVote, null); });
+}
+
+function renderPOTDResults(q, myVote, votes) {
   var el = document.getElementById('potd-card');
-  // Use localStorage to build rough local tally — worker would have full data
-  // Show simulated realistic results while loading
-  var seed = q.id.split('').reduce(function(a,c) { return a + c.charCodeAt(0); }, 0);
-  var simResults = q.opts.map(function(opt, i) {
-    var base = [38,24,16,12,7,4][i] || 5;
-    var jitter = ((seed * (i+1) * 7) % 10) - 5;
-    return {opt: opt, pct: Math.max(2, base + jitter)};
-  });
-  // Normalise
-  var total = simResults.reduce(function(s,r) { return s + r.pct; }, 0);
-  simResults.forEach(function(r) { r.pct = Math.round(r.pct / total * 100); });
-  simResults.sort(function(a,b) { return b.pct - a.pct; });
+  if (!el) return;
+
+  var results;
+  if (votes && Object.keys(votes).length > 0) {
+    var total = q.opts.reduce(function(s, opt) { return s + (votes[opt] || 0); }, 0);
+    results = q.opts.map(function(opt) {
+      var count = votes[opt] || 0;
+      return {opt: opt, pct: total > 0 ? Math.round(count / total * 100) : 0, count: count};
+    });
+  } else {
+    // No votes yet — show zeros
+    results = q.opts.map(function(opt) { return {opt: opt, pct: 0, count: 0}; });
+  }
+  results.sort(function(a, b) { return b.pct - a.pct; });
+  var totalVotes = results.reduce(function(s, r) { return s + r.count; }, 0);
 
   el.innerHTML = '<div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:4px;line-height:1.4">' + q.q + '</div>'
     + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Your answer: <strong>' + myVote + '</strong></div>'
-    + simResults.map(function(r) {
+    + results.map(function(r) {
       var isMe = r.opt === myVote;
       var barColor = isMe ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-primary-container)';
       return '<div style="margin-bottom:8px">'
@@ -2462,7 +2483,7 @@ function loadPOTDResults(q, myVote) {
         + '<div style="width:' + r.pct + '%;background:' + barColor + ';height:100%;border-radius:99px;transition:width 0.6s ease"></div>'
         + '</div></div>';
     }).join('')
-    + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:10px">Live votes from real users · New question daily</div>';
+    + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:10px">Live votes from real users · ' + totalVotes + ' vote' + (totalVotes !== 1 ? 's' : '') + ' today · New question daily</div>';
 }
 
 renderPolls();
