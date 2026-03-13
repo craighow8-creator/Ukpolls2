@@ -1888,7 +1888,7 @@ function renderAge() {
         + '</div>'
         + '<div style="padding:2px 18px 14px">'
         + barRows
-        + (g.note ? '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:8px;font-weight:700;line-height:1.5;background:var(--md-sys-color-surface-container-low);border-radius:12px;padding:8px 12px">\ud83d\udca1 ' + g.note + '</div>' : '')
+        + (g.note ? '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:2px;margin-bottom:6px;font-weight:600;padding-left:66px">💡 ' + g.note + '</div>' : '')
         + '</div>'
         + '</div>';
     }).join('');
@@ -1928,12 +1928,12 @@ function renderAge() {
     {label:'Mixed/Other',   REF:18,GRN:26,LAB:24,CON:12,LD:14},
   ]);
   var nvData = [
-        {label:'Reform UK', color:'#12B7D4', pct:32, note:'Biggest beneficiary of returning non-voters'},
-        {label:'Restore Britain', color:'#1a4a9e', pct:18, note:'Growing fast among disengaged voters'},
-        {label:'Green',     color:'#02A95B', pct:16, note:''},
-        {label:'Labour',    color:'#E4003B', pct:14, note:''},
-        {label:'Con',       color:'#0087DC', pct:10, note:''},
-        {label:'LD',        color:'#FAA61A', pct:6,  note:''},
+        {label:'Reform UK',       color:'#12B7D4', pct:32},
+        {label:'Restore Britain', color:'#1a4a9e', pct:18},
+        {label:'Green',           color:'#02A95B', pct:16},
+        {label:'Labour',          color:'#E4003B', pct:14},
+        {label:'Conservative',    color:'#0087DC', pct:10},
+        {label:'Lib Dem',         color:'#FAA61A', pct:6},
       ];
   var nvMax = Math.max.apply(null, nvData.map(function(p){return p.pct;}));
   document.getElementById('nonvoter-content').innerHTML =
@@ -1943,19 +1943,16 @@ function renderAge() {
     + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);line-height:1.7;margin-bottom:14px;background:var(--md-sys-color-surface-container-low);border-radius:16px;padding:12px 14px">'
     + '42% of eligible voters did not vote in the 2024 General Election. Among those who didn\'t vote but now say they would <em>"definitely vote"</em>, Reform UK and Restore Britain are picking up the largest share.'
     + '</div>'
-    + '<div style="font-size:12px;font-weight:800;color:var(--md-sys-color-on-surface-variant);margin-bottom:12px;letter-spacing:0.6px;text-transform:uppercase">Estimated intention among 2024 non-voters who now say they\'d vote</div>'
+    + '<div style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">Estimated intention among 2024 non-voters who now say they\'d vote</div>'
     + nvData.map(function(p, i) {
         var normW = Math.round((p.pct / nvMax) * 100);
         var isLead = i === 0;
-        return '<div style="margin-bottom:' + (isLead ? '10' : '8') + 'px">'
-          + '<div style="display:flex;align-items:center;gap:10px">'
-          + '<div style="width:110px;font-size:' + (isLead ? '15' : '13') + 'px;color:' + p.color + ';font-weight:' + (isLead ? '900' : '700') + ';flex-shrink:0;line-height:1.2">' + p.label + '</div>'
-          + '<div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:' + (isLead ? '18' : '12') + 'px;overflow:hidden">'
+        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+          + '<div style="width:120px;font-size:14px;color:' + p.color + ';font-weight:800;flex-shrink:0;line-height:1.2">' + p.label + '</div>'
+          + '<div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:' + (isLead ? '16' : '11') + 'px;overflow:hidden">'
           + '<div style="width:' + normW + '%;background:' + p.color + ';height:100%;border-radius:99px;transition:width 0.5s cubic-bezier(0.4,0,0.2,1)"></div>'
           + '</div>'
-          + '<div style="width:36px;text-align:right;font-size:' + (isLead ? '17' : '14') + 'px;font-weight:900;color:' + p.color + '">' + p.pct + '%</div>'
-          + '</div>'
-          + (p.note ? '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin:4px 0 0 120px;font-weight:700;font-style:italic">💡 ' + p.note + '</div>' : '')
+          + '<div style="width:38px;text-align:right;font-size:' + (isLead ? '16' : '13') + 'px;font-weight:900;color:' + p.color + '">' + p.pct + '%</div>'
           + '</div>';
       }).join('')
     + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:12px;font-weight:600">Source: Find Out Now, JL Partners.</div>'
