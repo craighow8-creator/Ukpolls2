@@ -581,7 +581,14 @@ body {
     <div id="race-leaders"></div>
     <div id="party-bars"></div>
     <div class="sec-label">🏛 Seat Projection<button class="sec-share" onclick="shareSection('🏛 Seat Projection', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
-    <div id="fptp-interactive" class="card" style="padding:0;overflow:hidden;border-top:4px solid var(--md-sys-color-primary)"></div>
+    <div id="seat-bar-card" onclick="openFPTPSheet()" style="cursor:pointer;background:var(--md-sys-color-surface);border-radius:24px;padding:16px;margin-bottom:12px;box-shadow:var(--md-elevation-2);border-top:4px solid var(--md-sys-color-primary);active:opacity:0.8">
+      <div id="seat-bar-inner" style="display:flex;height:76px;border-radius:16px;overflow:hidden;gap:2px;box-shadow:var(--md-elevation-1);margin-bottom:10px"></div>
+      <div id="seat-bar-verdict" style="text-align:center"></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px">
+        <span style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Tap to explore · What is FPTP?</span>
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--md-sys-color-on-surface-variant)"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+      </div>
+    </div>
 
     <div class="sec-label">📈 6-Month Trend<button class="sec-share" onclick="shareSection('📈 6-Month Trend', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div class="card" style="padding:20px;border-top:4px solid var(--md-sys-color-primary)" id="trend-card">
@@ -1504,154 +1511,145 @@ function renderPolls() {
 }
 
 function renderFPTPExplorer() {
-  var el = document.getElementById('fptp-interactive');
-  if (!el) return;
-  var baseParties = D.parties.filter(p => p.seats !== null);
+  var baseParties = D.parties.filter(function(p){ return p.seats !== null && p.seats > 0; });
   var MAJORITY = 326;
   var TOTAL_SEATS = 650;
+  var seatParties = baseParties.slice().sort(function(a,b){ return b.seats - a.seats; });
+  var totalSeats = seatParties.reduce(function(s,p){ return s + p.seats; }, 0);
+  var leader = seatParties[0];
+  var isOutright = leader && leader.seats >= MAJORITY;
 
-  function getPRSeats(parties) {
-    var totalPct = parties.reduce((s,p) => s+p.pct, 0);
-    return parties.map(p => Object.assign({}, p, {prSeats: Math.round(p.pct/totalPct*TOTAL_SEATS)}));
-  }
-
-  function swingSeats(parties, swingName, delta) {
-    var others = parties.filter(p=>p.name!==swingName);
-    var totalOther = others.reduce((s,p)=>s+p.pct,0);
-    return parties.map(p => {
-      var np = Object.assign({},p);
-      if (p.name===swingName) {
-        np.pct = Math.max(1,Math.min(60,p.pct+delta));
-        np.seats = Math.round(p.seats*Math.pow(np.pct/p.pct,2.5));
-      } else {
-        var take = (p.pct/totalOther)*delta;
-        np.pct = Math.max(1,p.pct-take);
-        np.seats = Math.max(0,Math.round(p.seats*Math.pow(np.pct/p.pct,2.5)));
-      }
-      return np;
-    });
-  }
-
-  var currentParties = baseParties.map(p=>Object.assign({},p));
-  var activeTab = 0;
-
-  var SVG_SHARE = '<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>';
-
-  function renderBar(parties, seatsKey, height) {
-    var sorted = parties.filter(p=>p[seatsKey]>0).sort((a,b)=>b[seatsKey]-a[seatsKey]);
-    return '<div style="display:flex;height:'+height+'px;border-radius:14px;overflow:hidden;gap:2px;box-shadow:var(--md-elevation-2)">'
-      + sorted.map(p=>{
-          var v = p[seatsKey];
-          var tc = p.name==='SNP'?'#1a1a1a':'#fff';
-          var c = v>=60?'<span style="font-size:13px;font-weight:900;font-family:Nunito,sans-serif">'+p.abbr+'</span><span style="font-size:15px;font-weight:800;font-family:Nunito,sans-serif">'+v+'</span>'
-            :v>=30?'<span style="font-size:11px;font-weight:900;font-family:Nunito,sans-serif">'+p.abbr+'</span><span style="font-size:13px;font-weight:800;font-family:Nunito,sans-serif">'+v+'</span>'
-            :v>=15?'<span style="font-size:12px;font-weight:900;font-family:Nunito,sans-serif">'+v+'</span>':'';
-          return '<div style="flex:'+v+';background:'+p.color+';color:'+tc+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;padding:2px;transition:flex 0.4s ease">'+c+'</div>';
-        }).join('')
-      + '</div>';
-  }
-
-  function renderAll() {
-    var seatParties = currentParties.filter(p=>p.seats>0).sort((a,b)=>b.seats-a.seats);
-    var leader = seatParties[0];
-    var isOutright = leader && leader.seats>=MAJORITY;
-
-    var tabs = ['🏛 Seats','⚖️ Fair Votes'];
-    var tabHtml = '<div style="display:flex;border-bottom:1px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface-container-low)">'
-      + tabs.map(function(t,i){
-          return '<button onclick="window._fptpTab('+i+')" style="flex:1;padding:10px 2px;border:none;background:none;font-family:Nunito,sans-serif;font-size:11px;font-weight:'+(activeTab===i?'800':'600')+';color:'+(activeTab===i?'var(--md-sys-color-primary)':'var(--md-sys-color-on-surface-variant)')+';border-bottom:'+(activeTab===i?'2px solid var(--md-sys-color-primary)':'2px solid transparent')+';cursor:pointer">'+t+'</button>';
-        }).join('')
-      + '</div>';
-
-    var body = '';
-
-    if (activeTab===0) {
-      var outcomeColor = isOutright?leader.color:'var(--md-sys-color-primary)';
-      var outcomeText = isOutright?leader.name+' outright majority':'Hung Parliament projected';
-      body = '<div style="padding:16px 16px 4px">'
-        + renderBar(currentParties,'seats',76)
-        + '<div style="text-align:center;font-size:14px;color:var(--md-sys-color-on-surface-variant);margin:8px 0 4px">326 seats needed for majority</div>'
-        + '<div style="text-align:center;font-size:17px;font-weight:800;color:'+outcomeColor+';margin-bottom:14px">'+outcomeText+'</div>'
-        + '</div>'
-        + '<div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:8px">'
-        + seatParties.map(function(p,i){
-            var badge = i===0?'🥇':i===1?'🥈':i===2?'🥉':String(i+1);
-            return '<div style="display:flex;align-items:center;gap:10px"><div style="width:22px;text-align:center;font-size:13px;font-weight:800;color:var(--md-sys-color-on-surface-variant)">'+badge+'</div>'
-              +'<div style="width:10px;height:10px;border-radius:50%;background:'+p.color+';flex-shrink:0"></div>'
-              +'<div style="flex:1;font-size:15px;font-weight:700;color:'+p.color+'">'+p.name+'</div>'
-              +'<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">'+Math.round(p.pct)+'% votes</div>'
-              +'<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface);min-width:40px;text-align:right">~'+p.seats+'</div></div>';
-          }).join('')
-        + '</div>';
-
-    } else if (activeTab===1) {
-      var withPR = getPRSeats(baseParties.filter(function(p){return p.seats>=0;}));
-      body = '<div style="padding:16px">'
-        + '<div style="font-size:13px;font-weight:800;color:var(--md-sys-color-on-surface-variant);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px;text-align:center">FPTP vs Proportional Representation</div>'
-        + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin-bottom:12px">How today\'s votes would translate under each system</div>'
-        + '<div style="font-size:12px;font-weight:800;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px;letter-spacing:0.5px">🗳 PROPORTIONAL REPRESENTATION</div>'
-        + renderBar(withPR,'prSeats',56)
-        + '<div style="font-size:12px;font-weight:800;color:var(--md-sys-color-on-surface-variant);margin:12px 0 6px;letter-spacing:0.5px">🏛 FIRST PAST THE POST (CURRENT)</div>'
-        + renderBar(baseParties.filter(function(p){return p.seats>0;}),'seats',56)
-        + '<div style="display:flex;flex-direction:column;gap:0;margin-top:14px">'
-        + withPR.sort(function(a,b){return (b.prSeats-(b.seats||0))-(a.prSeats-(a.seats||0));}).map(function(p){
-            var diff = p.prSeats-(p.seats||0);
-            var ds = diff>0?'+'+diff:String(diff);
-            var dc = diff>0?'var(--up)':diff<0?'var(--down)':'var(--md-sys-color-on-surface-variant)';
-            return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
-              +'<div style="width:10px;height:10px;border-radius:50%;background:'+p.color+';flex-shrink:0"></div>'
-              +'<div style="flex:1;font-size:15px;font-weight:700;color:'+p.color+'">'+p.name+'</div>'
-              +'<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">'+(p.seats||0)+' → '+p.prSeats+'</div>'
-              +'<div style="font-size:15px;font-weight:800;color:'+dc+';min-width:36px;text-align:right">'+ds+'</div>'
-              +'</div>';
-          }).join('')
-        + '</div>'
-        + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:14px;padding:12px;margin-top:12px;font-size:13px;color:var(--md-sys-color-on-surface);line-height:1.6">⚖️ Under PR, <strong>Labour and Greens</strong> gain the most. <strong>Reform UK</strong> would lose its majority but still lead.</div>'
-        + '</div>';
-    }
-
-    el.innerHTML = tabHtml + body;
-    updateSummary();
-  }
-
-  function updateSummary() {
-    var sumEl = document.getElementById('seat-summary');
-    if (!sumEl) return;
-    var s = currentParties.filter(function(p){return p.seats>0;}).sort(function(a,b){return b.seats-a.seats;})[0];
-    var isOut = s && s.seats>=MAJORITY;
-    sumEl.innerHTML = '<span style="color:var(--md-sys-color-on-surface-variant)">326 seats needed for majority</span> · <strong style="color:'+(isOut?s.color:'var(--md-sys-color-primary)')+'">'+(isOut?s.name+' outright majority':'Hung Parliament projected')+'</strong>';
-  }
-
-  function updateWIOutcome() {
-    var el2 = document.getElementById('wi-outcome');
-    if (!el2) return;
-    var s = currentParties.filter(function(p){return p.seats>0;}).sort(function(a,b){return b.seats-a.seats;})[0];
-    var isOut = s && s.seats>=MAJORITY;
-    el2.innerHTML = isOut
-      ? '<span style="color:'+s.color+'">'+s.name+' outright majority ('+s.seats+' seats)</span>'
-      : '<span style="color:var(--md-sys-color-primary)">Hung Parliament — '+(s?s.name+' largest party':'no majority')+'</span>';
-  }
-
-  window._fptpTab = function(i) { activeTab=i; currentParties=baseParties.map(function(p){return Object.assign({},p);}); renderAll(); };
-  window._fptpSlide = function(val) {
-    var base = baseParties.find(function(p){return p.name==='Reform UK';});
-    var delta = Number(val)-base.pct;
-    currentParties = swingSeats(baseParties.map(function(p){return Object.assign({},p);}), 'Reform UK', delta);
-    var pctEl = document.getElementById('wi-pct');
-    if (pctEl) pctEl.textContent = val+'%';
-    var grid = document.getElementById('wi-grid');
-    if (grid) grid.innerHTML = currentParties.filter(function(p){return p.seats>=0;}).sort(function(a,b){return b.seats-a.seats;}).map(function(p){
-      var isRef = p.name==='Reform UK';
-      return '<div style="background:'+(isRef?p.color+'22':'var(--md-sys-color-surface-container)')+';border:2px solid '+(isRef?p.color:'var(--md-sys-color-outline-variant)')+';border-radius:14px;padding:12px;text-align:center">'
-        +'<div style="font-size:12px;font-weight:800;color:'+p.color+'">'+p.name+'</div>'
-        +'<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin:2px 0">'+Math.round(p.pct)+'% votes</div>'
-        +'<div style="font-size:24px;font-weight:900;color:var(--md-sys-color-on-surface)">~'+Math.max(0,p.seats)+'</div>'
-        +'<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">seats</div></div>';
+  // Render the clean seat bar
+  var barEl = document.getElementById('seat-bar-inner');
+  if (barEl) {
+    barEl.innerHTML = seatParties.map(function(p) {
+      var tc = p.name === 'SNP' ? '#1a1a1a' : '#fff';
+      var content = p.seats >= 55
+        ? '<span style="font-size:13px;font-weight:900;display:block;line-height:1.2">' + p.abbr + '</span><span style="font-size:16px;font-weight:900">' + p.seats + '</span>'
+        : p.seats >= 28
+        ? '<span style="font-size:10px;font-weight:900;display:block">' + p.abbr + '</span><span style="font-size:13px;font-weight:800">' + p.seats + '</span>'
+        : p.seats >= 14 ? '<span style="font-size:11px;font-weight:800">' + p.seats + '</span>' : '';
+      return '<div style="flex:' + p.seats + ';background:' + p.color + ';color:' + tc + ';display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:flex 0.4s ease">' + content + '</div>';
     }).join('');
-    updateWIOutcome();
-  };
+  }
 
-  renderAll();
+  // Render verdict
+  var verdictEl = document.getElementById('seat-bar-verdict');
+  if (verdictEl) {
+    var oc = isOutright ? leader.color : 'var(--md-sys-color-primary)';
+    var ot = isOutright ? leader.name + ' outright majority' : 'Hung Parliament projected';
+    verdictEl.innerHTML = '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:3px">326 seats needed for majority</div>'
+      + '<div style="font-size:17px;font-weight:900;color:' + oc + '">' + ot + '</div>';
+  }
+}
+
+function openFPTPSheet() {
+  var existing = document.getElementById('fptp-sheet');
+  if (existing) return;
+
+  var baseParties = D.parties.filter(function(p){ return p.seats !== null && p.seats > 0; });
+  var TOTAL_SEATS = 650;
+
+  function prSeats(pct) { return Math.round((pct / 100) * TOTAL_SEATS); }
+
+  function buildBar(parties, useSeats, height) {
+    var data = parties.slice().sort(function(a,b){ return (useSeats?b.seats:b.prS) - (useSeats?a.seats:a.prS); });
+    return '<div style="display:flex;height:' + height + 'px;border-radius:14px;overflow:hidden;gap:2px;box-shadow:var(--md-elevation-1)">'
+      + data.map(function(p) {
+          var val = useSeats ? p.seats : p.prS;
+          var tc = p.name === 'SNP' ? '#1a1a1a' : '#fff';
+          var content = val >= 50
+            ? '<span style="font-size:11px;font-weight:900;display:block">' + p.abbr + '</span><span style="font-size:13px;font-weight:800">' + val + '</span>'
+            : val >= 20 ? '<span style="font-size:10px;font-weight:800">' + val + '</span>' : '';
+          return '<div style="flex:' + val + ';background:' + p.color + ';color:' + tc + ';display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden">' + content + '</div>';
+        }).join('')
+      + '</div>';
+  }
+
+  var withPR = baseParties.map(function(p){ return Object.assign({}, p, {prS: prSeats(p.pct)}); });
+
+  var bg = document.createElement('div');
+  bg.id = 'fptp-sheet-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease;';
+  bg.onclick = closeFPTPSheet;
+  document.body.appendChild(bg);
+  setTimeout(function(){ bg.style.background = 'rgba(0,0,0,0.5)'; }, 10);
+
+  var sheet = document.createElement('div');
+  sheet.id = 'fptp-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;'
+    + 'background:var(--md-sys-color-surface-container-high);'
+    + 'border-radius:28px 28px 0 0;'
+    + 'box-shadow:0 -4px 32px rgba(0,0,0,0.2);'
+    + 'transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);'
+    + 'max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,16px)';
+
+  // Gain/loss rows
+  var gainLoss = withPR.slice().sort(function(a,b){ return (b.prS - b.seats) - (a.prS - a.seats); }).map(function(p) {
+    var diff = p.prS - p.seats;
+    var ds = diff > 0 ? '+' + diff : String(diff);
+    var bg2 = diff > 0 ? '#1a7f3718' : diff < 0 ? '#C8102E12' : 'var(--md-sys-color-surface-container)';
+    var border = diff > 0 ? '#1a7f3735' : diff < 0 ? '#C8102E25' : 'var(--md-sys-color-outline-variant)';
+    var dc = diff > 0 ? 'var(--up)' : diff < 0 ? 'var(--down)' : 'var(--md-sys-color-on-surface-variant)';
+    var arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '—';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:' + bg2 + ';border:1.5px solid ' + border + ';border-radius:14px">'
+      + '<div style="width:10px;height:10px;border-radius:50%;background:' + p.color + ';flex-shrink:0"></div>'
+      + '<div style="flex:1;font-size:15px;font-weight:800;color:' + p.color + '">' + p.name + '</div>'
+      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">' + p.seats + ' → ' + p.prS + '</div>'
+      + '<div style="font-size:16px;font-weight:900;color:' + dc + ';min-width:44px;text-align:right">' + arrow + ' ' + Math.abs(diff) + '</div>'
+      + '</div>';
+  }).join('');
+
+  sheet.innerHTML =
+    // Handle bar
+    '<div style="display:flex;justify-content:center;padding:12px 0 4px">'
+    + '<div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>'
+    + '</div>'
+    // Title
+    + '<div style="padding:8px 24px 0">'
+    + '<div style="font-size:24px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:-0.5px;margin-bottom:4px">🏛 What is FPTP?</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;margin-bottom:16px">First Past The Post means <strong>winning constituencies</strong>, not total votes. A party with support concentrated in the right places wins far more seats than its vote share deserves — and vice versa.</div>'
+    + '</div>'
+    // FPTP bar
+    + '<div style="padding:0 16px 12px">'
+    + '<div style="font-size:11px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">🏛 Current FPTP result</div>'
+    + buildBar(withPR, true, 64)
+    + '</div>'
+    // Divider
+    + '<div style="display:flex;align-items:center;gap:10px;padding:0 16px;margin:4px 0 12px">'
+    + '<div style="flex:1;height:1px;background:var(--md-sys-color-outline-variant)"></div>'
+    + '<div style="font-size:11px;font-weight:800;letter-spacing:0.8px;color:var(--md-sys-color-on-surface-variant);text-transform:uppercase">vs if seats matched votes</div>'
+    + '<div style="flex:1;height:1px;background:var(--md-sys-color-outline-variant)"></div>'
+    + '</div>'
+    // PR bar
+    + '<div style="padding:0 16px 12px">'
+    + '<div style="font-size:11px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">🗳 Proportional representation (PR)</div>'
+    + buildBar(withPR, false, 64)
+    + '</div>'
+    // Gain/loss table
+    + '<div style="padding:0 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:16px">'
+    + '<div style="font-size:13px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:0.3px;margin-bottom:2px">Who wins and loses under PR?</div>'
+    + gainLoss
+    + '</div>'
+    // Explainer tonal card
+    + '<div style="margin:0 16px 24px;background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-large);padding:16px">'
+    + '<div style="font-size:13px;font-weight:900;color:var(--md-sys-color-primary);letter-spacing:0.5px;margin-bottom:8px">💡 Why does this happen?</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.7">Reform UK at <strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.pct||0) + '%</strong> projects to <strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.seats||0) + ' seats</strong> because their support is spread efficiently across winnable constituencies. Labour at <strong>' + (D.parties.find(function(p){return p.name==="Labour";})?.pct||0) + '%</strong> gets just <strong>~' + (D.parties.find(function(p){return p.name==="Labour";})?.seats||0) + ' seats</strong> — their vote piles up in safe seats, wasting millions of votes. Under PR, every vote counts equally.</div>'
+    + '</div>';
+
+  document.body.appendChild(sheet);
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+}
+
+function closeFPTPSheet() {
+  var sheet = document.getElementById('fptp-sheet');
+  var bg = document.getElementById('fptp-sheet-bg');
+  if (sheet) { sheet.style.transform = 'translateY(100%)'; }
+  if (bg) { bg.style.background = 'rgba(0,0,0,0)'; }
+  setTimeout(function(){
+    if (sheet && sheet.parentNode) sheet.remove();
+    if (bg && bg.parentNode) bg.remove();
+  }, 350);
 }
 
 // ── Render Trends ──
@@ -2853,6 +2851,7 @@ var SECTION_SHARE = {
 
 
   // Find the sec-label element containing this button, then capture it + the next sibling card
+async function shareSection(label, btn) {
   var labelEl = btn ? btn.closest('.sec-label') : null;
   var target = null;
   if (labelEl) {
