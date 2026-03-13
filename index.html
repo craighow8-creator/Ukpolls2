@@ -1671,7 +1671,9 @@ function openFPTPSheet() {
   document.body.appendChild(sheet);
   setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
   addSwipeToDismiss(sheet, closeFPTPSheet);
-} {
+}
+
+function closeFPTPSheet() {
   var sheet = document.getElementById('fptp-sheet');
   var bg = document.getElementById('fptp-sheet-bg');
   if (sheet) { sheet.style.transform = 'translateY(100%)'; }
