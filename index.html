@@ -791,7 +791,7 @@ body {
     </div>
     <div id="vote-section">
       <div id="vote-buttons" style="margin-bottom:8px"></div>
-      <div id="vote-msg" style="text-align:center;font-size:18px;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;min-height:24px"></div>
+      <div id="vote-msg" style="text-align:center;font-size:15px;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;min-height:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px">
       <div style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">📊 App vs Real Polls</div>
@@ -854,12 +854,12 @@ body {
       <div style="display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch">
         <!-- AI CHIPS START -->
         <button class="chip" onclick="askAI('Starmer refused Trump\'s request to use UK bases for Iran strikes, then partially reversed — did he handle the Iran crisis well or has he damaged the UK-US special relationship?')">Starmer & the Iran crisis</button>
-        <button class="chip" onclick="askAI('Nigel Farage initially demanded Britain back Trump\'s Iran strikes, then U-turned completely — what does this tell us about his judgment and whether Reform UK is ready to govern?')">Farage\'s Iran U-turn</button>
+        <button class="chip" onclick="askAI('Nigel Farage initially demanded Britain back Trump\'s Iran strikes, then U-turned completely — what does this tell us about his judgment and whether Reform UK is ready to govern?')">Farage's Iran U-turn</button>
         <button class="chip" onclick="askAI('Restore Britain reached 100,000 members faster than any party in modern UK history, yet mainstream media have barely covered it. Why are the MSM ignoring this and what does it mean for UK politics?')">Restore Britain media blackout</button>
         <button class="chip" onclick="askAI('Rupert Lowe\'s Restore Britain has 100k members, Elon Musk\'s backing, and ex-Reform councillors defecting to it. Is it a genuine political force or will it fragment before the next election?')">Is Restore Britain real?</button>
         <button class="chip" onclick="askAI('The Greens won a by-election in a Labour heartland seat for the first time ever. What does this mean for Starmer\'s hold on the left?')">Greens beat Labour in heartland</button>
         <button class="chip" onclick="askAI('Trump said Starmer is not Winston Churchill — is Trump\'s contempt for the UK PM a political problem for Britain or does standing up to Trump actually help Starmer at home?')">Trump vs Starmer</button>
-        <button class="chip" onclick="askAI('Senior Labour figures have joined Reform UK and trade union members are reportedly defecting too. Is Labour\'s traditional working-class base collapsing for good?')">Labour\'s base collapsing?</button>
+        <button class="chip" onclick="askAI('Senior Labour figures have joined Reform UK and trade union members are reportedly defecting too. Is Labour\'s traditional working-class base collapsing for good?')">Labour's base collapsing?</button>
         <button class="chip" onclick="askAI('Reform UK launched its Welsh Senedd election manifesto with Farage claiming May 7 will end Labour dominance in Wales. Can Reform really break Labour\'s decades-long grip on Wales?')">Reform vs Labour in Wales</button>
         <button class="chip" onclick="askAI('The US-Iran war has split the British right — Farage, Badenoch and Restore Britain all took different positions. What does this fracture reveal about the future of the UK right?')">Right splits over Iran war</button>
         <button class="chip" onclick="askAI('MSM rarely covers Restore Britain despite 100k members and major backing. Is this a deliberate media blackout or editorial judgment, and what are the implications for British democracy?')">Is MSM suppressing Restore Britain?</button>
@@ -1333,8 +1333,8 @@ async function askParty(party, color) {
   out.scrollIntoView({behavior:'smooth', block:'nearest'});
 
   var ctx = 'You are a neutral, expert UK political analyst. Today is ' + D.fetchDate + '. '
-    + 'Current polling: Reform UK 26%, Labour 19%, Conservative 18%, Green 17%, Lib Dem 12%, SNP 3%, Restore Britain 7%. '
-    + 'Always state policies as plain facts. Never editoralise. Be equally tough and fair on all parties.';
+    + 'Current polling: Reform UK 27%, Labour 19%, Conservative 18%, Green 15%, Lib Dem 12%, SNP 3%, Restore Britain 7%. '
+    + 'Always state policies as plain facts. Never editorialise. Be equally tough and fair on all parties.';
 
   try {
     var resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json','X-App-Token':APP_TOKEN},
@@ -1372,7 +1372,8 @@ async function askParty(party, color) {
       html += '</div></div>';
       out.innerHTML = html + shareBtn('Why vote ' + party + '? ' + text);
     } else {
-      out.innerHTML = '<div style="color:var(--md-sys-color-secondary);padding:16px">Error: No response received.</div>';
+      var errMsg = data.error ? data.error.message : JSON.stringify(data).substring(0, 120);
+      out.innerHTML = '<div style="color:var(--md-sys-color-secondary);padding:16px">Error: ' + errMsg + '</div>';
     }
   } catch(e) {
     out.innerHTML = '<div style="color:var(--md-sys-color-secondary);padding:16px">Error: ' + e.message + '</div>';
@@ -1388,23 +1389,25 @@ async function askAI(q) {
   out.innerHTML = '<div style="color:var(--md-sys-color-on-surface-variant);font-size:15px;text-align:center;padding:20px">⏳ Thinking...</div>';
   out.scrollIntoView({behavior:'smooth', block:'nearest'});
   var ctx = 'You are a neutral, expert UK political analyst. Today is ' + D.fetchDate + '. '
-    + 'Current polling averages: Reform UK 26%, Labour 19%, Conservative 18%, Green 17%, Lib Dem 12%, SNP 3%, Restore Britain 7% (FON prompted only). '
+    + 'Current polling averages: Reform UK 27%, Labour 19%, Conservative 18%, Green 15%, Lib Dem 12%, SNP 3%, Restore Britain 7% (FON prompted only). '
     + 'MRP seat projection: Reform UK 335, Conservative 92, Lib Dem 60, Green 52, Labour 41, SNP 44 — a hung parliament. '
+    + 'Restore Britain has surpassed 110,000 paid members by 10 March 2026 — fastest growing party in modern UK history, yet receiving almost no MSM coverage. '
     + 'Keir Starmer net approval: around -46. Nigel Farage: -17. Kemi Badenoch: -12. Zack Polanski: -8 to +11 (varies by pollster). '
-    + 'Key recent events: YouGov (8-9 Mar) put Reform 23%, Con 19%, Green 19% — unusually tight three-way. '
+    + 'Key recent events: More in Common (6-9 Mar) put Reform 30% — highest of current cycle. '
+    + 'Starmer faces sleaze allegations over Mandelson affair. '
     + 'Starmer approved US use of UK bases for Iran strikes; Trump attacked Starmer publicly. '
     + 'Labour won first ever council by-election gain from Reform UK (Murton, Durham, 5 Mar). '
-    + 'Restore Britain officially registered as a party (4 Mar), polling 7% in prompted polls. '
     + 'Answer in clear, engaging prose. Be politically neutral but don\'t shy away from hard truths. Max 200 words.';
   try {
     var resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json','X-App-Token':APP_TOKEN}, body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,system:ctx,messages:[{role:'user',content:q}]}) });
     var data = await resp.json();
     var text = data.content && data.content[0] && data.content[0].text;
     if (text) {
-      out.innerHTML = '<div style="font-size:18px;color:var(--md-sys-color-on-surface);line-height:1.7">' + text.replace(/\n/g,'<br>') + '</div>' + shareBtn(q + '\n\n' + text);
+      out.innerHTML = '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.7">' + text.replace(/\n/g,'<br>') + '</div>' + shareBtn(q + '\n\n' + text);
       input.value = '';
     } else {
-      out.innerHTML = '<div style="color:var(--md-sys-color-secondary)">Error: No response received.</div>';
+      var errMsg = data.error ? data.error.message : JSON.stringify(data).substring(0, 120);
+      out.innerHTML = '<div style="color:var(--md-sys-color-secondary)">Error: ' + errMsg + '</div>';
     }
   } catch(e) {
     out.innerHTML = '<div style="color:var(--md-sys-color-secondary)">Error: ' + e.message + '</div>';
@@ -2591,13 +2594,15 @@ function renderPOTDResults(q, myVote, votes) {
 }
 
 renderPolls();
-// Auto-update header date to today
+// Auto-update header date and AI news date to today
 (function() {
-  var el = document.getElementById('hdr-date');
-  if (!el) return;
   var now = new Date();
   var months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  el.textContent = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  var monthsFull = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var hdr = document.getElementById('hdr-date');
+  if (hdr) hdr.textContent = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  var nd = document.getElementById('ai-news-date');
+  if (nd) nd.textContent = now.getDate() + ' ' + monthsFull[now.getMonth()];
 })();
 renderAge();
 renderLeaders();
