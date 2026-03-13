@@ -3169,7 +3169,7 @@ function canvasFooter(ctx) {
 function drawPollingCard(ctx) {
   var parties = D.parties.filter(function(p) { return p.name !== 'Other'; });
   var maxPct = Math.max.apply(null, parties.map(function(p) { return p.pct; }));
-  var PAD = 36, barMaxW = CARD_W - PAD * 2 - 70, barH = 40, barGap = 16, startX = PAD + 52, startY = 128;
+  var PAD = 36, trackW = CARD_W - PAD * 2 - 70, barMaxW = trackW - 52, barH = 40, barGap = 16, startX = PAD + 52, startY = 128;
   ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
   canvasHeader(ctx, 'Current Polling', D.fetchDate + '  ·  7-poll average');
   canvasFooter(ctx);
@@ -3180,7 +3180,7 @@ function drawPollingCard(ctx) {
     var w = Math.max(4, Math.round((p.pct / maxPct) * barMaxW));
     var chg = p.change > 0 ? '+' + p.change : p.change < 0 ? '' + p.change : '-';
     var chgCol = p.change > 0 ? '#1a7f37' : p.change < 0 ? CARD_SECONDARY : CARD_MUTED;
-    canvasFillRoundRect(ctx, startX, y, barMaxW, barH, 8, '#e0dce8');
+    canvasFillRoundRect(ctx, startX, y, trackW, barH, 8, '#e0dce8');
     canvasFillRoundRect(ctx, startX, y, w, barH, 8, p.color);
     ctx.fillStyle = CARD_TEXT; ctx.font = '800 17px ' + CARD_FONT;
     ctx.textAlign = 'right'; ctx.fillText(p.abbr, startX - 8, y + 26); ctx.textAlign = 'left';
@@ -3444,17 +3444,22 @@ function drawNonVotersCard(ctx) {
   ctx.fillStyle = CARD_TEXT; ctx.font = '700 14px ' + CARD_FONT;
   ctx.fillText('ESTIMATED INTENTION AMONG 2024 NON-VOTERS', PAD, 232);
 
-  var barMaxW = CARD_W - PAD * 2 - 90 - 52, barH = 36, gap = 18, startY = 248;
+  var trackW = CARD_W - PAD * 2 - 90; // full track width
+  var barMaxW = trackW - 52;           // bars stop 52px before track end, leaving room for label
+  var barH = 36, gap = 18, startY = 248;
   data.forEach(function(p, i) {
     var y = startY + i * (barH + gap);
     var bw = Math.round((p.pct / maxPct) * barMaxW);
-    canvasFillRoundRect(ctx, PAD + 80, y, barMaxW, barH, 8, '#e0dce8');
+    // Track (full width)
+    canvasFillRoundRect(ctx, PAD + 80, y, trackW, barH, 8, '#e0dce8');
+    // Bar (scaled, never reaches end of track)
     canvasFillRoundRect(ctx, PAD + 80, y, bw, barH, 8, p.color);
+    // Party name on the left
     ctx.fillStyle = p.color; ctx.font = '800 15px ' + CARD_FONT;
     ctx.textAlign = 'right'; ctx.fillText(p.label, PAD + 74, y + 23); ctx.textAlign = 'left';
-    // Percentage always to the right of the bar, never inside
+    // Percentage immediately after bar — always inside the track area
     ctx.fillStyle = p.color; ctx.font = '900 18px ' + CARD_FONT;
-    ctx.fillText(p.pct + '%', PAD + 80 + bw + 10, y + 24);
+    ctx.fillText(p.pct + '%', PAD + 80 + bw + 8, y + 24);
   });
 
   ctx.fillStyle = CARD_MUTED; ctx.font = '500 13px ' + CARD_FONT;
