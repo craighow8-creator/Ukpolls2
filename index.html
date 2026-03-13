@@ -1342,31 +1342,30 @@ async function askParty(party, color) {
     var data = await resp.json();
     var text = data.content && data.content[0] && data.content[0].text;
     if (text) {
-      // Render as structured document with party colour header
+      // Render as structured document with party colour top-border card
       var lines = text.split('\n');
-      var html = '<div style="border-radius:16px;overflow:hidden;box-shadow:var(--md-elevation-2)">';
-      // Header bar in party colour
-      html += '<div style="background:' + color + ';padding:16px 20px">';
-      html += '<div style="font-size:15px;font-weight:700;color:rgba(255,255,255,0.8);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">Party Briefing</div>';
-      html += '<div style="font-size:15px;font-weight:800;color:#fff">Why vote ' + party + '?</div>';
+      var html = '<div style="background:var(--md-sys-color-surface);border-radius:20px;overflow:hidden;'
+        + 'box-shadow:var(--md-elevation-2);border-top:4px solid ' + color + '">';
+      // Colour header strip
+      html += '<div style="background:' + color + '12;padding:14px 18px;border-bottom:1px solid ' + color + '22">';
+      html += '<div style="font-size:11px;font-weight:700;color:' + color + ';letter-spacing:1.2px;text-transform:uppercase;margin-bottom:2px">Party Briefing</div>';
+      html += '<div style="font-size:18px;font-weight:900;color:' + color + '">Why vote ' + party + '?</div>';
       html += '</div>';
       // Body
-      html += '<div style="background:var(--md-sys-color-surface);padding:16px 20px">';
+      html += '<div style="padding:16px 18px">';
       var inSection = false;
       lines.forEach(function(line) {
         line = line.trim();
-        if (!line) { if (inSection) html += '<div style="height:10px"></div>'; return; }
-        // Section headings
+        if (!line) { if (inSection) html += '<div style="height:8px"></div>'; return; }
         if (line.match(/^(WHAT THEY STAND FOR|KEY POLICIES|THE CASE FOR|THE CASE AGAINST|WHO VOTES FOR THEM)/i)) {
-          html += '<div style="font-size:15px;font-weight:800;letter-spacing:0.9px;text-transform:uppercase;color:' + color + ';margin:14px 0 6px;border-bottom:1.5px solid ' + color + '22;padding-bottom:4px">' + line + '</div>';
+          html += '<div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:' + color + ';margin:14px 0 6px;border-bottom:1.5px solid ' + color + '22;padding-bottom:4px">' + line + '</div>';
           inSection = true;
         } else if (line.startsWith('•') || line.startsWith('-') || line.match(/^\d+\./)) {
-          // Bullet points
-          html += '<div style="display:flex;gap:8px;margin:4px 0;font-size:18px;line-height:1.6;color:var(--md-sys-color-on-surface)">'
+          html += '<div style="display:flex;gap:8px;margin:4px 0;font-size:15px;line-height:1.6;color:var(--md-sys-color-on-surface)">'
             + '<span style="color:' + color + ';flex-shrink:0;font-weight:700">▸</span>'
             + '<span>' + line.replace(/^[•\-\d+\.]+\s*/,'') + '</span></div>';
         } else {
-          html += '<div style="font-size:18px;line-height:1.7;color:var(--md-sys-color-on-surface);margin:3px 0">' + line + '</div>';
+          html += '<div style="font-size:15px;line-height:1.7;color:var(--md-sys-color-on-surface);margin:3px 0">' + line + '</div>';
         }
       });
       html += '</div></div>';
@@ -1403,7 +1402,9 @@ async function askAI(q) {
     var data = await resp.json();
     var text = data.content && data.content[0] && data.content[0].text;
     if (text) {
-      out.innerHTML = '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.7">' + text.replace(/\n/g,'<br>') + '</div>' + shareBtn(q + '\n\n' + text);
+      out.innerHTML = '<div style="background:var(--md-sys-color-surface);border-radius:20px;padding:18px;box-shadow:var(--md-elevation-2);border-top:4px solid var(--md-sys-color-primary)">'
+        + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.7">' + text.replace(/\n\n/g,'</p><p style="margin:10px 0">').replace(/\n/g,'<br>') + '</div>'
+        + '</div>' + shareBtn(q + '\n\n' + text);
       input.value = '';
     } else {
       var errMsg = data.error ? data.error.message : JSON.stringify(data).substring(0, 120);
