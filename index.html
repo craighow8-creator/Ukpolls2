@@ -172,12 +172,14 @@ body {
   color: var(--md-sys-color-primary);
   font-family: 'Nunito', sans-serif;
   letter-spacing: -0.5px;
+  text-align: center;
 }
 .ssub {
   font-size: 14px;
   color: var(--md-sys-color-on-surface-variant);
   margin-bottom: 16px;
   font-weight: 400;
+  text-align: center;
 }
 .sec-label {
   font-size: 13px;
@@ -204,6 +206,7 @@ body {
   position: relative;
   overflow: hidden;
   box-shadow: var(--md-elevation-2);
+  text-align: center;
 }
 .rl-card::before {
   content: '';
@@ -554,7 +557,7 @@ body {
   <div class="page active" id="page-polls">
     <div class="stitle">Polls</div>
     <div class="ssub" id="overview-sub">7-poll moving average</div>
-    <div id="freshness-pill" style="margin-bottom:4px"></div>
+    <div id="freshness-pill" style="margin-bottom:4px;text-align:center"></div>
     <div id="race-leaders"></div>
     <div id="party-bars"></div>
     <div class="sec-label">🏛 Seat Projection</div>
@@ -792,7 +795,7 @@ body {
   <div class="page" id="page-vote">
     <div class="stitle">Your Vote</div>
     <div class="ssub">How would you vote today?</div>
-    <div style="display:flex;align-items:center;gap:8px;background:#FAA61A15;border-radius:14px;padding:10px 14px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;background:#FAA61A15;border-radius:14px;padding:10px 14px;margin-bottom:16px">
       <span style="font-size:15px">🇬🇧</span>
       <span style="font-size:15px;color:#a06200;font-weight:700">One vote per device · Change anytime · Results update live</span>
     </div>
@@ -1499,7 +1502,7 @@ function renderPolls() {
     var ld = seatParties[0];
     var isOutright = ld.seats >= 326;
     var short = 326 - ld.seats;
-    sumEl.innerHTML = '326 seats needed for majority · <strong style="color:'
+    sumEl.innerHTML = '326 seats needed for majority<br><strong style="color:'
       + (isOutright ? ld.color : 'var(--md-sys-color-primary)') + '">'
       + (isOutright ? ld.name + ' outright majority' : 'Hung Parliament projected')
       + '</strong>';
