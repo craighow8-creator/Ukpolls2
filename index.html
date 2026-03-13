@@ -646,13 +646,17 @@ body {
       <div id="party-bars"></div>
     </div>
     <div class="sec-label">🏛 Seat Projection<button class="sec-share" onclick="shareSection('🏛 Seat Projection', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
-    <div id="seat-bar-card" onclick="openFPTPSheet()" style="cursor:pointer;background:var(--md-sys-color-surface);border-radius:24px;padding:16px;margin-bottom:12px;box-shadow:var(--md-elevation-2);border-top:4px solid var(--md-sys-color-primary);active:opacity:0.8">
+    <div id="seat-bar-card" onclick="openFPTPSheet()" style="cursor:pointer;background:var(--md-sys-color-surface);border-radius:24px;padding:16px;margin-bottom:8px;box-shadow:var(--md-elevation-2);border-top:4px solid var(--md-sys-color-primary);active:opacity:0.8">
       <div id="seat-bar-inner" style="display:flex;height:76px;border-radius:16px;overflow:hidden;gap:2px;box-shadow:var(--md-elevation-1);margin-bottom:10px"></div>
       <div id="seat-bar-verdict" style="text-align:center"></div>
       <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px">
         <span style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Tap to explore · What is FPTP?</span>
         <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--md-sys-color-on-surface-variant)"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
       </div>
+    </div>
+    <div style="background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:800;color:var(--md-sys-color-primary);letter-spacing:0.4px;margin-bottom:6px">📐 Methodology</div>
+      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;font-weight:500">Seat projection uses the <strong style="color:var(--md-sys-color-on-surface)">Electoral Calculus MRP model</strong> (Mar 2026), which applies multi-level regression and post-stratification to current polling averages across all 650 constituencies. MRP is the same method used by YouGov and Sky News at general elections. Projections are <strong style="color:var(--md-sys-color-on-surface)">highly sensitive to small polling shifts</strong> — a 1–2pt swing can move dozens of seats. Treat as a directional indicator, not a forecast.</div>
     </div>
 
     <div class="sec-label">📈 6-Month Trend<button class="sec-share" onclick="shareSection('📈 6-Month Trend', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
@@ -662,7 +666,7 @@ body {
     </div>
     <div class="sec-label" id="polls-anchor">📋 Recent Polls<button class="sec-share" onclick="shareSection('📋 Recent Polls', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="polls-cards"></div>
-    <div class="sec-label">📌 Milestones<button class="sec-share" onclick="shareSection('📌 Milestones', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
+    <div class="sec-label">📌 Milestones</div>
     <div class="card" style="border-top:4px solid var(--md-sys-color-secondary)" id="milestones-list"></div>
 
 
@@ -677,7 +681,7 @@ body {
     <div class="sec-label">⏳ Countdown<button class="sec-share" onclick="shareSection('⏳ Countdown', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="countdown-card" style="margin-bottom:12px"></div>
 
-    <div class="sec-label">🗓 Key Dates<button class="sec-share" onclick="shareSection('🗓 Key Dates', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
+    <div class="sec-label">🗓 Key Dates</div>
     <div class="card" style="border-top:4px solid var(--md-sys-color-primary);padding:4px 0">
       <div class="key-date-row" onclick="showMilestoneSearch('UK local elections May 2026 Runcorn by-election', this)" style="cursor:pointer" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
         <div class="key-date-dot" style="background:#C8102E"></div>
@@ -701,7 +705,7 @@ body {
       </div>
     </div>
 
-    <div class="sec-label">📅 Upcoming<button class="sec-share" onclick="shareSection('📅 Upcoming', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
+    <div class="sec-label">📅 Upcoming</div>
 
     <!-- Explainer card -->
     <div class="explainer-card" onclick="var b=document.getElementById('may-explainer');var a=document.getElementById('may-arrow');b.classList.toggle('open');a.textContent=b.classList.contains('open')?'▲':'▼'">
@@ -2291,17 +2295,6 @@ async function leaderAITake(li) {
   if (btn) { btn.disabled = false; btn.style.opacity = ''; }
 }
 
-async function shareLeader(li) {
-  var l = D.leaders[li];
-  showToast('🎨 Building card...');
-  try {
-    var svgStr = buildLeaderCard(l);
-    var blob = await svgToPng(svgStr);
-    await shareBlob(blob, l.name + ' — UK Poll Tracker', 'uk-poll-tracker-leader.png');
-  } catch(e) {
-    showToast('Could not build card — try again');
-  }
-}
 
 // ── Render Poll Cards ──
 function renderPollCards() {
@@ -3098,206 +3091,935 @@ var SECTION_SHARE = {
 // ── SVG Share Card Engine ─────────────────────────────────────────────────
 // Produces crisp 1200×630 PNG share cards — no html2canvas, no blur.
 
-var CARD_W = 1200, CARD_H = 630;
+var CARD_W = 630, CARD_H = 900;
 var CARD_BG = '#F7F2FA', CARD_SURFACE = '#FFFFFF';
 var CARD_PRIMARY = '#012169', CARD_SECONDARY = '#C8102E';
 var CARD_TEXT = '#1C1B1F', CARD_MUTED = '#49454F', CARD_OUTLINE = '#CAC4D0';
 var CARD_FONT = 'system-ui, -apple-system, "Segoe UI", Arial, sans-serif';
 
-function svgEsc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function stripEmoji(str) {
+  return String(str).replace(/[\u{1F000}-\u{1FFFF}]|[\u{2600}-\u{27FF}]|[\u{FE00}-\u{FEFF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA9F}]/gu, '').replace(/\s+/g, ' ').trim();
 }
 
-function cardBrandingFooter() {
-  return '<rect x="0" y="590" width="1200" height="40" fill="' + CARD_PRIMARY + '"/>'
-    + '<text x="600" y="612" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="18" font-weight="700" fill="white">🇬🇧 UK Poll Tracker · ukpolls2.github.io</text>';
+function wrapText(ctx, text, maxWidth) {
+  var words = text.split(' '), lines = [], line = '';
+  words.forEach(function(word) {
+    var test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = word; }
+    else { line = test; }
+  });
+  if (line) lines.push(line);
+  return lines;
 }
 
-function cardHeader(title, subtitle) {
-  return '<rect x="0" y="0" width="1200" height="90" fill="' + CARD_PRIMARY + '"/>'
-    + '<text x="48" y="52" font-family="' + CARD_FONT + '" font-size="32" font-weight="900" fill="white">' + svgEsc(title) + '</text>'
-    + (subtitle ? '<text x="48" y="78" font-family="' + CARD_FONT + '" font-size="20" font-weight="500" fill="rgba(255,255,255,0.75)">' + svgEsc(subtitle) + '</text>' : '');
+function drawCardToCanvas(drawFn) {
+  var canvas = document.createElement('canvas');
+  canvas.width = CARD_W; canvas.height = CARD_H;
+  var ctx = canvas.getContext('2d');
+  drawFn(ctx);
+  return canvas;
 }
 
-function svgToPng(svgString) {
-  return new Promise(function(resolve) {
-    var blob = new Blob([svgString], {type:'image/svg+xml'});
-    var url = URL.createObjectURL(blob);
-    var img = new Image();
-    img.onload = function() {
-      var canvas = document.createElement('canvas');
-      canvas.width = CARD_W; canvas.height = CARD_H;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(url);
-      canvas.toBlob(resolve, 'image/png');
-    };
-    img.src = url;
+function canvasToBlob(canvas) {
+  return new Promise(function(resolve) { canvas.toBlob(resolve, 'image/png'); });
+}
+
+function canvasFillRoundRect(ctx, x, y, w, h, r, color) {
+  if (w <= 0) return;
+  r = Math.min(r, w / 2, h / 2);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath(); ctx.fill();
+}
+
+function canvasHeader(ctx, titleRaw, subtitleRaw) {
+  var title = stripEmoji(titleRaw);
+  var subtitle = subtitleRaw ? stripEmoji(subtitleRaw) : null;
+  var hh = subtitle ? 110 : 88;
+  ctx.fillStyle = CARD_PRIMARY;
+  ctx.fillRect(0, 0, CARD_W, hh);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 30px ' + CARD_FONT;
+  ctx.fillText(title, 36, 50);
+  if (subtitle) {
+    ctx.font = '500 18px ' + CARD_FONT;
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.fillText(subtitle, 36, 80);
+  }
+}
+
+function canvasFooter(ctx) {
+  ctx.fillStyle = CARD_PRIMARY;
+  ctx.fillRect(0, CARD_H - 50, CARD_W, 50);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '700 16px ' + CARD_FONT;
+  ctx.textAlign = 'center';
+  ctx.fillText('UK Poll Tracker  ·  ukpolls2.github.io', CARD_W / 2, CARD_H - 18);
+  ctx.textAlign = 'left';
+}
+
+function drawPollingCard(ctx) {
+  var parties = D.parties.filter(function(p) { return p.name !== 'Other'; });
+  var maxPct = Math.max.apply(null, parties.map(function(p) { return p.pct; }));
+  var PAD = 36, barMaxW = CARD_W - PAD * 2 - 70, barH = 40, barGap = 16, startX = PAD + 52, startY = 128;
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, 'Current Polling', D.fetchDate + '  ·  7-poll average');
+  canvasFooter(ctx);
+  ctx.fillStyle = CARD_MUTED; ctx.font = '600 14px ' + CARD_FONT;
+  ctx.textAlign = 'right'; ctx.fillText('chg', CARD_W - PAD, startY - 10); ctx.textAlign = 'left';
+  parties.forEach(function(p, i) {
+    var y = startY + i * (barH + barGap);
+    var w = Math.max(4, Math.round((p.pct / maxPct) * barMaxW));
+    var chg = p.change > 0 ? '+' + p.change : p.change < 0 ? '' + p.change : '-';
+    var chgCol = p.change > 0 ? '#1a7f37' : p.change < 0 ? CARD_SECONDARY : CARD_MUTED;
+    canvasFillRoundRect(ctx, startX, y, barMaxW, barH, 8, '#e0dce8');
+    canvasFillRoundRect(ctx, startX, y, w, barH, 8, p.color);
+    ctx.fillStyle = CARD_TEXT; ctx.font = '800 17px ' + CARD_FONT;
+    ctx.textAlign = 'right'; ctx.fillText(p.abbr, startX - 8, y + 26); ctx.textAlign = 'left';
+    ctx.fillStyle = p.color; ctx.font = '900 19px ' + CARD_FONT;
+    ctx.fillText(p.pct + '%', startX + w + 8, y + 26);
+    ctx.fillStyle = chgCol; ctx.font = '700 15px ' + CARD_FONT;
+    ctx.textAlign = 'right'; ctx.fillText(chg, CARD_W - PAD, y + 26); ctx.textAlign = 'left';
   });
 }
 
+function drawSeatsCard(ctx) {
+  var parties = D.parties.filter(function(p) { return p.seats !== null; });
+  var total = parties.reduce(function(s, p) { return s + p.seats; }, 0);
+  var majority = Math.floor(total / 2) + 1;
+  var PAD = 36, barX = PAD, barY = 128, barH = 72, barW = CARD_W - PAD * 2;
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, 'Seat Projection', 'MRP model  ·  ' + D.fetchDate);
+  canvasFooter(ctx);
+  canvasFillRoundRect(ctx, barX, barY, barW, barH, 10, '#ddd');
+  var cx = barX;
+  parties.forEach(function(p) {
+    var sw = Math.round((p.seats / total) * barW);
+    ctx.fillStyle = p.color; ctx.fillRect(cx, barY, sw, barH);
+    if (sw > 40) {
+      ctx.fillStyle = '#fff'; ctx.font = '800 13px ' + CARD_FONT; ctx.textAlign = 'center';
+      ctx.fillText(p.abbr, cx + sw / 2, barY + 24);
+      ctx.font = '900 17px ' + CARD_FONT;
+      ctx.fillText(p.seats, cx + sw / 2, barY + 50);
+    }
+    cx += sw;
+  });
+  ctx.textAlign = 'left';
+  var majX = barX + Math.round((majority / total) * barW);
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(majX, barY - 10); ctx.lineTo(majX, barY + barH + 10); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = CARD_MUTED; ctx.font = '700 13px ' + CARD_FONT; ctx.textAlign = 'center';
+  ctx.fillText('Majority ' + majority, majX, barY - 16); ctx.textAlign = 'left';
+  var legY = barY + barH + 48, legX = PAD;
+  parties.forEach(function(p, i) {
+    var col = i % 2, row = Math.floor(i / 2);
+    var x = legX + col * 270, y = legY + row * 44;
+    canvasFillRoundRect(ctx, x, y - 18, 20, 20, 4, p.color);
+    ctx.fillStyle = CARD_TEXT; ctx.font = '700 17px ' + CARD_FONT;
+    ctx.fillText(p.name + '  ' + p.seats, x + 28, y);
+  });
+}
+
+function drawLeaderCard(ctx, l) {
+  var netStr = l.net === null ? '?' : (l.net > 0 ? '+' : '') + l.net;
+  var netCol = l.net === null ? CARD_MUTED : l.net > 0 ? '#1a7f37' : CARD_SECONDARY;
+  var initials = l.name.split(' ').map(function(w) { return w[0]; }).join('').slice(0, 2);
+  var PAD = 36;
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  ctx.fillStyle = l.color; ctx.fillRect(0, 0, CARD_W, 6);
+  canvasHeader(ctx, 'Leader Rating', 'UK Poll Tracker  ·  ' + D.fetchDate);
+  canvasFooter(ctx);
+  // White content panel
+  canvasFillRoundRect(ctx, PAD, 118, CARD_W - PAD * 2, CARD_H - 118 - 50 - PAD, 16, CARD_SURFACE);
+  // Avatar
+  var avX = PAD + 56, avY = 194;
+  ctx.fillStyle = l.color; ctx.beginPath(); ctx.arc(avX, avY, 52, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = '900 32px ' + CARD_FONT; ctx.textAlign = 'center';
+  ctx.fillText(initials, avX, avY + 11); ctx.textAlign = 'left';
+  // Name & party
+  ctx.fillStyle = CARD_TEXT; ctx.font = '900 32px ' + CARD_FONT;
+  ctx.fillText(l.name, PAD + 122, 172);
+  ctx.fillStyle = l.color; ctx.font = '600 19px ' + CARD_FONT;
+  ctx.fillText(l.party, PAD + 122, 200);
+  // Divider
+  ctx.fillStyle = CARD_OUTLINE; ctx.fillRect(PAD + 8, 244, CARD_W - PAD * 2 - 16, 1);
+  // Net approval
+  ctx.fillStyle = netCol; ctx.font = '900 100px ' + CARD_FONT; ctx.textAlign = 'center';
+  ctx.fillText(netStr, CARD_W / 2, 370);
+  ctx.fillStyle = CARD_MUTED; ctx.font = '700 18px ' + CARD_FONT;
+  ctx.fillText('NET APPROVAL', CARD_W / 2, 406); ctx.textAlign = 'left';
+  // Approve/disapprove
+  if (l.approve && l.disapprove) {
+    var barTot = l.approve + l.disapprove, bw = CARD_W - PAD * 2 - 16, bh = 28, bx = PAD + 8, by = 432;
+    var aw = Math.round((l.approve / barTot) * bw);
+    canvasFillRoundRect(ctx, bx, by, bw, bh, 14, '#e0dce8');
+    canvasFillRoundRect(ctx, bx, by, aw, bh, 14, '#1a7f3766');
+    ctx.fillStyle = '#1a7f37'; ctx.font = '700 18px ' + CARD_FONT;
+    ctx.fillText(l.approve + '% approve', bx, by + bh + 26);
+    ctx.fillStyle = CARD_SECONDARY; ctx.textAlign = 'right';
+    ctx.fillText(l.disapprove + '% disapprove', bx + bw, by + bh + 26); ctx.textAlign = 'left';
+  }
+  if (l.note) {
+    ctx.fillStyle = CARD_MUTED; ctx.font = '400 18px ' + CARD_FONT;
+    var noteLines = wrapText(ctx, stripEmoji(l.note), CARD_W - PAD * 2 - 16);
+    noteLines.slice(0, 4).forEach(function(line, i) { ctx.fillText(line, PAD + 8, 460 + i * 28); });
+  }
+}
+
+function drawGenericCard(ctx, label, lines) {
+  var PAD = 36;
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, stripEmoji(label), D.fetchDate);
+  canvasFooter(ctx);
+  canvasFillRoundRect(ctx, PAD, 120, CARD_W - PAD * 2, CARD_H - 120 - 50 - PAD, 16, CARD_SURFACE);
+  ctx.fillStyle = CARD_TEXT;
+  var y = 162, maxW = CARD_W - PAD * 2 - 32, maxY = CARD_H - 50 - PAD - 16;
+  lines.forEach(function(line, i) {
+    if (y >= maxY) return;
+    var clean = stripEmoji(line).trim(); if (!clean) { y += 10; return; }
+    ctx.font = (i === 0 ? '700' : '400') + ' 20px ' + CARD_FONT;
+    wrapText(ctx, clean, maxW).forEach(function(wl) {
+      if (y < maxY) { ctx.fillText(wl, PAD + 16, y); y += 30; }
+    });
+    y += 4;
+  });
+}
+
+// ── Shared demographic bar chart helper ──
+function drawDemoCard(ctx, title, subtitle, groups, parties, maxScale) {
+  var PAD = 28;
+  maxScale = maxScale || 40;
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, title, subtitle || (D.fetchDate + '  ·  polling average'));
+  canvasFooter(ctx);
+
+  // Compact legend - single row
+  var legY = 118, totalW = CARD_W - PAD * 2;
+  var legItemW = Math.floor(totalW / parties.length);
+  parties.forEach(function(p, i) {
+    var x = PAD + i * legItemW;
+    canvasFillRoundRect(ctx, x, legY, 10, 10, 2, p.color);
+    ctx.fillStyle = CARD_TEXT; ctx.font = '600 12px ' + CARD_FONT;
+    ctx.fillText(p.label, x + 14, legY + 9);
+  });
+
+  var contentH = CARD_H - 140 - 55;
+  var rowH = Math.floor(contentH / groups.length);
+  // Clamp row height so bars don't get too tall or too cramped
+  rowH = Math.max(rowH, 80);
+  var barSlotH = rowH - 38; // space left for bars after label row
+  var nParties = parties.length;
+  var barH = Math.max(7, Math.min(13, Math.floor((barSlotH - (nParties - 1) * 3) / nParties)));
+  var barMaxW = CARD_W - PAD * 2 - 58;
+  var startY = 138;
+
+  groups.forEach(function(g, gi) {
+    var y = startY + gi * rowH;
+
+    // Group label — truncated to one line
+    var labelText = g.label;
+    ctx.font = '700 14px ' + CARD_FONT;
+    if (ctx.measureText(labelText).width > 260) {
+      while (ctx.measureText(labelText + '…').width > 260 && labelText.length > 0) {
+        labelText = labelText.slice(0, -1);
+      }
+      labelText += '…';
+    }
+    ctx.fillStyle = CARD_TEXT;
+    ctx.fillText(labelText, PAD, y + 13);
+
+    // Leader pill — right aligned
+    var lead = parties.reduce(function(best, p) { return (g[p.key] || 0) > (g[best.key] || 0) ? p : best; }, parties[0]);
+    ctx.fillStyle = lead.color; ctx.font = '700 11px ' + CARD_FONT;
+    ctx.textAlign = 'right';
+    ctx.fillText(lead.label + ' leads', CARD_W - PAD, y + 13);
+    ctx.textAlign = 'left';
+
+    // Bars sorted by value
+    var sorted = parties.slice().sort(function(a, b) { return (g[b.key] || 0) - (g[a.key] || 0); });
+    sorted.forEach(function(p, pi) {
+      var val = g[p.key] || 0;
+      if (!val) return;
+      var by = y + 20 + pi * (barH + 3);
+      var bw = Math.max(4, Math.round((val / maxScale) * barMaxW));
+      canvasFillRoundRect(ctx, PAD + 46, by, barMaxW, barH, 3, '#e0dce8');
+      canvasFillRoundRect(ctx, PAD + 46, by, bw, barH, 3, p.color);
+      ctx.fillStyle = CARD_MUTED; ctx.font = '600 10px ' + CARD_FONT;
+      ctx.textAlign = 'right';
+      ctx.fillText(val + '%', PAD + 42, by + barH - 1);
+      ctx.textAlign = 'left';
+    });
+
+    // Divider
+    if (gi < groups.length - 1) {
+      ctx.fillStyle = CARD_OUTLINE;
+      ctx.fillRect(PAD, y + rowH - 2, CARD_W - PAD * 2, 1);
+    }
+  });
+}
+
+var DEMO_PARTIES = [
+  {key:'REF', label:'Reform', color:'#12B7D4'},
+  {key:'GRN', label:'Green',  color:'#02A95B'},
+  {key:'LAB', label:'Labour', color:'#E4003B'},
+  {key:'CON', label:'Con',    color:'#0087DC'},
+  {key:'LD',  label:'LD',     color:'#FAA61A'},
+];
+var DEMO_PARTIES_SNP = DEMO_PARTIES.concat([{key:'SNP', label:'SNP', color:'#C4922A'}]);
+
+function drawSocialClassCard(ctx) {
+  drawDemoCard(ctx, 'Voting by Social Class', null, [
+    {label:'AB  Professional / managerial', REF:20, GRN:24, LAB:18, CON:20, LD:18},
+    {label:'C1  Clerical / supervisory',    REF:26, GRN:19, LAB:18, CON:18, LD:14},
+    {label:'C2  Skilled working class',     REF:32, GRN:14, LAB:18, CON:16, LD:11},
+    {label:'DE  Semi / unskilled',          REF:30, GRN:16, LAB:20, CON:12, LD:10},
+  ], DEMO_PARTIES);
+}
+
+function drawEducationCard(ctx) {
+  drawDemoCard(ctx, 'Voting by Education', null, [
+    {label:'Degree educated',      REF:16, GRN:28, LAB:22, CON:16, LD:18},
+    {label:'Non-degree educated',  REF:33, GRN:13, LAB:15, CON:18, LD:11},
+    {label:'In education (16-21)', REF:12, GRN:35, LAB:20, CON:8,  LD:14},
+  ], DEMO_PARTIES);
+}
+
+function drawRegionCard(ctx) {
+  drawDemoCard(ctx, 'Voting by Region', null, [
+    {label:'London',           REF:16, GRN:26, LAB:26, CON:14, LD:14},
+    {label:'South East',       REF:26, GRN:18, LAB:14, CON:20, LD:18},
+    {label:'South West',       REF:24, GRN:20, LAB:14, CON:18, LD:20},
+    {label:'Midlands',         REF:32, GRN:14, LAB:20, CON:18, LD:10},
+    {label:'North of England', REF:30, GRN:16, LAB:22, CON:14, LD:11},
+    {label:'Wales',            REF:24, GRN:14, LAB:26, CON:14, LD:12},
+    {label:'Scotland',         REF:14, GRN:10, LAB:28, CON:14, LD:8, SNP:28},
+  ], DEMO_PARTIES_SNP, 35);
+}
+
+function drawEthnicityCard(ctx) {
+  drawDemoCard(ctx, 'Voting by Ethnicity', null, [
+    {label:'White British', REF:30, GRN:17, LAB:17, CON:17, LD:12},
+    {label:'Asian British', REF:14, GRN:18, LAB:36, CON:16, LD:12},
+    {label:'Black British', REF:8,  GRN:22, LAB:44, CON:10, LD:10},
+    {label:'Mixed / Other', REF:18, GRN:26, LAB:24, CON:12, LD:14},
+  ], DEMO_PARTIES, 50);
+}
+
+function drawNonVotersCard(ctx) {
+  var PAD = 32;
+  var data = [
+    {label:'Reform UK',       color:'#12B7D4', pct:32},
+    {label:'Restore Britain', color:'#1a4a9e', pct:18},
+    {label:'Green',           color:'#02A95B', pct:16},
+    {label:'Labour',          color:'#E4003B', pct:14},
+    {label:'Conservative',    color:'#0087DC', pct:10},
+    {label:'Lib Dem',         color:'#FAA61A', pct:6},
+  ];
+  var maxPct = 32;
+
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, '2024 Non-Voters', 'Where are they going now?');
+  canvasFooter(ctx);
+
+  // Context box
+  canvasFillRoundRect(ctx, PAD, 122, CARD_W - PAD * 2, 88, 14, CARD_SURFACE);
+  ctx.fillStyle = CARD_TEXT; ctx.font = '700 17px ' + CARD_FONT;
+  ctx.fillText('42% of eligible voters did not vote in 2024', PAD + 14, 150);
+  ctx.fillStyle = CARD_MUTED; ctx.font = '400 15px ' + CARD_FONT;
+  var ctxLine = 'Among those who now say they\'d definitely vote, Reform UK and Restore Britain lead.';
+  wrapText(ctx, ctxLine, CARD_W - PAD * 2 - 28).forEach(function(l, i) {
+    ctx.fillText(l, PAD + 14, 172 + i * 22);
+  });
+
+  // Bars
+  ctx.fillStyle = CARD_TEXT; ctx.font = '700 14px ' + CARD_FONT;
+  ctx.fillText('ESTIMATED INTENTION AMONG 2024 NON-VOTERS', PAD, 232);
+
+  var barMaxW = CARD_W - PAD * 2 - 90, barH = 36, gap = 18, startY = 248;
+  data.forEach(function(p, i) {
+    var y = startY + i * (barH + gap);
+    var bw = Math.round((p.pct / maxPct) * barMaxW);
+    canvasFillRoundRect(ctx, PAD + 80, y, barMaxW, barH, 8, '#e0dce8');
+    canvasFillRoundRect(ctx, PAD + 80, y, bw, barH, 8, p.color);
+    ctx.fillStyle = p.color; ctx.font = '800 15px ' + CARD_FONT;
+    ctx.textAlign = 'right'; ctx.fillText(p.label, PAD + 74, y + 23); ctx.textAlign = 'left';
+    ctx.fillStyle = i === 0 ? '#fff' : p.color;
+    ctx.font = '900 18px ' + CARD_FONT;
+    ctx.fillText(p.pct + '%', PAD + 80 + bw + 10, y + 24);
+  });
+
+  ctx.fillStyle = CARD_MUTED; ctx.font = '500 13px ' + CARD_FONT;
+  ctx.fillText('Source: Find Out Now, JL Partners', PAD, CARD_H - 68);
+}
+function drawAgeCard(ctx) {
+  var PAD = 32;
+  var groups = [
+    {label:'18-24', REF:18, GRN:32, LAB:20, CON:8,  LD:12},
+    {label:'25-34', REF:20, GRN:28, LAB:22, CON:10, LD:13},
+    {label:'35-44', REF:24, GRN:22, LAB:20, CON:14, LD:13},
+    {label:'45-54', REF:28, GRN:16, LAB:17, CON:18, LD:16},
+    {label:'55-64', REF:34, GRN:12, LAB:16, CON:20, LD:13},
+    {label:'65+',   REF:31, GRN:8,  LAB:15, CON:22, LD:14},
+  ];
+  var parties = [
+    {key:'REF', label:'Reform', color:'#12B7D4'},
+    {key:'GRN', label:'Green',  color:'#02A95B'},
+    {key:'LAB', label:'Labour', color:'#E4003B'},
+    {key:'CON', label:'Con',    color:'#0087DC'},
+    {key:'LD',  label:'LD',     color:'#FAA61A'},
+  ];
+
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, 'Voting by Age Group', D.fetchDate + '  ·  polling average');
+  canvasFooter(ctx);
+
+  // Legend
+  var legX = PAD, legY = 122;
+  parties.forEach(function(p, i) {
+    var x = legX + i * 112;
+    canvasFillRoundRect(ctx, x, legY, 14, 14, 3, p.color);
+    ctx.fillStyle = CARD_TEXT; ctx.font = '600 14px ' + CARD_FONT;
+    ctx.fillText(p.label, x + 18, legY + 11);
+  });
+
+  var rowH = 110, startY = 150, barMaxW = CARD_W - PAD * 2 - 52, barH = 14;
+
+  groups.forEach(function(g, gi) {
+    var y = startY + gi * rowH;
+    // Age label
+    ctx.fillStyle = CARD_TEXT; ctx.font = '800 18px ' + CARD_FONT;
+    ctx.fillText(g.label, PAD, y + 16);
+    // Find leader
+    var lead = parties.reduce(function(best, p) { return g[p.key] > g[best.key] ? p : best; }, parties[0]);
+    ctx.fillStyle = lead.color; ctx.font = '700 13px ' + CARD_FONT;
+    ctx.textAlign = 'right';
+    ctx.fillText(lead.label + ' leads', CARD_W - PAD, y + 16);
+    ctx.textAlign = 'left';
+    // Bars — sorted by value
+    var sorted = parties.slice().sort(function(a, b) { return g[b.key] - g[a.key]; });
+    sorted.forEach(function(p, pi) {
+      var by = y + 24 + pi * (barH + 5);
+      var bw = Math.round((g[p.key] / 40) * barMaxW);
+      canvasFillRoundRect(ctx, PAD + 48, by, barMaxW, barH, 4, '#e0dce8');
+      canvasFillRoundRect(ctx, PAD + 48, by, bw, barH, 4, p.color);
+      ctx.fillStyle = CARD_MUTED; ctx.font = '600 12px ' + CARD_FONT;
+      ctx.textAlign = 'right';
+      ctx.fillText(g[p.key] + '%', PAD + 44, by + 11);
+      ctx.textAlign = 'left';
+    });
+    // Divider
+    if (gi < groups.length - 1) {
+      ctx.fillStyle = CARD_OUTLINE; ctx.fillRect(PAD, y + rowH - 4, CARD_W - PAD * 2, 1);
+    }
+  });
+}
+
+// ── Recent Polls card ──
+function drawRecentPollsCard(ctx) {
+  var PAD = 28;
+  var KEYS = [
+    {k:'ref', label:'Ref', color:'#12B7D4'},
+    {k:'lab', label:'Lab', color:'#E4003B'},
+    {k:'con', label:'Con', color:'#0087DC'},
+    {k:'grn', label:'Grn', color:'#02A95B'},
+    {k:'ld',  label:'LD',  color:'#FAA61A'},
+    {k:'rb',  label:'RB',  color:'#1a4a9e'},
+  ];
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, 'Recent Polls', 'Individual pollster results  ·  ' + D.fetchDate);
+  canvasFooter(ctx);
+  var legY = 118;
+  KEYS.forEach(function(k, i) {
+    var x = PAD + i * 96;
+    canvasFillRoundRect(ctx, x, legY, 10, 10, 2, k.color);
+    ctx.fillStyle = CARD_TEXT; ctx.font = '600 12px ' + CARD_FONT;
+    ctx.fillText(k.label, x + 14, legY + 9);
+  });
+  var rowH = Math.max(90, Math.floor((CARD_H - 140 - 55) / D.polls.length));
+  var barH = 26, startY = 136;
+  D.polls.forEach(function(p, i) {
+    var y = startY + i * rowH;
+    ctx.fillStyle = CARD_TEXT; ctx.font = '800 16px ' + CARD_FONT;
+    ctx.fillText(p.pollster, PAD, y + 16);
+    ctx.fillStyle = CARD_MUTED; ctx.font = '600 13px ' + CARD_FONT;
+    ctx.textAlign = 'right'; ctx.fillText(p.date, CARD_W - PAD, y + 16); ctx.textAlign = 'left';
+    var valid = KEYS.filter(function(k) { return p[k.k] != null; });
+    var total = valid.reduce(function(s, k) { return s + p[k.k]; }, 0);
+    var barW = CARD_W - PAD * 2, bx = PAD, by = y + 24;
+    canvasFillRoundRect(ctx, bx, by, barW, barH, 6, '#e0dce8');
+    var cx = bx;
+    valid.slice().sort(function(a, b) { return p[b.k] - p[a.k]; }).forEach(function(k) {
+      var sw = Math.round((p[k.k] / total) * barW);
+      ctx.fillStyle = k.color; ctx.fillRect(cx, by, sw, barH);
+      if (sw > 36) {
+        ctx.fillStyle = '#fff'; ctx.font = '700 11px ' + CARD_FONT; ctx.textAlign = 'center';
+        ctx.fillText(p[k.k] + '%', cx + sw / 2, by + 17);
+      }
+      cx += sw;
+    });
+    ctx.textAlign = 'left';
+    if (i < D.polls.length - 1) {
+      ctx.fillStyle = CARD_OUTLINE; ctx.fillRect(PAD, y + rowH - 4, CARD_W - PAD * 2, 1);
+    }
+  });
+}
+
+// ── Betting Odds card ──
+function drawBettingCard(ctx) {
+  var PAD = 32;
+  var odds = [
+    {name:'Reform UK',    color:'#12B7D4', odds:'6/4',  fav:true},
+    {name:'Labour',       color:'#E4003B', odds:'9/4',  fav:false},
+    {name:'Conservative', color:'#0087DC', odds:'8/1',  fav:false},
+    {name:'Green',        color:'#02A95B', odds:'14/1', fav:false},
+    {name:'Lib Dem',      color:'#FAA61A', odds:'20/1', fav:false},
+  ];
+  function impliedProb(str) {
+    var parts = str.split('/'), n = parseInt(parts[0]), d = parseInt(parts[1]);
+    return Math.round(d / (n + d) * 100);
+  }
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, 'Betting Odds', 'Next GE outright winner  ·  Betfair / Oddschecker  ·  Mar 2026');
+  canvasFooter(ctx);
+  ctx.fillStyle = CARD_MUTED; ctx.font = '600 15px ' + CARD_FONT;
+  ctx.fillText('Odds to win most seats at the next General Election', PAD, 126);
+  var rowH = 110, startY = 146, maxProb = impliedProb(odds[0].odds);
+  var barMaxW = CARD_W - PAD * 2 - 80;
+  odds.forEach(function(o, i) {
+    var y = startY + i * rowH, prob = impliedProb(o.odds);
+    var bw = Math.round((prob / maxProb) * barMaxW);
+    canvasFillRoundRect(ctx, PAD, y, CARD_W - PAD * 2, 94, 12, CARD_SURFACE);
+    ctx.fillStyle = o.color; ctx.fillRect(PAD, y, CARD_W - PAD * 2, 5);
+    ctx.fillStyle = CARD_TEXT; ctx.font = '800 20px ' + CARD_FONT;
+    ctx.fillText(o.name, PAD + 14, y + 34);
+    if (o.fav) {
+      var lw = ctx.measureText(o.name).width;
+      canvasFillRoundRect(ctx, PAD + 14 + lw + 10, y + 18, 80, 22, 11, o.color + '22');
+      ctx.fillStyle = o.color; ctx.font = '700 11px ' + CARD_FONT;
+      ctx.fillText('FAVOURITE', PAD + 14 + lw + 22, y + 33);
+    }
+    ctx.fillStyle = o.color; ctx.font = '900 28px ' + CARD_FONT;
+    ctx.textAlign = 'right'; ctx.fillText(o.odds, CARD_W - PAD - 14, y + 36); ctx.textAlign = 'left';
+    canvasFillRoundRect(ctx, PAD + 14, y + 50, barMaxW, 16, 8, '#e0dce8');
+    canvasFillRoundRect(ctx, PAD + 14, y + 50, bw, 16, 8, o.color + 'aa');
+    ctx.fillStyle = CARD_MUTED; ctx.font = '600 13px ' + CARD_FONT;
+    ctx.fillText(prob + '% implied probability', PAD + 14 + bw + 8, y + 63);
+  });
+  ctx.fillStyle = CARD_MUTED; ctx.font = '500 12px ' + CARD_FONT;
+  ctx.textAlign = 'center';
+  ctx.fillText('18+  ·  Please gamble responsibly  ·  BeGambleAware.org', CARD_W / 2, CARD_H - 60);
+  ctx.textAlign = 'left';
+}
+
+// ── Countdown card ──
+function drawCountdownCard(ctx) {
+  var PAD = 36;
+  var now = new Date();
+  var may1 = new Date('2026-05-01T00:00:00');
+  var ge = new Date('2029-05-02T00:00:00');
+  var msDay = 86400000;
+  var dMay = Math.max(0, Math.ceil((may1 - now) / msDay));
+  var dGE = Math.ceil((ge - now) / msDay);
+  var accentCol = dMay <= 7 ? CARD_SECONDARY : dMay <= 30 ? '#FAA61A' : CARD_PRIMARY;
+
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, 'Election Countdown', D.fetchDate);
+  canvasFooter(ctx);
+
+  // Big days number
+  canvasFillRoundRect(ctx, PAD, 120, CARD_W - PAD * 2, 280, 20, CARD_SURFACE);
+  ctx.fillStyle = CARD_MUTED; ctx.font = '700 16px ' + CARD_FONT;
+  ctx.textAlign = 'center';
+  ctx.fillText('LOCAL ELECTIONS + RUNCORN BY-ELECTION', CARD_W / 2, 162);
+  ctx.fillStyle = accentCol; ctx.font = '900 148px ' + CARD_FONT;
+  ctx.fillText(dMay, CARD_W / 2, 300);
+  ctx.fillStyle = CARD_MUTED; ctx.font = '700 20px ' + CARD_FONT;
+  ctx.fillText('days to go  ·  1 May 2026', CARD_W / 2, 340);
+  ctx.textAlign = 'left';
+
+  // Weeks / GE grid
+  var gridY = 426;
+  canvasFillRoundRect(ctx, PAD, gridY, (CARD_W - PAD * 2 - 12) / 2, 100, 14, CARD_SURFACE);
+  canvasFillRoundRect(ctx, PAD + (CARD_W - PAD * 2 - 12) / 2 + 12, gridY, (CARD_W - PAD * 2 - 12) / 2, 100, 14, CARD_SURFACE);
+  ctx.fillStyle = CARD_PRIMARY; ctx.font = '900 36px ' + CARD_FONT;
+  ctx.textAlign = 'center';
+  ctx.fillText(Math.round(dMay / 7 * 10) / 10, PAD + (CARD_W - PAD * 2 - 12) / 4, gridY + 52);
+  ctx.fillStyle = CARD_MUTED; ctx.font = '600 16px ' + CARD_FONT;
+  ctx.fillText('weeks', PAD + (CARD_W - PAD * 2 - 12) / 4, gridY + 76);
+  var col2X = PAD + (CARD_W - PAD * 2 - 12) / 2 + 12 + (CARD_W - PAD * 2 - 12) / 4;
+  ctx.fillStyle = CARD_PRIMARY; ctx.font = '900 36px ' + CARD_FONT;
+  ctx.fillText(dGE, col2X, gridY + 52);
+  ctx.fillStyle = CARD_MUTED; ctx.font = '600 16px ' + CARD_FONT;
+  ctx.fillText('days to GE deadline', col2X, gridY + 76);
+  ctx.textAlign = 'left';
+
+  // What's at stake
+  canvasFillRoundRect(ctx, PAD, 552, CARD_W - PAD * 2, 280, 16, CARD_SURFACE);
+  ctx.fillStyle = accentCol; ctx.font = '800 15px ' + CARD_FONT;
+  ctx.fillText('WHAT\'S AT STAKE', PAD + 16, 580);
+  var stakes = [
+    'English councils across major cities & towns',
+    'Every Scottish council up for election',
+    'Runcorn & Helsby by-election',
+    'Reform UK\'s first major electoral test',
+    'Labour face potential losses in strongholds',
+  ];
+  ctx.fillStyle = CARD_TEXT; ctx.font = '400 18px ' + CARD_FONT;
+  stakes.forEach(function(s, i) {
+    ctx.fillText('·  ' + s, PAD + 16, 608 + i * 36);
+  });
+}
+
+// ── 6-Month Trend card ──
+function drawTrendCard(ctx) {
+  var PAD = 32;
+  var parties = ['Reform UK', 'Labour', 'Conservative', 'Lib Dem', 'Green'];
+  var colors = {'Reform UK':'#12B7D4', 'Labour':'#E4003B', 'Conservative':'#0087DC', 'Lib Dem':'#FAA61A', 'Green':'#02A95B'};
+  var abbrs  = {'Reform UK':'REF', 'Labour':'LAB', 'Conservative':'CON', 'Lib Dem':'LD', 'Green':'GRN'};
+
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, '6-Month Trend', 'Sep 2025 – ' + D.fetchDate);
+  canvasFooter(ctx);
+
+  // Chart area
+  var chartX = PAD + 32, chartY = 130, chartW = CARD_W - PAD * 2 - 32, chartH = 480;
+  var minVal = 8, maxVal = 35;
+  var months = D.trends.map(function(t) { return t.month; });
+  var xStep = chartW / (months.length - 1);
+
+  // Grid lines
+  [10, 15, 20, 25, 30].forEach(function(v) {
+    var gy = chartY + chartH - Math.round(((v - minVal) / (maxVal - minVal)) * chartH);
+    ctx.strokeStyle = '#e0dce8'; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(chartX, gy); ctx.lineTo(chartX + chartW, gy); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = CARD_MUTED; ctx.font = '600 12px ' + CARD_FONT;
+    ctx.textAlign = 'right';
+    ctx.fillText(v + '%', chartX - 6, gy + 4);
+    ctx.textAlign = 'left';
+  });
+
+  // Month labels
+  months.forEach(function(m, i) {
+    var x = chartX + i * xStep;
+    ctx.fillStyle = CARD_MUTED; ctx.font = '600 13px ' + CARD_FONT;
+    ctx.textAlign = 'center';
+    ctx.fillText(m, x, chartY + chartH + 20);
+    ctx.textAlign = 'left';
+  });
+
+  // Lines per party
+  parties.forEach(function(p) {
+    var col = colors[p];
+    ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.setLineDash([]);
+    ctx.beginPath();
+    var started = false;
+    D.trends.forEach(function(t, i) {
+      var v = t[p];
+      if (v == null) return;
+      var x = chartX + i * xStep;
+      var y = chartY + chartH - Math.round(((v - minVal) / (maxVal - minVal)) * chartH);
+      if (!started) { ctx.moveTo(x, y); started = true; } else { ctx.lineTo(x, y); }
+    });
+    ctx.stroke();
+    // Dot + label at last point
+    var last = D.trends[D.trends.length - 1];
+    if (last[p] != null) {
+      var lx = chartX + (D.trends.length - 1) * xStep;
+      var ly = chartY + chartH - Math.round(((last[p] - minVal) / (maxVal - minVal)) * chartH);
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(lx, ly, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = col; ctx.font = '800 14px ' + CARD_FONT;
+      ctx.fillText(abbrs[p] + ' ' + last[p] + '%', lx + 8, ly + 4);
+    }
+  });
+
+  // Legend at bottom
+  var legY = chartY + chartH + 40, legX = PAD;
+  parties.forEach(function(p, i) {
+    var x = legX + i * 112;
+    canvasFillRoundRect(ctx, x, legY, 14, 14, 3, colors[p]);
+    ctx.fillStyle = CARD_TEXT; ctx.font = '600 14px ' + CARD_FONT;
+    ctx.fillText(abbrs[p], x + 18, legY + 11);
+  });
+}
+
+// ── Recent Results card ──
+function drawResultsCard(ctx) {
+  var PAD = 32;
+  var results = [
+    {date:'5 Mar 2026',  seat:'Murton (Durham)',     type:'Council by-election', winner:'Labour',   winCol:'#E4003B',  note:'Labour GAIN from Reform UK — first ever'},
+    {date:'27 Feb 2026', seat:'Gorton & Denton',     type:'Westminster by-election', winner:'Green', winCol:'#02A95B', note:'Green GAIN from Labour (+28.6pt swing)'},
+    {date:'6 Feb 2025',  seat:'Kingswood',           type:'Westminster by-election', winner:'Reform UK', winCol:'#12B7D4', note:'Reform UK GAIN from Conservative'},
+    {date:'10 Oct 2024', seat:'Henley & Thame',      type:'Westminster by-election', winner:'Lib Dem',   winCol:'#FAA61A', note:'Lib Dem HOLD (+8.1pt)'},
+  ];
+
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, 'Recent Results', 'By-elections  ·  UK Poll Tracker');
+  canvasFooter(ctx);
+
+  results.forEach(function(r, i) {
+    var y = 130 + i * 178;
+    canvasFillRoundRect(ctx, PAD, y, CARD_W - PAD * 2, 162, 14, CARD_SURFACE);
+    // Colour strip
+    ctx.fillStyle = r.winCol; ctx.fillRect(PAD, y, CARD_W - PAD * 2, 5);
+    // Date & type
+    ctx.fillStyle = CARD_MUTED; ctx.font = '600 14px ' + CARD_FONT;
+    ctx.fillText(r.date + '  ·  ' + r.type, PAD + 14, y + 28);
+    // Seat name
+    ctx.fillStyle = CARD_TEXT; ctx.font = '900 22px ' + CARD_FONT;
+    ctx.fillText(r.seat, PAD + 14, y + 56);
+    // Winner chip
+    canvasFillRoundRect(ctx, PAD + 14, y + 68, ctx.measureText(r.winner).width + 28, 28, 14, r.winCol + '22');
+    ctx.fillStyle = r.winCol; ctx.font = '800 15px ' + CARD_FONT;
+    ctx.fillText(r.winner, PAD + 28, y + 87);
+    // Note
+    ctx.fillStyle = CARD_MUTED; ctx.font = '400 15px ' + CARD_FONT;
+    ctx.fillText(r.note, PAD + 14, y + 128);
+  });
+}
+function drawMigrationCard(ctx) {
+  var M = MIGRATION;
+  var PAD = 32;
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, 'Net Migration', M.fetchYear);
+  canvasFooter(ctx);
+
+  // Hero number
+  ctx.fillStyle = CARD_PRIMARY;
+  ctx.font = '900 88px ' + CARD_FONT;
+  ctx.textAlign = 'center';
+  ctx.fillText((M.netTotal / 1000).toFixed(0) + 'k', CARD_W / 2, 200);
+  ctx.font = '600 17px ' + CARD_FONT;
+  ctx.fillStyle = CARD_MUTED;
+  ctx.fillText('net migration · ' + M.fetchYear, CARD_W / 2, 228);
+
+  // Down arrow vs prev year
+  var drop = M.netPrev - M.netTotal;
+  ctx.fillStyle = '#1a7f37';
+  ctx.font = '700 20px ' + CARD_FONT;
+  ctx.fillText('Down ' + (drop / 1000).toFixed(0) + 'k vs ' + (M.netPrev / 1000).toFixed(0) + 'k in 2024  (-' + Math.round(drop / M.netPrev * 100) + '%)', CARD_W / 2, 262);
+  ctx.textAlign = 'left';
+
+  // Divider
+  ctx.fillStyle = CARD_OUTLINE; ctx.fillRect(PAD, 278, CARD_W - PAD * 2, 1);
+
+  // Year-on-year bar chart
+  ctx.fillStyle = CARD_TEXT; ctx.font = '800 15px ' + CARD_FONT;
+  ctx.fillText('YEAR-ON-YEAR TREND', PAD, 302);
+
+  var trend = M.trend;
+  var maxNet = Math.max.apply(null, trend.map(function(t) { return t.net; }));
+  var chartX = PAD, chartW = CARD_W - PAD * 2;
+  var barW = Math.floor(chartW / trend.length) - 6;
+  var chartH = 110, chartBaseY = 420;
+
+  trend.forEach(function(t, i) {
+    var bh = Math.max(4, Math.round((t.net / maxNet) * chartH));
+    var x = chartX + i * (barW + 6);
+    var isLatest = i === trend.length - 1;
+    canvasFillRoundRect(ctx, x, chartBaseY - bh, barW, bh, 4, isLatest ? CARD_PRIMARY : CARD_PRIMARY + '40');
+    // Value label above bar
+    ctx.fillStyle = isLatest ? CARD_PRIMARY : CARD_MUTED;
+    ctx.font = (isLatest ? '800' : '600') + ' 13px ' + CARD_FONT;
+    ctx.textAlign = 'center';
+    ctx.fillText((t.net / 1000).toFixed(0) + 'k', x + barW / 2, chartBaseY - bh - 6);
+    // Year label below
+    ctx.fillStyle = CARD_MUTED; ctx.font = '600 13px ' + CARD_FONT;
+    ctx.fillText(t.year, x + barW / 2, chartBaseY + 18);
+  });
+  ctx.textAlign = 'left';
+
+  // Divider
+  ctx.fillStyle = CARD_OUTLINE; ctx.fillRect(PAD, 446, CARD_W - PAD * 2, 1);
+
+  // Top 4 nationalities
+  ctx.fillStyle = CARD_TEXT; ctx.font = '800 15px ' + CARD_FONT;
+  ctx.fillText('TOP SOURCES (INFLOW)', PAD, 470);
+
+  var top4 = M.byNationality.slice(0, 4);
+  var maxInflow = Math.max.apply(null, top4.map(function(n) { return n.inflow; }));
+  top4.forEach(function(n, i) {
+    var y = 492 + i * 48;
+    var bw = Math.round((n.inflow / maxInflow) * (CARD_W - PAD * 2 - 100));
+    ctx.fillStyle = CARD_TEXT; ctx.font = '700 16px ' + CARD_FONT;
+    ctx.fillText(n.name, PAD, y);
+    ctx.fillStyle = CARD_MUTED; ctx.font = '600 14px ' + CARD_FONT;
+    ctx.textAlign = 'right';
+    ctx.fillText((n.inflow / 1000).toFixed(0) + 'k', CARD_W - PAD, y);
+    ctx.textAlign = 'left';
+    canvasFillRoundRect(ctx, PAD, y + 6, bw, 10, 5, CARD_PRIMARY + '50');
+  });
+}
+
+// ── Channel Crossings card ──
+function drawCrossingsCard(ctx) {
+  var S = MIGRATION.smallBoats;
+  var PAD = 32;
+  ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
+  canvasHeader(ctx, 'Channel Crossings', '2025 data · Home Office');
+  canvasFooter(ctx);
+
+  // Hero number
+  ctx.fillStyle = CARD_SECONDARY;
+  ctx.font = '900 82px ' + CARD_FONT;
+  ctx.textAlign = 'center';
+  ctx.fillText(S.total2025.toLocaleString(), CARD_W / 2, 196);
+  ctx.fillStyle = CARD_MUTED; ctx.font = '600 17px ' + CARD_FONT;
+  ctx.fillText('small boat crossings in 2025', CARD_W / 2, 226);
+
+  // vs 2024
+  var diff = S.total2025 - S.total2024;
+  var diffPct = Math.round(Math.abs(diff) / S.total2024 * 100);
+  ctx.fillStyle = diff > 0 ? CARD_SECONDARY : '#1a7f37';
+  ctx.font = '700 19px ' + CARD_FONT;
+  ctx.fillText((diff > 0 ? '+' : '') + diff.toLocaleString() + ' vs 2024  (' + (diff > 0 ? '+' : '-') + diffPct + '%)', CARD_W / 2, 258);
+  ctx.textAlign = 'left';
+
+  // Divider
+  ctx.fillStyle = CARD_OUTLINE; ctx.fillRect(PAD, 274, CARD_W - PAD * 2, 1);
+
+  // 4 stat boxes in 2x2 grid
+  var stats = [
+    {label:'2025 crossings', val:S.total2025.toLocaleString(), col:CARD_SECONDARY},
+    {label:'2024 crossings', val:S.total2024.toLocaleString(), col:CARD_MUTED},
+    {label:'Asylum claim rate', val:S.asylumClaimRate + '%', col:'#f97316'},
+    {label:'Grant rate', val:S.grantRate + '%', col:'#1a7f37'},
+  ];
+  stats.forEach(function(s, i) {
+    var col = i % 2, row = Math.floor(i / 2);
+    var x = PAD + col * 286, y = 296 + row * 110;
+    canvasFillRoundRect(ctx, x, y, 270, 96, 12, CARD_SURFACE);
+    ctx.fillStyle = s.col; ctx.font = '900 36px ' + CARD_FONT;
+    ctx.fillText(s.val, x + 16, y + 46);
+    ctx.fillStyle = CARD_MUTED; ctx.font = '600 15px ' + CARD_FONT;
+    ctx.fillText(s.label, x + 16, y + 74);
+  });
+
+  // Divider
+  ctx.fillStyle = CARD_OUTLINE; ctx.fillRect(PAD, 520, CARD_W - PAD * 2, 1);
+
+  // Top nationalities
+  ctx.fillStyle = CARD_TEXT; ctx.font = '800 15px ' + CARD_FONT;
+  ctx.fillText('TOP NATIONALITIES', PAD, 546);
+
+  S.topNationalities.slice(0, 5).forEach(function(nat, i) {
+    var x = PAD + i * 112;
+    canvasFillRoundRect(ctx, x, 556, 100, 36, 18, CARD_SECONDARY + '18');
+    ctx.fillStyle = CARD_SECONDARY; ctx.font = '700 15px ' + CARD_FONT;
+    ctx.textAlign = 'center';
+    ctx.fillText(nat, x + 50, 579);
+    ctx.textAlign = 'left';
+  });
+
+  // Cumulative since 2018
+  ctx.fillStyle = CARD_MUTED; ctx.font = '600 16px ' + CARD_FONT;
+  ctx.textAlign = 'center';
+  ctx.fillText((S.total2018to2025 / 1000).toFixed(0) + 'k total crossings since 2018', CARD_W / 2, 630);
+
+  // Deaths
+  ctx.fillStyle = CARD_TEXT; ctx.font = '700 16px ' + CARD_FONT;
+  ctx.fillText('Deaths in 2025: ' + S.deaths2025 + '  ·  Deaths in 2024: ' + S.deaths2024, CARD_W / 2, 660);
+  ctx.textAlign = 'left';
+}
+
+
 async function shareBlob(blob, title, filename) {
   var file = new File([blob], filename, {type:'image/png'});
-  if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
-    try { await navigator.share({files:[file], title:title}); return; } catch(e) { if (e.name==='AbortError') return; }
+  // Try native file share first
+  if (navigator.share && navigator.canShare) {
+    try {
+      if (navigator.canShare({files:[file]})) {
+        await navigator.share({files:[file], title:title});
+        return;
+      }
+    } catch(e) {
+      if (e.name === 'AbortError') return;
+      // Fall through to download on other errors
+    }
   }
+  // Fallback: download
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
   showToast('📥 Image saved!');
 }
 
-// ── Card: Polling Snapshot ──
-function buildPollingCard() {
-  var parties = D.parties.filter(p => p.name !== 'Other');
-  var maxPct = Math.max.apply(null, parties.map(p => p.pct));
-  var barMaxW = 700, barH = 44, barGap = 12, startX = 320, startY = 130;
-
-  var bars = parties.map(function(p, i) {
-    var y = startY + i * (barH + barGap);
-    var w = Math.round((p.pct / maxPct) * barMaxW);
-    var chg = p.change > 0 ? '▲' + p.change : p.change < 0 ? '▼' + Math.abs(p.change) : '—';
-    var chgCol = p.change > 0 ? '#1a7f37' : p.change < 0 ? CARD_SECONDARY : CARD_MUTED;
-    return '<rect x="' + startX + '" y="' + y + '" width="' + barMaxW + '" height="' + barH + '" rx="8" fill="' + CARD_OUTLINE + '" opacity="0.35"/>'
-      + '<rect x="' + startX + '" y="' + y + '" width="' + w + '" height="' + barH + '" rx="8" fill="' + p.color + '"/>'
-      + '<text x="' + (startX - 12) + '" y="' + (y + 29) + '" text-anchor="end" font-family="' + CARD_FONT + '" font-size="22" font-weight="800" fill="' + CARD_TEXT + '">' + svgEsc(p.abbr) + '</text>'
-      + '<text x="' + (startX + w + 14) + '" y="' + (y + 29) + '" font-family="' + CARD_FONT + '" font-size="26" font-weight="900" fill="' + p.color + '">' + p.pct + '%</text>'
-      + '<text x="' + (startX + barMaxW + 80) + '" y="' + (y + 29) + '" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="19" font-weight="700" fill="' + chgCol + '">' + chg + '</text>';
-  }).join('');
-
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + CARD_W + '" height="' + CARD_H + '">'
-    + '<rect width="' + CARD_W + '" height="' + CARD_H + '" fill="' + CARD_BG + '"/>'
-    + cardHeader('🗳 Current Polling', D.fetchDate + ' · 7-poll average')
-    + '<text x="48" y="138" font-family="' + CARD_FONT + '" font-size="19" font-weight="600" fill="' + CARD_MUTED + '">Party</text>'
-    + '<text x="' + (startX + barMaxW + 80) + '" y="138" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="19" font-weight="600" fill="' + CARD_MUTED + '">Chg</text>'
-    + bars
-    + cardBrandingFooter()
-    + '</svg>';
-  return svg;
-}
-
-// ── Card: Seat Projection ──
-function buildSeatsCard() {
-  var parties = D.parties.filter(p => p.seats !== null);
-  var total = parties.reduce((s,p) => s + p.seats, 0);
-  var majority = Math.floor(total / 2) + 1;
-  var startX = 48, barY = 160, barH = 80, w = CARD_W - 96;
-
-  // Seat bar segments
-  var cx = startX;
-  var segs = parties.map(function(p) {
-    var sw = Math.round((p.seats / total) * w);
-    var seg = '<rect x="' + cx + '" y="' + barY + '" width="' + sw + '" height="' + barH + '" fill="' + p.color + '"/>'
-      + (sw > 60 ? '<text x="' + (cx + sw/2) + '" y="' + (barY + 30) + '" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="20" font-weight="800" fill="white">' + svgEsc(p.abbr) + '</text>'
-                 + '<text x="' + (cx + sw/2) + '" y="' + (barY + 58) + '" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="22" font-weight="900" fill="white">' + p.seats + '</text>' : '');
-    cx += sw;
-    return seg;
-  }).join('');
-
-  // Majority line
-  var majX = startX + Math.round((majority / total) * w);
-
-  // Legend
-  var legY = 280, legX = 48;
-  var legend = parties.map(function(p, i) {
-    var x = legX + (i % 4) * 280, y = legY + Math.floor(i / 4) * 50;
-    return '<rect x="' + x + '" y="' + (y-18) + '" width="24" height="24" rx="4" fill="' + p.color + '"/>'
-      + '<text x="' + (x+34) + '" y="' + y + '" font-family="' + CARD_FONT + '" font-size="20" font-weight="700" fill="' + CARD_TEXT + '">' + svgEsc(p.name) + ' — ' + p.seats + '</text>';
-  }).join('');
-
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + CARD_W + '" height="' + CARD_H + '">'
-    + '<rect width="' + CARD_W + '" height="' + CARD_H + '" fill="' + CARD_BG + '"/>'
-    + cardHeader('🏛 Seat Projection', 'MRP model · ' + D.fetchDate)
-    + '<rect x="' + startX + '" y="' + barY + '" width="' + w + '" height="' + barH + '" rx="12" fill="' + CARD_OUTLINE + '"/>'
-    + segs
-    + '<line x1="' + majX + '" y1="' + (barY-8) + '" x2="' + majX + '" y2="' + (barY+barH+8) + '" stroke="' + CARD_TEXT + '" stroke-width="3" stroke-dasharray="6,4"/>'
-    + '<text x="' + majX + '" y="' + (barY-14) + '" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="17" font-weight="700" fill="' + CARD_MUTED + '">Majority (' + majority + ')</text>'
-    + legend
-    + cardBrandingFooter()
-    + '</svg>';
-  return svg;
-}
-
-// ── Card: Leader ──
-function buildLeaderCard(l) {
-  var netStr = l.net === null ? '?' : (l.net > 0 ? '+' : '') + l.net;
-  var netCol = l.net === null ? CARD_MUTED : l.net > 0 ? '#1a7f37' : CARD_SECONDARY;
-  var initials = l.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2);
-  var barW = 700, approveW = l.approve ? Math.round((l.approve/(l.approve+l.disapprove))*barW) : 0;
-
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + CARD_W + '" height="' + CARD_H + '">'
-    + '<rect width="' + CARD_W + '" height="' + CARD_H + '" fill="' + CARD_BG + '"/>'
-    + '<rect x="0" y="0" width="1200" height="8" fill="' + l.color + '"/>'
-    + cardHeader('👤 Leader Rating', 'UK Poll Tracker · ' + D.fetchDate)
-    // Avatar circle
-    + '<circle cx="120" cy="340" r="80" fill="' + l.color + '"/>'
-    + '<text x="120" y="357" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="48" font-weight="900" fill="white">' + svgEsc(initials) + '</text>'
-    // Name & party
-    + '<text x="240" y="300" font-family="' + CARD_FONT + '" font-size="48" font-weight="900" fill="' + CARD_TEXT + '">' + svgEsc(l.name) + '</text>'
-    + '<text x="240" y="345" font-family="' + CARD_FONT + '" font-size="26" font-weight="700" fill="' + l.color + '">' + svgEsc(l.party) + '</text>'
-    // Net approval
-    + '<text x="240" y="415" font-family="' + CARD_FONT + '" font-size="96" font-weight="900" fill="' + netCol + '">' + svgEsc(netStr) + '</text>'
-    + '<text x="' + (240 + (String(netStr).length * 54)) + '" y="415" font-family="' + CARD_FONT + '" font-size="26" font-weight="700" fill="' + CARD_MUTED + '"> net approval</text>'
-    // Approve/disapprove bar
-    + (l.approve ? '<rect x="240" y="450" width="' + barW + '" height="28" rx="14" fill="' + CARD_OUTLINE + '"/>'
-      + '<rect x="240" y="450" width="' + approveW + '" height="28" rx="14" fill="#1a7f37" opacity="0.6"/>'
-      + '<text x="240" y="506" font-family="' + CARD_FONT + '" font-size="22" font-weight="700" fill="#1a7f37">▲ ' + l.approve + '% approve</text>'
-      + '<text x="700" y="506" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="22" font-weight="700" fill="' + CARD_MUTED + '">·</text>'
-      + '<text x="760" y="506" font-family="' + CARD_FONT + '" font-size="22" font-weight="700" fill="' + CARD_SECONDARY + '">▼ ' + l.disapprove + '% disapprove</text>' : '')
-    + cardBrandingFooter()
-    + '</svg>';
-  return svg;
-}
-
-// ── Card: Generic section (fallback) ──
-function buildGenericCard(label, lines) {
-  var textRows = lines.slice(0, 8).map(function(line, i) {
-    return '<text x="48" y="' + (160 + i * 52) + '" font-family="' + CARD_FONT + '" font-size="26" fill="' + CARD_TEXT + '">' + svgEsc(line) + '</text>';
-  }).join('');
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + CARD_W + '" height="' + CARD_H + '">'
-    + '<rect width="' + CARD_W + '" height="' + CARD_H + '" fill="' + CARD_BG + '"/>'
-    + cardHeader(label, D.fetchDate)
-    + textRows
-    + cardBrandingFooter()
-    + '</svg>';
-  return svg;
-}
-
-// ── Main share dispatcher ──
 async function shareSection(label, btn) {
   showToast('🎨 Building card...');
-  var svgStr;
+  var canvas;
   try {
-    var clean = label.replace(/^[^\w]+/, '').trim(); // strip emoji prefix for matching
-    if (label.includes('Current Polling') || label.includes('🗳 Current')) {
-      svgStr = buildPollingCard();
-    } else if (label.includes('Seat Projection')) {
-      svgStr = buildSeatsCard();
-    } else {
-      // Generic: pull text lines from SECTION_SHARE lookup or label
-      var info = SECTION_SHARE[label];
-      var lines = info ? info.text.split('\n').filter(Boolean) : [label];
-      svgStr = buildGenericCard(label, lines);
-    }
-    var blob = await svgToPng(svgStr);
-    await shareBlob(blob, 'UK Poll Tracker · ' + label, 'uk-poll-tracker.png');
+    canvas = drawCardToCanvas(function(ctx) {
+      if (label.includes('Current Polling') || label.includes('🗳 Current')) {
+        drawPollingCard(ctx);
+      } else if (label.includes('Seat Projection')) {
+        drawSeatsCard(ctx);
+      } else if (label.includes('Net Migration') || label.includes('🛂')) {
+        drawMigrationCard(ctx);
+      } else if (label.includes('Channel Crossings') || label.includes('🚤')) {
+        drawCrossingsCard(ctx);
+      } else if (label.includes('Recent Polls') || label.includes('📋')) {
+        drawRecentPollsCard(ctx);
+      } else if (label.includes('Betting Odds') || label.includes('🎰')) {
+        drawBettingCard(ctx);
+      } else if (label.includes('Age Group') || label.includes('👤')) {
+        drawAgeCard(ctx);
+      } else if (label.includes('Social Class') || label.includes('🏠')) {
+        drawSocialClassCard(ctx);
+      } else if (label.includes('Education') || label.includes('🎓')) {
+        drawEducationCard(ctx);
+      } else if (label.includes('Region') || label.includes('📍')) {
+        drawRegionCard(ctx);
+      } else if (label.includes('Ethnicity') || label.includes('🌍')) {
+        drawEthnicityCard(ctx);
+      } else if (label.includes('Non-Voter') || label.includes('2024 Non')) {
+        drawNonVotersCard(ctx);
+      } else if (label.includes('Countdown') || label.includes('⏳')) {
+        drawCountdownCard(ctx);
+      } else if (label.includes('6-Month Trend') || label.includes('📈')) {
+        drawTrendCard(ctx);
+      } else if (label.includes('Recent Results') || label.includes('🗳 Recent')) {
+        drawResultsCard(ctx);
+      } else {
+        var info = SECTION_SHARE[label];
+        var lines = info ? info.text.split('\n').filter(Boolean) : [label];
+        drawGenericCard(ctx, label, lines);
+      }
+    });
   } catch(e) {
-    console.error('Share card error:', e);
+    console.error('Card draw error:', e);
     showToast('Could not build card — try again');
+    return;
   }
+  canvas.toBlob(async function(blob) {
+    if (!blob) { showToast('Could not build card — try again'); return; }
+    await shareBlob(blob, 'UK Poll Tracker · ' + label, 'uk-poll-tracker.png');
+  }, 'image/png');
 }
 
 async function shareLeader(li) {
   var l = D.leaders[li];
   showToast('🎨 Building card...');
+  var canvas;
   try {
-    var svgStr = buildLeaderCard(l);
-    var blob = await svgToPng(svgStr);
-    await shareBlob(blob, l.name + ' — UK Poll Tracker', 'uk-poll-tracker-leader.png');
+    canvas = drawCardToCanvas(function(ctx) { drawLeaderCard(ctx, l); });
   } catch(e) {
     showToast('Could not build card — try again');
+    return;
   }
+  canvas.toBlob(async function(blob) {
+    if (!blob) { showToast('Could not build card — try again'); return; }
+    await shareBlob(blob, l.name + ' — UK Poll Tracker', 'uk-poll-tracker-leader.png');
+  }, 'image/png');
 }
 </script>
 </body>
