@@ -5,7 +5,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -2294,62 +2293,13 @@ async function leaderAITake(li) {
 
 async function shareLeader(li) {
   var l = D.leaders[li];
-  var card = document.getElementById('lcard-' + li);
-  if (!card) { showToast('Could not find card'); return; }
-
-  // Make sure the card body is open so full content is visible in screenshot
-  var body = document.getElementById('lbody-' + li);
-  var wasOpen = body && body.classList.contains('open');
-  if (body && !wasOpen) body.classList.add('open');
-
-  // Build a wrapper clone with branding footer
-  var wrapper = document.createElement('div');
-  wrapper.style.cssText = 'background:var(--md-sys-color-surface-container-low);padding:16px;border-radius:24px;display:inline-block;min-width:300px;max-width:420px;';
-  var cardClone = card.cloneNode(true);
-  // Remove action buttons from clone to keep it clean
-  var actionsEl = cardClone.querySelector('.leader-actions');
-  if (actionsEl) actionsEl.remove();
-  wrapper.appendChild(cardClone);
-
-  var footer = document.createElement('div');
-  footer.style.cssText = 'font-size:12px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin-top:10px;font-family:Nunito,sans-serif;font-weight:600;';
-  footer.textContent = '🇬🇧 UK Poll Tracker · ' + APP_URL;
-  wrapper.appendChild(footer);
-  document.body.appendChild(wrapper);
-
-  showToast('📸 Capturing...');
+  showToast('🎨 Building card...');
   try {
-    var canvas = await html2canvas(wrapper, {
-      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-surface-container-low').trim() || '#F7F2FA',
-      scale: 2,
-      useCORS: true,
-      logging: false
-    });
-    document.body.removeChild(wrapper);
-    // Restore card state
-    if (body && !wasOpen) body.classList.remove('open');
-
-    canvas.toBlob(async function(blob) {
-      var file = new File([blob], 'uk-poll-tracker-leader.png', {type: 'image/png'});
-      if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
-        try {
-          await navigator.share({ files: [file], title: l.name + ' — UK Poll Tracker' });
-          return;
-        } catch(e) {
-          if (e.name === 'AbortError') return;
-        }
-      }
-      // Fallback: download
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url; a.download = 'uk-poll-tracker-leader.png'; a.click();
-      URL.revokeObjectURL(url);
-      showToast('📥 Image saved!');
-    }, 'image/png');
+    var svgStr = buildLeaderCard(l);
+    var blob = await svgToPng(svgStr);
+    await shareBlob(blob, l.name + ' — UK Poll Tracker', 'uk-poll-tracker-leader.png');
   } catch(e) {
-    if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
-    if (body && !wasOpen) body.classList.remove('open');
-    showToast('Could not capture — try again');
+    showToast('Could not build card — try again');
   }
 }
 
@@ -3145,66 +3095,208 @@ var SECTION_SHARE = {
 
 
   // Find the sec-label element containing this button, then capture it + the next sibling card
-async function shareSection(label, btn) {
-  var labelEl = btn ? btn.closest('.sec-label') : null;
-  var target = null;
-  if (labelEl) {
-    // Build a wrapper with the label + the following content sibling
-    var next = labelEl.nextElementSibling;
-    if (next) {
-      var wrapper = document.createElement('div');
-      wrapper.style.cssText = 'background:var(--md-sys-color-surface-container-low);padding:16px;border-radius:24px;display:inline-block;min-width:300px;';
-      var labelClone = labelEl.cloneNode(true);
-      // Remove the share button from the clone
-      var shareBtn = labelClone.querySelector('.sec-share');
-      if (shareBtn) shareBtn.remove();
-      wrapper.appendChild(labelClone);
-      wrapper.appendChild(next.cloneNode(true));
-      // Add branding footer
-      var footer = document.createElement('div');
-      footer.style.cssText = 'font-size:12px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin-top:10px;font-family:Nunito,sans-serif;font-weight:600;';
-      footer.textContent = '🇬🇧 UK Poll Tracker · ' + APP_URL;
-      wrapper.appendChild(footer);
-      document.body.appendChild(wrapper);
-      target = wrapper;
-    }
-  }
+// ── SVG Share Card Engine ─────────────────────────────────────────────────
+// Produces crisp 1200×630 PNG share cards — no html2canvas, no blur.
 
-  if (!target) {
-    showToast('Could not capture section');
-    return;
-  }
+var CARD_W = 1200, CARD_H = 630;
+var CARD_BG = '#F7F2FA', CARD_SURFACE = '#FFFFFF';
+var CARD_PRIMARY = '#012169', CARD_SECONDARY = '#C8102E';
+var CARD_TEXT = '#1C1B1F', CARD_MUTED = '#49454F', CARD_OUTLINE = '#CAC4D0';
+var CARD_FONT = 'system-ui, -apple-system, "Segoe UI", Arial, sans-serif';
 
-  showToast('📸 Capturing...');
-  try {
-    var canvas = await html2canvas(target, {
-      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-surface-container-low').trim() || '#F7F2FA',
-      scale: 2,
-      useCORS: true,
-      logging: false
-    });
-    document.body.removeChild(target);
-    canvas.toBlob(async function(blob) {
-      var file = new File([blob], 'uk-poll-tracker.png', {type: 'image/png'});
-      if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
-        try {
-          await navigator.share({ files: [file], title: 'UK Poll Tracker · ' + label });
-          return;
-        } catch(e) {
-          // User cancelled — do nothing
-          if (e.name === 'AbortError') return;
-        }
-      }
-      // Fallback: download the image
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url; a.download = 'uk-poll-tracker.png'; a.click();
+function svgEsc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function cardBrandingFooter() {
+  return '<rect x="0" y="590" width="1200" height="40" fill="' + CARD_PRIMARY + '"/>'
+    + '<text x="600" y="612" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="18" font-weight="700" fill="white">🇬🇧 UK Poll Tracker · ukpolls2.github.io</text>';
+}
+
+function cardHeader(title, subtitle) {
+  return '<rect x="0" y="0" width="1200" height="90" fill="' + CARD_PRIMARY + '"/>'
+    + '<text x="48" y="52" font-family="' + CARD_FONT + '" font-size="32" font-weight="900" fill="white">' + svgEsc(title) + '</text>'
+    + (subtitle ? '<text x="48" y="78" font-family="' + CARD_FONT + '" font-size="20" font-weight="500" fill="rgba(255,255,255,0.75)">' + svgEsc(subtitle) + '</text>' : '');
+}
+
+function svgToPng(svgString) {
+  return new Promise(function(resolve) {
+    var blob = new Blob([svgString], {type:'image/svg+xml'});
+    var url = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      canvas.width = CARD_W; canvas.height = CARD_H;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
       URL.revokeObjectURL(url);
-      showToast('📥 Image saved!');
-    }, 'image/png');
+      canvas.toBlob(resolve, 'image/png');
+    };
+    img.src = url;
+  });
+}
+
+async function shareBlob(blob, title, filename) {
+  var file = new File([blob], filename, {type:'image/png'});
+  if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+    try { await navigator.share({files:[file], title:title}); return; } catch(e) { if (e.name==='AbortError') return; }
+  }
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  showToast('📥 Image saved!');
+}
+
+// ── Card: Polling Snapshot ──
+function buildPollingCard() {
+  var parties = D.parties.filter(p => p.name !== 'Other');
+  var maxPct = Math.max.apply(null, parties.map(p => p.pct));
+  var barMaxW = 700, barH = 44, barGap = 12, startX = 320, startY = 130;
+
+  var bars = parties.map(function(p, i) {
+    var y = startY + i * (barH + barGap);
+    var w = Math.round((p.pct / maxPct) * barMaxW);
+    var chg = p.change > 0 ? '▲' + p.change : p.change < 0 ? '▼' + Math.abs(p.change) : '—';
+    var chgCol = p.change > 0 ? '#1a7f37' : p.change < 0 ? CARD_SECONDARY : CARD_MUTED;
+    return '<rect x="' + startX + '" y="' + y + '" width="' + barMaxW + '" height="' + barH + '" rx="8" fill="' + CARD_OUTLINE + '" opacity="0.35"/>'
+      + '<rect x="' + startX + '" y="' + y + '" width="' + w + '" height="' + barH + '" rx="8" fill="' + p.color + '"/>'
+      + '<text x="' + (startX - 12) + '" y="' + (y + 29) + '" text-anchor="end" font-family="' + CARD_FONT + '" font-size="22" font-weight="800" fill="' + CARD_TEXT + '">' + svgEsc(p.abbr) + '</text>'
+      + '<text x="' + (startX + w + 14) + '" y="' + (y + 29) + '" font-family="' + CARD_FONT + '" font-size="26" font-weight="900" fill="' + p.color + '">' + p.pct + '%</text>'
+      + '<text x="' + (startX + barMaxW + 80) + '" y="' + (y + 29) + '" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="19" font-weight="700" fill="' + chgCol + '">' + chg + '</text>';
+  }).join('');
+
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + CARD_W + '" height="' + CARD_H + '">'
+    + '<rect width="' + CARD_W + '" height="' + CARD_H + '" fill="' + CARD_BG + '"/>'
+    + cardHeader('🗳 Current Polling', D.fetchDate + ' · 7-poll average')
+    + '<text x="48" y="138" font-family="' + CARD_FONT + '" font-size="19" font-weight="600" fill="' + CARD_MUTED + '">Party</text>'
+    + '<text x="' + (startX + barMaxW + 80) + '" y="138" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="19" font-weight="600" fill="' + CARD_MUTED + '">Chg</text>'
+    + bars
+    + cardBrandingFooter()
+    + '</svg>';
+  return svg;
+}
+
+// ── Card: Seat Projection ──
+function buildSeatsCard() {
+  var parties = D.parties.filter(p => p.seats !== null);
+  var total = parties.reduce((s,p) => s + p.seats, 0);
+  var majority = Math.floor(total / 2) + 1;
+  var startX = 48, barY = 160, barH = 80, w = CARD_W - 96;
+
+  // Seat bar segments
+  var cx = startX;
+  var segs = parties.map(function(p) {
+    var sw = Math.round((p.seats / total) * w);
+    var seg = '<rect x="' + cx + '" y="' + barY + '" width="' + sw + '" height="' + barH + '" fill="' + p.color + '"/>'
+      + (sw > 60 ? '<text x="' + (cx + sw/2) + '" y="' + (barY + 30) + '" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="20" font-weight="800" fill="white">' + svgEsc(p.abbr) + '</text>'
+                 + '<text x="' + (cx + sw/2) + '" y="' + (barY + 58) + '" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="22" font-weight="900" fill="white">' + p.seats + '</text>' : '');
+    cx += sw;
+    return seg;
+  }).join('');
+
+  // Majority line
+  var majX = startX + Math.round((majority / total) * w);
+
+  // Legend
+  var legY = 280, legX = 48;
+  var legend = parties.map(function(p, i) {
+    var x = legX + (i % 4) * 280, y = legY + Math.floor(i / 4) * 50;
+    return '<rect x="' + x + '" y="' + (y-18) + '" width="24" height="24" rx="4" fill="' + p.color + '"/>'
+      + '<text x="' + (x+34) + '" y="' + y + '" font-family="' + CARD_FONT + '" font-size="20" font-weight="700" fill="' + CARD_TEXT + '">' + svgEsc(p.name) + ' — ' + p.seats + '</text>';
+  }).join('');
+
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + CARD_W + '" height="' + CARD_H + '">'
+    + '<rect width="' + CARD_W + '" height="' + CARD_H + '" fill="' + CARD_BG + '"/>'
+    + cardHeader('🏛 Seat Projection', 'MRP model · ' + D.fetchDate)
+    + '<rect x="' + startX + '" y="' + barY + '" width="' + w + '" height="' + barH + '" rx="12" fill="' + CARD_OUTLINE + '"/>'
+    + segs
+    + '<line x1="' + majX + '" y1="' + (barY-8) + '" x2="' + majX + '" y2="' + (barY+barH+8) + '" stroke="' + CARD_TEXT + '" stroke-width="3" stroke-dasharray="6,4"/>'
+    + '<text x="' + majX + '" y="' + (barY-14) + '" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="17" font-weight="700" fill="' + CARD_MUTED + '">Majority (' + majority + ')</text>'
+    + legend
+    + cardBrandingFooter()
+    + '</svg>';
+  return svg;
+}
+
+// ── Card: Leader ──
+function buildLeaderCard(l) {
+  var netStr = l.net === null ? '?' : (l.net > 0 ? '+' : '') + l.net;
+  var netCol = l.net === null ? CARD_MUTED : l.net > 0 ? '#1a7f37' : CARD_SECONDARY;
+  var initials = l.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2);
+  var barW = 700, approveW = l.approve ? Math.round((l.approve/(l.approve+l.disapprove))*barW) : 0;
+
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + CARD_W + '" height="' + CARD_H + '">'
+    + '<rect width="' + CARD_W + '" height="' + CARD_H + '" fill="' + CARD_BG + '"/>'
+    + '<rect x="0" y="0" width="1200" height="8" fill="' + l.color + '"/>'
+    + cardHeader('👤 Leader Rating', 'UK Poll Tracker · ' + D.fetchDate)
+    // Avatar circle
+    + '<circle cx="120" cy="340" r="80" fill="' + l.color + '"/>'
+    + '<text x="120" y="357" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="48" font-weight="900" fill="white">' + svgEsc(initials) + '</text>'
+    // Name & party
+    + '<text x="240" y="300" font-family="' + CARD_FONT + '" font-size="48" font-weight="900" fill="' + CARD_TEXT + '">' + svgEsc(l.name) + '</text>'
+    + '<text x="240" y="345" font-family="' + CARD_FONT + '" font-size="26" font-weight="700" fill="' + l.color + '">' + svgEsc(l.party) + '</text>'
+    // Net approval
+    + '<text x="240" y="415" font-family="' + CARD_FONT + '" font-size="96" font-weight="900" fill="' + netCol + '">' + svgEsc(netStr) + '</text>'
+    + '<text x="' + (240 + (String(netStr).length * 54)) + '" y="415" font-family="' + CARD_FONT + '" font-size="26" font-weight="700" fill="' + CARD_MUTED + '"> net approval</text>'
+    // Approve/disapprove bar
+    + (l.approve ? '<rect x="240" y="450" width="' + barW + '" height="28" rx="14" fill="' + CARD_OUTLINE + '"/>'
+      + '<rect x="240" y="450" width="' + approveW + '" height="28" rx="14" fill="#1a7f37" opacity="0.6"/>'
+      + '<text x="240" y="506" font-family="' + CARD_FONT + '" font-size="22" font-weight="700" fill="#1a7f37">▲ ' + l.approve + '% approve</text>'
+      + '<text x="700" y="506" text-anchor="middle" font-family="' + CARD_FONT + '" font-size="22" font-weight="700" fill="' + CARD_MUTED + '">·</text>'
+      + '<text x="760" y="506" font-family="' + CARD_FONT + '" font-size="22" font-weight="700" fill="' + CARD_SECONDARY + '">▼ ' + l.disapprove + '% disapprove</text>' : '')
+    + cardBrandingFooter()
+    + '</svg>';
+  return svg;
+}
+
+// ── Card: Generic section (fallback) ──
+function buildGenericCard(label, lines) {
+  var textRows = lines.slice(0, 8).map(function(line, i) {
+    return '<text x="48" y="' + (160 + i * 52) + '" font-family="' + CARD_FONT + '" font-size="26" fill="' + CARD_TEXT + '">' + svgEsc(line) + '</text>';
+  }).join('');
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + CARD_W + '" height="' + CARD_H + '">'
+    + '<rect width="' + CARD_W + '" height="' + CARD_H + '" fill="' + CARD_BG + '"/>'
+    + cardHeader(label, D.fetchDate)
+    + textRows
+    + cardBrandingFooter()
+    + '</svg>';
+  return svg;
+}
+
+// ── Main share dispatcher ──
+async function shareSection(label, btn) {
+  showToast('🎨 Building card...');
+  var svgStr;
+  try {
+    var clean = label.replace(/^[^\w]+/, '').trim(); // strip emoji prefix for matching
+    if (label.includes('Current Polling') || label.includes('🗳 Current')) {
+      svgStr = buildPollingCard();
+    } else if (label.includes('Seat Projection')) {
+      svgStr = buildSeatsCard();
+    } else {
+      // Generic: pull text lines from SECTION_SHARE lookup or label
+      var info = SECTION_SHARE[label];
+      var lines = info ? info.text.split('\n').filter(Boolean) : [label];
+      svgStr = buildGenericCard(label, lines);
+    }
+    var blob = await svgToPng(svgStr);
+    await shareBlob(blob, 'UK Poll Tracker · ' + label, 'uk-poll-tracker.png');
   } catch(e) {
-    if (document.body.contains(target)) document.body.removeChild(target);
-    showToast('Could not capture — try again');
+    console.error('Share card error:', e);
+    showToast('Could not build card — try again');
+  }
+}
+
+async function shareLeader(li) {
+  var l = D.leaders[li];
+  showToast('🎨 Building card...');
+  try {
+    var svgStr = buildLeaderCard(l);
+    var blob = await svgToPng(svgStr);
+    await shareBlob(blob, l.name + ' — UK Poll Tracker', 'uk-poll-tracker-leader.png');
+  } catch(e) {
+    showToast('Could not build card — try again');
   }
 }
 </script>
