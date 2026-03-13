@@ -552,7 +552,11 @@ body {
     <div id="party-bars"></div>
     <div class="sec-label">🏛 Seat Projection</div>
     <div class="sbar" id="seat-bar"></div>
-    <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin-bottom:20px;font-weight:500">326 seats needed for majority · <strong style="color:var(--md-sys-color-primary)">Hung Parliament</strong></div>
+    <div id="seat-summary" style="font-size:15px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin:8px 0 12px;font-weight:500"></div>
+    <div class="card" style="border-top:4px solid var(--md-sys-color-outline-variant);padding:14px 16px;margin-bottom:4px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">⚖️ About First Past The Post</div>
+      <div style="font-size:14px;line-height:1.7;color:var(--md-sys-color-on-surface)">Under FPTP, the UK's voting system, what matters is winning individual constituencies — not total votes. A party can win far more seats than its national vote share suggests if its support is geographically concentrated, and far fewer if its vote is spread thinly. That's why Reform UK at 26% projects to hundreds of seats while Labour at 19% projects to just ~41 — Reform's vote is more efficiently distributed across winnable seats. These seat estimates use a uniform national swing model and carry significant uncertainty.</div>
+    </div>
     <div class="sec-label">📋 Context</div>
     <div class="card" style="font-size:16px;line-height:1.8;color:var(--md-sys-color-on-surface);border-top:4px solid var(--md-sys-color-primary)" id="ctx-text"></div>
 
@@ -566,16 +570,7 @@ body {
     <div class="sec-label">📌 Milestones</div>
     <div class="card" style="border-top:4px solid #C8102E" id="milestones-list"></div>
 
-    <div class="sec-label">🔄 Swing Calculator</div>
-    <div class="card" style="border-top:4px solid var(--md-sys-color-primary);padding:18px" id="swing-card">
-      <div style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:4px">What if the polls shifted?</div>
-      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Drag to adjust a party's share — others rebalance automatically</div>
-      <div id="swing-sliders"></div>
-      <div style="font-size:13px;font-weight:800;color:var(--md-sys-color-on-surface);margin:14px 0 8px;letter-spacing:0.3px">PROJECTED SEATS</div>
-      <div class="sbar" id="swing-seat-bar" style="height:48px;border-radius:12px;margin-bottom:8px"></div>
-      <div id="swing-seat-labels" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
-      <button onclick="resetSwing()" style="margin-top:12px;padding:8px 18px;border-radius:99px;border:1.5px solid var(--md-sys-color-outline-variant);background:transparent;font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant);cursor:pointer;font-family:\'Nunito\',sans-serif">↺ Reset to current polls</button>
-    </div>
+
     <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);padding:2px 4px 12px">BPC members · RB = Restore Britain (prompted only)</div>
   </div>
 
@@ -1086,49 +1081,62 @@ function generateShareText() {
   var p = D.parties;
   var sorted = p.slice().sort(function(a,b) { return b.pct - a.pct; });
   var leader = sorted[0];
-  var second = sorted[1];
-  var third = sorted[2];
 
-  var labPct = (p.find(function(x) { return x.name === 'Labour'; }) || {}).pct || 0;
-  var conPct = (p.find(function(x) { return x.name === 'Conservative'; }) || {}).pct || 0;
-  var grnPct = (p.find(function(x) { return x.name === 'Green'; }) || {}).pct || 0;
-  var rbPct  = (p.find(function(x) { return x.name === 'Restore Britain'; }) || {}).pct || 0;
+  var find = function(name) { return p.find(function(x) { return x.name === name; }) || {}; };
+  var labPct = find('Labour').pct || 0;
+  var conPct = find('Conservative').pct || 0;
+  var grnPct = find('Green').pct || 0;
+  var ldPct  = find('Lib Dem').pct || 0;
+  var rbPct  = find('Restore Britain').pct || 0;
   var labPos = sorted.findIndex(function(x) { return x.name === 'Labour'; }) + 1;
+
+  var partyEmoji = {
+    'Reform UK':       '➡️',
+    'Labour':          '🌹',
+    'Conservative':    '🌳',
+    'Green':           '🌿',
+    'Lib Dem':         '🔶',
+    'Restore Britain': '🇬🇧',
+    'SNP':             '🏴󠁧󠁢󠁳󠁣󠁴󠁿'
+  };
+  var leaderEmoji = partyEmoji[leader.name] || '🗳️';
+
+  var minGap = 99, gapA, gapB;
+  for (var i = 0; i < sorted.length - 1; i++) {
+    var gap = sorted[i].pct - sorted[i+1].pct;
+    if (gap < minGap && sorted[i].pct > 5 && sorted[i+1].pct > 5) {
+      minGap = gap; gapA = sorted[i]; gapB = sorted[i+1];
+    }
+  }
 
   var bigMover = p.reduce(function(best, x) {
     return x.change !== null && Math.abs(x.change || 0) > Math.abs(best.change || 0) ? x : best;
   }, {change: 0});
 
-  var sorted2 = sorted.slice();
-  var minGap = 99, gapA, gapB;
-  for (var i = 0; i < sorted2.length - 1; i++) {
-    var gap = sorted2[i].pct - sorted2[i+1].pct;
-    if (gap < minGap && sorted2[i].pct > 5 && sorted2[i+1].pct > 5) {
-      minGap = gap; gapA = sorted2[i]; gapB = sorted2[i+1];
-    }
-  }
+  var line1 = leaderEmoji + ' ' + leader.name + ' are out front on ' + leader.pct + '% as British politics fragments.';
 
-  var story;
-  var rbLine = rbPct >= 5 ? ' Restore Britain are also surging — now at ' + rbPct + '%, picking up thousands of new members.' : '';
+  var snap = [];
+  if (labPct) snap.push('Labour ' + labPct + '%');
+  if (conPct) snap.push('Con ' + conPct + '%');
+  if (grnPct) snap.push('Green ' + grnPct + '%');
+  if (ldPct >= 5) snap.push('LD ' + ldPct + '%');
+  if (rbPct >= 5) snap.push('Restore Britain ' + rbPct + '%');
+  var line2 = snap.join(' · ');
 
+  var line3 = '';
   if (labPos > 2) {
-    var posWord = ['','first','second','third','fourth','fifth'][labPos] || labPos + 'th';
-    story = 'Labour have collapsed to ' + posWord + ' place at ' + labPct + '% as ' + leader.name + ' lead on ' + leader.pct + '%. The Tories are on ' + conPct + '%, the Greens on ' + grnPct + '% — British politics is being completely redrawn.' + rbLine;
-  } else if (bigMover.change && Math.abs(bigMover.change) >= 2) {
-    var dir = bigMover.change > 0 ? 'up' : 'down';
-    var emoji = bigMover.change > 0 ? '📈' : '📉';
-    story = bigMover.name + ' are ' + dir + ' ' + Math.abs(bigMover.change) + ' points to ' + bigMover.pct + '% ' + emoji + '. ' + leader.name + ' lead on ' + leader.pct + '%, Labour on ' + labPct + '%, the Tories on ' + conPct + '%, Greens on ' + grnPct + '%.' + rbLine;
+    var posWord = ['','1st','2nd','3rd','4th','5th'][labPos] || labPos + 'th';
+    line3 = '🚨 Labour have fallen to ' + posWord + ' place — historic low.';
   } else if (minGap <= 2 && gapA && gapB) {
-    story = gapA.name + ' and ' + gapB.name + ' are neck and neck — ' + gapA.pct + '% vs ' + gapB.pct + '% 👀. Labour on ' + labPct + '%, Tories on ' + conPct + '%, Greens on ' + grnPct + '%.' + rbLine;
-  } else if (leader.name === 'Reform UK' && leader.pct - second.pct >= 5) {
-    story = 'Reform UK are out in front on ' + leader.pct + '% — Labour on ' + labPct + '%, the Tories on ' + conPct + '%, the Greens on ' + grnPct + '%. A hung parliament on current polling.' + rbLine;
-  } else if (grnPct >= 15) {
-    story = 'The Greens are at ' + grnPct + '% — near historic highs 🌿. ' + leader.name + ' lead on ' + leader.pct + '%, Labour on ' + labPct + '%, the Tories on ' + conPct + '%.' + rbLine;
-  } else {
-    story = leader.name + ' lead on ' + leader.pct + '%, Labour on ' + labPct + '%, the Tories on ' + conPct + '%, the Greens on ' + grnPct + '%. A hung parliament on current polling.' + rbLine;
+    line3 = '👀 Just ' + minGap + 'pt between ' + gapA.name + ' (' + gapA.pct + '%) and ' + gapB.name + ' (' + gapB.pct + '%).';
+  } else if (bigMover.change && Math.abs(bigMover.change) >= 2) {
+    line3 = (bigMover.change > 0 ? '📈' : '📉') + ' ' + bigMover.name + ' ' + (bigMover.change > 0 ? 'up' : 'down') + ' ' + Math.abs(bigMover.change) + 'pts to ' + bigMover.pct + '%.';
   }
 
-  return '🇬🇧 ' + story + '\n\nTrack every poll: ' + APP_URL;
+  var line4 = rbPct >= 5 ? '📈 Restore Britain at ' + rbPct + '% and growing.' : '';
+
+  var lines = [line1, line2, line3, line4].filter(Boolean);
+  return lines.join('\n') + '\n\n🇬🇧 UK Poll Tracker — updated daily\n' + APP_URL;
 }
 
 function openShare() {
@@ -1153,7 +1161,7 @@ function shareToFacebook() {
 function shareNative() {
   try { window.goatcounter.count({path:'share-native',title:'Share: native sheet',event:true}); } catch(e) {}
   if (navigator.share) {
-    navigator.share({ title: '🇬🇧 UK Poll Tracker', text: generateShareText(), url: APP_URL }).catch(function() {});
+    navigator.share({ title: '🇬🇧 UK Poll Tracker', text: generateShareText() }).catch(function() {});
   } else {
     navigator.clipboard.writeText(generateShareText()).then(function() { alert('Copied to clipboard!'); });
   }
@@ -1468,8 +1476,16 @@ function renderPolls() {
       + '</div>';
   }).join('');
   document.getElementById('ctx-text').textContent = D.context;
-  var wim = document.getElementById('what-it-means');
-  if (wim) { var ld = D.parties[0], short = 326 - ld.seats; wim.innerHTML = '<strong>What this means:</strong> On current polling, <span style="color:'+ld.color+';font-weight:700">'+ld.name+'</span>'+(ld.seats>=326?' projects to an outright majority (~'+ld.seats+' seats).':' would be largest party (~'+ld.seats+' seats) but <strong>'+short+' short of a majority</strong> — a <strong>hung parliament</strong>.'); }
+  var sumEl = document.getElementById('seat-summary');
+  if (sumEl) {
+    var ld = seatParties[0];
+    var isOutright = ld.seats >= 326;
+    var short = 326 - ld.seats;
+    sumEl.innerHTML = '326 seats needed for majority · <strong style="color:'
+      + (isOutright ? ld.color : 'var(--md-sys-color-primary)') + '">'
+      + (isOutright ? ld.name + ' outright majority' : 'Hung Parliament projected')
+      + '</strong>';
+  }
   renderTrends();
   renderPollCards();
 }
@@ -2368,108 +2384,7 @@ function renderCountdown() {
     + '</div>';
 }
 
-/* ── Swing Calculator ── */
-var swingState = null;
 
-function initSwing() {
-  swingState = D.parties.map(function(p) {
-    return {name: p.name, color: p.color, abbr: p.abbr || p.name.split(' ')[0].substring(0,3), pct: p.pct, base: p.pct, seats: p.seats};
-  });
-  renderSwing();
-}
-
-function swingSeatEstimate(parties) {
-  // Simple proportional estimate based on current MRP ratio
-  var MRP = {'Reform UK':335,'Conservative':92,'Lib Dem':60,'Green':52,'Labour':41,'SNP':44,'Restore Britain':1};
-  var BASE = {'Reform UK':26,'Conservative':18,'Lib Dem':12,'Green':17,'Labour':19,'SNP':3,'Restore Britain':7};
-  return parties.map(function(p) {
-    var baseSeats = MRP[p.name] || 0;
-    var basePct = BASE[p.name] || p.pct;
-    if (basePct === 0) return Object.assign({}, p, {calcSeats: 0});
-    var ratio = p.pct / basePct;
-    var est = Math.max(0, Math.round(baseSeats * ratio));
-    return Object.assign({}, p, {calcSeats: est});
-  });
-}
-
-function renderSwing() {
-  var sliderEl = document.getElementById('swing-sliders');
-  if (!sliderEl || !swingState) return;
-
-  sliderEl.innerHTML = swingState.map(function(p, i) {
-    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
-      + '<div style="width:56px;font-size:12px;font-weight:800;color:' + p.color + ';text-align:right;flex-shrink:0">' + p.name.split(' ')[0] + '</div>'
-      + '<input type="range" min="0" max="50" value="' + p.pct + '" step="1" id="sw-range-' + i + '" '
-      + 'style="flex:1;accent-color:' + p.color + '" '
-      + 'oninput="onSwingInput(' + i + ',this.value)">'
-      + '<div id="sw-lbl-' + i + '" style="width:36px;font-size:14px;font-weight:800;color:' + p.color + ';text-align:right">' + p.pct + '%</div>'
-      + '</div>';
-  }).join('');
-
-  renderSwingResult();
-}
-
-function onSwingInput(idx, val) {
-  val = parseInt(val);
-  var oldVal = swingState[idx].pct;
-  var delta = val - oldVal;
-  swingState[idx].pct = val;
-  document.getElementById('sw-lbl-' + idx).textContent = val + '%';
-
-  // Rebalance the other parties proportionally to absorb the delta
-  if (delta !== 0) {
-    var others = swingState.filter(function(p, i) { return i !== idx && p.pct > 0; });
-    var othersTotal = others.reduce(function(s, p) { return s + p.pct; }, 0);
-    if (othersTotal > 0) {
-      var remaining = delta;
-      others.forEach(function(p, oi) {
-        var share = p.pct / othersTotal;
-        var adj = oi === others.length - 1 ? remaining : Math.round(share * delta);
-        remaining -= adj;
-        p.pct = Math.max(0, p.pct - adj);
-      });
-    }
-    // Update all other sliders and labels
-    swingState.forEach(function(p, i) {
-      if (i === idx) return;
-      var sliderEl = document.getElementById('sw-range-' + i);
-      var labelEl = document.getElementById('sw-lbl-' + i);
-      if (sliderEl) sliderEl.value = p.pct;
-      if (labelEl) labelEl.textContent = p.pct + '%';
-    });
-  }
-
-  renderSwingResult();
-}
-
-function renderSwingResult() {
-  var barEl = document.getElementById('swing-seat-bar');
-  var labelsEl = document.getElementById('swing-seat-labels');
-  if (!barEl) return;
-  var withSeats = swingSeatEstimate(swingState).filter(function(p) { return p.calcSeats > 0; });
-  withSeats.sort(function(a,b) { return b.calcSeats - a.calcSeats; });
-  var total = withSeats.reduce(function(s,p) { return s + p.calcSeats; }, 0);
-  barEl.innerHTML = withSeats.map(function(p) {
-    var w = Math.round(p.calcSeats / total * 100);
-    return '<div style="flex:' + p.calcSeats + ';background:' + p.color + ';display:flex;align-items:center;justify-content:center;min-width:4px;overflow:hidden">'
-      + (w >= 6 ? '<span style="font-size:10px;font-weight:800;color:#fff">' + p.calcSeats + '</span>' : '')
-      + '</div>';
-  }).join('');
-  labelsEl.innerHTML = withSeats.map(function(p) {
-    var diff = p.calcSeats - (p.seats || 0);
-    var diffStr = diff > 0 ? '<span style="color:#02A95B">+' + diff + '</span>' : diff < 0 ? '<span style="color:#C8102E">' + diff + '</span>' : '<span style="color:var(--md-sys-color-on-surface-variant)">–</span>';
-    return '<div style="display:flex;align-items:center;gap:4px;background:var(--md-sys-color-surface-container);border-radius:99px;padding:3px 10px 3px 8px">'
-      + '<div style="width:8px;height:8px;border-radius:50%;background:' + p.color + ';flex-shrink:0"></div>'
-      + '<span style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface)">' + p.name.split(' ')[0] + ' ' + p.calcSeats + '</span>'
-      + diffStr
-      + '</div>';
-  }).join('');
-}
-
-function resetSwing() {
-  swingState.forEach(function(p) { p.pct = p.base; });
-  renderSwing();
-}
 
 /* ── Poll of the Day ── */
 var POTD_QUESTIONS = [
@@ -2555,7 +2470,6 @@ renderLeaders();
 renderPollCards();
 initVotePage();
 renderCountdown();
-initSwing();
 renderPOTD();
 showPopupIfDue();
 setTimeout(renderTrends, 100);
@@ -2610,17 +2524,18 @@ setTimeout(renderTrends, 100);
 
 </script>
 
-<script data-goatcounter="https://ukpolls.goatcounter.com/count" async src="//gc.zgo.at/count.js">
+<script data-goatcounter="https://ukpolls.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script>
 function shareExplainer() {
   var text = 'What are the May 2026 elections actually for?\n\n'
     + 'Not Westminster — these are local elections for councils across England and Scotland.\n\n'
-    + '\u26a0\ufe0f Labour face potential wipeout in traditional strongholds\n'
-    + '\U0001f535 Reform UK\'s first real test: can polls translate to councillors?\n'
-    + '\U0001f7e2 Greens eyeing gains in cities after Gorton & Denton\n'
-    + '\U0001f3f4 Every Scottish council up for grabs\n\n'
-    + '\U0001f1ec\U0001f1e7 UK Poll Tracker\n' + APP_URL;
+    + '⚠️ Labour face potential wipeout in traditional strongholds\n'
+    + '➡️ Reform UK\'s first real test: can polls translate to councillors?\n'
+    + '🟢 Greens eyeing gains in cities after Gorton & Denton\n'
+    + '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Every Scottish council up for grabs\n\n'
+    + '🇬🇧 UK Poll Tracker\n' + APP_URL;
   try { navigator.clipboard.writeText(text); } catch(e) {}
-  showToast('\U0001f4cb Copied — ready to share!');
+  showToast('📋 Copied — ready to share!');
   if (navigator.share) {
     try { navigator.share({ title: 'May 2026 Elections Explained', text: text }); } catch(e) {}
   }
