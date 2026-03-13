@@ -3444,7 +3444,7 @@ function drawNonVotersCard(ctx) {
   ctx.fillStyle = CARD_TEXT; ctx.font = '700 14px ' + CARD_FONT;
   ctx.fillText('ESTIMATED INTENTION AMONG 2024 NON-VOTERS', PAD, 232);
 
-  var barMaxW = CARD_W - PAD * 2 - 90, barH = 36, gap = 18, startY = 248;
+  var barMaxW = CARD_W - PAD * 2 - 90 - 52, barH = 36, gap = 18, startY = 248;
   data.forEach(function(p, i) {
     var y = startY + i * (barH + gap);
     var bw = Math.round((p.pct / maxPct) * barMaxW);
@@ -3452,8 +3452,8 @@ function drawNonVotersCard(ctx) {
     canvasFillRoundRect(ctx, PAD + 80, y, bw, barH, 8, p.color);
     ctx.fillStyle = p.color; ctx.font = '800 15px ' + CARD_FONT;
     ctx.textAlign = 'right'; ctx.fillText(p.label, PAD + 74, y + 23); ctx.textAlign = 'left';
-    ctx.fillStyle = i === 0 ? '#fff' : p.color;
-    ctx.font = '900 18px ' + CARD_FONT;
+    // Percentage always to the right of the bar, never inside
+    ctx.fillStyle = p.color; ctx.font = '900 18px ' + CARD_FONT;
     ctx.fillText(p.pct + '%', PAD + 80 + bw + 10, y + 24);
   });
 
