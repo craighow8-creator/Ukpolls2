@@ -2202,12 +2202,62 @@ async function leaderAITake(li) {
 
 async function shareLeader(li) {
   var l = D.leaders[li];
-  var netStr = l.net !== null ? (l.net > 0 ? '+' : '') + l.net + ' net approval' : 'no polling data yet';
-  var text = l.name + ' (' + l.party + ') — ' + netStr + '.\n\nTrack all UK leader ratings on UK Poll Tracker:\nhttps://craighow8-creator.github.io/Ukpolls2/';
-  try { await navigator.clipboard.writeText(text); } catch(e) {}
-  showToast('📋 Copied — ready to paste!');
-  if (navigator.share) {
-    try { await navigator.share({ title: l.name + ' — UK Poll Tracker', text }); } catch(e) {}
+  var card = document.getElementById('lcard-' + li);
+  if (!card) { showToast('Could not find card'); return; }
+
+  // Make sure the card body is open so full content is visible in screenshot
+  var body = document.getElementById('lbody-' + li);
+  var wasOpen = body && body.classList.contains('open');
+  if (body && !wasOpen) body.classList.add('open');
+
+  // Build a wrapper clone with branding footer
+  var wrapper = document.createElement('div');
+  wrapper.style.cssText = 'background:var(--md-sys-color-surface-container-low);padding:16px;border-radius:24px;display:inline-block;min-width:300px;max-width:420px;';
+  var cardClone = card.cloneNode(true);
+  // Remove action buttons from clone to keep it clean
+  var actionsEl = cardClone.querySelector('.leader-actions');
+  if (actionsEl) actionsEl.remove();
+  wrapper.appendChild(cardClone);
+
+  var footer = document.createElement('div');
+  footer.style.cssText = 'font-size:12px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin-top:10px;font-family:Nunito,sans-serif;font-weight:600;';
+  footer.textContent = '🇬🇧 UK Poll Tracker · ' + APP_URL;
+  wrapper.appendChild(footer);
+  document.body.appendChild(wrapper);
+
+  showToast('📸 Capturing...');
+  try {
+    var canvas = await html2canvas(wrapper, {
+      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-surface-container-low').trim() || '#F7F2FA',
+      scale: 2,
+      useCORS: true,
+      logging: false
+    });
+    document.body.removeChild(wrapper);
+    // Restore card state
+    if (body && !wasOpen) body.classList.remove('open');
+
+    canvas.toBlob(async function(blob) {
+      var file = new File([blob], 'uk-poll-tracker-leader.png', {type: 'image/png'});
+      if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+        try {
+          await navigator.share({ files: [file], title: l.name + ' — UK Poll Tracker' });
+          return;
+        } catch(e) {
+          if (e.name === 'AbortError') return;
+        }
+      }
+      // Fallback: download
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'uk-poll-tracker-leader.png'; a.click();
+      URL.revokeObjectURL(url);
+      showToast('📥 Image saved!');
+    }, 'image/png');
+  } catch(e) {
+    if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
+    if (body && !wasOpen) body.classList.remove('open');
+    showToast('Could not capture — try again');
   }
 }
 
