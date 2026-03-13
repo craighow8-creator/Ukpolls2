@@ -51,6 +51,13 @@
   --md-elevation-1: 0 1px 2px rgba(0,0,0,0.08), 0 1px 3px 1px rgba(0,0,0,0.06);
   --md-elevation-2: 0 1px 2px rgba(0,0,0,0.1), 0 2px 6px 2px rgba(0,0,0,0.08);
   --md-elevation-3: 0 4px 8px 3px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.1);
+  /* ── M3E Motion Tokens ── */
+  --md-motion-short: 0.15s;
+  --md-motion-medium: 0.25s;
+  --md-motion-long: 0.35s;
+  --md-motion-standard: cubic-bezier(0.2, 0, 0, 1);
+  --md-motion-expressive: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --md-motion-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -110,9 +117,9 @@ body {
   font-size: 13px; font-weight: 600;
   cursor: pointer;
   font-family: 'Nunito', sans-serif;
-  transition: background 0.2s;
+  transition: background var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);
 }
-.btn-share:active { background: var(--md-sys-color-primary-container); }
+.btn-share:active { background: var(--md-sys-color-primary-container); transform: scale(0.97); }
 .btn-support {
   background: var(--md-sys-color-secondary);
   color: #fff;
@@ -126,9 +133,9 @@ body {
   display: inline-flex; align-items: center;
   white-space: nowrap;
   box-shadow: var(--md-elevation-1);
-  transition: box-shadow 0.2s;
+  transition: box-shadow var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);
 }
-.btn-support:active { box-shadow: none; }
+.btn-support:active { box-shadow: none; transform: scale(0.97); }
 
 /* ── Content ── */
 @keyframes ptr-spin {
@@ -154,7 +161,7 @@ body {
 /* ── Cards ── */
 .card {
   background: var(--md-sys-color-surface);
-  border-radius: 24px;
+  border-radius: var(--md-sys-shape-corner-large);
   padding: 20px;
   margin-bottom: 12px;
   box-shadow: var(--md-elevation-2);
@@ -162,7 +169,7 @@ body {
 }
 .card-tonal {
   background: var(--md-sys-color-tonal-navy);
-  border-radius: var(--md-sys-shape-corner-extra-large);
+  border-radius: var(--md-sys-shape-corner-large);
   padding: 20px;
   margin-bottom: 12px;
 }
@@ -203,11 +210,11 @@ body {
   color: var(--md-sys-color-on-surface-variant);
   opacity: 0.5;
   line-height: 1;
-  transition: opacity 0.2s;
+  transition: opacity var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);
   display: inline-flex;
   align-items: center;
 }
-.sec-share:active { opacity: 1; }
+.sec-share:active { opacity: 1; transform: scale(0.9); }
 .sec-share svg { width: 18px; height: 18px; fill: currentColor; }
 
 /* ── Party Grid ── */
@@ -219,7 +226,7 @@ body {
   margin-bottom: 16px;
 }
 .rl-card {
-  border-radius: 28px;
+  border-radius: var(--md-sys-shape-corner-large);
   padding: 18px;
   position: relative;
   overflow: hidden;
@@ -253,7 +260,7 @@ body {
 .bar-rank { font-size: 12px; font-weight: 700; color: var(--md-sys-color-on-surface-variant); width: 16px; text-align: center; flex-shrink: 0; }
 .bar-name { font-size: 14px; font-weight: 700; width: 80px; flex-shrink: 0; }
 .bar-track { flex: 1; height: 10px; background: var(--md-sys-color-outline-variant); border-radius: 99px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+.bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s var(--md-motion-expressive); }
 .bar-pct { font-size: 15px; font-weight: 800; width: 36px; text-align: right; flex-shrink: 0; }
 .bar-change { font-size: 12px; font-weight: 700; width: 36px; text-align: right; flex-shrink: 0; }
 .bar-seats { font-size: 11px; color: var(--md-sys-color-on-surface-variant); width: 52px; text-align: right; flex-shrink: 0; }
@@ -303,12 +310,12 @@ body {
   gap: 3px; flex: 1;
   font-family: 'Nunito', sans-serif;
   font-weight: 500;
-  transition: color 0.2s;
+  transition: color var(--md-motion-short) var(--md-motion-standard);
   position: relative;
 }
 .nb svg {
   width: 24px; height: 24px; stroke-width: 1.6;
-  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  transition: transform var(--md-motion-long) var(--md-motion-expressive);
 }
 .nb .nav-indicator { display: none; }
 .nb.active { color: var(--md-sys-color-primary); font-weight: 800; }
@@ -319,11 +326,11 @@ body {
 /* ── Leader Cards ── */
 .lcard {
   background: var(--md-sys-color-surface);
-  border-radius: var(--md-sys-shape-corner-extra-large);
+  border-radius: var(--md-sys-shape-corner-large);
   margin-bottom: 14px;
   box-shadow: var(--md-elevation-2);
   overflow: visible;
-  transition: box-shadow 0.2s;
+  transition: box-shadow var(--md-motion-short) var(--md-motion-standard);
   border-top: 4px solid;
 }
 .lcard-header {
@@ -334,7 +341,7 @@ body {
   gap: 14px;
   user-select: none;
   background: linear-gradient(to bottom, rgba(0,0,0,0.015), transparent);
-  transition: background 0.15s;
+  transition: background var(--md-motion-short) var(--md-motion-standard);
   overflow: hidden;
 }
 .lcard-header:active { background: var(--md-sys-color-tonal-navy); }
@@ -358,12 +365,13 @@ body {
 .lcs { display: flex; gap: 16px; font-size: 14px; margin-bottom: 14px; font-weight: 600; }
 .policy-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; justify-content: center; }
 .policy-pill {
-  padding: 7px 14px; border-radius: 50px;
+  padding: 7px 14px; border-radius: var(--md-sys-shape-corner-full);
   font-size: 13px; font-weight: 700;
   border: none; cursor: pointer;
   font-family: 'Nunito', sans-serif;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--md-motion-short) var(--md-motion-standard), color var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);
 }
+.policy-pill:active { transform: scale(0.97); }
 .policy-pill.active { color: #fff; }
 .policy-detail {
   font-size: 15px; line-height: 1.75;
@@ -390,13 +398,13 @@ body {
 .leader-action-btn {
   flex: 1; min-width: 80px;
   padding: 10px 8px;
-  border-radius: 50px; border: none;
+  border-radius: var(--md-sys-shape-corner-full); border: none;
   font-size: 13px; font-weight: 700;
   font-family: 'Nunito', sans-serif;
   cursor: pointer; text-align: center;
-  transition: background 0.15s, transform 0.1s;
+  transition: background var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);
 }
-.leader-action-btn:active { transform: scale(0.96); }
+.leader-action-btn:active { transform: scale(0.97); }
 .rating-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .rating-stars { display: flex; gap: 4px; }
 .rating-star {
@@ -412,7 +420,7 @@ body {
 /* ── Elections ── */
 .ecard {
   background: var(--md-sys-color-surface);
-  border-radius: 24px;
+  border-radius: var(--md-sys-shape-corner-large);
   padding: 0;
   margin-bottom: 12px;
   box-shadow: var(--md-elevation-2);
@@ -434,14 +442,16 @@ body {
 .rm { width: 70px; font-size: 12px; font-weight: 700; text-align: right; color: var(--md-sys-color-on-surface-variant); }
 .explainer-card {
   background: var(--md-sys-color-surface);
-  border-radius: 24px;
+  border-radius: var(--md-sys-shape-corner-large);
   padding: 18px;
   margin-bottom: 12px;
   cursor: pointer;
   box-shadow: var(--md-elevation-2);
-  border-top: 4px solid #012169;
+  border-top: 4px solid var(--md-sys-color-primary);
   overflow: hidden;
+  transition: transform var(--md-motion-short) var(--md-motion-expressive);
 }
+.explainer-card:active { transform: scale(0.99); }
 .explainer-body { display: none; margin-top: 14px; }
 .explainer-body.open { display: block; }
 .explainer-section {
@@ -471,9 +481,9 @@ body {
   font-family: 'Nunito', sans-serif;
   font-weight: 700;
   box-shadow: var(--md-elevation-1);
-  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  transition: background var(--md-motion-short) var(--md-motion-standard), border-color var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);
 }
-.chip:active { background: var(--md-sys-color-tonal-navy); border-color: var(--md-sys-color-primary); transform: scale(0.96); }
+.chip:active { background: var(--md-sys-color-tonal-navy); border-color: var(--md-sys-color-primary); transform: scale(0.97); }
 .party-btn {
   padding: 10px 18px;
   border-radius: var(--md-sys-shape-corner-full);
@@ -484,11 +494,11 @@ body {
   font-size: 14px;
   font-weight: 800;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, transform 0.1s;
+  transition: background var(--md-motion-short) var(--md-motion-standard), color var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);
   letter-spacing: 0.2px;
 }
 .party-btn:hover { background: var(--pc); color: #fff; }
-.party-btn:active { transform: scale(0.96); background: var(--pc); color: #fff; }
+.party-btn:active { transform: scale(0.97); background: var(--pc); color: #fff; }
 .ai-empty { text-align: center; padding: 32px 20px; color: var(--md-sys-color-on-surface-variant); font-size: 14px; }
 
 /* ── Support Popup ── */
@@ -509,7 +519,8 @@ body {
 .popup-icon { font-size: 48px; margin-bottom: 12px; }
 .popup-title { font-size: 22px; font-weight: 700; color: var(--md-sys-color-on-surface); margin-bottom: 8px; font-family: 'Nunito', sans-serif; }
 .popup-body { font-size: 14px; color: var(--md-sys-color-on-surface-variant); line-height: 1.6; margin-bottom: 24px; }
-.popup-btn { display: block; width: 100%; padding: 14px; border-radius: var(--md-sys-shape-corner-full); font-weight: 700; font-size: 15px; cursor: pointer; border: none; margin-bottom: 10px; font-family: 'Nunito', sans-serif; }
+.popup-btn { display: block; width: 100%; padding: 14px; border-radius: var(--md-sys-shape-corner-full); font-weight: 700; font-size: 15px; cursor: pointer; border: none; margin-bottom: 10px; font-family: 'Nunito', sans-serif; transition: transform var(--md-motion-short) var(--md-motion-expressive); }
+.popup-btn:active { transform: scale(0.97); }
 .popup-yes { background: var(--md-sys-color-secondary); color: #fff; }
 .popup-no { background: transparent; color: var(--md-sys-color-on-surface-variant); font-size: 14px; text-decoration: underline; }
 
@@ -555,7 +566,7 @@ body {
 <body>
 <div id="splash" style="position:fixed;inset:0;z-index:99999;background:#012169;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity 0.5s ease,transform 0.5s ease">
   <!-- Big logo -->
-  <div style="width:96px;height:96px;border-radius:28px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.4);margin-bottom:24px;animation:splashPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both">
+  <div style="width:96px;height:96px;border-radius:var(--md-sys-shape-corner-extra-large);overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.4);margin-bottom:24px;animation:splashPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both">
     <svg viewBox="0 0 200 200" width="96" height="96" xmlns="http://www.w3.org/2000/svg">
       <rect width="200" height="200" fill="#012169"/>
       <line x1="0" y1="0" x2="200" y2="200" stroke="white" stroke-width="28"/>
@@ -653,7 +664,7 @@ body {
     <div class="sec-label" id="polls-anchor">📋 Recent Polls<button class="sec-share" onclick="shareSection('📋 Recent Polls', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="polls-cards"></div>
     <div class="sec-label">📌 Milestones<button class="sec-share" onclick="shareSection('📌 Milestones', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
-    <div class="card" style="border-top:4px solid #C8102E" id="milestones-list"></div>
+    <div class="card" style="border-top:4px solid var(--md-sys-color-secondary)" id="milestones-list"></div>
 
 
     <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);padding:2px 4px 12px">BPC members · RB = Restore Britain (prompted only)</div>
@@ -884,7 +895,7 @@ body {
     </div>
 
     <div style="font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin:22px 0 10px 2px;text-align:center">🗳 Poll of the Day</div>
-    <div class="card" style="border-top:4px solid #C8102E;padding:18px" id="potd-card">
+    <div class="card" style="border-top:4px solid var(--md-sys-color-secondary);padding:18px" id="potd-card">
       <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:15px;padding:12px">Loading...</div>
     </div>
   </div>
@@ -919,23 +930,23 @@ body {
     <div class="ssub">Straight-talking briefings on UK politics</div>
 
     <!-- PARTY BRIEFING SECTION -->
-    <div style="background:var(--md-sys-color-surface-container);border-radius:28px;box-shadow:var(--md-elevation-2);overflow:hidden;border-top:4px solid var(--md-sys-color-primary);padding:20px;margin-bottom:12px">
+    <div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-extra-large);box-shadow:var(--md-elevation-2);overflow:hidden;border-top:4px solid var(--md-sys-color-primary);padding:20px;margin-bottom:12px">
       <div style="font-size:19px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:14px;letter-spacing:-0.3px">🗳 Why vote for...</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-        <div onclick="askParty('Labour','#C8102E')" style="background:#C8102E18;border-top:4px solid #C8102E;border-radius:20px;padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:all 0.15s;display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#C8102E;font-weight:800">Labour</div></div>
-        <div onclick="askParty('Reform UK','#12B7D4')" style="background:#12B7D418;border-top:4px solid #12B7D4;border-radius:20px;padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:all 0.15s;display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#12B7D4;font-weight:800">Reform UK</div></div>
-        <div onclick="askParty('Conservative','#003087')" style="background:#00308718;border-top:4px solid #003087;border-radius:20px;padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:all 0.15s;display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#003087;font-weight:800">Conservative</div></div>
-        <div onclick="askParty('Green','#6AB023')" style="background:#6AB02318;border-top:4px solid #6AB023;border-radius:20px;padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:all 0.15s;display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#6AB023;font-weight:800">Green</div></div>
-        <div onclick="askParty('Lib Dem','#FAA61A')" style="background:#FAA61A18;border-top:4px solid #FAA61A;border-radius:20px;padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:all 0.15s;display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#FAA61A;font-weight:800">Lib Dem</div></div>
-        <div onclick="askParty('SNP','#C4922A')" style="background:#C4922A18;border-top:4px solid #C4922A;border-radius:20px;padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:all 0.15s;display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#C4922A;font-weight:800">SNP</div></div>
+        <div onclick="askParty('Labour','#C8102E')" style="background:#C8102E18;border-top:4px solid var(--md-sys-color-secondary);border-radius:var(--md-sys-shape-corner-large);padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:background var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#C8102E;font-weight:800">Labour</div></div>
+        <div onclick="askParty('Reform UK','#12B7D4')" style="background:#12B7D418;border-top:4px solid #12B7D4;border-radius:var(--md-sys-shape-corner-large);padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:background var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#12B7D4;font-weight:800">Reform UK</div></div>
+        <div onclick="askParty('Conservative','#003087')" style="background:#00308718;border-top:4px solid #003087;border-radius:var(--md-sys-shape-corner-large);padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:background var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#003087;font-weight:800">Conservative</div></div>
+        <div onclick="askParty('Green','#6AB023')" style="background:#6AB02318;border-top:4px solid #6AB023;border-radius:var(--md-sys-shape-corner-large);padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:background var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#6AB023;font-weight:800">Green</div></div>
+        <div onclick="askParty('Lib Dem','#FAA61A')" style="background:#FAA61A18;border-top:4px solid #FAA61A;border-radius:var(--md-sys-shape-corner-large);padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:background var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#FAA61A;font-weight:800">Lib Dem</div></div>
+        <div onclick="askParty('SNP','#C4922A')" style="background:#C4922A18;border-top:4px solid #C4922A;border-radius:var(--md-sys-shape-corner-large);padding:16px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:background var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);display:flex;align-items:center;justify-content:center;min-height:72px"><div style="font-size:15px;color:#C4922A;font-weight:800">SNP</div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr;gap:10px">
-        <div onclick="askParty('Restore Britain','#1B1B1B')" style="background:#1B1B1B12;border-top:4px solid #1B1B1B;border-radius:20px;padding:14px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:all 0.15s;display:flex;align-items:center;justify-content:center;min-height:56px"><div style="font-size:15px;color:var(--md-sys-color-on-surface);font-weight:800">Restore Britain</div></div>
+        <div onclick="askParty('Restore Britain','#1B1B1B')" style="background:#1B1B1B12;border-top:4px solid #1B1B1B;border-radius:var(--md-sys-shape-corner-large);padding:14px 12px;text-align:center;cursor:pointer;box-shadow:var(--md-elevation-1);transition:background var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);display:flex;align-items:center;justify-content:center;min-height:56px"><div style="font-size:15px;color:var(--md-sys-color-on-surface);font-weight:800">Restore Britain</div></div>
       </div>
     </div>
 
     <!-- TODAY'S STORIES SECTION -->
-    <div style="background:var(--md-sys-color-surface-container);border-radius:28px;box-shadow:var(--md-elevation-2);overflow:hidden;border-top:4px solid #C8102E;padding:20px 20px 14px;margin-bottom:12px">
+    <div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-extra-large);box-shadow:var(--md-elevation-2);overflow:hidden;border-top:4px solid var(--md-sys-color-secondary);padding:20px 20px 14px;margin-bottom:12px">
       <div style="font-size:19px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:14px;letter-spacing:-0.3px">📰 In the news · <span id="ai-news-date" style="color:var(--md-sys-color-secondary);font-size:17px;font-weight:900"></span></div>
       <div id="news-chips-scroll" style="display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch">
         <!-- AI CHIPS START -->
@@ -956,7 +967,7 @@ body {
     </div>
 
     <!-- OUTPUT - moved up, right after sections -->
-    <div id="ai-output" class="ai-empty" style="min-height:56px;background:var(--md-sys-color-surface-container);border-radius:28px;box-shadow:var(--md-elevation-1);border-top:4px solid var(--md-sys-color-outline-variant)">Tap a party for a briefing, or swipe the news →</div>
+    <div id="ai-output" class="ai-empty" style="min-height:56px;background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-extra-large);box-shadow:var(--md-elevation-1);border-top:4px solid var(--md-sys-color-outline-variant)">Tap a party for a briefing, or swipe the news →</div>
 
     <!-- INPUT -->
     <div style="display:flex;gap:8px;margin-top:12px">
@@ -972,7 +983,7 @@ body {
 
 <!-- Share Modal -->
 <div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.6);z-index:500;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeShare()">
-  <div id="share-modal-sheet" style="background:var(--md-sys-color-surface);border-radius:28px 28px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.12);transition:transform 0.25s cubic-bezier(0.05,0.7,0.1,1);touch-action:pan-x">
+  <div id="share-modal-sheet" style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-extra-large) 28px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.12);transition:transform 0.25s cubic-bezier(0.05,0.7,0.1,1);touch-action:pan-x">
     <div style="width:36px;height:4px;background:var(--md-sys-color-outline-variant);border-radius:2px;margin:0 auto 20px"></div>
     <div style="font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Share</div>
     <div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:16px;font-family:\'Nunito\',sans-serif">UK Poll Tracker</div>
@@ -1014,7 +1025,7 @@ body {
 
 <!-- Leader Compare Modal -->
 <div id="leader-compare-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.5);z-index:1000;align-items:flex-end;justify-content:center" onclick="closeLeaderCompare()">
-  <div id="leader-compare-sheet" onclick="event.stopPropagation()" style="background:var(--md-sys-color-surface-container-high);border-radius:28px 28px 0 0;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,16px);transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);box-shadow:0 -4px 32px rgba(0,0,0,0.2)">
+  <div id="leader-compare-sheet" onclick="event.stopPropagation()" style="background:var(--md-sys-color-surface-container-high);border-radius:var(--md-sys-shape-corner-extra-large) 28px 0 0;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,16px);transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);box-shadow:0 -4px 32px rgba(0,0,0,0.2)">
     <div style="display:flex;justify-content:center;padding:12px 0 4px">
       <div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>
     </div>
@@ -1360,7 +1371,7 @@ function openCompare() {
   compareSelected = [];
   document.getElementById('compare-result').innerHTML = '';
   document.getElementById('compare-picker').innerHTML = D.parties.map((p, i) =>
-    '<div onclick="toggleCompare(\'' + p.name + '\',this)" data-name="' + p.name + '" style="background:var(--md-sys-color-surface);border:2px solid ' + p.color + '40;border-radius:var(--md-sys-shape-corner-large);padding:12px 6px;text-align:center;cursor:pointer;transition:all 0.15s;box-shadow:var(--md-elevation-1)">'
+    '<div onclick="toggleCompare(\'' + p.name + '\',this)" data-name="' + p.name + '" style="background:var(--md-sys-color-surface);border:2px solid ' + p.color + '40;border-radius:var(--md-sys-shape-corner-large);padding:12px 6px;text-align:center;cursor:pointer;transition:background var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);box-shadow:var(--md-elevation-1)">'
     + '<div style="font-size:18px;color:' + p.color + ';font-weight:700;margin-bottom:4px">' + p.name + '</div>'
     + '<div style="font-size:15px;font-weight:700;color:' + p.color + ';font-family:\'Nunito\',sans-serif">' + p.pct + '%</div>'
     + '</div>'
@@ -1516,7 +1527,7 @@ async function askParty(party, color) {
     if (text) {
       // Render as structured document with party colour top-border card
       var lines = text.split('\n');
-      var html = '<div style="background:var(--md-sys-color-surface);border-radius:20px;overflow:hidden;'
+      var html = '<div style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-large);overflow:hidden;'
         + 'box-shadow:var(--md-elevation-2);border-top:4px solid ' + color + '">';
       // Colour header strip
       html += '<div style="background:' + color + '12;padding:14px 18px;border-bottom:1px solid ' + color + '22">';
@@ -1574,7 +1585,7 @@ async function askAI(q) {
     var data = await resp.json();
     var text = data.content && data.content[0] && data.content[0].text;
     if (text) {
-      out.innerHTML = '<div style="background:var(--md-sys-color-surface);border-radius:20px;padding:18px;box-shadow:var(--md-elevation-2);border-top:4px solid var(--md-sys-color-primary)">'
+      out.innerHTML = '<div style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-large);padding:18px;box-shadow:var(--md-elevation-2);border-top:4px solid var(--md-sys-color-primary)">'
         + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.7">' + text.replace(/\n\n/g,'</p><p style="margin:10px 0">').replace(/\n/g,'<br>') + '</div>'
         + '</div>' + shareBtn(q + '\n\n' + text);
       input.value = '';
@@ -1722,7 +1733,7 @@ function openFPTPSheet() {
   sheet.id = 'fptp-sheet';
   sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;'
     + 'background:var(--md-sys-color-surface-container-high);'
-    + 'border-radius:28px 28px 0 0;'
+    + 'border-radius:var(--md-sys-shape-corner-extra-large) 28px 0 0;'
     + 'box-shadow:0 -4px 32px rgba(0,0,0,0.2);'
     + 'transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);'
     + 'max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,16px)';
@@ -1828,7 +1839,7 @@ function showMilestoneSearch(text, el) {
   sheet._text = text;
   sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;'
     + 'background:var(--md-sys-color-surface-container-high);'
-    + 'border-radius:28px 28px 0 0;padding:0 0 40px;'
+    + 'border-radius:var(--md-sys-shape-corner-extra-large) 28px 0 0;padding:0 0 40px;'
     + 'box-shadow:0 -4px 32px rgba(0,0,0,0.2);'
     + 'transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);';
 
@@ -1848,7 +1859,7 @@ function showMilestoneSearch(text, el) {
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 32px">'
     + sources.map(function(s) {
         return '<a href="' + s.url + encodeURIComponent(text) + '" target="_blank" rel="noopener" '
-          + 'style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;'
+          + 'style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--md-sys-shape-corner-large);'
           + 'text-decoration:none;color:var(--md-sys-color-on-surface);'
           + 'font-size:15px;font-weight:800;letter-spacing:-0.2px;'
           + 'background:var(--md-sys-color-surface-container);'
@@ -2450,8 +2461,8 @@ function renderVoteButtons() {
     var minH = small ? '56px' : '72px';
     var fSize = small ? '13px' : '15px';
     return '<div onclick="castVote(\'' + p.name + '\')" style="background:' + bg + ';' + topBorder
-      + 'border-radius:20px;padding:' + (small ? '10px 8px' : '16px 12px') + ';text-align:center;cursor:pointer;'
-      + 'box-shadow:' + shadow + ';transition:all 0.15s;display:flex;flex-direction:column;'
+      + 'border-radius:var(--md-sys-shape-corner-large);padding:' + (small ? '10px 8px' : '16px 12px') + ';text-align:center;cursor:pointer;'
+      + 'box-shadow:' + shadow + ';transition:background var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive);display:flex;flex-direction:column;'
       + 'align-items:center;justify-content:center;min-height:' + minH + ';gap:2px;position:relative;overflow:hidden">'
       + wm
       + '<div style="position:relative;font-size:' + fSize + ';color:' + (sel ? p.color : 'var(--md-sys-color-on-surface)') + ';font-weight:800;word-break:break-word;line-height:1.3">' + p.name + '</div>'
@@ -2645,7 +2656,7 @@ function renderMigration() {
       + '<div style="font-size:15px;color:' + (change<0?'var(--up)':'var(--down)') + ';margin-top:6px;font-weight:600">'
         + (change<0?'▼ ':'▲ +') + Math.abs(change/1000).toFixed(0) + 'k vs previous year (' + changePct + '%)</div>'
     + '</div>'
-    + '<div class="card" style="margin-bottom:12px;padding:18px;border-top:4px solid #C8102E">'
+    + '<div class="card" style="margin-bottom:12px;padding:18px;border-top:4px solid var(--md-sys-color-secondary)">'
       + '<div style="font-size:18px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px;letter-spacing:0.5px">📈 YEAR-ON-YEAR TREND</div>'
       + '<div style="display:flex;align-items:flex-end;gap:6px;height:80px;margin-bottom:8px">'
       + M.trend.map(t => {
@@ -2701,7 +2712,7 @@ function renderMigration() {
     + '</div>';
 
   var sbEl = document.getElementById('smallboats-content');
-  if (sbEl) sbEl.innerHTML = '<div class="card" style="margin-bottom:12px;padding:18px;border-top:4px solid #C8102E">'
+  if (sbEl) sbEl.innerHTML = '<div class="card" style="margin-bottom:12px;padding:18px;border-top:4px solid var(--md-sys-color-secondary)">'
       + '<div style="font-size:18px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px">🚤 ILLEGAL CHANNEL CROSSINGS</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
         + '<div style="background:var(--md-sys-color-tonal-red);border-radius:var(--md-sys-shape-corner-large);padding:14px;text-align:center">'
