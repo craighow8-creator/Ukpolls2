@@ -530,8 +530,22 @@ body {
 .ptable th { font-size: 11px; color: var(--md-sys-color-on-surface-variant); letter-spacing: 1px; padding: 6px 3px; text-align: center; border-bottom: 1px solid var(--md-sys-color-outline-variant); font-weight: 600; text-transform: uppercase; }
 .ptable td { padding: 10px 3px; text-align: center; border-bottom: 1px solid var(--md-sys-color-outline-variant); font-size: 13px; }
 
-/* ── Divider ── */
-.m3-divider { height: 1px; background: var(--md-sys-color-outline-variant); margin: 8px 0; }
+/* ── AI Skeleton Loader ── */
+@keyframes skeleton-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.ai-skeleton-line {
+  height: 14px;
+  border-radius: 7px;
+  margin-bottom: 10px;
+  background: linear-gradient(90deg, var(--md-sys-color-outline-variant) 25%, var(--md-sys-color-surface-container-high) 50%, var(--md-sys-color-outline-variant) 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.ai-skeleton-line:last-child { margin-bottom: 0; }
+
+
 
 /* ── Tonal chip tags ── */
 .tonal-tag { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: var(--md-sys-shape-corner-full); font-size: 12px; font-weight: 600; }
@@ -2233,7 +2247,18 @@ function rateLeader(li, rating) {
 async function leaderAITake(li) {
   var l = D.leaders[li];
   var el = document.getElementById('leader-ai-take-' + li);
-  el.innerHTML = '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);padding:8px 0">⏳ Getting AI take...</div>';
+  var btn = document.querySelector('#lbody-' + li + ' .leader-action-btn[onclick*="leaderAITake"]');
+
+  // Disable button & show animated skeleton
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+  el.innerHTML = '<div style="background:' + l.color + '0f;border-left:3px solid ' + l.color + ';border-radius:0 12px 12px 0;padding:12px 14px;margin-bottom:12px">'
+    + '<div style="font-size:15px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:' + l.color + ';margin-bottom:10px">🤖 AI Take</div>'
+    + '<div class="ai-skeleton-line" style="width:95%"></div>'
+    + '<div class="ai-skeleton-line" style="width:88%"></div>'
+    + '<div class="ai-skeleton-line" style="width:92%"></div>'
+    + '<div class="ai-skeleton-line" style="width:70%"></div>'
+    + '</div>';
+
   var q = 'Give a punchy 3-sentence verdict on ' + l.name + ' (' + l.party + '). '
     + 'Net approval: ' + (l.net !== null ? l.net : 'unknown') + '. '
     + 'Cover: their current political trajectory, their biggest strength, and their biggest weakness. '
@@ -2251,8 +2276,9 @@ async function leaderAITake(li) {
         + text + '</div>'
       : '';
   } catch(e) {
-    el.innerHTML = '<div style="color:var(--md-sys-color-secondary);font-size:15px">Error getting AI take</div>';
+    el.innerHTML = '<div style="color:var(--md-sys-color-secondary);font-size:15px;padding:8px 0">⚠️ Error getting AI take — try again</div>';
   }
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; }
 }
 
 async function shareLeader(li) {
