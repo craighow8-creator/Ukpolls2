@@ -1498,9 +1498,15 @@ function renderPolls() {
 
 // ── Render Trends ──
 function showMilestoneSearch(text, el) {
-  // Remove any existing popup
-  var existing = document.getElementById('milestone-popup');
-  if (existing) { existing.remove(); if (existing._text === text) return; }
+  var existingSheet = document.getElementById('milestone-sheet');
+  var existingBg = document.getElementById('milestone-sheet-bg');
+  if (existingSheet) {
+    var wasText = existingSheet._text;
+    existingSheet.style.transform = 'translateY(100%)';
+    if (existingBg) existingBg.style.background = 'rgba(0,0,0,0)';
+    setTimeout(function() { if (existingSheet.parentNode) existingSheet.remove(); if (existingBg && existingBg.parentNode) existingBg.remove(); }, 300);
+    if (wasText === text) return;
+  }
 
   var sources = [
     {icon:'🔍', label:'Google',    url:'https://www.google.com/search?q='},
@@ -1511,25 +1517,52 @@ function showMilestoneSearch(text, el) {
     {icon:'📰', label:'BBC',       url:'https://www.bbc.co.uk/search?q='},
   ];
 
-  var popup = document.createElement('div');
-  popup.id = 'milestone-popup';
-  popup._text = text;
-  popup.style.cssText = 'position:fixed;z-index:9999;background:var(--md-sys-color-surface-container-high);border-radius:16px;padding:14px;box-shadow:0 8px 32px rgba(0,0,0,0.18);width:280px;top:50%;left:50%;transform:translate(-50%,-50%);';
+  var bg = document.createElement('div');
+  bg.id = 'milestone-sheet-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease;';
+  document.body.appendChild(bg);
+  setTimeout(function() { bg.style.background = 'rgba(0,0,0,0.4)'; }, 10);
 
-  popup.innerHTML = '<div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:10px">Search this story</div>'
-    + sources.map(s =>
-        '<a href="' + s.url + encodeURIComponent(text) + '" target="_blank" rel="noopener" '
-        + 'style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;text-decoration:none;color:var(--md-sys-color-on-surface);font-size:14px;font-weight:600;margin-bottom:4px;background:var(--md-sys-color-surface-container)">'
-        + '<span style="font-size:18px">' + s.icon + '</span>' + s.label + '</a>'
-      ).join('')
-    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);margin-top:8px;text-align:center">Tap outside to close</div>';
+  var sheet = document.createElement('div');
+  sheet.id = 'milestone-sheet';
+  sheet._text = text;
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;'
+    + 'background:var(--md-sys-color-surface-container-high);'
+    + 'border-radius:28px 28px 0 0;padding:0 0 40px;'
+    + 'box-shadow:0 -4px 32px rgba(0,0,0,0.2);'
+    + 'transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);';
 
-  document.body.appendChild(popup);
-  setTimeout(function() {
-    document.addEventListener('click', function closePopup(e) {
-      if (!popup.contains(e.target)) { popup.remove(); document.removeEventListener('click', closePopup); }
-    });
-  }, 100);
+  sheet.innerHTML =
+    '<div style="display:flex;justify-content:center;padding:12px 0 4px">'
+    + '<div style="width:32px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>'
+    + '</div>'
+    + '<div style="font-size:13px;font-weight:800;color:var(--md-sys-color-on-surface-variant);'
+    + 'letter-spacing:0.8px;text-transform:uppercase;padding:8px 24px 16px">Search this story</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px">'
+    + sources.map(function(s) {
+        return '<a href="' + s.url + encodeURIComponent(text) + '" target="_blank" rel="noopener" '
+          + 'style="display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;'
+          + 'text-decoration:none;color:var(--md-sys-color-on-surface);'
+          + 'font-size:15px;font-weight:700;'
+          + 'background:var(--md-sys-color-surface-container);">'
+          + '<span style="font-size:24px">' + s.icon + '</span>' + s.label
+          + '</a>';
+      }).join('')
+    + '</div>';
+
+  document.body.appendChild(sheet);
+  setTimeout(function() { sheet.style.transform = 'translateY(0)'; }, 10);
+
+  function closeSheet() {
+    sheet.style.transform = 'translateY(100%)';
+    bg.style.background = 'rgba(0,0,0,0)';
+    setTimeout(function() {
+      if (sheet.parentNode) sheet.remove();
+      if (bg.parentNode) bg.remove();
+    }, 300);
+  }
+
+  bg.addEventListener('click', closeSheet);
 }
 
 function renderTrends() {
@@ -1554,43 +1587,14 @@ function renderTrends() {
     borderWidth: 2.5,
     tension: 0.4, fill: true,
   }));
-  const endLabelPlugin = {
-    id: 'endLabels',
-    afterDatasetsDraw(chart) {
-      const ctx = chart.ctx;
-      chart.data.datasets.forEach((ds, i) => {
-        if (!chart.isDatasetVisible(i)) return;
-        const meta = chart.getDatasetMeta(i);
-        const last = meta.data[meta.data.length - 1];
-        if (!last) return;
-        const val = ds.data[ds.data.length - 1];
-        if (val == null) return;
-        const x = last.x, y = last.y;
-        const r = 14;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(x + r + 4, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = ds.borderColor;
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 10px Nunito, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(val + '%', x + r + 4, y);
-        ctx.restore();
-      });
-    }
-  };
-
   const el = document.getElementById('trend-chart');
   if (window._trendChart) window._trendChart.destroy();
   window._trendChart = new Chart(el, {
     type: 'line',
     data: { labels, datasets },
-    plugins: [endLabelPlugin],
     options: {
       responsive: true, maintainAspectRatio: true, aspectRatio: 1.4,
-      layout: { padding: { right: 36 } },
+      layout: { padding: { right: 8 } },
       animation: { duration: 600, easing: 'easeOutCubic' },
       interaction: { mode: 'index', intersect: false },
       plugins: {
