@@ -199,17 +199,24 @@ body {
   margin-bottom: 16px;
 }
 .rl-card {
-  border-radius: 20px;
-  padding: 16px;
+  border-radius: 28px;
+  padding: 18px;
   position: relative;
   overflow: hidden;
   box-shadow: var(--md-elevation-2);
 }
+.rl-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(0,0,0,0.08) 100%);
+  pointer-events: none;
+}
 .rl-rank { font-size: 11px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; opacity: 0.7; margin-bottom: 4px; }
 .rl-name { font-size: 15px; font-weight: 800; margin-bottom: 8px; }
 .rl-pct { font-size: 42px; font-weight: 900; line-height: 1; }
-.rl-pct small { font-size: 20px; font-weight: 700; }
-.rl-change { font-size: 13px; font-weight: 700; margin-top: 4px; }
+.rl-pct small { font-size: 18px; font-weight: 400; opacity: 0.75; vertical-align: super; }
+.rl-change { font-size: 13px; font-weight: 700; margin-top: 6px; }
 .rl-seats { font-size: 12px; opacity: 0.75; margin-top: 2px; font-weight: 600; }
 
 /* ── Party Bar List ── */
@@ -1447,14 +1454,14 @@ function renderPolls() {
   function leaderCard(p, rank, label) {
     var isDark = ['#012169','#1B1B1B','#003087','#6AB023','#C8102E'].includes(p.color);
     var bg = p.color;
-    var chg = p.change > 0 ? '▲ +'+p.change+'%' : p.change < 0 ? '▼ '+p.change+'%' : '– NC';
-    var chgColor = p.change > 0 ? '#7fff7f' : p.change < 0 ? '#ffaaaa' : 'rgba(255,255,255,0.6)';
+    var chg = p.change > 0 ? '▲ +'+p.change+'%' : p.change < 0 ? '▼ '+p.change+'%' : '<span style="background:rgba(255,255,255,0.2);border-radius:99px;padding:2px 8px;font-size:11px;letter-spacing:0.5px">NC</span>';
+    var chgColor = p.change > 0 ? '#7fff7f' : p.change < 0 ? '#ffaaaa' : '#fff';
     return `<div class="rl-card" style="background:${bg};color:#fff">
       <div class="rl-rank">${label}</div>
       <div class="rl-name">${p.name}</div>
       <div class="rl-pct">${p.pct}<small>%</small></div>
       <div class="rl-change" style="color:${chgColor}">${chg}</div>
-      <div class="rl-seats">${p.seats ? '~'+p.seats+' seats' : ''}</div>
+      <div class="rl-seats">${p.seats ? p.seats+' seats' : ''}</div>
     </div>`;
   }
   document.getElementById('race-leaders').innerHTML = `<div class="race-leaders">${leaderCard(top,1,'🥇 Leading')+(second ? leaderCard(second,2,'🥈 2nd') : '')}</div>`;
@@ -2387,11 +2394,15 @@ function buildLeaderComparison(a, b) {
   function netCol(n) { return n===null?'var(--md-sys-color-on-surface-variant)':n>0?'var(--up)':'var(--down)'; }
   function netStr(n) { return n===null?'No data':(n>0?'+':'')+n; }
   function policyRow(emoji, label, ta, tb) {
-    return '<tr>'
-      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:13px;line-height:1.5">'+(ta||'—')+'</div></td>'
-      + '<td style="padding:10px 4px;border-top:1px solid var(--md-sys-color-outline-variant);text-align:center;vertical-align:top;width:16%"><div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">' + emoji + '<br>' + label + '</div></td>'
-      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:13px;line-height:1.5">'+(tb||'—')+'</div></td>'
-      + '</tr>';
+    return '<div style="margin-bottom:2px">'
+      + '<div style="font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);padding:10px 0 6px;border-top:1px solid var(--md-sys-color-outline-variant)">'
+      + emoji + ' ' + label + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1px 1fr;margin-bottom:8px">'
+      + '<div style="font-size:13px;line-height:1.6;padding-right:10px;color:var(--md-sys-color-on-surface)">'+(ta||'—')+'</div>'
+      + '<div style="background:var(--md-sys-color-outline-variant)"></div>'
+      + '<div style="font-size:13px;line-height:1.6;padding-left:10px;color:var(--md-sys-color-on-surface)">'+(tb||'—')+'</div>'
+      + '</div>'
+      + '</div>';
   }
   var nameMap = {'Green Party':'Green','Lib Dems':'Lib Dem','Reform UK':'Reform UK','Restore Britain':'Restore Britain','Conservative':'Conservative','Labour':'Labour','SNP':'SNP'};
   var pa = D.parties.find(p => p.name===(nameMap[a.party]||a.party));
@@ -2402,11 +2413,12 @@ function buildLeaderComparison(a, b) {
     + '<div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:'+b.color+';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;margin:0 auto 6px">'+b.name.split(' ').map(w=>w[0]).join('').slice(0,2)+'</div><div style="font-size:18px;font-weight:700;color:'+b.color+'">'+b.name+'</div><div style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">'+b.party+'</div>'+(pb?'<div style="font-size:22px;font-weight:700;color:'+b.color+';font-family:\'Nunito\',sans-serif;margin-top:4px">'+pb.pct+'%</div>':'')+'</div>'
     + '</div>'
     + '<table style="width:100%;border-collapse:collapse"><tbody>'
+    + '<div>'
     + policyRow('🛂','Immigration',a.immigration,b.immigration)
     + policyRow('💷','Economy',a.economy,b.economy)
     + policyRow('🏥','NHS',a.nhs,b.nhs)
     + policyRow('🌿','Climate',a.climate,b.climate)
-    + '</tbody></table>';
+    + '</div>';
 }
 
 // ── Support Popup ──
