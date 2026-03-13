@@ -17,8 +17,8 @@
 .key-date-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0 }
 .key-date-info { flex:1 }
 .key-date-label { font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface);line-height:1.3 }
-.key-date-sub { font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:2px }
-.key-date-days { font-size:13px;font-weight:800;color:var(--md-sys-color-primary);white-space:nowrap;text-align:right }
+.key-date-sub { font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-top:2px }
+.key-date-days { font-size:14px;font-weight:800;color:var(--md-sys-color-primary);white-space:nowrap;text-align:right }
 /* ── M3E Token System ── */
 :root {
   --md-sys-color-primary: #012169;
@@ -540,7 +540,7 @@ body {
 <div id="content">
   <div id="ptr-indicator" style="display:flex;align-items:center;justify-content:center;gap:8px;height:0;overflow:hidden;transition:height 0.2s ease;background:var(--md-sys-color-surface-container-low)">
     <div id="ptr-spinner" style="width:20px;height:20px;border:2.5px solid var(--md-sys-color-primary-container);border-top-color:var(--md-sys-color-primary);border-radius:50%;transition:transform 0.2s"></div>
-    <span id="ptr-label" style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant);font-family:\'Nunito\',sans-serif">Pull to refresh</span>
+    <span id="ptr-label" style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface-variant);font-family:\'Nunito\',sans-serif">Pull to refresh</span>
   </div>
 
   <!-- OVERVIEW -->
@@ -552,13 +552,13 @@ body {
     <div id="party-bars"></div>
     <div class="sec-label">🏛 Seat Projection</div>
     <div class="sbar" id="seat-bar"></div>
-    <div id="seat-summary" style="font-size:15px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin:8px 0 12px;font-weight:500"></div>
+    <div id="seat-summary" style="font-size:17px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin:8px 0 12px;font-weight:500"></div>
     <div class="card" style="border-top:4px solid var(--md-sys-color-outline-variant);padding:14px 16px;margin-bottom:4px">
-      <div style="font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">⚖️ About First Past The Post</div>
+      <div style="font-size:14px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">⚖️ About First Past The Post</div>
       <div style="font-size:14px;line-height:1.7;color:var(--md-sys-color-on-surface)">Under FPTP, the UK's voting system, what matters is winning individual constituencies — not total votes. A party can win far more seats than its national vote share suggests if its support is geographically concentrated, and far fewer if its vote is spread thinly. That's why Reform UK at 26% projects to hundreds of seats while Labour at 19% projects to just ~41 — Reform's vote is more efficiently distributed across winnable seats. These seat estimates use a uniform national swing model and carry significant uncertainty.</div>
     </div>
     <div class="sec-label">📋 Context</div>
-    <div class="card" style="font-size:16px;line-height:1.8;color:var(--md-sys-color-on-surface);border-top:4px solid var(--md-sys-color-primary)" id="ctx-text"></div>
+    <div class="card" style="font-size:14px;line-height:1.8;color:var(--md-sys-color-on-surface);border-top:4px solid var(--md-sys-color-primary)" id="ctx-text"></div>
 
     <div class="sec-label">📈 6-Month Trend</div>
     <div class="card" style="padding:20px;border-top:4px solid var(--md-sys-color-primary)" id="trend-card">
@@ -571,7 +571,7 @@ body {
     <div class="card" style="border-top:4px solid #C8102E" id="milestones-list"></div>
 
 
-    <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);padding:2px 4px 12px">BPC members · RB = Restore Britain (prompted only)</div>
+    <div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);padding:2px 4px 12px">BPC members · RB = Restore Britain (prompted only)</div>
   </div>
 
   <!-- ELECTIONS -->
@@ -592,12 +592,12 @@ body {
       <div class="key-date-row">
         <div class="key-date-dot" style="background:#0087DC"></div>
         <div class="key-date-info"><div class="key-date-label">Horsham by-election</div><div class="key-date-sub">TBC 2026 · Con hold under threat from LD/Reform</div></div>
-        <div class="key-date-days" style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">TBC</div>
+        <div class="key-date-days" style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">TBC</div>
       </div>
       <div class="key-date-row">
         <div class="key-date-dot" style="background:#012169"></div>
         <div class="key-date-info"><div class="key-date-label">Autumn Budget</div><div class="key-date-sub">Est. Oct/Nov 2026 · OBR forecasts due</div></div>
-        <div class="key-date-days" style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">~7 months</div>
+        <div class="key-date-days" style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">~7 months</div>
       </div>
       <div class="key-date-row" style="border-bottom:none">
         <div class="key-date-dot" style="background:#E4003B"></div>
@@ -612,14 +612,14 @@ body {
     <div class="explainer-card" onclick="var b=document.getElementById('may-explainer');var a=document.getElementById('may-arrow');b.classList.toggle('open');a.textContent=b.classList.contains('open')?'▲':'▼'">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
         <div>
-          <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#012169;margin-bottom:4px">📖 Explainer · 1 May 2026</div>
+          <div style="font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#012169;margin-bottom:4px">📖 Explainer · 1 May 2026</div>
           <div style="font-size:17px;font-weight:900;color:var(--md-sys-color-on-surface);line-height:1.3">What are the May elections actually for?</div>
-          <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:3px">Not Westminster — here's what's really at stake</div>
+          <div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-top:3px">Not Westminster — here's what's really at stake</div>
         </div>
         <div id="may-arrow" style="width:32px;height:32px;border-radius:50%;background:#EEF1FA;display:flex;align-items:center;justify-content:center;font-size:14px;color:#012169;font-weight:800;flex-shrink:0">▼</div>
       </div>
       <div class="explainer-body" id="may-explainer">
-        <div style="font-size:15px;line-height:1.75;color:var(--md-sys-color-on-surface);margin-bottom:14px">
+        <div style="font-size:17px;line-height:1.75;color:var(--md-sys-color-on-surface);margin-bottom:14px">
           The May elections are <strong>not for Westminster seats</strong>. Voters choose councillors for county councils, metropolitan boroughs and unitary authorities across England — plus every council in Scotland.
         </div>
 
@@ -742,43 +742,43 @@ body {
     <div class="ecard" style="margin-bottom:12px">
       <div class="ecard-accent" style="background:#1a6e3c"></div>
       <div class="ecard-inner">
-        <div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:4px">Next General Election — Outright Winner</div>
-        <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Odds to win most seats · Betfair / Oddschecker · Mar 2026</div>
+        <div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:4px">Next General Election — Outright Winner</div>
+        <div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Odds to win most seats · Betfair / Oddschecker · Mar 2026</div>
         <div style="display:flex;flex-direction:column;gap:8px">
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#12B7D415;border-radius:12px;border-left:3px solid #12B7D4">
             <div style="display:flex;align-items:center;gap:10px">
-              <span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">Reform UK</span>
-              <span style="font-size:11px;font-weight:700;color:#12B7D4;background:#12B7D418;border-radius:99px;padding:2px 8px">FAVOURITE</span>
+              <span style="font-size:17px;font-weight:800;color:var(--md-sys-color-on-surface)">Reform UK</span>
+              <span style="font-size:14px;font-weight:700;color:#12B7D4;background:#12B7D418;border-radius:99px;padding:2px 8px">FAVOURITE</span>
             </div>
-            <span style="font-size:18px;font-weight:900;color:#12B7D4">6/4</span>
+            <span style="font-size:14px;font-weight:900;color:#12B7D4">6/4</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#E4003B15;border-radius:12px;border-left:3px solid #E4003B">
-            <span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">Labour</span>
-            <span style="font-size:18px;font-weight:900;color:#E4003B">9/4</span>
+            <span style="font-size:17px;font-weight:800;color:var(--md-sys-color-on-surface)">Labour</span>
+            <span style="font-size:14px;font-weight:900;color:#E4003B">9/4</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#0087DC15;border-radius:12px;border-left:3px solid #0087DC">
-            <span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">Conservative</span>
-            <span style="font-size:18px;font-weight:900;color:#0087DC">8/1</span>
+            <span style="font-size:17px;font-weight:800;color:var(--md-sys-color-on-surface)">Conservative</span>
+            <span style="font-size:14px;font-weight:900;color:#0087DC">8/1</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#02A95B15;border-radius:12px;border-left:3px solid #02A95B">
-            <span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">Green</span>
-            <span style="font-size:18px;font-weight:900;color:#02A95B">14/1</span>
+            <span style="font-size:17px;font-weight:800;color:var(--md-sys-color-on-surface)">Green</span>
+            <span style="font-size:14px;font-weight:900;color:#02A95B">14/1</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#FAA61A15;border-radius:12px;border-left:3px solid #FAA61A">
-            <span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">Lib Dem</span>
-            <span style="font-size:18px;font-weight:900;color:#FAA61A">20/1</span>
+            <span style="font-size:17px;font-weight:800;color:var(--md-sys-color-on-surface)">Lib Dem</span>
+            <span style="font-size:14px;font-weight:900;color:#FAA61A">20/1</span>
           </div>
         </div>
         <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--md-sys-color-outline-variant);display:flex;flex-wrap:wrap;gap:8px">
-          <a href="https://www.oddschecker.com/politics/british-politics/next-uk-general-election/winner" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:var(--md-sys-color-surface-container);border-radius:99px;font-size:13px;font-weight:700;color:var(--md-sys-color-primary);text-decoration:none">🔗 Oddschecker</a>
-          <a href="https://www.betfair.com/exchange/plus/politics/market/1.107373419" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:var(--md-sys-color-surface-container);border-radius:99px;font-size:13px;font-weight:700;color:var(--md-sys-color-primary);text-decoration:none">🔗 Betfair</a>
-          <a href="https://www.paddypower.com/politics" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:var(--md-sys-color-surface-container);border-radius:99px;font-size:13px;font-weight:700;color:var(--md-sys-color-primary);text-decoration:none">🔗 Paddy Power</a>
+          <a href="https://www.oddschecker.com/politics/british-politics/next-uk-general-election/winner" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:var(--md-sys-color-surface-container);border-radius:99px;font-size:14px;font-weight:700;color:var(--md-sys-color-primary);text-decoration:none">🔗 Oddschecker</a>
+          <a href="https://www.betfair.com/exchange/plus/politics/market/1.107373419" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:var(--md-sys-color-surface-container);border-radius:99px;font-size:14px;font-weight:700;color:var(--md-sys-color-primary);text-decoration:none">🔗 Betfair</a>
+          <a href="https://www.paddypower.com/politics" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:var(--md-sys-color-surface-container);border-radius:99px;font-size:14px;font-weight:700;color:var(--md-sys-color-primary);text-decoration:none">🔗 Paddy Power</a>
         </div>
-        <div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:10px">18+ · Please gamble responsibly · BeGambleAware.org</div>
+        <div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-top:10px">18+ · Please gamble responsibly · BeGambleAware.org</div>
       </div>
     </div>
 
-    <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);text-align:center;padding:12px 0 4px">Sources: BBC, Electoral Commission.</div>
+    <div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);text-align:center;padding:12px 0 4px">Sources: BBC, Electoral Commission.</div>
   </div>
 
   <!-- VOTE -->
@@ -786,22 +786,22 @@ body {
     <div class="stitle">Your Vote</div>
     <div class="ssub">How would you vote today?</div>
     <div style="display:flex;align-items:center;gap:8px;background:#FAA61A15;border-radius:14px;padding:10px 14px;margin-bottom:16px">
-      <span style="font-size:18px">🇬🇧</span>
-      <span style="font-size:13px;color:#a06200;font-weight:700">UK voters only please · One vote per device · Change anytime</span>
+      <span style="font-size:14px">🇬🇧</span>
+      <span style="font-size:14px;color:#a06200;font-weight:700">UK voters only please · One vote per device · Change anytime</span>
     </div>
     <div id="vote-section">
       <div id="vote-buttons" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px"></div>
-      <div id="vote-msg" style="text-align:center;font-size:15px;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;min-height:24px"></div>
+      <div id="vote-msg" style="text-align:center;font-size:17px;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;min-height:24px"></div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px">
-      <div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface)">📊 App vs Real Polls</div>
-      <div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">How you compare</div>
+      <div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface)">📊 App vs Real Polls</div>
+      <div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);font-weight:600">How you compare</div>
     </div>
     <div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);padding:20px" id="vote-results">
-      <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:16px;padding:20px">Loading results...</div>
+      <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:14px;padding:20px">Loading results...</div>
     </div>
 
-    <div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin:22px 0 10px 2px">🗳 Poll of the Day</div>
+    <div style="font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin:22px 0 10px 2px">🗳 Poll of the Day</div>
     <div class="card" style="border-top:4px solid #C8102E;padding:18px" id="potd-card">
       <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:14px;padding:12px">Loading...</div>
     </div>
@@ -819,7 +819,7 @@ body {
     <div class="sec-label">🌍 Ethnicity</div><div id="ethnicity-content"></div>
     <div class="sec-label">🛂 Net Migration</div>
     <div id="migration-content"></div>
-    <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common · ONS Nov 2025 · Home Office / Migration Observatory. Mar 2026.</div>
+    <div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common · ONS Nov 2025 · Home Office / Migration Observatory. Mar 2026.</div>
   </div>
 
   <!-- LEADERS -->
@@ -836,7 +836,7 @@ body {
 
     <!-- PARTY BRIEFING SECTION -->
     <div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);overflow:hidden;border-top:4px solid var(--md-sys-color-primary);padding:18px;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:12px">🗳 Why vote for...</div>
+      <div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:12px">🗳 Why vote for...</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         <button class="party-btn" style="--pc:#C8102E" onclick="askParty('Labour','#C8102E')">Labour</button>
         <button class="party-btn" style="--pc:#12B7D4" onclick="askParty('Reform UK','#12B7D4')">Reform UK</button>
@@ -850,7 +850,7 @@ body {
 
     <!-- TODAY'S STORIES SECTION -->
     <div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);overflow:hidden;border-top:4px solid #C8102E;padding:18px 18px 12px;margin-bottom:12px">
-      <div style="font-size:13px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:12px">📰 In the news · <span id="ai-news-date" style="color:var(--md-sys-color-secondary);font-size:12px;font-weight:600"></span></div>
+      <div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:12px">📰 In the news · <span id="ai-news-date" style="color:var(--md-sys-color-secondary);font-size:14px;font-weight:600"></span></div>
       <div style="display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch">
         <!-- AI CHIPS START -->
         <button class="chip" onclick="askAI('Starmer refused Trump\'s request to use UK bases for Iran strikes, then partially reversed — did he handle the Iran crisis well or has he damaged the UK-US special relationship?')">Starmer & the Iran crisis</button>
@@ -875,10 +875,10 @@ body {
     <!-- INPUT -->
     <div style="display:flex;gap:8px;margin-top:12px">
       <input id="ai-input" type="text" placeholder="Ask about UK politics..."
-        style="flex:1;background:var(--md-sys-color-surface);border:2px solid var(--md-sys-color-outline-variant);border-radius:99px;padding:13px 18px;color:var(--md-sys-color-on-surface);font-size:16px;outline:none;font-family:'Nunito',sans-serif;box-shadow:var(--md-elevation-1);"
+        style="flex:1;background:var(--md-sys-color-surface);border:2px solid var(--md-sys-color-outline-variant);border-radius:99px;padding:13px 18px;color:var(--md-sys-color-on-surface);font-size:14px;outline:none;font-family:'Nunito',sans-serif;box-shadow:var(--md-elevation-1);"
         onkeydown="if(event.key==='Enter')askAI(this.value)">
       <button onclick="askAI(document.getElementById('ai-input').value)"
-        style="background:var(--md-sys-color-primary);border:none;border-radius:99px;padding:13px 22px;color:#fff;font-weight:800;cursor:pointer;font-size:15px;font-family:'Nunito',sans-serif;box-shadow:var(--md-elevation-2);white-space:nowrap;">Ask</button>
+        style="background:var(--md-sys-color-primary);border:none;border-radius:99px;padding:13px 22px;color:#fff;font-weight:800;cursor:pointer;font-size:17px;font-family:'Nunito',sans-serif;box-shadow:var(--md-elevation-2);white-space:nowrap;">Ask</button>
     </div>
   </div>
 
@@ -888,17 +888,17 @@ body {
 <div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.6);z-index:500;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeShare()">
   <div style="background:var(--md-sys-color-surface);border-radius:28px 28px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.12)">
     <div style="width:36px;height:4px;background:var(--md-sys-color-outline-variant);border-radius:2px;margin:0 auto 20px"></div>
-    <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Share</div>
+    <div style="font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Share</div>
     <div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:16px;font-family:\'Nunito\',sans-serif">UK Poll Tracker</div>
-    <div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;border-top:3px solid var(--md-sys-color-primary);padding:14px 16px;font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.7;margin-bottom:18px;font-style:italic" id="share-preview-text"></div>
+    <div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;border-top:3px solid var(--md-sys-color-primary);padding:14px 16px;font-size:17px;color:var(--md-sys-color-on-surface);line-height:1.7;margin-bottom:18px;font-style:italic" id="share-preview-text"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-      <button onclick="shareToX();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#000;color:#fff;font-family:\'Nunito\',sans-serif">X / Twitter</button>
-      <button onclick="shareToWhatsApp();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#25D366;color:#fff;font-family:\'Nunito\',sans-serif">WhatsApp</button>
-      <button onclick="shareToFacebook();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:15px;cursor:pointer;background:#1877F2;color:#fff;font-family:\'Nunito\',sans-serif">Facebook</button>
-      <button onclick="copyLink()" id="copy-btn" style="padding:14px;border-radius:99px;border:2px solid var(--md-sys-color-outline-variant);font-weight:800;font-size:15px;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">📋 Copy</button>
+      <button onclick="shareToX();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:17px;cursor:pointer;background:#000;color:#fff;font-family:\'Nunito\',sans-serif">X / Twitter</button>
+      <button onclick="shareToWhatsApp();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:17px;cursor:pointer;background:#25D366;color:#fff;font-family:\'Nunito\',sans-serif">WhatsApp</button>
+      <button onclick="shareToFacebook();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:17px;cursor:pointer;background:#1877F2;color:#fff;font-family:\'Nunito\',sans-serif">Facebook</button>
+      <button onclick="copyLink()" id="copy-btn" style="padding:14px;border-radius:99px;border:2px solid var(--md-sys-color-outline-variant);font-weight:800;font-size:17px;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">📋 Copy</button>
     </div>
-    <button onclick="shareNative();closeShare()" style="width:100%;padding:14px;background:var(--md-sys-color-primary);color:#fff;border:none;font-size:15px;font-weight:800;cursor:pointer;border-radius:99px;font-family:'Nunito',sans-serif;margin-bottom:8px">🔗 More apps (Reddit, Telegram…)</button>
-    <button onclick="closeShare()" style="width:100%;padding:12px;background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface-variant);border:none;font-size:15px;font-weight:700;cursor:pointer;border-radius:99px;font-family:\'Nunito\',sans-serif">Dismiss</button>
+    <button onclick="shareNative();closeShare()" style="width:100%;padding:14px;background:var(--md-sys-color-primary);color:#fff;border:none;font-size:17px;font-weight:800;cursor:pointer;border-radius:99px;font-family:'Nunito',sans-serif;margin-bottom:8px">🔗 More apps (Reddit, Telegram…)</button>
+    <button onclick="closeShare()" style="width:100%;padding:12px;background:var(--md-sys-color-surface-container-low);color:var(--md-sys-color-on-surface-variant);border:none;font-size:17px;font-weight:700;cursor:pointer;border-radius:99px;font-family:\'Nunito\',sans-serif">Dismiss</button>
   </div>
 </div>
 
@@ -906,10 +906,10 @@ body {
 <div id="compare-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.5);z-index:500;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)closeCompare()">
   <div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-extra-large);padding:24px;width:100%;max-width:440px;max-height:85vh;overflow-y:auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-size:20px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">Compare Parties</div>
-      <button onclick="closeCompare()" style="background:var(--md-sys-color-surface-container-high);border:none;color:var(--md-sys-color-on-surface);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer">✕</button>
+      <div style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">Compare Parties</div>
+      <button onclick="closeCompare()" style="background:var(--md-sys-color-surface-container-high);border:none;color:var(--md-sys-color-on-surface);width:36px;height:36px;border-radius:50%;font-size:14px;cursor:pointer">✕</button>
     </div>
-    <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Pick two parties to compare</div>
+    <div style="font-size:17px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Pick two parties to compare</div>
     <div id="compare-picker" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px"></div>
     <div id="compare-result"></div>
   </div>
@@ -930,8 +930,8 @@ body {
 <div id="leader-compare-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.5);z-index:1000;align-items:center;justify-content:center;padding:16px">
   <div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-extra-large);width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:24px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-      <div style="font-size:20px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">⚖️ Compare Leaders</div>
-      <button onclick="closeLeaderCompare()" style="background:var(--md-sys-color-surface-container-high);border:none;color:var(--md-sys-color-on-surface);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer">✕</button>
+      <div style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">⚖️ Compare Leaders</div>
+      <button onclick="closeLeaderCompare()" style="background:var(--md-sys-color-surface-container-high);border:none;color:var(--md-sys-color-on-surface);width:36px;height:36px;border-radius:50%;font-size:14px;cursor:pointer">✕</button>
     </div>
     <div id="leader-compare-result"></div>
   </div>
@@ -1183,8 +1183,8 @@ function openCompare() {
   document.getElementById('compare-result').innerHTML = '';
   document.getElementById('compare-picker').innerHTML = D.parties.map((p, i) =>
     '<div onclick="toggleCompare(\'' + p.name + '\',this)" data-name="' + p.name + '" style="background:var(--md-sys-color-surface);border:2px solid ' + p.color + '40;border-radius:var(--md-sys-shape-corner-large);padding:12px 6px;text-align:center;cursor:pointer;transition:all 0.15s;box-shadow:var(--md-elevation-1)">'
-    + '<div style="font-size:15px;color:' + p.color + ';font-weight:700;margin-bottom:4px">' + p.name + '</div>'
-    + '<div style="font-size:20px;font-weight:700;color:' + p.color + ';font-family:\'Nunito\',sans-serif">' + p.pct + '%</div>'
+    + '<div style="font-size:17px;color:' + p.color + ';font-weight:700;margin-bottom:4px">' + p.name + '</div>'
+    + '<div style="font-size:14px;font-weight:700;color:' + p.color + ';font-family:\'Nunito\',sans-serif">' + p.pct + '%</div>'
     + '</div>'
   ).join('');
   document.getElementById('compare-modal').style.display = 'flex';
@@ -1227,22 +1227,22 @@ function renderComparison() {
   }
   function policyRow(emoji, label, textA, textB) {
     return '<tr>'
-      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:15px;line-height:1.5">' + (textA||'—') + '</div></td>'
-      + '<td style="padding:10px 4px;border-top:1px solid var(--md-sys-color-outline-variant);text-align:center;vertical-align:top;width:16%"><div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);white-space:nowrap">' + emoji + '<br>' + label + '</div></td>'
-      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:15px;line-height:1.5">' + (textB||'—') + '</div></td>'
+      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:17px;line-height:1.5">' + (textA||'—') + '</div></td>'
+      + '<td style="padding:10px 4px;border-top:1px solid var(--md-sys-color-outline-variant);text-align:center;vertical-align:top;width:16%"><div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);white-space:nowrap">' + emoji + '<br>' + label + '</div></td>'
+      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:17px;line-height:1.5">' + (textB||'—') + '</div></td>'
       + '</tr>';
   }
   document.getElementById('compare-result').innerHTML =
     '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:14px">'
-    + '<div style="text-align:center"><div style="font-size:15px;color:' + a.color + ';font-weight:700">' + a.name + '</div><div style="font-size:32px;font-weight:700;color:' + a.color + ';font-family:\'Nunito\',sans-serif">' + a.pct + '%</div><div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">' + (a.seats!==null?'~'+a.seats+(a.seats===1?' seat':' seats'):'—') + '</div></div>'
-    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);font-weight:700;text-align:center">VS</div>'
-    + '<div style="text-align:center"><div style="font-size:15px;color:' + b.color + ';font-weight:700">' + b.name + '</div><div style="font-size:32px;font-weight:700;color:' + b.color + ';font-family:\'Nunito\',sans-serif">' + b.pct + '%</div><div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">' + (b.seats!==null?'~'+b.seats+(b.seats===1?' seat':' seats'):'—') + '</div></div>'
+    + '<div style="text-align:center"><div style="font-size:17px;color:' + a.color + ';font-weight:700">' + a.name + '</div><div style="font-size:32px;font-weight:700;color:' + a.color + ';font-family:\'Nunito\',sans-serif">' + a.pct + '%</div><div style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">' + (a.seats!==null?'~'+a.seats+(a.seats===1?' seat':' seats'):'—') + '</div></div>'
+    + '<div style="font-size:17px;color:var(--md-sys-color-on-surface-variant);font-weight:700;text-align:center">VS</div>'
+    + '<div style="text-align:center"><div style="font-size:17px;color:' + b.color + ';font-weight:700">' + b.name + '</div><div style="font-size:32px;font-weight:700;color:' + b.color + ';font-family:\'Nunito\',sans-serif">' + b.pct + '%</div><div style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">' + (b.seats!==null?'~'+b.seats+(b.seats===1?' seat':' seats'):'—') + '</div></div>'
     + '</div>'
-    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-medium);padding:12px;font-size:15px;color:var(--md-sys-color-on-surface);text-align:center;margin-bottom:14px">' + leader.name + ' leads by ' + diff + ' points. ' + gapNote + '</div>'
+    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-medium);padding:12px;font-size:17px;color:var(--md-sys-color-on-surface);text-align:center;margin-bottom:14px">' + leader.name + ' leads by ' + diff + ' points. ' + gapNote + '</div>'
     + (la || lb ? '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:14px;background:var(--md-sys-color-surface-container-low);border-radius:var(--md-sys-shape-corner-medium);padding:12px">'
-      + '<div style="text-align:center"><div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:2px">' + (la?la.name:'—') + '</div><div style="font-size:17px">Net: ' + netBadge(la) + '</div></div>'
-      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);text-align:center">👤<br>Leader</div>'
-      + '<div style="text-align:center"><div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:2px">' + (lb?lb.name:'—') + '</div><div style="font-size:17px">Net: ' + netBadge(lb) + '</div></div>'
+      + '<div style="text-align:center"><div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-bottom:2px">' + (la?la.name:'—') + '</div><div style="font-size:17px">Net: ' + netBadge(la) + '</div></div>'
+      + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);text-align:center">👤<br>Leader</div>'
+      + '<div style="text-align:center"><div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-bottom:2px">' + (lb?lb.name:'—') + '</div><div style="font-size:17px">Net: ' + netBadge(lb) + '</div></div>'
       + '</div>' : '')
     + '<table style="width:100%;border-collapse:collapse"><tbody>'
     + policyRow('🛂','Immigration', la&&la.immigration, lb&&lb.immigration)
@@ -1323,7 +1323,7 @@ async function askParty(party, color) {
 
   var out = document.getElementById('ai-output');
   out.className = '';
-  out.innerHTML = '<div style="text-align:center;padding:24px;color:var(--md-sys-color-on-surface-variant);font-size:16px">⏳ Building briefing...</div>';
+  out.innerHTML = '<div style="text-align:center;padding:24px;color:var(--md-sys-color-on-surface-variant);font-size:14px">⏳ Building briefing...</div>';
   out.scrollIntoView({behavior:'smooth', block:'nearest'});
 
   var ctx = 'You are a neutral, expert UK political analyst. Today is ' + D.fetchDate + '. '
@@ -1341,8 +1341,8 @@ async function askParty(party, color) {
       var html = '<div style="border-radius:16px;overflow:hidden;box-shadow:var(--md-elevation-2)">';
       // Header bar in party colour
       html += '<div style="background:' + color + ';padding:16px 20px">';
-      html += '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.8);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">Party Briefing</div>';
-      html += '<div style="font-size:20px;font-weight:800;color:#fff">Why vote ' + party + '?</div>';
+      html += '<div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.8);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px">Party Briefing</div>';
+      html += '<div style="font-size:14px;font-weight:800;color:#fff">Why vote ' + party + '?</div>';
       html += '</div>';
       // Body
       html += '<div style="background:var(--md-sys-color-surface);padding:16px 20px">';
@@ -1352,15 +1352,15 @@ async function askParty(party, color) {
         if (!line) { if (inSection) html += '<div style="height:10px"></div>'; return; }
         // Section headings
         if (line.match(/^(WHAT THEY STAND FOR|KEY POLICIES|THE CASE FOR|THE CASE AGAINST|WHO VOTES FOR THEM)/i)) {
-          html += '<div style="font-size:11px;font-weight:800;letter-spacing:0.9px;text-transform:uppercase;color:' + color + ';margin:14px 0 6px;border-bottom:1.5px solid ' + color + '22;padding-bottom:4px">' + line + '</div>';
+          html += '<div style="font-size:14px;font-weight:800;letter-spacing:0.9px;text-transform:uppercase;color:' + color + ';margin:14px 0 6px;border-bottom:1.5px solid ' + color + '22;padding-bottom:4px">' + line + '</div>';
           inSection = true;
         } else if (line.startsWith('•') || line.startsWith('-') || line.match(/^\d+\./)) {
           // Bullet points
-          html += '<div style="display:flex;gap:8px;margin:4px 0;font-size:15px;line-height:1.6;color:var(--md-sys-color-on-surface)">'
+          html += '<div style="display:flex;gap:8px;margin:4px 0;font-size:17px;line-height:1.6;color:var(--md-sys-color-on-surface)">'
             + '<span style="color:' + color + ';flex-shrink:0;font-weight:700">▸</span>'
             + '<span>' + line.replace(/^[•\-\d+\.]+\s*/,'') + '</span></div>';
         } else {
-          html += '<div style="font-size:15px;line-height:1.7;color:var(--md-sys-color-on-surface);margin:3px 0">' + line + '</div>';
+          html += '<div style="font-size:17px;line-height:1.7;color:var(--md-sys-color-on-surface);margin:3px 0">' + line + '</div>';
         }
       });
       html += '</div></div>';
@@ -1379,7 +1379,7 @@ async function askAI(q) {
   var input = document.getElementById('ai-input');
   input.value = q;
   out.className = '';
-  out.innerHTML = '<div style="color:var(--md-sys-color-on-surface-variant);font-size:16px;text-align:center;padding:20px">⏳ Thinking...</div>';
+  out.innerHTML = '<div style="color:var(--md-sys-color-on-surface-variant);font-size:14px;text-align:center;padding:20px">⏳ Thinking...</div>';
   out.scrollIntoView({behavior:'smooth', block:'nearest'});
   var ctx = 'You are a neutral, expert UK political analyst. Today is ' + D.fetchDate + '. '
     + 'Current polling averages: Reform UK 26%, Labour 19%, Conservative 18%, Green 17%, Lib Dem 12%, SNP 3%, Restore Britain 7% (FON prompted only). '
@@ -1422,7 +1422,7 @@ function renderPolls() {
     var freshLabel = daysAgo === 0 ? 'Updated today' : daysAgo === 1 ? 'Updated yesterday' : 'Updated ' + daysAgo + ' days ago';
     fpEl.innerHTML = '<div style="display:inline-flex;align-items:center;gap:6px;background:var(--md-sys-color-tonal-navy);border-radius:99px;padding:5px 12px">'
       + '<div style="width:7px;height:7px;border-radius:50%;background:' + freshColor + ';flex-shrink:0"></div>'
-      + '<span style="font-size:12px;font-weight:700;color:var(--md-sys-color-primary)">' + freshLabel + ' · ' + updated + '</span>'
+      + '<span style="font-size:14px;font-weight:700;color:var(--md-sys-color-primary)">' + freshLabel + ' · ' + updated + '</span>'
       + '</div>';
   }
   document.getElementById('overview-sub').textContent = '7-poll moving average';
@@ -1472,8 +1472,8 @@ function renderPolls() {
     var pct = (p.seats / totalSeats * 100).toFixed(1);
     var textColor = p.name === 'SNP' ? '#1a1a1a' : '#fff';
     return `<div class="sseg" style="flex:${p.seats};background:${p.color};color:${textColor}" title="${p.name}: ~${p.seats} seats">`
-      + (p.seats > 25 ? `<span style="font-size:12px;font-weight:800;letter-spacing:0.3px">${p.abbr}</span><span style="font-size:11px;opacity:0.9">${p.seats}</span>` 
-         : p.seats > 10 ? `<span style="font-size:10px;font-weight:800">${p.seats}</span>` : '')
+      + (p.seats > 25 ? `<span style="font-size:14px;font-weight:800;letter-spacing:0.3px">${p.abbr}</span><span style="font-size:14px;opacity:0.9">${p.seats}</span>` 
+         : p.seats > 10 ? `<span style="font-size:14px;font-weight:800">${p.seats}</span>` : '')
       + '</div>';
   }).join('');
   document.getElementById('ctx-text').textContent = D.context;
@@ -1496,8 +1496,8 @@ function renderTrends() {
   // movers-list removed — redundant with bar list
   document.getElementById('milestones-list').innerHTML = D.milestones.map(m => `
     <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)">
-      <div style="font-size:13px;color:var(--md-sys-color-secondary);white-space:nowrap;min-width:60px;font-weight:700;padding-top:2px">${m.date}</div>
-      <div style="font-size:16px;color:var(--md-sys-color-on-surface);line-height:1.5">${m.text}</div>
+      <div style="font-size:14px;color:var(--md-sys-color-secondary);white-space:nowrap;min-width:60px;font-weight:700;padding-top:2px">${m.date}</div>
+      <div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.5">${m.text}</div>
     </div>`).join('');
 
   const parties = ['Reform UK','Labour','Conservative','Lib Dem','Green'];
@@ -1555,7 +1555,7 @@ function renderTrends() {
   document.getElementById('trend-legend').innerHTML = parties.map((p,i) =>
     `<button onclick="toggleTrendParty(${i})" id="tlegend-${i}"
       style="background:${colors[p]};color:#fff;border:none;border-radius:50px;padding:6px 14px;
-      font-size:15px;font-weight:600;font-family:'Nunito',sans-serif;cursor:pointer;
+      font-size:17px;font-weight:600;font-family:'Nunito',sans-serif;cursor:pointer;
       transition:opacity 0.2s,transform 0.15s;opacity:1">${p}</button>`
   ).join('');
 }
@@ -1592,7 +1592,7 @@ function renderAge() {
       var barRows = parties.filter(p => g[p.key] > 0).sort((a,b) => g[b.key] - g[a.key]).map(p => {
         var pct = g[p.key];
         return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">'
-          + '<div style="width:52px;font-size:13px;color:' + p.color + ';font-weight:700;flex-shrink:0;text-align:right;line-height:1.2">' + p.label + '</div>'
+          + '<div style="width:52px;font-size:14px;color:' + p.color + ';font-weight:700;flex-shrink:0;text-align:right;line-height:1.2">' + p.label + '</div>'
           + '<div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:12px;overflow:hidden">'
           + '<div style="width:' + pct + '%;background:' + p.color + ';height:100%;border-radius:99px;transition:width 0.4s ease"></div>'
           + '</div>'
@@ -1602,11 +1602,11 @@ function renderAge() {
 
       return '<div style="background:var(--md-sys-color-surface);border-radius:20px;box-shadow:var(--md-elevation-1);margin-bottom:10px;overflow:hidden;border-top:3px solid ' + leadColor + '">'
         + '<div style="padding:14px 16px 4px;display:flex;justify-content:space-between;align-items:center">'
-        + '<div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface)">' + g.label + '</div>'
+        + '<div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface)">' + g.label + '</div>'
         + '</div>'
         + '<div style="padding:4px 16px 14px">'
         + barRows
-        + (g.note ? '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:6px;font-style:italic;line-height:1.5">' + g.note + '</div>' : '')
+        + (g.note ? '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-top:6px;font-style:italic;line-height:1.5">' + g.note + '</div>' : '')
         + '</div>'
         + '</div>';
     }).join('');
@@ -1647,11 +1647,11 @@ function renderAge() {
   ]);
   document.getElementById('nonvoter-content').innerHTML = `
     <div style="background:var(--md-sys-color-surface);border-radius:20px;box-shadow:var(--md-elevation-1);margin-bottom:10px;overflow:hidden;border-top:3px solid #12B7D4">
-      <div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:10px;padding:14px 16px 0">Where are 2024's non-voters going?</div>
-      <div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75;margin-bottom:14px;padding:0 16px">
+      <div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:10px;padding:14px 16px 0">Where are 2024's non-voters going?</div>
+      <div style="font-size:17px;color:var(--md-sys-color-on-surface);line-height:1.75;margin-bottom:14px;padding:0 16px">
         42% of eligible voters did not vote in the 2024 General Election. Among those who didn't vote but now say they would <em>"definitely vote"</em>, Reform UK and Restore Britain are picking up the largest share.
       </div>
-      <div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:0 16px">Estimated intention among 2024 non-voters who now say they'd vote</div>
+      <div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:0 16px">Estimated intention among 2024 non-voters who now say they'd vote</div>
       ${[
         {label:'Reform UK', color:'#12B7D4', pct:32, note:'Biggest beneficiary of returning non-voters'},
         {label:'RB',        color:'#1a4a9e', pct:18, note:'Growing fast among disengaged voters'},
@@ -1661,14 +1661,14 @@ function renderAge() {
         {label:'LD',        color:'#FAA61A', pct:6,  note:''},
       ].map(p => `
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 16px">
-          <div style="width:72px;font-size:13px;color:${p.color};font-weight:700;flex-shrink:0;line-height:1.2">${p.label}</div>
+          <div style="width:72px;font-size:14px;color:${p.color};font-weight:700;flex-shrink:0;line-height:1.2">${p.label}</div>
           <div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:12px;overflow:hidden">
             <div style="width:${p.pct}%;background:${p.color};height:100%;border-radius:99px"></div>
           </div>
-          <div style="width:32px;text-align:right;font-size:15px;font-weight:700;color:${p.color}">${p.pct}%</div>
+          <div style="width:32px;text-align:right;font-size:17px;font-weight:700;color:${p.color}">${p.pct}%</div>
         </div>
-        ${p.note ? `<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;padding-left:88px;font-style:italic">${p.note}</div>` : ''}`).join('')}
-      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:10px;padding:0 16px 16px">Source: Find Out Now, JL Partners.</div>
+        ${p.note ? `<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;padding-left:88px;font-style:italic">${p.note}</div>` : ''}`).join('')}
+      <div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-top:10px;padding:0 16px 16px">Source: Find Out Now, JL Partners.</div>
     </div>`;
 }
 
@@ -1704,7 +1704,7 @@ function renderLeaders() {
       + '<div style="flex:' + l.disapprove + ';background:#C8102E55;border-radius:0 99px 99px 0"></div>'
       + '</div>'
       + '<div class="lcs"><span style="color:var(--up)">▲ ' + l.approve + '%</span>'
-      + '<span style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-weight:500">approve / disapprove</span>'
+      + '<span style="font-size:14px;color:var(--md-sys-color-on-surface-variant);font-weight:500">approve / disapprove</span>'
       + '<span style="color:var(--down)">▼ ' + l.disapprove + '%</span></div>';
 
     // Policy pills
@@ -1719,7 +1719,7 @@ function renderLeaders() {
       + '</div>'
       + topics.filter(t => l[t.k]).map(t =>
         '<div class="policy-detail" id="pd-' + li + '-' + t.k + '" style="border-color:' + l.color + '">'
-        + '<div style="font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:' + l.color + ';margin-bottom:6px">' + t.l + '</div>'
+        + '<div style="font-size:14px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:' + l.color + ';margin-bottom:6px">' + t.l + '</div>'
         + l[t.k]
         + '</div>'
       ).join('');
@@ -1729,20 +1729,20 @@ function renderLeaders() {
       '<div class="bio-section">'
       + '<button onclick="toggleBio(' + li + ')" id="bio-btn-' + li + '" '
       + 'style="background:var(--md-sys-color-tonal-navy);border:none;color:var(--md-sys-color-primary);'
-      + 'border-radius:50px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif">'
+      + 'border-radius:50px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif">'
       + '📖 About ' + l.name.split(' ')[0] + '</button>'
       + '<div class="bio-text" id="bio-' + li + '">' + l.bio + '</div>'
       + '</div>' : '';
 
     // Note (for leaders without polling)
     var noteSection = l.note ?
-      '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);line-height:1.7;'
+      '<div style="font-size:17px;color:var(--md-sys-color-on-surface-variant);line-height:1.7;'
       + 'background:var(--md-sys-color-surface-container-low);border-radius:14px;padding:12px 14px;margin-bottom:12px">'
       + l.note + '</div>' : '';
 
     // Star rating
     var stars = '<div class="rating-row">'
-      + '<div style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">Your rating</div>'
+      + '<div style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">Your rating</div>'
       + '<div class="rating-stars" id="stars-' + li + '">'
       + [1,2,3,4,5].map(s =>
         '<span class="rating-star" onclick="rateLeader(' + li + ',' + s + ')" id="star-' + li + '-' + s + '">'
@@ -1768,7 +1768,7 @@ function renderLeaders() {
       + '<div class="lcard-meta">'
       + '<div class="lcname">' + l.name + '</div>'
       + '<div class="lcparty" style="color:' + l.color + '">' + l.party + '</div>'
-      + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:3px;font-weight:600">'
+      + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-top:3px;font-weight:600">'
       + (myRating > 0 ? '⭐'.repeat(myRating) : 'Tap for policies, bio & more') + '</div>'
       + '</div>'
       + '<div class="lcard-score">'
@@ -1862,8 +1862,8 @@ async function leaderAITake(li) {
     var data = await resp.json();
     var text = data.content && data.content[0] && data.content[0].text;
     el.innerHTML = text
-      ? '<div style="background:' + l.color + '0f;border-left:3px solid ' + l.color + ';border-radius:0 12px 12px 0;padding:12px 14px;font-size:15px;line-height:1.7;color:var(--md-sys-color-on-surface);margin-bottom:12px">'
-        + '<div style="font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:' + l.color + ';margin-bottom:6px">🤖 AI Take</div>'
+      ? '<div style="background:' + l.color + '0f;border-left:3px solid ' + l.color + ';border-radius:0 12px 12px 0;padding:12px 14px;font-size:17px;line-height:1.7;color:var(--md-sys-color-on-surface);margin-bottom:12px">'
+        + '<div style="font-size:14px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:' + l.color + ';margin-bottom:6px">🤖 AI Take</div>'
         + text + '</div>'
       : '';
   } catch(e) {
@@ -1899,15 +1899,15 @@ function renderPollCards() {
       var pct = p[k.k];
       var show = pct >= 8;
       return '<div style="flex:' + pct + ';background:' + k.color + ';display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;min-width:2px">'
-        + (show ? '<span style="font-size:10px;font-weight:800;color:#fff;line-height:1.3;opacity:0.95">' + k.abbr + '</span>' : '')
-        + (show ? '<span style="font-size:11px;font-weight:700;color:#fff;line-height:1.3;opacity:0.9">' + pct + '%</span>' : '')
+        + (show ? '<span style="font-size:14px;font-weight:800;color:#fff;line-height:1.3;opacity:0.95">' + k.abbr + '</span>' : '')
+        + (show ? '<span style="font-size:14px;font-weight:700;color:#fff;line-height:1.3;opacity:0.9">' + pct + '%</span>' : '')
         + '</div>';
     }).join('');
 
     return '<div style="margin-bottom:14px">'
       + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'
       + '<span style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface)">' + p.pollster + '</span>'
-      + '<span style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + p.date + '</span>'
+      + '<span style="font-size:14px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + p.date + '</span>'
       + '</div>'
       + '<div style="display:flex;height:48px;border-radius:12px;overflow:hidden;gap:1.5px;background:var(--md-sys-color-outline-variant)">'
       + segs
@@ -1920,15 +1920,15 @@ function renderPollCards() {
     + KEYS.map(function(k) {
       return '<div style="display:flex;align-items:center;gap:5px">'
         + '<div style="width:10px;height:10px;border-radius:3px;background:' + k.color + '"></div>'
-        + '<span style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">' + k.label + '</span>'
+        + '<span style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">' + k.label + '</span>'
         + '</div>';
     }).join('')
     + '</div>';
 
   document.getElementById('polls-cards').innerHTML =
     '<div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);padding:18px;border-top:4px solid var(--md-sys-color-primary)">'
-    + '<div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:2px">Recent polls</div>'
-    + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px">Bars show each party\'s share per pollster</div>'
+    + '<div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:2px">Recent polls</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px">Bars show each party\'s share per pollster</div>'
     + rows
     + key
     + '</div>';
@@ -1974,15 +1974,15 @@ function renderVoteButtons() {
     var wm = count > 0 ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:900;color:' + p.color + ';opacity:0.2;pointer-events:none">' + count + '</div>' : '';
     return '<div onclick="castVote(\'' + p.name + '\')" style="background:' + bg + ';' + topBorder + 'border-radius:20px;padding:16px 12px;text-align:center;cursor:pointer;box-shadow:' + shadow + ';transition:all 0.15s;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:72px;gap:4px;position:relative;overflow:hidden">'
       + wm
-      + '<div style="position:relative;font-size:16px;color:' + (sel ? p.color : 'var(--md-sys-color-on-surface)') + ';font-weight:800;word-break:break-word;line-height:1.3">' + p.name + '</div>'
-      + (sel ? '<div style="position:relative;font-size:12px;color:' + p.color + ';font-weight:800;letter-spacing:0.5px">✓ Your vote</div>' : '')
+      + '<div style="position:relative;font-size:14px;color:' + (sel ? p.color : 'var(--md-sys-color-on-surface)') + ';font-weight:800;word-break:break-word;line-height:1.3">' + p.name + '</div>'
+      + (sel ? '<div style="position:relative;font-size:14px;color:' + p.color + ';font-weight:800;letter-spacing:0.5px">✓ Your vote</div>' : '')
       + '</div>';
   }).join('')
   + (!_showAllParties ? '<div onclick="_showAllParties=true;renderVoteButtons()" style="grid-column:1/-1;text-align:center;padding:10px;font-size:14px;color:var(--md-sys-color-primary);font-weight:700;cursor:pointer;border:2px dashed var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-large)">+ More parties</div>' : '');
   const msg = document.getElementById('vote-msg');
   const myV = getMyVote();
   if (myV) {
-    msg.innerHTML = 'Your vote: <strong style="color:var(--md-sys-color-primary)">' + myV + '</strong> &nbsp;·&nbsp; <span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">Tap any party to change</span>';
+    msg.innerHTML = 'Your vote: <strong style="color:var(--md-sys-color-primary)">' + myV + '</strong> &nbsp;·&nbsp; <span style="font-size:17px;color:var(--md-sys-color-on-surface-variant)">Tap any party to change</span>';
   } else {
     msg.textContent = 'Tap a party to cast your vote';
   }
@@ -2010,13 +2010,13 @@ function showVoteSharePrompt(party) {
     + 'box-shadow:0 6px 24px ' + p.color + '55;animation:slideIn 0.3s ease';
   el.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px">'
     + '<div style="color:#fff">'
-    + '<div style="font-size:12px;opacity:0.8;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">You voted</div>'
+    + '<div style="font-size:14px;opacity:0.8;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">You voted</div>'
     + '<div style="font-size:26px;font-weight:900;line-height:1">' + party + '</div>'
     + '</div>'
     + '<div style="font-size:44px;line-height:1">🗳️</div>'
     + '</div>'
     + '<button onclick="shareMyVote(\'' + party + '\')" style="width:100%;background:#fff;color:' + p.color + ';border:none;'
-    + 'border-radius:50px;padding:14px;font-size:15px;font-weight:900;'
+    + 'border-radius:50px;padding:14px;font-size:17px;font-weight:900;'
     + 'font-family:\'Nunito\',sans-serif;cursor:pointer">'
     + '🔗 Share my vote with friends</button>';
   var voteSection = document.getElementById('vote-section');
@@ -2048,21 +2048,21 @@ function generateInsight(votes, total, POLL_MAP) {
   var text = biggest.diff > 0
     ? '📊 App users back <strong style="color:' + p.color + '">' + biggest.name + '</strong> at ' + biggest.appPct + '% — ' + (multiple && multiple > 1.5 ? multiple + 'x their poll rating of ' + biggest.pollPct + '%' : biggest.diff + ' points above national polls')
     : '📊 <strong style="color:' + p.color + '">' + biggest.name + '</strong> underperforms here vs polls — ' + biggest.appPct + '% app vs ' + biggest.pollPct + '% nationally';
-  return '<div style="background:var(--md-sys-color-tonal-navy);border-radius:14px;padding:12px 16px;margin-bottom:18px;font-size:15px;line-height:1.6;color:var(--md-sys-color-on-surface)">' + text + '</div>';
+  return '<div style="background:var(--md-sys-color-tonal-navy);border-radius:14px;padding:12px 16px;margin-bottom:18px;font-size:17px;line-height:1.6;color:var(--md-sys-color-on-surface)">' + text + '</div>';
 }
 
 async function loadVoteResults() {
   const el = document.getElementById('vote-results');
   try {
     const resp = await fetch(WORKER + '/votes');
-    if (!resp.ok) { el.innerHTML = '<div style="padding:16px;font-size:15px;color:var(--md-sys-color-secondary)">Server error ' + resp.status + '</div>'; return; }
+    if (!resp.ok) { el.innerHTML = '<div style="padding:16px;font-size:17px;color:var(--md-sys-color-secondary)">Server error ' + resp.status + '</div>'; return; }
     const raw = await resp.text();
     let votes;
-    try { votes = JSON.parse(raw); } catch(e) { el.innerHTML = '<div style="padding:16px;font-size:15px;color:var(--md-sys-color-secondary)">Bad response: ' + raw.substring(0,80) + '</div>'; return; }
+    try { votes = JSON.parse(raw); } catch(e) { el.innerHTML = '<div style="padding:16px;font-size:17px;color:var(--md-sys-color-secondary)">Bad response: ' + raw.substring(0,80) + '</div>'; return; }
     const knownNames = PARTIES_VOTE.map(p => p.name);
     const total = Object.entries(votes).reduce((a,[k,v]) => a + (knownNames.includes(k) ? Number(v) : 0), 0);
     if (total === 0) {
-      el.innerHTML = '<div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:16px;padding:20px">No votes yet — be the first!</div>';
+      el.innerHTML = '<div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:14px;padding:20px">No votes yet — be the first!</div>';
       return;
     }
     window._voteCache = votes;
@@ -2070,7 +2070,7 @@ async function loadVoteResults() {
     const POLL_MAP = {'Reform UK':26,'Labour':19,'Conservative':18,'Green':17,'Lib Dem':12,'SNP':3,'Restore Britain':7};
     el.innerHTML = '<div style="text-align:center;margin-bottom:18px">'
       + '<div style="font-size:44px;font-weight:900;color:var(--md-sys-color-primary);font-family:Nunito,sans-serif">' + total.toLocaleString() + '</div>'
-      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);letter-spacing:1.5px;margin-top:2px;font-weight:600;text-transform:uppercase">Total votes cast</div>'
+      + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);letter-spacing:1.5px;margin-top:2px;font-weight:600;text-transform:uppercase">Total votes cast</div>'
       + '</div>'
       + generateInsight(votes, total, POLL_MAP)
       + PARTIES_VOTE.filter(p => (votes[p.name]||0) > 0 || POLL_MAP[p.name]).sort((a,b) => (votes[b.name]||0) - (votes[a.name]||0)).map(p => {
@@ -2080,27 +2080,27 @@ async function loadVoteResults() {
         if (n === 0 && pollPct === 0) return '';
         return '<div style="margin-bottom:14px">'
           + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-            + '<span style="font-size:16px;color:' + p.color + ';font-weight:800">' + p.name + '</span>'
-            + (n > 0 && pollPct ? '<span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;background:' + (Math.abs(userPct-pollPct)>5 ? p.color+'18' : 'var(--md-sys-color-surface-container-low)') + ';color:' + p.color + '">' + (userPct > pollPct ? '▲' : userPct < pollPct ? '▼' : '=') + ' ' + Math.abs(userPct-pollPct) + 'pt vs polls</span>' : '')
+            + '<span style="font-size:14px;color:' + p.color + ';font-weight:800">' + p.name + '</span>'
+            + (n > 0 && pollPct ? '<span style="font-size:14px;font-weight:700;padding:3px 10px;border-radius:99px;background:' + (Math.abs(userPct-pollPct)>5 ? p.color+'18' : 'var(--md-sys-color-surface-container-low)') + ';color:' + p.color + '">' + (userPct > pollPct ? '▲' : userPct < pollPct ? '▼' : '=') + ' ' + Math.abs(userPct-pollPct) + 'pt vs polls</span>' : '')
           + '</div>'
           + (n > 0 ? '<div style="display:flex;gap:8px;align-items:center;margin-bottom:5px">'
-            + '<div style="width:36px;font-size:12px;font-weight:800;color:' + p.color + ';letter-spacing:0.3px">App</div>'
+            + '<div style="width:36px;font-size:14px;font-weight:800;color:' + p.color + ';letter-spacing:0.3px">App</div>'
             + '<div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:14px;overflow:hidden">'
               + '<div style="width:' + userPct + '%;background:' + p.color + ';height:100%;border-radius:99px;transition:width 0.6s ease"></div>'
             + '</div>'
-            + '<div style="width:38px;text-align:right;font-size:16px;font-weight:900;color:' + p.color + '">' + userPct + '%</div>'
+            + '<div style="width:38px;text-align:right;font-size:14px;font-weight:900;color:' + p.color + '">' + userPct + '%</div>'
           + '</div>' : '')
           + (pollPct ? '<div style="display:flex;gap:8px;align-items:center">'
-            + '<div style="width:36px;font-size:12px;font-weight:600;color:var(--md-sys-color-on-surface-variant)">Poll</div>'
+            + '<div style="width:36px;font-size:14px;font-weight:600;color:var(--md-sys-color-on-surface-variant)">Poll</div>'
             + '<div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:8px;overflow:hidden">'
               + '<div style="width:' + pollPct + '%;background:' + p.color + '50;height:100%;border-radius:99px"></div>'
             + '</div>'
-            + '<div style="width:38px;text-align:right;font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">' + pollPct + '%</div>'
+            + '<div style="width:38px;text-align:right;font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">' + pollPct + '%</div>'
           + '</div>' : '')
           + '</div>';
       }).join('');
   } catch(e) {
-    document.getElementById('vote-results').innerHTML = '<div style="text-align:center;font-size:15px;padding:16px;color:var(--md-sys-color-secondary)">Error: ' + e.message + '</div>';
+    document.getElementById('vote-results').innerHTML = '<div style="text-align:center;font-size:17px;padding:16px;color:var(--md-sys-color-secondary)">Error: ' + e.message + '</div>';
   }
 }
 
@@ -2152,29 +2152,29 @@ function renderMigration() {
   var changePct = Math.round(change / M.netPrev * 100);
   el.innerHTML =
     '<div class="card" style="margin-bottom:12px;text-align:center;padding:24px;border-top:4px solid var(--md-sys-color-primary)">'
-      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);letter-spacing:1.5px;margin-bottom:6px;font-weight:600;text-transform:uppercase">Net Migration · ' + M.fetchYear + '</div>'
+      + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);letter-spacing:1.5px;margin-bottom:6px;font-weight:600;text-transform:uppercase">Net Migration · ' + M.fetchYear + '</div>'
       + '<div style="font-size:48px;font-weight:700;color:var(--md-sys-color-primary);font-family:\'Nunito\',sans-serif">' + (M.netTotal/1000).toFixed(0) + 'k</div>'
-      + '<div style="font-size:16px;color:' + (change<0?'var(--up)':'var(--down)') + ';margin-top:6px;font-weight:600">'
+      + '<div style="font-size:14px;color:' + (change<0?'var(--up)':'var(--down)') + ';margin-top:6px;font-weight:600">'
         + (change<0?'▼ ':'▲ +') + Math.abs(change/1000).toFixed(0) + 'k vs previous year (' + changePct + '%)</div>'
     + '</div>'
     + '<div class="card" style="margin-bottom:12px;padding:18px;border-top:4px solid #C8102E">'
-      + '<div style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px;letter-spacing:0.5px">📈 YEAR-ON-YEAR TREND</div>'
+      + '<div style="font-size:17px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px;letter-spacing:0.5px">📈 YEAR-ON-YEAR TREND</div>'
       + '<div style="display:flex;align-items:flex-end;gap:6px;height:80px;margin-bottom:8px">'
       + M.trend.map(t => {
           var h = Math.round(t.net / trendMax * 75);
           var isLatest = t.year === '2025';
           return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">'
-            + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + (t.net/1000).toFixed(0) + 'k</div>'
+            + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + (t.net/1000).toFixed(0) + 'k</div>'
             + '<div style="width:100%;height:' + h + 'px;background:' + (isLatest?'var(--md-sys-color-primary)':'var(--md-sys-color-primary-container)') + ';border-radius:4px 4px 0 0"></div>'
             + '</div>';
         }).join('')
       + '</div>'
       + '<div style="display:flex;gap:6px">'
-      + M.trend.map(t => '<div style="flex:1;text-align:center;font-size:13px;color:var(--md-sys-color-on-surface-variant)">' + t.year + '</div>').join('')
+      + M.trend.map(t => '<div style="flex:1;text-align:center;font-size:14px;color:var(--md-sys-color-on-surface-variant)">' + t.year + '</div>').join('')
       + '</div>'
     + '</div>'
     + '<div class="card" style="margin-bottom:12px;padding:18px;border-top:4px solid var(--md-sys-color-primary)">'
-      + '<div style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px">🌍 TOP NATIONALITIES (INFLOW)</div>'
+      + '<div style="font-size:17px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px">🌍 TOP NATIONALITIES (INFLOW)</div>'
       + M.byNationality.map(n => {
           var maxInflow = 130000;
           var hasNet = n.net != null;
@@ -2186,24 +2186,24 @@ function renderMigration() {
           var barCol = hasNet&&isNeg ? '#C8102E' : hasNet ? 'var(--md-sys-color-outline)' : 'var(--md-sys-color-primary)';
           return '<div style="margin-bottom:10px">'
             + '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
-              + '<span style="font-size:15px;color:var(--md-sys-color-on-surface);font-weight:600">' + n.name + '</span>'
-              + '<span style="font-size:13px;color:' + col + ';font-weight:700">' + netLabel + '</span>'
+              + '<span style="font-size:17px;color:var(--md-sys-color-on-surface);font-weight:600">' + n.name + '</span>'
+              + '<span style="font-size:14px;color:' + col + ';font-weight:700">' + netLabel + '</span>'
             + '</div>'
             + '<div style="background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:7px;overflow:hidden">'
               + '<div style="width:' + pct + '%;background:' + barCol + ';height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>'
             + '</div>'
-            + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">' + n.type + '</div>'
+            + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">' + n.type + '</div>'
           + '</div>';
         }).join('')
     + '</div>'
     + '<div class="card" style="margin-bottom:12px;padding:18px;border-top:4px solid var(--md-sys-color-primary)">'
-      + '<div style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px">📋 ARRIVALS BY VISA TYPE</div>'
+      + '<div style="font-size:17px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px">📋 ARRIVALS BY VISA TYPE</div>'
       + M.byVisa.map(v => {
           var pct = Math.round(v.n / totalVisa * 100);
           return '<div style="margin-bottom:10px">'
             + '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
-              + '<span style="font-size:15px;color:var(--md-sys-color-on-surface);font-weight:600">' + v.type + '</span>'
-              + '<span style="font-size:15px;color:' + v.color + ';font-weight:700">' + pct + '% · ' + (v.n/1000).toFixed(0) + 'k</span>'
+              + '<span style="font-size:17px;color:var(--md-sys-color-on-surface);font-weight:600">' + v.type + '</span>'
+              + '<span style="font-size:17px;color:' + v.color + ';font-weight:700">' + pct + '% · ' + (v.n/1000).toFixed(0) + 'k</span>'
             + '</div>'
             + '<div style="background:var(--md-sys-color-outline-variant);border-radius:var(--md-sys-shape-corner-full);height:8px;overflow:hidden">'
               + '<div style="width:' + pct + '%;background:' + v.color + ';height:100%;border-radius:var(--md-sys-shape-corner-full)"></div>'
@@ -2212,17 +2212,17 @@ function renderMigration() {
         }).join('')
     + '</div>'
     + '<div class="card" style="margin-bottom:12px;padding:18px;border-top:4px solid #C8102E">'
-      + '<div style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px">🚤 ILLEGAL CHANNEL CROSSINGS</div>'
+      + '<div style="font-size:17px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:14px">🚤 ILLEGAL CHANNEL CROSSINGS</div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
         + '<div style="background:var(--md-sys-color-tonal-red);border-radius:var(--md-sys-shape-corner-large);padding:14px;text-align:center">'
           + '<div style="font-size:24px;font-weight:700;color:#c05000;font-family:\'Nunito\',sans-serif">' + (M.smallBoats.total2025/1000).toFixed(1) + 'k</div>'
-          + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">Crossings in 2025</div>'
-          + '<div style="font-size:13px;color:var(--down);margin-top:2px;font-weight:600">▲ ' + Math.round((M.smallBoats.total2025-M.smallBoats.total2024)/M.smallBoats.total2024*100) + '% vs 2024</div>'
+          + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">Crossings in 2025</div>'
+          + '<div style="font-size:14px;color:var(--down);margin-top:2px;font-weight:600">▲ ' + Math.round((M.smallBoats.total2025-M.smallBoats.total2024)/M.smallBoats.total2024*100) + '% vs 2024</div>'
         + '</div>'
         + '<div style="background:var(--md-sys-color-tonal-red);border-radius:var(--md-sys-shape-corner-large);padding:14px;text-align:center">'
           + '<div style="font-size:24px;font-weight:700;color:#c05000;font-family:\'Nunito\',sans-serif">' + (M.smallBoats.total2018to2025/1000).toFixed(0) + 'k</div>'
-          + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">Total since 2018</div>'
-          + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">as of ' + D.fetchDate + '</div>'
+          + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">Total since 2018</div>'
+          + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-top:2px">as of ' + D.fetchDate + '</div>'
         + '</div>'
       + '</div>'
       + '<div style="display:flex;flex-direction:column;gap:0;margin-bottom:12px">'
@@ -2232,14 +2232,14 @@ function renderMigration() {
            {label:'Returned from UK (2018–2024)',val:(M.smallBoats.returned/1000).toFixed(0)+'k (3%)',col:'var(--md-sys-color-on-surface-variant)'},
           ].map(r =>
             '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
-            + '<span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">' + r.label + '</span>'
-            + '<span style="font-size:15px;font-weight:700;color:' + r.col + '">' + r.val + '</span>'
+            + '<span style="font-size:17px;color:var(--md-sys-color-on-surface-variant)">' + r.label + '</span>'
+            + '<span style="font-size:17px;font-weight:700;color:' + r.col + '">' + r.val + '</span>'
             + '</div>'
           ).join('')
       + '</div>'
-      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px"><strong style="color:var(--md-sys-color-on-surface)">Top nationalities:</strong> Afghan, Syrian, Iranian, Iraqi, Eritrean</div>'
-      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px"><strong style="color:var(--md-sys-color-on-surface)">Hotel/support cost:</strong> £15bn estimated over 10 years (NAO)</div>'
-      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)"><strong style="color:var(--md-sys-color-on-surface)">France returns pilot:</strong> 193 returned by end of 2025 out of ~16,000 arrivals (1%)</div>'
+      + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px"><strong style="color:var(--md-sys-color-on-surface)">Top nationalities:</strong> Afghan, Syrian, Iranian, Iraqi, Eritrean</div>'
+      + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px"><strong style="color:var(--md-sys-color-on-surface)">Hotel/support cost:</strong> £15bn estimated over 10 years (NAO)</div>'
+      + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant)"><strong style="color:var(--md-sys-color-on-surface)">France returns pilot:</strong> 193 returned by end of 2025 out of ~16,000 arrivals (1%)</div>'
     + '</div>';
 }
 
@@ -2280,23 +2280,23 @@ function buildLeaderComparison(a, b) {
   function netStr(n) { return n===null?'No data':(n>0?'+':'')+n; }
   function policyRow(emoji, label, ta, tb) {
     return '<tr>'
-      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:15px;line-height:1.5">'+(ta||'—')+'</div></td>'
-      + '<td style="padding:10px 4px;border-top:1px solid var(--md-sys-color-outline-variant);text-align:center;vertical-align:middle;width:16%"><div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">'+emoji+'<br>'+label+'</div></td>'
-      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:15px;line-height:1.5">'+(tb||'—')+'</div></td>'
+      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:17px;line-height:1.5">'+(ta||'—')+'</div></td>'
+      + '<td style="padding:10px 4px;border-top:1px solid var(--md-sys-color-outline-variant);text-align:center;vertical-align:middle;width:16%"><div style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+emoji+'<br>'+label+'</div></td>'
+      + '<td style="padding:10px 6px;border-top:1px solid var(--md-sys-color-outline-variant);vertical-align:top;width:42%"><div style="font-size:17px;line-height:1.5">'+(tb||'—')+'</div></td>'
       + '</tr>';
   }
   var nameMap = {'Green Party':'Green','Lib Dems':'Lib Dem','Reform UK':'Reform UK','Restore Britain':'Restore Britain','Conservative':'Conservative','Labour':'Labour','SNP':'SNP'};
   var pa = D.parties.find(p => p.name===(nameMap[a.party]||a.party));
   var pb = D.parties.find(p => p.name===(nameMap[b.party]||b.party));
   return '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:16px">'
-    + '<div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:'+a.color+';display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;margin:0 auto 6px">'+a.name.split(' ').map(w=>w[0]).join('').slice(0,2)+'</div><div style="font-size:15px;font-weight:700;color:'+a.color+'">'+a.name+'</div><div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">'+a.party+'</div>'+(pa?'<div style="font-size:22px;font-weight:700;color:'+a.color+';font-family:\'Nunito\',sans-serif;margin-top:4px">'+pa.pct+'%</div>':'')+'</div>'
-    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);font-weight:700">VS</div>'
-    + '<div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:'+b.color+';display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;margin:0 auto 6px">'+b.name.split(' ').map(w=>w[0]).join('').slice(0,2)+'</div><div style="font-size:15px;font-weight:700;color:'+b.color+'">'+b.name+'</div><div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">'+b.party+'</div>'+(pb?'<div style="font-size:22px;font-weight:700;color:'+b.color+';font-family:\'Nunito\',sans-serif;margin-top:4px">'+pb.pct+'%</div>':'')+'</div>'
+    + '<div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:'+a.color+';display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;margin:0 auto 6px">'+a.name.split(' ').map(w=>w[0]).join('').slice(0,2)+'</div><div style="font-size:17px;font-weight:700;color:'+a.color+'">'+a.name+'</div><div style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+a.party+'</div>'+(pa?'<div style="font-size:22px;font-weight:700;color:'+a.color+';font-family:\'Nunito\',sans-serif;margin-top:4px">'+pa.pct+'%</div>':'')+'</div>'
+    + '<div style="font-size:17px;color:var(--md-sys-color-on-surface-variant);font-weight:700">VS</div>'
+    + '<div style="text-align:center"><div style="width:48px;height:48px;border-radius:50%;background:'+b.color+';display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff;margin:0 auto 6px">'+b.name.split(' ').map(w=>w[0]).join('').slice(0,2)+'</div><div style="font-size:17px;font-weight:700;color:'+b.color+'">'+b.name+'</div><div style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+b.party+'</div>'+(pb?'<div style="font-size:22px;font-weight:700;color:'+b.color+';font-family:\'Nunito\',sans-serif;margin-top:4px">'+pb.pct+'%</div>':'')+'</div>'
     + '</div>'
     + '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;background:var(--md-sys-color-surface-container-low);border-radius:var(--md-sys-shape-corner-medium);padding:12px;margin-bottom:14px">'
-      + '<div style="text-align:center"><div style="font-size:22px;font-weight:700;color:'+netCol(a.net)+';font-family:\'Nunito\',sans-serif">'+netStr(a.net)+'</div><div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">Net approval</div></div>'
-      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);text-align:center;align-self:center">👤<br>Leader</div>'
-      + '<div style="text-align:center"><div style="font-size:22px;font-weight:700;color:'+netCol(b.net)+';font-family:\'Nunito\',sans-serif">'+netStr(b.net)+'</div><div style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">Net approval</div></div>'
+      + '<div style="text-align:center"><div style="font-size:22px;font-weight:700;color:'+netCol(a.net)+';font-family:\'Nunito\',sans-serif">'+netStr(a.net)+'</div><div style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">Net approval</div></div>'
+      + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);text-align:center;align-self:center">👤<br>Leader</div>'
+      + '<div style="text-align:center"><div style="font-size:22px;font-weight:700;color:'+netCol(b.net)+';font-family:\'Nunito\',sans-serif">'+netStr(b.net)+'</div><div style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">Net approval</div></div>'
     + '</div>'
     + '<table style="width:100%;border-collapse:collapse"><tbody>'
     + policyRow('🛂','Immigration',a.immigration,b.immigration)
@@ -2368,18 +2368,18 @@ function renderCountdown() {
   var color = dMay <= 7 ? '#C8102E' : dMay <= 30 ? '#FAA61A' : 'var(--md-sys-color-primary)';
   el.innerHTML = '<div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);overflow:hidden;border-top:4px solid ' + color + '">'
     + '<div style="padding:20px;text-align:center">'
-    + '<div style="font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:8px">Local Elections + Runcorn By-Election</div>'
+    + '<div style="font-size:14px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:8px">Local Elections + Runcorn By-Election</div>'
     + '<div style="font-size:64px;font-weight:900;color:' + color + ';font-family:\'Nunito\',sans-serif;line-height:1">' + dMay + '</div>'
-    + '<div style="font-size:16px;font-weight:700;color:var(--md-sys-color-on-surface-variant);margin-top:4px">days to go · 1 May 2026</div>'
+    + '<div style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface-variant);margin-top:4px">days to go · 1 May 2026</div>'
     + '</div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--md-sys-color-outline-variant)">'
     + '<div style="padding:14px;text-align:center;border-right:1px solid var(--md-sys-color-outline-variant)">'
       + '<div style="font-size:22px;font-weight:900;color:var(--md-sys-color-primary)">' + Math.round(dMay/7*10)/10 + '</div>'
-      + '<div style="font-size:11px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">weeks</div>'
+      + '<div style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">weeks</div>'
     + '</div>'
     + '<div style="padding:14px;text-align:center">'
       + '<div style="font-size:22px;font-weight:900;color:var(--md-sys-color-primary)">' + dGE + '</div>'
-      + '<div style="font-size:11px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">days to GE deadline</div>'
+      + '<div style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">days to GE deadline</div>'
     + '</div>'
     + '</div>'
     + '</div>';
@@ -2412,7 +2412,7 @@ function renderPOTD() {
     return;
   }
 
-  el.innerHTML = '<div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:14px;line-height:1.4">' + q.q + '</div>'
+  el.innerHTML = '<div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:14px;line-height:1.4">' + q.q + '</div>'
     + '<div style="display:flex;flex-direction:column;gap:8px">'
     + q.opts.map(function(opt, oi) {
       return '<button onclick="handlePOTD(this)" data-qid="' + q.id + '" data-opt="' + opt.replace(/"/g,'&quot;') + '" style="padding:12px 16px;border-radius:12px;border:2px solid var(--md-sys-color-outline-variant);background:var(--md-sys-color-surface-container-low);font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface);text-align:left;cursor:pointer;width:100%">' + opt + '</button>';
@@ -2469,21 +2469,21 @@ function renderPOTDResults(q, myVote, votes) {
   results.sort(function(a, b) { return b.pct - a.pct; });
   var totalVotes = results.reduce(function(s, r) { return s + r.count; }, 0);
 
-  el.innerHTML = '<div style="font-size:16px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:4px;line-height:1.4">' + q.q + '</div>'
-    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Your answer: <strong>' + myVote + '</strong></div>'
+  el.innerHTML = '<div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:4px;line-height:1.4">' + q.q + '</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-bottom:14px">Your answer: <strong>' + myVote + '</strong></div>'
     + results.map(function(r) {
       var isMe = r.opt === myVote;
       var barColor = isMe ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-primary-container)';
       return '<div style="margin-bottom:8px">'
         + '<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
-        + '<span style="font-size:13px;font-weight:' + (isMe?'800':'600') + ';color:var(--md-sys-color-on-surface)">' + r.opt + (isMe?' ✓':'') + '</span>'
-        + '<span style="font-size:13px;font-weight:800;color:var(--md-sys-color-primary)">' + r.pct + '%</span>'
+        + '<span style="font-size:14px;font-weight:' + (isMe?'800':'600') + ';color:var(--md-sys-color-on-surface)">' + r.opt + (isMe?' ✓':'') + '</span>'
+        + '<span style="font-size:14px;font-weight:800;color:var(--md-sys-color-primary)">' + r.pct + '%</span>'
         + '</div>'
         + '<div style="background:var(--md-sys-color-surface-container-low);border-radius:99px;height:8px;overflow:hidden">'
         + '<div style="width:' + r.pct + '%;background:' + barColor + ';height:100%;border-radius:99px;transition:width 0.6s ease"></div>'
         + '</div></div>';
     }).join('')
-    + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:10px">Live votes from real users · ' + totalVotes + ' vote' + (totalVotes !== 1 ? 's' : '') + ' today · New question daily</div>';
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-top:10px">Live votes from real users · ' + totalVotes + ' vote' + (totalVotes !== 1 ? 's' : '') + ' today · New question daily</div>';
 }
 
 renderPolls();
