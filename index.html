@@ -1063,7 +1063,7 @@ const D = {
      climate:"Committed to net zero by 2050 but opposes what she calls 'unrealistic near-term targets' that impose costs on ordinary households. Strongly pro-nuclear — would fast-track planning approval for new reactors including SMRs. Would maintain the North Sea licensing regime while it remains economically viable. Opposes new onshore wind but supports offshore wind development. Would not withdraw from the Paris Agreement but wants to renegotiate the UK's nationally determined contribution. Believes the transition must be technology-led, not subsidy-led, and opposes green levies that she says disproportionately hit low-income households.",
      bio:"Born Olukemi Olufunto Adegoke on 2 January 1980 in Wimbledon. Her mother came to the UK for medical treatment and gave birth here. Grew up between Nigeria and the US; returned to the UK at 16 with very little money and worked at McDonald's while completing her A-levels. Studied Computer Systems Engineering at Sussex University and later law at Birkbeck. Worked as a software engineer, then at Coutts & Co and The Spectator. MP for North West Essex since 2017. The first Black woman and first Black person to lead the Conservative Party, elected leader in November 2024. Known for her outspoken anti-woke stance and sharp PMQs performances."},
     {name:"Keir Starmer",party:"Labour",color:"#E4003B",approve:20,disapprove:66,net:-46,
-     immigration:"Has established a Border Security Command with £100m in new funding to tackle organised immigration crime. Tightened rules on student visa dependants following a surge in numbers. Raised salary thresholds for skilled worker visas to £38,700. Extended the settlement route from 5 to 10 years. Deployed 1,000 extra returns caseworkers. Accepts that net migration must fall substantially from its record 906,000 peak in 2023. Defends the decision to scrap Rwanda as ineffective and expensive. Critics argue his measures are insufficient and that the government has no coherent plan to reduce overall numbers.",
+     immigration:"Has established a Border Security Command with £100m in new funding to tackle organised immigration crime. Tightened rules on student visa dependants following a surge in numbers. Raised salary thresholds for skilled worker visas to £38,700. Extended the settlement route from 5 to 10 years. Deployed 1,000 extra returns caseworkers. Accepts that net migration must fall substantially from its record 944,000 peak in 2023. Defends the decision to scrap Rwanda as ineffective and expensive. Critics argue his measures are insufficient and that the government has no coherent plan to reduce overall numbers.",
      economy:"Has bound the government to strict fiscal rules: debt must be falling as a share of GDP by the fifth year of the forecast. Delivered a £40bn tax-raising Budget in October 2024, the largest in a generation — including a 1.2 percentage point rise in employer National Insurance. Has committed to investing in NHS, schools and clean energy, arguing growth requires public investment. Faces criticism that the NI rise has damaged business confidence and suppressed hiring. GDP growth has been weak since the Budget. Backs GB Energy as a publicly-owned clean energy vehicle. Opposes renationalisation of utilities beyond energy.",
      nhs:"Committed to 40,000 extra NHS appointments per week to cut waiting lists — the central pledge of the 2024 manifesto. Lists are falling from their 7.8 million peak. Has invested in mental health waiting time standards. Backs the 10-year NHS workforce plan. Under pressure over GP access — average waits remain too long despite the government's targets. Has resisted calls to increase NHS pay above inflation. Critics argue the pace of change is too slow given the scale of underfunding inherited from the Conservatives.",
      climate:"Committed to clean power by 2030 — 100% of electricity from clean sources including wind, solar and nuclear. Created GB Energy, a publicly-owned energy company to co-invest in renewable projects. Banned new North Sea oil and gas licences, a controversial decision criticised by trade unions representing energy workers. Backed the Hinkley C nuclear plant and approved new sites. Has set legally binding carbon budgets. Under pressure from some Labour MPs in coastal communities over the North Sea ban. Faces the challenge of delivering clean power by 2030 against a grid that is not yet capable of handling full variable renewables.",
@@ -2226,7 +2226,7 @@ async function loadVoteResults() {
 // ── Migration ──
 var MIGRATION = {
   fetchYear: 'Year ending June 2025 · ONS',
-  netTotal: 204000, netPrev: 649000, netPrev2: 906000,
+  netTotal: 204000, netPrev: 649000, netPrev2: 944000,
   byNationality: [
     {name:'India',        net:null, inflow:130000, type:'work/study (top source)'},
     {name:'China',        net:null, inflow:100000, type:'study (24% of student visas)'},
@@ -2245,15 +2245,15 @@ var MIGRATION = {
     {type:'Study',        n:440000, color:'#6366f1'},
     {type:'Skilled Work', n:175000, color:'#12B7D4'},
     {type:'Family',       n:68000,  color:'#FAA61A'},
-    {type:'Asylum',       n:111000, color:'#f97316'},
+    {type:'Asylum',       n:96000,  color:'#f97316'},
     {type:'Other',        n:35000,  color:'#6b7280'},
   ],
   trend: [
     {year:'2019',net:184000},{year:'2020',net:87000},{year:'2021',net:173000},
-    {year:'2022',net:504000},{year:'2023',net:906000},{year:'2024',net:649000},{year:'2025',net:204000},
+    {year:'2022',net:504000},{year:'2023',net:944000},{year:'2024',net:649000},{year:'2025',net:204000},
   ],
   smallBoats: {
-    total2025:41500, total2024:36816, total2018to2025:196000,
+    total2025:41472, total2024:36816, total2018to2025:196019,
     topNationalities:['Afghan','Syrian','Iranian','Iraqi','Eritrean'],
     asylumClaimRate:95, grantRate:68, returned:5000, deaths2025:24, deaths2024:73,
     hotelCost:'£15bn over 10 years (NAO est.)',
