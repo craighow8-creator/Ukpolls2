@@ -242,7 +242,7 @@ body {
 .rl-seats { font-size: 12px; opacity: 0.75; margin-top: 2px; font-weight: 600; }
 
 /* ── Party Bar List ── */
-.bar-list { margin-bottom: 16px; }
+.bar-list { margin-bottom: 0; }
 .bar-row {
   display: flex;
   align-items: center;
@@ -250,6 +250,7 @@ body {
   padding: 9px 0;
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
+.bar-row:last-child { border-bottom: none; }
 .bar-rank { font-size: 12px; font-weight: 700; color: var(--md-sys-color-on-surface-variant); width: 16px; text-align: center; flex-shrink: 0; }
 .bar-name { font-size: 14px; font-weight: 700; width: 80px; flex-shrink: 0; }
 .bar-track { flex: 1; height: 10px; background: var(--md-sys-color-outline-variant); border-radius: 99px; overflow: hidden; }
@@ -575,11 +576,12 @@ body {
 
   <!-- OVERVIEW -->
   <div class="page active" id="page-polls">
-    <div class="stitle">Polls</div>
-    <div class="ssub" id="overview-sub">7-poll moving average</div>
     <div id="freshness-pill" style="margin-bottom:4px;text-align:center"></div>
-    <div id="race-leaders"></div>
-    <div id="party-bars"></div>
+    <div class="sec-label">🗳 Current Polling<button class="sec-share" onclick="shareSection('🗳 Current Polling', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
+    <div class="card" style="border-top:4px solid var(--md-sys-color-primary);padding:16px;margin-bottom:12px">
+      <div id="race-leaders"></div>
+      <div id="party-bars"></div>
+    </div>
     <div class="sec-label">🏛 Seat Projection<button class="sec-share" onclick="shareSection('🏛 Seat Projection', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="seat-bar-card" onclick="openFPTPSheet()" style="cursor:pointer;background:var(--md-sys-color-surface);border-radius:24px;padding:16px;margin-bottom:12px;box-shadow:var(--md-elevation-2);border-top:4px solid var(--md-sys-color-primary);active:opacity:0.8">
       <div id="seat-bar-inner" style="display:flex;height:76px;border-radius:16px;overflow:hidden;gap:2px;box-shadow:var(--md-elevation-1);margin-bottom:10px"></div>
@@ -1497,7 +1499,7 @@ function renderPolls() {
       + '<span style="font-size:15px;font-weight:700;color:var(--md-sys-color-primary)">' + freshLabel + ' · ' + updated + '</span>'
       + '</div>';
   }
-  document.getElementById('overview-sub').textContent = '7-poll moving average';
+  var overviewSub = document.getElementById('overview-sub'); if (overviewSub) overviewSub.textContent = '7-poll moving average';
   // date shown in freshness pill only
 
   // Sort by pct descending
