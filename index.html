@@ -261,7 +261,7 @@ body {
 /* ── Seat Bar ── */
 .sbar {
   display: flex;
-  height: 58px;
+  height: 76px;
   border-radius: 16px;
   overflow: hidden;
   margin-bottom: 4px;
@@ -271,9 +271,10 @@ body {
 }
 .sseg {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 800; overflow: hidden;
-  color: white; gap: 2px; line-height: 1;
+  font-family: 'Nunito', sans-serif; font-weight: 800; overflow: hidden;
+  color: white; gap: 1px; line-height: 1.1;
   transition: flex 0.4s ease;
+  padding: 4px 2px;
 }
 
 @keyframes slideIn {
@@ -1509,10 +1510,15 @@ function renderPolls() {
   document.getElementById('seat-bar').innerHTML = seatParties.map(p => {
     var pct = (p.seats / totalSeats * 100).toFixed(1);
     var textColor = p.name === 'SNP' ? '#1a1a1a' : '#fff';
-    return `<div class="sseg" style="flex:${p.seats};background:${p.color};color:${textColor}" title="${p.name}: ~${p.seats} seats">`
-      + (p.seats > 25 ? `<span style="font-size:15px;font-weight:800;letter-spacing:0.3px">${p.abbr}</span><span style="font-size:15px;opacity:0.9">${p.seats}</span>` 
-         : p.seats > 10 ? `<span style="font-size:15px;font-weight:800">${p.seats}</span>` : '')
-      + '</div>';
+    var content = '';
+    if (p.seats >= 60) {
+      content = `<span style="font-size:13px;font-weight:900;letter-spacing:0.3px">${p.abbr}</span><span style="font-size:15px;font-weight:800;opacity:0.95">${p.seats}</span>`;
+    } else if (p.seats >= 30) {
+      content = `<span style="font-size:11px;font-weight:900">${p.abbr}</span><span style="font-size:13px;font-weight:800;opacity:0.95">${p.seats}</span>`;
+    } else if (p.seats >= 15) {
+      content = `<span style="font-size:12px;font-weight:900">${p.seats}</span>`;
+    }
+    return `<div class="sseg" style="flex:${p.seats};background:${p.color};color:${textColor}" title="${p.name}: ~${p.seats} seats">${content}</div>`;
   }).join('');
   document.getElementById('ctx-text').textContent = D.context;
   var sumEl = document.getElementById('seat-summary');
