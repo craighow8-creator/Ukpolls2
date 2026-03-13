@@ -1864,28 +1864,31 @@ function renderAge() {
   ];
   function bars(elId, groups) {
     document.getElementById(elId).innerHTML = groups.map(g => {
-      // Find the leading party for this group
-      var maxPct = 0, leadColor = '#012169';
-      parties.forEach(function(p) { if (g[p.key] > maxPct) { maxPct = g[p.key]; leadColor = p.color; } });
+      var maxPct = 0, leadParty = null;
+      parties.forEach(function(p) { if ((g[p.key]||0) > maxPct) { maxPct = g[p.key]; leadParty = p; } });
+      var leadColor = leadParty ? leadParty.color : 'var(--md-sys-color-primary)';
 
-      var barRows = parties.filter(p => g[p.key] > 0).sort((a,b) => g[b.key] - g[a.key]).map(p => {
+      var barRows = parties.filter(p => g[p.key] > 0).sort((a,b) => g[b.key] - g[a.key]).map((p, i) => {
         var pct = g[p.key];
-        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">'
-          + '<div style="width:52px;font-size:15px;color:' + p.color + ';font-weight:700;flex-shrink:0;text-align:right;line-height:1.2">' + p.label + '</div>'
-          + '<div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:12px;overflow:hidden">'
-          + '<div style="width:' + pct + '%;background:' + p.color + ';height:100%;border-radius:99px;transition:width 0.4s ease"></div>'
+        var normW = Math.round((pct / maxPct) * 100);
+        var isLead = i === 0;
+        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:' + (isLead ? '6' : '5') + 'px">'
+          + '<div style="width:56px;font-size:' + (isLead ? '15' : '13') + 'px;color:' + p.color + ';font-weight:' + (isLead ? '900' : '700') + ';flex-shrink:0;text-align:right;line-height:1.2">' + p.label + '</div>'
+          + '<div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:' + (isLead ? '16' : '11') + 'px;overflow:hidden">'
+          + '<div style="width:' + normW + '%;background:' + p.color + ';height:100%;border-radius:99px;transition:width 0.5s cubic-bezier(0.4,0,0.2,1)"></div>'
           + '</div>'
-          + '<div style="width:36px;text-align:right;font-size:15px;font-weight:800;color:' + p.color + '">' + pct + '%</div>'
+          + '<div style="width:38px;text-align:right;font-size:' + (isLead ? '17' : '13') + 'px;font-weight:900;color:' + p.color + '">' + pct + '%</div>'
           + '</div>';
       }).join('');
 
-      return '<div style="background:var(--md-sys-color-surface);border-radius:20px;box-shadow:var(--md-elevation-1);margin-bottom:10px;overflow:hidden;border-top:3px solid ' + leadColor + '">'
-        + '<div style="padding:14px 16px 4px;display:flex;justify-content:space-between;align-items:center">'
-        + '<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">' + g.label + '</div>'
+      return '<div style="background:var(--md-sys-color-surface-container);border-radius:24px;box-shadow:var(--md-elevation-2);margin-bottom:10px;overflow:hidden;border-top:4px solid ' + leadColor + '">'
+        + '<div style="padding:14px 18px 8px;display:flex;align-items:center;gap:10px">'
+        + '<div style="font-size:17px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:-0.2px;flex:1">' + g.label + '</div>'
+        + (leadParty ? '<div style="font-size:12px;font-weight:800;color:' + leadColor + ';background:' + leadColor + '18;border:1.5px solid ' + leadColor + '40;border-radius:99px;padding:3px 10px">\u25b2 ' + leadParty.label + ' leads</div>' : '')
         + '</div>'
-        + '<div style="padding:4px 16px 14px">'
+        + '<div style="padding:2px 18px 14px">'
         + barRows
-        + (g.note ? '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);margin-top:6px;font-style:italic;line-height:1.5">' + g.note + '</div>' : '')
+        + (g.note ? '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:8px;font-weight:700;line-height:1.5;background:var(--md-sys-color-surface-container-low);border-radius:12px;padding:8px 12px">\ud83d\udca1 ' + g.note + '</div>' : '')
         + '</div>'
         + '</div>';
     }).join('');
@@ -1924,31 +1927,40 @@ function renderAge() {
     {label:'Black British', REF:8, GRN:22,LAB:44,CON:10,LD:10, note:'Labour dominant but Greens making inroads'},
     {label:'Mixed/Other',   REF:18,GRN:26,LAB:24,CON:12,LD:14},
   ]);
-  document.getElementById('nonvoter-content').innerHTML = `
-    <div style="background:var(--md-sys-color-surface);border-radius:20px;box-shadow:var(--md-elevation-1);margin-bottom:10px;overflow:hidden;border-top:3px solid #12B7D4">
-      <div style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:10px;padding:14px 16px 0">Where are 2024's non-voters going?</div>
-      <div style="font-size:18px;color:var(--md-sys-color-on-surface);line-height:1.75;margin-bottom:14px;padding:0 16px">
-        42% of eligible voters did not vote in the 2024 General Election. Among those who didn't vote but now say they would <em>"definitely vote"</em>, Reform UK and Restore Britain are picking up the largest share.
-      </div>
-      <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:0 16px">Estimated intention among 2024 non-voters who now say they'd vote</div>
-      ${[
+  var nvData = [
         {label:'Reform UK', color:'#12B7D4', pct:32, note:'Biggest beneficiary of returning non-voters'},
-        {label:'RB',        color:'#1a4a9e', pct:18, note:'Growing fast among disengaged voters'},
+        {label:'Restore Britain', color:'#1a4a9e', pct:18, note:'Growing fast among disengaged voters'},
         {label:'Green',     color:'#02A95B', pct:16, note:''},
         {label:'Labour',    color:'#E4003B', pct:14, note:''},
         {label:'Con',       color:'#0087DC', pct:10, note:''},
         {label:'LD',        color:'#FAA61A', pct:6,  note:''},
-      ].map(p => `
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 16px">
-          <div style="width:72px;font-size:15px;color:${p.color};font-weight:700;flex-shrink:0;line-height:1.2">${p.label}</div>
-          <div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:12px;overflow:hidden">
-            <div style="width:${p.pct}%;background:${p.color};height:100%;border-radius:99px"></div>
-          </div>
-          <div style="width:32px;text-align:right;font-size:18px;font-weight:700;color:${p.color}">${p.pct}%</div>
-        </div>
-        ${p.note ? `<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;padding-left:88px;font-style:italic">${p.note}</div>` : ''}`).join('')}
-      <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);margin-top:10px;padding:0 16px 16px">Source: Find Out Now, JL Partners.</div>
-    </div>`;
+      ];
+  var nvMax = Math.max.apply(null, nvData.map(function(p){return p.pct;}));
+  document.getElementById('nonvoter-content').innerHTML =
+    '<div style="background:var(--md-sys-color-surface-container);border-radius:24px;box-shadow:var(--md-elevation-2);margin-bottom:10px;overflow:hidden;border-top:4px solid #12B7D4">'
+    + '<div style="padding:16px 18px 4px">'
+    + '<div style="font-size:19px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:-0.3px;margin-bottom:10px">🗳 Where are 2024\'s non-voters going?</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);line-height:1.7;margin-bottom:14px;background:var(--md-sys-color-surface-container-low);border-radius:16px;padding:12px 14px">'
+    + '42% of eligible voters did not vote in the 2024 General Election. Among those who didn\'t vote but now say they would <em>"definitely vote"</em>, Reform UK and Restore Britain are picking up the largest share.'
+    + '</div>'
+    + '<div style="font-size:12px;font-weight:800;color:var(--md-sys-color-on-surface-variant);margin-bottom:12px;letter-spacing:0.6px;text-transform:uppercase">Estimated intention among 2024 non-voters who now say they\'d vote</div>'
+    + nvData.map(function(p, i) {
+        var normW = Math.round((p.pct / nvMax) * 100);
+        var isLead = i === 0;
+        return '<div style="margin-bottom:' + (isLead ? '10' : '8') + 'px">'
+          + '<div style="display:flex;align-items:center;gap:10px">'
+          + '<div style="width:110px;font-size:' + (isLead ? '15' : '13') + 'px;color:' + p.color + ';font-weight:' + (isLead ? '900' : '700') + ';flex-shrink:0;line-height:1.2">' + p.label + '</div>'
+          + '<div style="flex:1;background:var(--md-sys-color-surface-container-low);border-radius:99px;height:' + (isLead ? '18' : '12') + 'px;overflow:hidden">'
+          + '<div style="width:' + normW + '%;background:' + p.color + ';height:100%;border-radius:99px;transition:width 0.5s cubic-bezier(0.4,0,0.2,1)"></div>'
+          + '</div>'
+          + '<div style="width:36px;text-align:right;font-size:' + (isLead ? '17' : '14') + 'px;font-weight:900;color:' + p.color + '">' + p.pct + '%</div>'
+          + '</div>'
+          + (p.note ? '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin:4px 0 0 120px;font-weight:700;font-style:italic">💡 ' + p.note + '</div>' : '')
+          + '</div>';
+      }).join('')
+    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:12px;font-weight:600">Source: Find Out Now, JL Partners.</div>'
+    + '</div>'
+    + '</div>';
 }
 
 // ── Render Leaders ──
