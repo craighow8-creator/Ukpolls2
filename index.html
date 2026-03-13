@@ -958,7 +958,7 @@ body {
 
 <!-- Share Modal -->
 <div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.6);z-index:500;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeShare()">
-  <div style="background:var(--md-sys-color-surface);border-radius:28px 28px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.12)">
+  <div id="share-modal-sheet" style="background:var(--md-sys-color-surface);border-radius:28px 28px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.12);transition:transform 0.25s cubic-bezier(0.05,0.7,0.1,1);touch-action:pan-x">
     <div style="width:36px;height:4px;background:var(--md-sys-color-outline-variant);border-radius:2px;margin:0 auto 20px"></div>
     <div style="font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Share</div>
     <div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:16px;font-family:\'Nunito\',sans-serif">UK Poll Tracker</div>
@@ -1253,9 +1253,59 @@ function openShare() {
   try { window.goatcounter.count({path:'share-modal-open',title:'Share modal opened',event:true}); } catch(e) {}
   var txt = generateShareText();
   document.getElementById('share-preview-text').textContent = txt;
-  document.getElementById('share-modal').style.display = 'flex';
+  var modal = document.getElementById('share-modal');
+  var sheet = document.getElementById('share-modal-sheet');
+  sheet.style.transition = 'none';
+  sheet.style.transform = 'translateY(100%)';
+  modal.style.display = 'flex';
+  requestAnimationFrame(function() {
+    sheet.style.transition = 'transform 0.3s cubic-bezier(0.05,0.7,0.1,1)';
+    sheet.style.transform = 'translateY(0)';
+  });
 }
-function closeShare() { document.getElementById('share-modal').style.display = 'none'; }
+function closeShare() {
+  var modal = document.getElementById('share-modal');
+  var sheet = document.getElementById('share-modal-sheet');
+  sheet.style.transition = 'transform 0.25s cubic-bezier(0.4,0,1,1)';
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(function() { modal.style.display = 'none'; sheet.style.transform = ''; }, 260);
+}
+// Swipe-to-dismiss for share modal
+(function() {
+  var sheet, startY, currentY, dragging = false;
+  document.addEventListener('DOMContentLoaded', function() {});
+  function init() {
+    sheet = document.getElementById('share-modal-sheet');
+    if (!sheet) return;
+    sheet.addEventListener('touchstart', function(e) {
+      // Only begin drag if touching near the top of the sheet (handle area)
+      var rect = sheet.getBoundingClientRect();
+      if (e.touches[0].clientY - rect.top > 80) return;
+      startY = e.touches[0].clientY;
+      dragging = true;
+      sheet.style.transition = 'none';
+    }, {passive: true});
+    sheet.addEventListener('touchmove', function(e) {
+      if (!dragging) return;
+      currentY = e.touches[0].clientY;
+      var dy = Math.max(0, currentY - startY);
+      sheet.style.transform = 'translateY(' + dy + 'px)';
+    }, {passive: true});
+    sheet.addEventListener('touchend', function() {
+      if (!dragging) return;
+      dragging = false;
+      var dy = Math.max(0, currentY - startY);
+      if (dy > 80) {
+        closeShare();
+      } else {
+        sheet.style.transition = 'transform 0.25s cubic-bezier(0.05,0.7,0.1,1)';
+        sheet.style.transform = 'translateY(0)';
+      }
+    });
+  }
+  // Init after DOM ready
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
+})();
 function shareToX() {
   try { window.goatcounter.count({path:'share-twitter',title:'Share: share-twitter',event:true}); } catch(e) {}
   window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(generateShareText()), '_blank');
