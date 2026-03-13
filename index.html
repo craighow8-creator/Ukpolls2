@@ -1514,13 +1514,7 @@ function showMilestoneSearch(text, el) {
   var popup = document.createElement('div');
   popup.id = 'milestone-popup';
   popup._text = text;
-  popup.style.cssText = 'position:fixed;z-index:9999;background:var(--md-sys-color-surface-container-high);border-radius:16px;padding:14px;box-shadow:0 8px 32px rgba(0,0,0,0.18);min-width:220px;max-width:300px;';
-
-  var rect = el.getBoundingClientRect();
-  var top = rect.bottom + 8;
-  if (top + 200 > window.innerHeight) top = rect.top - 208;
-  popup.style.top = top + 'px';
-  popup.style.left = Math.min(rect.left, window.innerWidth - 310) + 'px';
+  popup.style.cssText = 'position:fixed;z-index:9999;background:var(--md-sys-color-surface-container-high);border-radius:16px;padding:14px;box-shadow:0 8px 32px rgba(0,0,0,0.18);width:280px;top:50%;left:50%;transform:translate(-50%,-50%);';
 
   popup.innerHTML = '<div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:10px">Search this story</div>'
     + sources.map(s =>
@@ -1560,13 +1554,43 @@ function renderTrends() {
     borderWidth: 2.5,
     tension: 0.4, fill: true,
   }));
+  const endLabelPlugin = {
+    id: 'endLabels',
+    afterDatasetsDraw(chart) {
+      const ctx = chart.ctx;
+      chart.data.datasets.forEach((ds, i) => {
+        if (!chart.isDatasetVisible(i)) return;
+        const meta = chart.getDatasetMeta(i);
+        const last = meta.data[meta.data.length - 1];
+        if (!last) return;
+        const val = ds.data[ds.data.length - 1];
+        if (val == null) return;
+        const x = last.x, y = last.y;
+        const r = 14;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + r + 4, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = ds.borderColor;
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px Nunito, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(val + '%', x + r + 4, y);
+        ctx.restore();
+      });
+    }
+  };
+
   const el = document.getElementById('trend-chart');
   if (window._trendChart) window._trendChart.destroy();
   window._trendChart = new Chart(el, {
     type: 'line',
     data: { labels, datasets },
+    plugins: [endLabelPlugin],
     options: {
       responsive: true, maintainAspectRatio: true, aspectRatio: 1.4,
+      layout: { padding: { right: 36 } },
       animation: { duration: 600, easing: 'easeOutCubic' },
       interaction: { mode: 'index', intersect: false },
       plugins: {
@@ -1586,14 +1610,14 @@ function renderTrends() {
       },
       scales: {
         x: {
-          grid: { color: 'rgba(0,0,0,0.06)', lineWidth: 1 },
-          border: { dash: [4,4] },
-          ticks: { color: '#79747E', font: { size: 13, family: "'Nunito',sans-serif" }, padding: 8 }
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color: '#79747E', font: { size: 12, family: "'Nunito',sans-serif" }, padding: 6 }
         },
         y: {
-          grid: { color: 'rgba(0,0,0,0.06)', lineWidth: 1 },
-          border: { dash: [4,4] },
-          ticks: { color: '#79747E', font: { size: 13, family: "'Nunito',sans-serif" }, callback: v => v + '%', padding: 8 },
+          grid: { color: 'rgba(0,0,0,0.05)', lineWidth: 1 },
+          border: { display: false },
+          ticks: { color: '#79747E', font: { size: 12, family: "'Nunito',sans-serif" }, callback: v => v + '%', padding: 6, maxTicksLimit: 5 },
           suggestedMin: 8, suggestedMax: 35,
         }
       }
