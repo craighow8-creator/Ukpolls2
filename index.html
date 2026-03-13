@@ -2636,7 +2636,7 @@ function dismissPopup() {
 
 // ── Swipe Navigation ──
 (function(){
-  var TABS = ['polls','elections','vote','demo','leaders','ai'];
+  var TABS = ['polls','elections','leaders','demo','vote','ai'];
   var content = document.getElementById('content');
   var sx = 0, sy = 0;
   content.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
