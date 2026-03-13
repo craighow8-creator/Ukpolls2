@@ -2536,7 +2536,7 @@ function generateInsight(votes, total, POLL_MAP) {
   var text = biggest.diff > 0
     ? '📊 App users back <strong style="color:' + p.color + '">' + biggest.name + '</strong> at ' + biggest.appPct + '% — ' + (multiple && multiple > 1.5 ? multiple + 'x their poll rating of ' + biggest.pollPct + '%' : biggest.diff + ' points above national polls')
     : '📊 <strong style="color:' + p.color + '">' + biggest.name + '</strong> underperforms here vs polls — ' + biggest.appPct + '% app vs ' + biggest.pollPct + '% nationally';
-  return '<div style="background:var(--md-sys-color-tonal-navy);border-radius:14px;padding:12px 16px;margin-bottom:18px;font-size:18px;line-height:1.6;color:var(--md-sys-color-on-surface)">' + text + '</div>';
+  return '<div style="background:var(--md-sys-color-tonal-navy);border-radius:14px;padding:12px 16px;margin-bottom:18px;font-size:18px;line-height:1.6;color:var(--md-sys-color-on-surface);text-align:center">' + text + '</div>';
 }
 
 async function loadVoteResults() {
