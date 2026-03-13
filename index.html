@@ -1274,7 +1274,46 @@ function generateShareText() {
   var line4 = rbPct >= 5 ? '📈 Restore Britain at ' + rbPct + '% and growing.' : '';
 
   var lines = [line1, line2, line3, line4].filter(Boolean);
+  // Default (used for preview in modal) — polling snapshot + install hook
   return lines.join('\n') + '\n\n🇬🇧 UK Poll Tracker — updated daily\n' + APP_URL;
+}
+
+// X/Twitter — must stay under 280 chars, punchy snapshot + install hook
+function generateXText() {
+  var p = D.parties;
+  var sorted = p.slice().sort(function(a,b) { return b.pct - a.pct; });
+  var snap = sorted.filter(function(x) { return x.pct >= 5 && x.name !== 'Other'; })
+    .map(function(x) { return x.abbr + ' ' + x.pct + '%'; }).join(' · ');
+  var now = new Date();
+  var may1 = new Date('2026-05-01T00:00:00');
+  var days = Math.max(0, Math.ceil((may1 - now) / 86400000));
+  return '🇬🇧 UK polls (' + D.fetchDate + '):\n' + snap + '\n\n⏳ ' + days + ' days to local elections\n\nFull data, leaders, demographics & AI briefings:\n' + APP_URL;
+}
+
+// WhatsApp / Copy / Native — rich, sells the app
+function generateInstallText() {
+  var p = D.parties;
+  var sorted = p.slice().sort(function(a,b) { return b.pct - a.pct; });
+  var leader = sorted[0];
+  var snap = sorted.filter(function(x) { return x.pct >= 5 && x.name !== 'Other'; })
+    .map(function(x) { return x.name + ' ' + x.pct + '%'; }).join(' · ');
+  var now = new Date();
+  var may1 = new Date('2026-05-01T00:00:00');
+  var days = Math.max(0, Math.ceil((may1 - now) / 86400000));
+  return '🇬🇧 UK Poll Tracker — the most complete free UK politics app\n\n'
+    + '📊 Latest polls: ' + snap + '\n\n'
+    + '⏳ ' + days + ' days to the May 2026 local elections\n\n'
+    + 'What you get — all free, no sign-up:\n'
+    + '✅ Live polling averages across 7 pollsters\n'
+    + '✅ MRP seat projection (650 seats)\n'
+    + '✅ Leader ratings & net approval\n'
+    + '✅ AI briefings on every party & leader\n'
+    + '✅ Demographics — age, class, region, ethnicity\n'
+    + '✅ Migration & channel crossings data\n'
+    + '✅ Betting odds & by-election results\n'
+    + '✅ Rich share cards for everything\n\n'
+    + 'No ads. No sign-up. Updated daily.\n\n'
+    + APP_URL;
 }
 
 function openShare() {
@@ -1336,20 +1375,19 @@ function closeShare() {
 })();
 function shareToX() {
   try { window.goatcounter.count({path:'share-twitter',title:'Share: share-twitter',event:true}); } catch(e) {}
-  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(generateShareText()), '_blank');
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(generateXText()), '_blank');
 }
 function shareToWhatsApp() {
   try { window.goatcounter.count({path:'share-whatsapp',title:'Share: share-whatsapp',event:true}); } catch(e) {}
-  window.open('https://wa.me/?text=' + encodeURIComponent(generateShareText()), '_blank');
+  window.open('https://wa.me/?text=' + encodeURIComponent(generateInstallText()), '_blank');
 }
 function shareToFacebook() {
   try { window.goatcounter.count({path:'share-facebook',title:'Share: share-facebook',event:true}); } catch(e) {}
-  window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(APP_URL) + '&quote=' + encodeURIComponent(generateShareText()), '_blank');
+  window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(APP_URL) + '&quote=' + encodeURIComponent(generateInstallText()), '_blank');
 }
 function shareNative() {
   try { window.goatcounter.count({path:'share-native',title:'Share: native sheet',event:true}); } catch(e) {}
-  var txt = generateShareText();
-  // Close our modal first so it doesn't block the native sheet from being dismissed
+  var txt = generateInstallText();
   closeShare();
   setTimeout(function() {
     if (navigator.share) {
@@ -1362,7 +1400,7 @@ function shareNative() {
 function copyLink() {
   try { window.goatcounter.count({path:'share-copy',title:'Share: copy link',event:true}); } catch(e) {}
   var btn = document.getElementById('copy-btn');
-  navigator.clipboard.writeText(generateShareText()).then(function() {
+  navigator.clipboard.writeText(generateInstallText()).then(function() {
     btn.textContent = '✓ Copied!';
     setTimeout(function() { btn.textContent = '📋 Copy'; }, 2000);
   });
