@@ -5,6 +5,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -191,7 +192,24 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  position: relative;
 }
+.sec-share {
+  position: absolute;
+  right: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 2px;
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.5;
+  line-height: 1;
+  transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+}
+.sec-share:active { opacity: 1; }
+.sec-share svg { width: 18px; height: 18px; fill: currentColor; }
 
 /* ── Party Grid ── */
 /* ── Race Leader Cards ── */
@@ -561,24 +579,24 @@ body {
     <div id="freshness-pill" style="margin-bottom:4px;text-align:center"></div>
     <div id="race-leaders"></div>
     <div id="party-bars"></div>
-    <div class="sec-label">🏛 Seat Projection</div>
+    <div class="sec-label">🏛 Seat Projection<button class="sec-share" onclick="shareSection('🏛 Seat Projection', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div class="sbar" id="seat-bar"></div>
     <div id="seat-summary" style="font-size:18px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin:8px 0 12px;font-weight:500"></div>
     <div class="card" style="border-top:4px solid var(--md-sys-color-outline-variant);padding:14px 16px;margin-bottom:4px">
       <div style="font-size:15px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">⚖️ About First Past The Post</div>
       <div style="font-size:15px;line-height:1.7;color:var(--md-sys-color-on-surface)">Under FPTP, the UK's voting system, what matters is winning individual constituencies — not total votes. A party can win far more seats than its national vote share suggests if its support is geographically concentrated, and far fewer if its vote is spread thinly. That's why Reform UK at 26% projects to hundreds of seats while Labour at 19% projects to just ~41 — Reform's vote is more efficiently distributed across winnable seats. These seat estimates use a uniform national swing model and carry significant uncertainty.</div>
     </div>
-    <div class="sec-label">📋 Context</div>
+    <div class="sec-label">📋 Context<button class="sec-share" onclick="shareSection('📋 Context', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div class="card" style="font-size:15px;line-height:1.8;color:var(--md-sys-color-on-surface);border-top:4px solid var(--md-sys-color-primary)" id="ctx-text"></div>
 
-    <div class="sec-label">📈 6-Month Trend</div>
+    <div class="sec-label">📈 6-Month Trend<button class="sec-share" onclick="shareSection('📈 6-Month Trend', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div class="card" style="padding:20px;border-top:4px solid var(--md-sys-color-primary)" id="trend-card">
       <canvas id="trend-chart" style="width:100%;display:block"></canvas>
       <div id="trend-legend" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center"></div>
     </div>
-    <div class="sec-label" id="polls-anchor">📋 Recent Polls</div>
+    <div class="sec-label" id="polls-anchor">📋 Recent Polls<button class="sec-share" onclick="shareSection('📋 Recent Polls', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="polls-cards"></div>
-    <div class="sec-label">📌 Milestones</div>
+    <div class="sec-label">📌 Milestones<button class="sec-share" onclick="shareSection('📌 Milestones', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div class="card" style="border-top:4px solid #C8102E" id="milestones-list"></div>
 
 
@@ -590,10 +608,10 @@ body {
     <div class="stitle">Elections</div>
     <div class="ssub">Upcoming votes &amp; results</div>
 
-    <div class="sec-label">⏳ Countdown</div>
+    <div class="sec-label">⏳ Countdown<button class="sec-share" onclick="shareSection('⏳ Countdown', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="countdown-card" style="margin-bottom:12px"></div>
 
-    <div class="sec-label">🗓 Key Dates</div>
+    <div class="sec-label">🗓 Key Dates<button class="sec-share" onclick="shareSection('🗓 Key Dates', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div class="card" style="border-top:4px solid var(--md-sys-color-primary);padding:4px 0">
       <div class="key-date-row">
         <div class="key-date-dot" style="background:#C8102E"></div>
@@ -617,7 +635,7 @@ body {
       </div>
     </div>
 
-    <div class="sec-label">📅 Upcoming</div>
+    <div class="sec-label">📅 Upcoming<button class="sec-share" onclick="shareSection('📅 Upcoming', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
 
     <!-- Explainer card -->
     <div class="explainer-card" onclick="var b=document.getElementById('may-explainer');var a=document.getElementById('may-arrow');b.classList.toggle('open');a.textContent=b.classList.contains('open')?'▲':'▼'">
@@ -707,7 +725,7 @@ body {
       </div>
     </div>
 
-    <div class="sec-label">🗳 Recent Results</div>
+    <div class="sec-label">🗳 Recent Results<button class="sec-share" onclick="shareSection('🗳 Recent Results', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
 
     <div class="ecard">
       <div class="ecard-accent" style="background:#02A95B"></div>
@@ -749,7 +767,7 @@ body {
       </div>
     </div>
 
-    <div class="sec-label">🎰 Betting Odds</div>
+    <div class="sec-label">🎰 Betting Odds<button class="sec-share" onclick="shareSection('🎰 Betting Odds', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div class="ecard" style="margin-bottom:12px">
       <div class="ecard-accent" style="background:#1a6e3c"></div>
       <div class="ecard-inner">
@@ -822,13 +840,13 @@ body {
   <div class="page" id="page-demo">
     <div class="stitle">Demographics</div>
     <div class="ssub">Voting intention by group · YouGov/Ipsos/MiC 2026</div>
-    <div class="sec-label">🗳 2024 Non-Voters</div><div id="nonvoter-content"></div>
-    <div class="sec-label">👤 Age Group</div><div id="age-content"></div>
-    <div class="sec-label">🏠 Social Class</div><div id="class-content"></div>
-    <div class="sec-label">🎓 Education</div><div id="edu-content"></div>
-    <div class="sec-label">📍 Region</div><div id="region-content"></div>
-    <div class="sec-label">🌍 Ethnicity</div><div id="ethnicity-content"></div>
-    <div class="sec-label">🛂 Net Migration</div>
+    <div class="sec-label">🗳 2024 Non-Voters<button class="sec-share" onclick="shareSection('🗳 2024 Non-Voters', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div><div id="nonvoter-content"></div>
+    <div class="sec-label">👤 Age Group<button class="sec-share" onclick="shareSection('👤 Age Group', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div><div id="age-content"></div>
+    <div class="sec-label">🏠 Social Class<button class="sec-share" onclick="shareSection('🏠 Social Class', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div><div id="class-content"></div>
+    <div class="sec-label">🎓 Education<button class="sec-share" onclick="shareSection('🎓 Education', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div><div id="edu-content"></div>
+    <div class="sec-label">📍 Region<button class="sec-share" onclick="shareSection('📍 Region', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div><div id="region-content"></div>
+    <div class="sec-label">🌍 Ethnicity<button class="sec-share" onclick="shareSection('🌍 Ethnicity', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div><div id="ethnicity-content"></div>
+    <div class="sec-label">🛂 Net Migration<button class="sec-share" onclick="shareSection('🛂 Net Migration', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="migration-content"></div>
     <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);text-align:center;padding:12px 0">Sources: YouGov, Ipsos, More in Common · ONS Nov 2025 · Home Office / Migration Observatory. Mar 2026.</div>
   </div>
@@ -2689,6 +2707,82 @@ function shareExplainer() {
   showToast('📋 Copied — ready to share!');
   if (navigator.share) {
     try { navigator.share({ title: 'May 2026 Elections Explained', text: text }); } catch(e) {}
+  }
+}
+
+var SECTION_SHARE = {
+  '🏛 Seat Projection':   { title:'UK Seat Projection', text:'🏛 Current UK seat projection (MRP model):\n\nReform UK: 335 seats\nLabour: 41 seats\nConservative: 98 seats\nLib Dem: 87 seats\nGreen: 28 seats\n\nBased on current polling averages.' },
+  '📈 6-Month Trend':     { title:'UK Poll Trend', text:'📈 UK polling trend — 6 months:\n\nReform UK leading at ~27%\nGreen rising to ~15%\nLabour falling to ~19%\nConservative at ~18%\n\nSee the full chart:' },
+  '⏳ Countdown':         { title:'UK Election Countdown', text:'⏳ Local Elections + Runcorn by-election\n\n📅 1 May 2026 — 49 days to go\n\nEngland & Scotland council seats up for grabs. Reform UK\'s first major electoral test.' },
+  '🗓 Key Dates':         { title:'UK Election Key Dates', text:'🗓 Upcoming UK political dates:\n\n📌 1 May 2026 — Local Elections + Runcorn by-election\n📌 TBC — Horsham by-election\n📌 Deadline: Jan 2029 — next General Election' },
+  '🛂 Net Migration':     { title:'UK Net Migration Data', text:'🛂 UK Net Migration (ONS, year ending June 2025):\n\n📉 Net migration: 204,000\n(down from 649,000 in 2024 and a peak of 944,000 in 2023)\n\nTop sources: India, China, Nigeria, Pakistan\nSmall boats 2025: 41,472 crossings' },
+  '🎰 Betting Odds':      { title:'UK Election Betting Odds', text:'🎰 Current UK political betting odds:\n\nNext party to lead government — check the latest on UK Poll Tracker.' },
+  '🗳 Recent Results':    { title:'Recent UK By-Election Results', text:'🗳 Recent UK by-election results — see the full breakdown on UK Poll Tracker.' },
+  '👤 Age Group':         { title:'UK Voting by Age Group', text:'👤 UK voting intention by age group — see the full breakdown on UK Poll Tracker.' },
+  '🏠 Social Class':      { title:'UK Voting by Social Class', text:'🏠 UK voting intention by social class — see the full breakdown on UK Poll Tracker.' },
+  '🎓 Education':         { title:'UK Voting by Education', text:'🎓 UK voting intention by education level — see the full breakdown on UK Poll Tracker.' },
+  '📍 Region':            { title:'UK Voting by Region', text:'📍 UK voting intention by region — see the full breakdown on UK Poll Tracker.' },
+  '🌍 Ethnicity':         { title:'UK Voting by Ethnicity', text:'🌍 UK voting intention by ethnicity — see the full breakdown on UK Poll Tracker.' },
+};
+
+async function shareSection(label, btn) {
+  // Find the sec-label element containing this button, then capture it + the next sibling card
+  var labelEl = btn ? btn.closest('.sec-label') : null;
+  var target = null;
+  if (labelEl) {
+    // Build a wrapper with the label + the following content sibling
+    var next = labelEl.nextElementSibling;
+    if (next) {
+      var wrapper = document.createElement('div');
+      wrapper.style.cssText = 'background:var(--md-sys-color-surface-container-low);padding:16px;border-radius:24px;display:inline-block;min-width:300px;';
+      var labelClone = labelEl.cloneNode(true);
+      // Remove the share button from the clone
+      var shareBtn = labelClone.querySelector('.sec-share');
+      if (shareBtn) shareBtn.remove();
+      wrapper.appendChild(labelClone);
+      wrapper.appendChild(next.cloneNode(true));
+      // Add branding footer
+      var footer = document.createElement('div');
+      footer.style.cssText = 'font-size:12px;color:var(--md-sys-color-on-surface-variant);text-align:center;margin-top:10px;font-family:Nunito,sans-serif;font-weight:600;';
+      footer.textContent = '🇬🇧 UK Poll Tracker · ' + APP_URL;
+      wrapper.appendChild(footer);
+      document.body.appendChild(wrapper);
+      target = wrapper;
+    }
+  }
+
+  if (!target) {
+    showToast('Could not capture section');
+    return;
+  }
+
+  showToast('📸 Capturing...');
+  try {
+    var canvas = await html2canvas(target, {
+      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--md-sys-color-surface-container-low').trim() || '#F7F2FA',
+      scale: 2,
+      useCORS: true,
+      logging: false
+    });
+    document.body.removeChild(target);
+    canvas.toBlob(async function(blob) {
+      var file = new File([blob], 'uk-poll-tracker.png', {type: 'image/png'});
+      if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+        try {
+          await navigator.share({ files: [file], title: 'UK Poll Tracker · ' + label });
+          return;
+        } catch(e) {}
+      }
+      // Fallback: download the image
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'uk-poll-tracker.png'; a.click();
+      URL.revokeObjectURL(url);
+      showToast('📥 Image saved!');
+    }, 'image/png');
+  } catch(e) {
+    if (document.body.contains(target)) document.body.removeChild(target);
+    showToast('Could not capture — try again');
   }
 }
 </script>
