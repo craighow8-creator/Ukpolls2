@@ -2934,7 +2934,10 @@ async function shareSection(label, btn) {
         try {
           await navigator.share({ files: [file], title: 'UK Poll Tracker · ' + label });
           return;
-        } catch(e) {}
+        } catch(e) {
+          // User cancelled — do nothing
+          if (e.name === 'AbortError') return;
+        }
       }
       // Fallback: download the image
       var url = URL.createObjectURL(blob);
