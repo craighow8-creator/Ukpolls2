@@ -669,25 +669,25 @@ body {
 
     <div class="sec-label">🗓 Key Dates<button class="sec-share" onclick="shareSection('🗓 Key Dates', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div class="card" style="border-top:4px solid var(--md-sys-color-primary);padding:4px 0">
-      <div class="key-date-row">
+      <div class="key-date-row" onclick="showMilestoneSearch('UK local elections May 2026 Runcorn by-election', this)" style="cursor:pointer" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
         <div class="key-date-dot" style="background:#C8102E"></div>
         <div class="key-date-info"><div class="key-date-label">Local Elections + Runcorn by-election</div><div class="key-date-sub">1 May 2026 · England &amp; Scotland councils</div></div>
-        <div class="key-date-days" id="kd-may1"></div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="key-date-days" id="kd-may1"></div><span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">🔍</span></div>
       </div>
-      <div class="key-date-row">
+      <div class="key-date-row" onclick="showMilestoneSearch('Horsham by-election 2026 UK', this)" style="cursor:pointer" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
         <div class="key-date-dot" style="background:#0087DC"></div>
         <div class="key-date-info"><div class="key-date-label">Horsham by-election</div><div class="key-date-sub">TBC 2026 · Con hold under threat from LD/Reform</div></div>
-        <div class="key-date-days" style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">TBC</div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">TBC</div><span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">🔍</span></div>
       </div>
-      <div class="key-date-row">
+      <div class="key-date-row" onclick="showMilestoneSearch('UK Autumn Budget 2026 OBR forecast', this)" style="cursor:pointer" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
         <div class="key-date-dot" style="background:#012169"></div>
         <div class="key-date-info"><div class="key-date-label">Autumn Budget</div><div class="key-date-sub">Est. Oct/Nov 2026 · OBR forecasts due</div></div>
-        <div class="key-date-days" style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">~7 months</div>
+        <div style="display:flex;align-items:center;gap:8px"><div style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">~7 months</div><span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">🔍</span></div>
       </div>
-      <div class="key-date-row" style="border-bottom:none">
+      <div class="key-date-row" style="border-bottom:none;cursor:pointer" onclick="showMilestoneSearch('UK next general election 2029 date', this)" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
         <div class="key-date-dot" style="background:#E4003B"></div>
         <div class="key-date-info"><div class="key-date-label">Next General Election deadline</div><div class="key-date-sub">No later than 2 May 2029</div></div>
-        <div class="key-date-days" id="kd-ge"></div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="key-date-days" id="kd-ge"></div><span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">🔍</span></div>
       </div>
     </div>
 
@@ -1809,12 +1809,12 @@ function showMilestoneSearch(text, el) {
   }
 
   var sources = [
-    {label:'Google',   url:'https://www.google.com/search?q=',                      bg:'#4285F4', svg:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>'},
-    {label:'X / Twitter', url:'https://x.com/search?q=',                           bg:'#000',    svg:'<svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'},
-    {label:'YouTube',  url:'https://www.youtube.com/results?search_query=',         bg:'#FF0000', svg:'<svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>'},
-    {label:'BBC News', url:'https://www.bbc.co.uk/search?q=',                       bg:'#BB1919', svg:'<svg viewBox="0 0 60 24" fill="white" xmlns="http://www.w3.org/2000/svg"><rect width="18" height="24" rx="2"/><rect x="21" width="18" height="24" rx="2"/><rect x="42" width="18" height="24" rx="2"/><text x="9" y="17" text-anchor="middle" font-size="11" font-weight="900" font-family="Arial">B</text><text x="30" y="17" text-anchor="middle" font-size="11" font-weight="900" font-family="Arial">B</text><text x="51" y="17" text-anchor="middle" font-size="11" font-weight="900" font-family="Arial">C</text></svg>'},
-    {label:'GB News',  url:'https://www.gbnews.com/search?q=',                      bg:'#1a1a2e', svg:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="white" stroke-width="2"/></svg>'},
-    {label:'Substack', url:'https://substack.com/search?query=',                    bg:'#FF6719', svg:'<svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/></svg>'},
+    {label:'Google',      url:'https://www.google.com/search?q=',                 bg:'#fff',    svg:'<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/><path d="M12 12.25h5.92c.07.47.08.94.08 1.4 0 3.35-1.2 6.17-3.28 8.09h-2.72v-2.77c1.17-.78 1.95-1.94 2.21-3.31H12v-3.41z" fill="#4285F4"/></svg>'},
+    {label:'X / Twitter', url:'https://x.com/search?q=',                          bg:'#000',    svg:'<svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'},
+    {label:'YouTube',     url:'https://www.youtube.com/results?search_query=',    bg:'#FF0000', svg:'<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814z" fill="white"/><polygon points="9.545,15.568 15.818,12 9.545,8.432" fill="#FF0000"/></svg>'},
+    {label:'BBC News',    url:'https://www.bbc.co.uk/search?q=',                  bg:'#BB1919', svg:'<svg viewBox="0 0 36 16" xmlns="http://www.w3.org/2000/svg"><rect width="10" height="16" rx="1.5" fill="white"/><rect x="13" width="10" height="16" rx="1.5" fill="white"/><rect x="26" width="10" height="16" rx="1.5" fill="white"/><text x="5" y="12" text-anchor="middle" font-size="9" font-weight="900" font-family="Arial,sans-serif" fill="#BB1919">B</text><text x="18" y="12" text-anchor="middle" font-size="9" font-weight="900" font-family="Arial,sans-serif" fill="#BB1919">B</text><text x="31" y="12" text-anchor="middle" font-size="9" font-weight="900" font-family="Arial,sans-serif" fill="#BB1919">C</text></svg>'},
+    {label:'GB News',     url:'https://www.gbnews.com/search?q=',                 bg:'#0a0a23', svg:'<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><text x="12" y="17" text-anchor="middle" font-size="11" font-weight="900" font-family="Arial,sans-serif" fill="white">GB</text></svg>'},
+    {label:'Substack',    url:'https://substack.com/search?query=',               bg:'#FF6719', svg:'<svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/></svg>'},
   ];
 
   var bg = document.createElement('div');
@@ -1855,7 +1855,7 @@ function showMilestoneSearch(text, el) {
           + 'border:1.5px solid var(--md-sys-color-outline-variant);"'
           + 'ontouchstart="this.style.transform=\'scale(0.96)\';this.style.opacity=\'0.85\'" '
           + 'ontouchend="this.style.transform=\'scale(1)\';this.style.opacity=\'1\'">'
-          + '<div style="width:36px;height:36px;border-radius:10px;background:' + s.bg + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:6px;box-sizing:border-box">'
+          + '<div style="width:36px;height:36px;border-radius:10px;background:' + s.bg + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:5px;box-sizing:border-box;border:1px solid rgba(0,0,0,0.08)">'
           + s.svg
           + '</div>'
           + '<span>' + s.label + '</span>'
