@@ -807,7 +807,7 @@ body {
     <div class="card" style="border-top:4px solid var(--md-sys-color-secondary)" id="milestones-list"></div>
 
 
-    <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);padding:2px 4px 12px">BPC members · RB = Restore Britain (prompted only)</div>
+    <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);padding:2px 4px 12px">BPC members · Restore Britain prompted only</div>
   </div>
 
   <!-- ELECTIONS -->
@@ -1221,6 +1221,22 @@ body {
 <script>
 const WORKER = 'https://throbbing-base-05b6.craighow8.workers.dev';
 const APP_TOKEN = 'afc1e6a1834e52b57a583ad850daeb3e5d41440952946f594b20fb3c9dc96542';
+
+// ── Central party registry — single source of truth for names, abbrs, colours ──
+const PARTY = {
+  'Reform UK':       {abbr:'REF', short:'Reform',         color:'#12B7D4'},
+  'Labour':          {abbr:'LAB', short:'Labour',         color:'#E4003B'},
+  'Conservative':    {abbr:'CON', short:'Con',            color:'#0087DC'},
+  'Green':           {abbr:'GRN', short:'Green',          color:'#02A95B'},
+  'Lib Dem':         {abbr:'LD',  short:'Lib Dem',        color:'#FAA61A'},
+  'SNP':             {abbr:'SNP', short:'SNP',            color:'#C4922A'},
+  'Restore Britain': {abbr:'RB',  short:'Restore Britain',color:'#1a4a9e'},
+  'Plaid Cymru':     {abbr:'PC',  short:'Plaid',          color:'#3F8428'},
+  'Other':           {abbr:'OTH', short:'Other',          color:'#6b7280'},
+};
+function partyColor(name) { return (PARTY[name] || {}).color || '#6b7280'; }
+function partyShort(name) { return (PARTY[name] || {}).short || name; }
+function partyAbbr(name)  { return (PARTY[name] || {}).abbr  || name; }
 
 const D = {
   fetchDate: "14 Mar 2026",
@@ -2354,12 +2370,12 @@ window.addEventListener('resize', () => {
 // ── Render Demographics ──
 function renderAge() {
   const parties = [
-    {key:'REF',label:'Ref UK',color:'#12B7D4'},
-    {key:'GRN',label:'Green',color:'#02A95B'},
-    {key:'LAB',label:'Labour',color:'#E4003B'},
-    {key:'CON',label:'Con',color:'#0087DC'},
-    {key:'LD',label:'LD',color:'#FAA61A'},
-    {key:'SNP',label:'SNP',color:'#C4922A'},
+    {key:'REF', label:partyShort('Reform UK'),    color:partyColor('Reform UK')},
+    {key:'GRN', label:partyShort('Green'),        color:partyColor('Green')},
+    {key:'LAB', label:partyShort('Labour'),       color:partyColor('Labour')},
+    {key:'CON', label:partyShort('Conservative'), color:partyColor('Conservative')},
+    {key:'LD',  label:partyShort('Lib Dem'),      color:partyColor('Lib Dem')},
+    {key:'SNP', label:partyShort('SNP'),          color:partyColor('SNP')},
   ];
   function bars(elId, groups) {
     document.getElementById(elId).innerHTML = groups.map(g => {
@@ -2424,12 +2440,12 @@ function renderAge() {
     {label:'Mixed/Other',   REF:18,GRN:26,LAB:24,CON:12,LD:14},
   ]);
   var nvData = [
-        {label:'Reform UK',       color:'#12B7D4', pct:32},
-        {label:'Restore Britain', color:'#1a4a9e', pct:18},
-        {label:'Green',           color:'#02A95B', pct:16},
-        {label:'Labour',          color:'#E4003B', pct:14},
-        {label:'Conservative',    color:'#0087DC', pct:10},
-        {label:'Lib Dem',         color:'#FAA61A', pct:6},
+        {label:partyShort('Reform UK'),       color:partyColor('Reform UK'), pct:32},
+        {label:partyShort('Restore Britain'), color:partyColor('Restore Britain'), pct:18},
+        {label:partyShort('Green'),           color:partyColor('Green'), pct:16},
+        {label:partyShort('Labour'),          color:partyColor('Labour'), pct:14},
+        {label:partyShort('Conservative'),    color:partyColor('Conservative'), pct:10},
+        {label:partyShort('Lib Dem'),         color:partyColor('Lib Dem'), pct:6},
       ];
   var nvMax = Math.max.apply(null, nvData.map(function(p){return p.pct;}));
   document.getElementById('nonvoter-content').innerHTML =
@@ -2459,12 +2475,12 @@ function renderAge() {
 // ── Render Scotland ──
 function renderScotland() {
   var parties = [
-    {key:'SNP', label:'SNP',     color:'#C4922A'},
-    {key:'REF', label:'Reform',  color:'#12B7D4'},
-    {key:'LAB', label:'Labour',  color:'#E4003B'},
-    {key:'CON', label:'Con',     color:'#0087DC'},
-    {key:'LD',  label:'LD',      color:'#FAA61A'},
-    {key:'GRN', label:'Green',   color:'#02A95B'},
+    {key:'SNP', label:partyShort('SNP'),          color:partyColor('SNP')},
+    {key:'REF', label:partyShort('Reform UK'),     color:partyColor('Reform UK')},
+    {key:'LAB', label:partyShort('Labour'),        color:partyColor('Labour')},
+    {key:'CON', label:partyShort('Conservative'),  color:partyColor('Conservative')},
+    {key:'LD',  label:partyShort('Lib Dem'),       color:partyColor('Lib Dem')},
+    {key:'GRN', label:partyShort('Green'),         color:partyColor('Green')},
   ];
 
   function makeCard(title, accentColor, data, note) {
@@ -2488,19 +2504,19 @@ function renderScotland() {
   }
 
   var holyroodData = [
-    {label:'SNP',     color:'#C4922A', pct:35},
-    {label:'Reform',  color:'#12B7D4', pct:19},
-    {label:'Labour',  color:'#E4003B', pct:16},
-    {label:'Con',     color:'#0087DC', pct:10},
-    {label:'LD',      color:'#FAA61A', pct:10},
-    {label:'Green',   color:'#02A95B', pct:9},
+    {label:partyShort('SNP'),     color:partyColor('SNP'), pct:35},
+    {label:partyShort('Reform UK'),  color:partyColor('Reform UK'), pct:19},
+    {label:partyShort('Labour'),  color:partyColor('Labour'), pct:16},
+    {label:partyShort('Conservative'),     color:partyColor('Conservative'), pct:10},
+    {label:partyShort('Lib Dem'),      color:partyColor('Lib Dem'), pct:10},
+    {label:partyShort('Green'),   color:partyColor('Green'), pct:9},
   ];
   var westminsterScotData = [
-    {label:'SNP',     color:'#C4922A', pct:33},
-    {label:'Labour',  color:'#E4003B', pct:21},
-    {label:'Reform',  color:'#12B7D4', pct:18},
-    {label:'Con',     color:'#0087DC', pct:12},
-    {label:'LD',      color:'#FAA61A', pct:9},
+    {label:partyShort('SNP'),     color:partyColor('SNP'), pct:33},
+    {label:partyShort('Labour'),  color:partyColor('Labour'), pct:21},
+    {label:partyShort('Reform UK'),  color:partyColor('Reform UK'), pct:18},
+    {label:partyShort('Conservative'),     color:partyColor('Conservative'), pct:12},
+    {label:partyShort('Lib Dem'),      color:partyColor('Lib Dem'), pct:9},
   ];
 
   var contextBox = '<div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;padding:12px 14px;margin-bottom:12px;font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.6">'
@@ -2535,20 +2551,20 @@ function renderWales() {
   }
 
   var seneddData = [
-    {label:'Plaid',   color:'#3F8428', pct:26},
-    {label:'Reform',  color:'#12B7D4', pct:26},
-    {label:'Labour',  color:'#E4003B', pct:20},
-    {label:'Con',     color:'#0087DC', pct:10},
-    {label:'Green',   color:'#02A95B', pct:10},
-    {label:'LD',      color:'#FAA61A', pct:7},
+    {label:partyShort('Plaid Cymru'),   color:partyColor('Plaid Cymru'), pct:26},
+    {label:partyShort('Reform UK'),  color:partyColor('Reform UK'), pct:26},
+    {label:partyShort('Labour'),  color:partyColor('Labour'), pct:20},
+    {label:partyShort('Conservative'),     color:partyColor('Conservative'), pct:10},
+    {label:partyShort('Green'),   color:partyColor('Green'), pct:10},
+    {label:partyShort('Lib Dem'),      color:partyColor('Lib Dem'), pct:7},
   ];
   var westminsterWalesData = [
-    {label:'Plaid',   color:'#3F8428', pct:29},
-    {label:'Reform',  color:'#12B7D4', pct:25},
-    {label:'Labour',  color:'#E4003B', pct:13},
-    {label:'Con',     color:'#0087DC', pct:12},
-    {label:'Green',   color:'#02A95B', pct:12},
-    {label:'LD',      color:'#FAA61A', pct:6},
+    {label:partyShort('Plaid Cymru'),   color:partyColor('Plaid Cymru'), pct:29},
+    {label:partyShort('Reform UK'),  color:partyColor('Reform UK'), pct:25},
+    {label:partyShort('Labour'),  color:partyColor('Labour'), pct:13},
+    {label:partyShort('Conservative'),     color:partyColor('Conservative'), pct:12},
+    {label:partyShort('Green'),   color:partyColor('Green'), pct:12},
+    {label:partyShort('Lib Dem'),      color:partyColor('Lib Dem'), pct:6},
   ];
 
   var contextBox = '<div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;padding:12px 14px;margin-bottom:12px;font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.6">'
@@ -2775,12 +2791,12 @@ async function leaderAITake(li) {
 // ── Render Poll Cards ──
 function renderPollCards() {
   var KEYS = [
-    {k:'ref', label:'Reform UK', abbr:'Ref', color:'#12B7D4'},
-    {k:'lab', label:'Labour',    abbr:'Lab', color:'#E4003B'},
-    {k:'con', label:'Con',       abbr:'Con', color:'#0087DC'},
-    {k:'grn', label:'Green',     abbr:'Grn', color:'#02A95B'},
-    {k:'ld',  label:'Lib Dem',   abbr:'LD',  color:'#FAA61A'},
-    {k:'rb',  label:'RB',        abbr:'RB',  color:'#1a4a9e'}
+    {k:'ref', label:partyShort('Reform UK'),       abbr:partyAbbr('Reform UK'),     color:partyColor('Reform UK')},
+    {k:'lab', label:partyShort('Labour'),           abbr:partyAbbr('Labour'),         color:partyColor('Labour')},
+    {k:'con', label:partyShort('Conservative'),     abbr:partyAbbr('Conservative'),   color:partyColor('Conservative')},
+    {k:'grn', label:partyShort('Green'),            abbr:partyAbbr('Green'),          color:partyColor('Green')},
+    {k:'ld',  label:partyShort('Lib Dem'),          abbr:partyAbbr('Lib Dem'),        color:partyColor('Lib Dem')},
+    {k:'rb',  label:partyShort('Restore Britain'),  abbr:partyAbbr('Restore Britain'),color:partyColor('Restore Britain')}
   ];
 
   // One row per poll — each a mini seat-projection style bar
@@ -3042,8 +3058,8 @@ var MIGRATION = {
   ],
   byVisa: [
     {type:'Study',        n:440000, color:'#6366f1'},
-    {type:'Skilled Work', n:175000, color:'#12B7D4'},
-    {type:'Family',       n:68000,  color:'#FAA61A'},
+    {type:'Skilled Work', n:175000, color:partyColor('Reform UK')},
+    {type:'Family',       n:68000,  color:partyColor('Lib Dem')},
     {type:'Asylum',       n:96000,  color:'#f97316'},
     {type:'Other',        n:35000,  color:'#6b7280'},
   ],
@@ -3830,13 +3846,13 @@ function drawDemoCard(ctx, title, subtitle, groups, parties, maxScale) {
 }
 
 var DEMO_PARTIES = [
-  {key:'REF', label:'Reform', color:'#12B7D4'},
-  {key:'GRN', label:'Green',  color:'#02A95B'},
-  {key:'LAB', label:'Labour', color:'#E4003B'},
-  {key:'CON', label:'Con',    color:'#0087DC'},
-  {key:'LD',  label:'LD',     color:'#FAA61A'},
+  {key:'REF', label:partyShort('Reform UK'),    color:partyColor('Reform UK')},
+  {key:'GRN', label:partyShort('Green'),        color:partyColor('Green')},
+  {key:'LAB', label:partyShort('Labour'),       color:partyColor('Labour')},
+  {key:'CON', label:partyShort('Conservative'), color:partyColor('Conservative')},
+  {key:'LD',  label:partyShort('Lib Dem'),      color:partyColor('Lib Dem')},
 ];
-var DEMO_PARTIES_SNP = DEMO_PARTIES.concat([{key:'SNP', label:'SNP', color:'#C4922A'}]);
+var DEMO_PARTIES_SNP = DEMO_PARTIES.concat([{key:'SNP', label:partyShort('SNP'), color:partyColor('SNP')}]);
 
 function drawSocialClassCard(ctx) {
   drawDemoCard(ctx, 'Voting by Social Class', null, [
@@ -3880,19 +3896,19 @@ function drawEthnicityCard(ctx) {
 function drawScotlandCard(ctx) {
   var PAD = 32;
   var holyrood = [
-    {label:'SNP',    color:'#C4922A', pct:35},
-    {label:'Reform', color:'#12B7D4', pct:19},
-    {label:'Labour', color:'#E4003B', pct:16},
-    {label:'Con',    color:'#0087DC', pct:10},
-    {label:'LD',     color:'#FAA61A', pct:10},
-    {label:'Green',  color:'#02A95B', pct:9},
+    {label:partyShort('SNP'),    color:partyColor('SNP'), pct:35},
+    {label:partyShort('Reform UK'), color:partyColor('Reform UK'), pct:19},
+    {label:partyShort('Labour'), color:partyColor('Labour'), pct:16},
+    {label:partyShort('Conservative'),    color:partyColor('Conservative'), pct:10},
+    {label:partyShort('Lib Dem'),     color:partyColor('Lib Dem'), pct:10},
+    {label:partyShort('Green'),  color:partyColor('Green'), pct:9},
   ];
   var westminster = [
-    {label:'SNP',    color:'#C4922A', pct:33},
-    {label:'Labour', color:'#E4003B', pct:21},
-    {label:'Reform', color:'#12B7D4', pct:18},
-    {label:'Con',    color:'#0087DC', pct:12},
-    {label:'LD',     color:'#FAA61A', pct:9},
+    {label:partyShort('SNP'),    color:partyColor('SNP'), pct:33},
+    {label:partyShort('Labour'), color:partyColor('Labour'), pct:21},
+    {label:partyShort('Reform UK'), color:partyColor('Reform UK'), pct:18},
+    {label:partyShort('Conservative'),    color:partyColor('Conservative'), pct:12},
+    {label:partyShort('Lib Dem'),     color:partyColor('Lib Dem'), pct:9},
   ];
 
   ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
@@ -3935,20 +3951,20 @@ function drawScotlandCard(ctx) {
 function drawWalesCard(ctx) {
   var PAD = 32;
   var senedd = [
-    {label:'Plaid',  color:'#3F8428', pct:26},
-    {label:'Reform', color:'#12B7D4', pct:26},
-    {label:'Labour', color:'#E4003B', pct:20},
-    {label:'Con',    color:'#0087DC', pct:10},
-    {label:'Green',  color:'#02A95B', pct:10},
-    {label:'LD',     color:'#FAA61A', pct:7},
+    {label:partyShort('Plaid Cymru'),  color:partyColor('Plaid Cymru'), pct:26},
+    {label:partyShort('Reform UK'), color:partyColor('Reform UK'), pct:26},
+    {label:partyShort('Labour'), color:partyColor('Labour'), pct:20},
+    {label:partyShort('Conservative'),    color:partyColor('Conservative'), pct:10},
+    {label:partyShort('Green'),  color:partyColor('Green'), pct:10},
+    {label:partyShort('Lib Dem'),     color:partyColor('Lib Dem'), pct:7},
   ];
   var westminster = [
-    {label:'Plaid',  color:'#3F8428', pct:29},
-    {label:'Reform', color:'#12B7D4', pct:25},
-    {label:'Labour', color:'#E4003B', pct:13},
-    {label:'Con',    color:'#0087DC', pct:12},
-    {label:'Green',  color:'#02A95B', pct:12},
-    {label:'LD',     color:'#FAA61A', pct:6},
+    {label:partyShort('Plaid Cymru'),  color:partyColor('Plaid Cymru'), pct:29},
+    {label:partyShort('Reform UK'), color:partyColor('Reform UK'), pct:25},
+    {label:partyShort('Labour'), color:partyColor('Labour'), pct:13},
+    {label:partyShort('Conservative'),    color:partyColor('Conservative'), pct:12},
+    {label:partyShort('Green'),  color:partyColor('Green'), pct:12},
+    {label:partyShort('Lib Dem'),     color:partyColor('Lib Dem'), pct:6},
   ];
 
   ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
@@ -3989,12 +4005,12 @@ function drawWalesCard(ctx) {
 function drawNonVotersCard(ctx) {
   var PAD = 32;
   var data = [
-    {label:'Reform UK',       color:'#12B7D4', pct:32},
-    {label:'Restore Britain', color:'#1a4a9e', pct:18},
-    {label:'Green',           color:'#02A95B', pct:16},
-    {label:'Labour',          color:'#E4003B', pct:14},
-    {label:'Conservative',    color:'#0087DC', pct:10},
-    {label:'Lib Dem',         color:'#FAA61A', pct:6},
+    {label:partyShort('Reform UK'),       color:partyColor('Reform UK'), pct:32},
+    {label:partyShort('Restore Britain'), color:partyColor('Restore Britain'), pct:18},
+    {label:partyShort('Green'),           color:partyColor('Green'), pct:16},
+    {label:partyShort('Labour'),          color:partyColor('Labour'), pct:14},
+    {label:partyShort('Conservative'),    color:partyColor('Conservative'), pct:10},
+    {label:partyShort('Lib Dem'),         color:partyColor('Lib Dem'), pct:6},
   ];
   var maxPct = 32;
 
@@ -4048,11 +4064,11 @@ function drawAgeCard(ctx) {
     {label:'65+',   REF:31, GRN:8,  LAB:15, CON:22, LD:14},
   ];
   var parties = [
-    {key:'REF', label:'Reform', color:'#12B7D4'},
-    {key:'GRN', label:'Green',  color:'#02A95B'},
-    {key:'LAB', label:'Labour', color:'#E4003B'},
-    {key:'CON', label:'Con',    color:'#0087DC'},
-    {key:'LD',  label:'LD',     color:'#FAA61A'},
+    {key:'REF', label:partyShort('Reform UK'), color:partyColor('Reform UK')},
+    {key:'GRN', label:partyShort('Green'),  color:partyColor('Green')},
+    {key:'LAB', label:partyShort('Labour'), color:partyColor('Labour')},
+    {key:'CON', label:partyShort('Conservative'),    color:partyColor('Conservative')},
+    {key:'LD',  label:partyShort('Lib Dem'),     color:partyColor('Lib Dem')},
   ];
 
   ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
@@ -4104,12 +4120,12 @@ function drawAgeCard(ctx) {
 function drawRecentPollsCard(ctx) {
   var PAD = 28;
   var KEYS = [
-    {k:'ref', label:'Ref', color:'#12B7D4'},
-    {k:'lab', label:'Lab', color:'#E4003B'},
-    {k:'con', label:'Con', color:'#0087DC'},
-    {k:'grn', label:'Grn', color:'#02A95B'},
-    {k:'ld',  label:'LD',  color:'#FAA61A'},
-    {k:'rb',  label:'RB',  color:'#1a4a9e'},
+    {k:'ref', label:partyShort('Reform UK'),      color:partyColor('Reform UK')},
+    {k:'lab', label:partyShort('Labour'),          color:partyColor('Labour')},
+    {k:'con', label:partyShort('Conservative'),             color:partyColor('Conservative')},
+    {k:'grn', label:partyShort('Green'),           color:partyColor('Green')},
+    {k:'ld',  label:partyShort('Lib Dem'),         color:partyColor('Lib Dem')},
+    {k:'rb',  label:partyShort('Restore Britain'), color:partyColor('Restore Britain')},
   ];
   ctx.fillStyle = CARD_BG; ctx.fillRect(0, 0, CARD_W, CARD_H);
   canvasHeader(ctx, 'Recent Polls', 'Individual pollster results  ·  ' + D.fetchDate);
@@ -4154,11 +4170,11 @@ function drawRecentPollsCard(ctx) {
 function drawBettingCard(ctx) {
   var PAD = 32;
   var odds = [
-    {name:'Reform UK',    color:'#12B7D4', odds:'6/4',  fav:true},
-    {name:'Labour',       color:'#E4003B', odds:'9/4',  fav:false},
-    {name:'Conservative', color:'#0087DC', odds:'8/1',  fav:false},
-    {name:'Green',        color:'#02A95B', odds:'14/1', fav:false},
-    {name:'Lib Dem',      color:'#FAA61A', odds:'20/1', fav:false},
+    {name:'Reform UK',    color:partyColor('Reform UK'), odds:'6/4',  fav:true},
+    {name:'Labour',       color:partyColor('Labour'), odds:'9/4',  fav:false},
+    {name:'Conservative', color:partyColor('Conservative'), odds:'8/1',  fav:false},
+    {name:'Green',        color:partyColor('Green'), odds:'14/1', fav:false},
+    {name:'Lib Dem',      color:partyColor('Lib Dem'), odds:'20/1', fav:false},
   ];
   function impliedProb(str) {
     var parts = str.split('/'), n = parseInt(parts[0]), d = parseInt(parts[1]);
