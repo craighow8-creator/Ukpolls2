@@ -2054,44 +2054,96 @@ function openFPTPSheet() {
   }).join('');
 
   sheet.innerHTML =
-    // Handle bar
+    // Handle
     '<div style="display:flex;justify-content:center;padding:12px 0 4px">'
     + '<div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>'
     + '</div>'
-    // Title
-    + '<div style="padding:8px 24px 0">'
-    + '<div style="font-size:24px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:-0.5px;margin-bottom:12px">🏛 What is FPTP?</div>'
-    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:14px;padding:14px 16px;margin-bottom:14px">'
-    + '<div style="font-size:13px;font-weight:900;color:var(--md-sys-color-primary);letter-spacing:0.5px;margin-bottom:6px">📌 THE 2024 PROOF</div>'
-    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.65">Labour won <strong>33.7% of votes</strong> — but <strong>63% of seats</strong>. Reform UK got <strong>14.3% of votes</strong> — but just <strong>5 seats</strong> out of 650. The Greens got <strong>6.7%</strong> — 1 seat. That\'s FPTP.</div>'
+
+    // Title block
+    + '<div style="padding:8px 24px 20px">'
+    + '<div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Explainer</div>'
+    + '<div style="font-size:26px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:-0.5px;line-height:1.2;margin-bottom:12px">First Past<br>The Post</div>'
+    + '<div style="font-size:16px;color:var(--md-sys-color-on-surface-variant);line-height:1.7">In each of the UK\'s <strong style="color:var(--md-sys-color-on-surface)">650 constituencies</strong>, only the candidate with the most votes wins a seat. Second place gets nothing — even by one vote. The total national vote share is irrelevant.</div>'
     + '</div>'
-    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);line-height:1.7;margin-bottom:16px">Under First Past The Post, only the winner in each of the 650 constituencies gets an MP. Come second by one vote and you get nothing. This means a party whose supporters are <strong>spread thinly across many seats</strong> wins almost nothing, while a party whose vote is <strong>concentrated in the right places</strong> can win a majority on a minority of votes.<br><br>It also means that millions of votes are effectively wasted — cast for parties or candidates who don\'t win locally, they have zero influence on the result.</div>'
+
+    // 2024 real-world example
+    + '<div style="margin:0 16px 16px;background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);overflow:hidden">'
+    + '<div style="padding:14px 18px 10px;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
+    + '<div style="font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:2px">2024 General Election — real result</div>'
     + '</div>'
-    // FPTP bar
+    + '<div style="display:flex;flex-direction:column;gap:0">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
+    + '<div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#E4003B;flex-shrink:0"></div><span style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface)">Labour</span></div>'
+    + '<div style="text-align:right"><span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">33.7% of votes</span><span style="font-size:15px;font-weight:900;color:#E4003B;margin-left:12px">63% of seats</span></div>'
+    + '</div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
+    + '<div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#12B7D4;flex-shrink:0"></div><span style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface)">Reform UK</span></div>'
+    + '<div style="text-align:right"><span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">14.3% of votes</span><span style="font-size:15px;font-weight:900;color:#12B7D4;margin-left:12px">5 seats</span></div>'
+    + '</div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px">'
+    + '<div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:3px;background:#02A95B;flex-shrink:0"></div><span style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface)">Green</span></div>'
+    + '<div style="text-align:right"><span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">6.7% of votes</span><span style="font-size:15px;font-weight:900;color:#02A95B;margin-left:12px">1 seat</span></div>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+
+    // For and Against — two columns
+    + '<div style="margin:0 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    // For
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:16px;border-top:3px solid #1a7f37">'
+    + '<div style="font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:#1a7f37;margin-bottom:12px">Case for</div>'
+    + '<div style="display:flex;flex-direction:column;gap:10px">'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Stable governments.</strong> Usually produces clear majorities — decisive, fast, accountable.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Local link.</strong> Every voter has a named MP they can hold directly accountable.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Simple.</strong> One vote, clear winner, result usually known by midnight.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Filters extremes.</strong> Fringe parties struggle to win seats without concentrated local support.</div>'
+    + '</div>'
+    + '</div>'
+    // Against
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:16px;border-top:3px solid var(--md-sys-color-secondary)">'
+    + '<div style="font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-secondary);margin-bottom:12px">Case against</div>'
+    + '<div style="display:flex;flex-direction:column;gap:10px">'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Wasted votes.</strong> Millions of votes have zero effect on the result.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Safe seats.</strong> Much of the country is ignored — campaigns focus on a few swing seats.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Disproportionate.</strong> Majorities on minorities of votes. Seats rarely reflect vote share.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Two-party bias.</strong> Historically favours large parties; squeezes smaller ones.</div>'
+    + '</div>'
+    + '</div>'
+    + '</div>'
+
+    // Current projection
     + '<div style="padding:0 16px 12px">'
-    + '<div style="font-size:11px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">🏛 Current FPTP result</div>'
+    + '<div style="font-size:11px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:8px">Current projection — FPTP</div>'
     + buildBar(withPR, true, 64)
     + '</div>'
+
     // Divider
     + '<div style="display:flex;align-items:center;gap:10px;padding:0 16px;margin:4px 0 12px">'
     + '<div style="flex:1;height:1px;background:var(--md-sys-color-outline-variant)"></div>'
-    + '<div style="font-size:11px;font-weight:800;letter-spacing:0.8px;color:var(--md-sys-color-on-surface-variant);text-transform:uppercase">vs if seats matched votes</div>'
+    + '<div style="font-size:11px;font-weight:800;letter-spacing:0.8px;color:var(--md-sys-color-on-surface-variant);text-transform:uppercase;padding:0 8px">vs if seats matched votes</div>'
     + '<div style="flex:1;height:1px;background:var(--md-sys-color-outline-variant)"></div>'
     + '</div>'
+
     // PR bar
     + '<div style="padding:0 16px 12px">'
-    + '<div style="font-size:11px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">🗳 Proportional representation (PR)</div>'
+    + '<div style="font-size:11px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:8px">Proportional representation (PR)</div>'
     + buildBar(withPR, false, 64)
     + '</div>'
-    // Gain/loss table
+
+    // Gain/loss
     + '<div style="padding:0 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:16px">'
-    + '<div style="font-size:13px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:0.3px;margin-bottom:2px">Who wins and loses under PR?</div>'
+    + '<div style="font-size:13px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:0.3px;margin-bottom:2px">Who gains and loses under PR?</div>'
     + gainLoss
     + '</div>'
-    // Explainer tonal card
-    + '<div style="margin:0 16px 24px;background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-large);padding:16px">'
-    + '<div style="font-size:13px;font-weight:900;color:var(--md-sys-color-primary);letter-spacing:0.5px;margin-bottom:8px">⚡ WHAT THIS MEANS NOW</div>'
-    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.7">Reform UK at <strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.pct||0) + '%</strong> projects to <strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.seats||0) + ' seats</strong> — a majority — because their vote is now efficiently distributed across winnable English seats. Labour at <strong>' + (D.parties.find(function(p){return p.name==="Labour";})?.pct||0) + '%</strong> projects just <strong>~' + (D.parties.find(function(p){return p.name==="Labour";})?.seats||0) + ' seats</strong> — their core vote is piling up in safe northern cities, wasting millions of votes. The Greens at <strong>' + (D.parties.find(function(p){return p.name==="Green";})?.pct||0) + '%</strong> get <strong>~' + (D.parties.find(function(p){return p.name==="Green";})?.seats||0) + ' seats</strong> because their support is still spread too thinly outside a few strongholds.</div>'
+
+    // Current context — neutral
+    + '<div style="margin:0 16px 28px;background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:16px">'
+    + '<div style="font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px">At current polling</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.75">'
+    + 'Reform UK (<strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.pct||0) + '%</strong>) projects <strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.seats||0) + ' seats</strong> — a majority — because their vote is efficiently spread across English constituencies. '
+    + 'Labour (<strong>' + (D.parties.find(function(p){return p.name==="Labour";})?.pct||0) + '%</strong>) projects just <strong>~' + (D.parties.find(function(p){return p.name==="Labour";})?.seats||0) + ' seats</strong> — their vote is concentrated in safe urban seats. '
+    + 'Under PR, both parties would have far fewer seats. Whether that is fairer depends on which case above you find more persuasive.'
+    + '</div>'
     + '</div>';
 
   document.body.appendChild(sheet);
