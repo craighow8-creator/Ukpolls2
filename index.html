@@ -791,7 +791,7 @@ body {
           <span style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Tap to explore · What is FPTP?</span>
           <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--md-sys-color-on-surface-variant)"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
         </div>
-        <button onclick="event.stopPropagation();fetchECSeats(this)" style="background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border:none;border-radius:99px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;flex-shrink:0;transition:background var(--md-motion-short) var(--md-motion-standard)">🔄 Refresh seats</button>
+        <button onclick="event.stopPropagation();fetchECSeats(this)" style="background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;flex-shrink:0;transition:background var(--md-motion-short) var(--md-motion-standard),transform var(--md-motion-short) var(--md-motion-expressive)">🔄 Refresh seats</button>
       </div>
     </div>
     <div style="background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;margin-bottom:16px">
@@ -1039,9 +1039,9 @@ body {
   <div class="page" id="page-vote">
     <div class="stitle">Your Vote</div>
     <div class="ssub">How would you vote today?</div>
-    <div style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--md-sys-color-tonal-navy);border-radius:14px;padding:10px 14px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;background:#FAA61A15;border-radius:14px;padding:10px 14px;margin-bottom:16px">
       <span style="font-size:15px">🇬🇧</span>
-      <span style="font-size:15px;color:var(--md-sys-color-primary);font-weight:700">One vote per device · Change anytime · Results update live</span>
+      <span style="font-size:15px;color:#a06200;font-weight:700">One vote per device · Change anytime · Results update live</span>
     </div>
     <div id="vote-section">
       <div id="vote-buttons" style="margin-bottom:8px"></div>
@@ -1052,7 +1052,7 @@ body {
       <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:15px;padding:20px">Loading results...</div>
     </div>
 
-    <div class="sec-label" style="margin-top:20px">🗳 Poll of the Day</div>
+    <div style="font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin:22px 0 10px 2px;text-align:center">🗳 Poll of the Day</div>
     <div class="card" style="border-top:4px solid var(--md-sys-color-secondary);padding:18px" id="potd-card">
       <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:15px;padding:12px">Loading...</div>
     </div>
@@ -4642,7 +4642,7 @@ async function shareLeader(li) {
 
 // ── Electoral Calculus live seat fetch ──
 async function fetchECSeats(btn) {
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Fetching...'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Fetching...'; }
   try {
     var resp = await fetch(WORKER + '/ec-seats', {
       headers: { 'X-App-Token': APP_TOKEN }
@@ -4650,42 +4650,35 @@ async function fetchECSeats(btn) {
     var data = await resp.json();
     if (data.error) throw new Error(data.error);
 
-    // Update D.parties seat counts from live EC data
     var updated = [];
     Object.entries(data.seats).forEach(function([partyName, info]) {
       var party = D.parties.find(function(p) { return p.name === partyName; });
-      if (party && info.predSeats !== undefined) {
-        if (info.predSeats !== party.seats) {
-          updated.push(partyName + ': ' + party.seats + ' → ' + info.predSeats);
-          party.seats = info.predSeats;
-        }
+      if (party && info.predSeats !== undefined && info.predSeats !== party.seats) {
+        updated.push(partyName + ' to ' + info.predSeats);
+        party.seats = info.predSeats;
       }
     });
 
-    // Re-render to reflect new seat numbers
+    // Re-render recreates the button so grab fresh ref after
     renderPolls();
 
-    // Update methodology box date if present
-    var methText = document.querySelector('#page-polls .card-tonal, #page-polls [style*="tonal-navy"]');
-    if (methText && data.updateDate) {
-      methText.innerHTML = methText.innerHTML.replace(/\w+ \d{4}(?= MRP model|\)|,)/, data.updateDate);
+    var freshBtn = document.querySelector('#seat-bar-card button');
+    if (freshBtn) {
+      freshBtn.textContent = 'Done';
+      freshBtn.disabled = true;
+      setTimeout(function() {
+        freshBtn.textContent = '🔄 Refresh seats';
+        freshBtn.disabled = false;
+      }, 3000);
     }
 
-    var msg = data.cached
-      ? '✓ Cached · EC ' + (data.updateDate || 'up to date')
-      : updated.length > 0
-        ? '✓ ' + updated.join(' · ')
-        : '✓ No change · EC ' + (data.updateDate || 'up to date');
+    var d = (data.updateDate || '').replace(/(\d+)\s+(\w{3})\w*\s+(\d{4})/, '$1 $2 $3');
+    showToast(updated.length > 0 ? '🏛 Seats updated · ' + d : '🏛 EC current · ' + d);
 
-    showToast('🏛 ' + msg);
-
-    if (btn) {
-      btn.textContent = '✓ Updated';
-      setTimeout(function() { btn.textContent = '🔄 Refresh seats'; btn.disabled = false; }, 3000);
-    }
   } catch(err) {
-    showToast('⚠️ EC fetch failed: ' + err.message);
-    if (btn) { btn.textContent = '⚠️ Retry'; btn.disabled = false; }
+    showToast('⚠️ EC fetch failed');
+    var freshBtn = document.querySelector('#seat-bar-card button');
+    if (freshBtn) { freshBtn.textContent = '⚠️ Retry'; freshBtn.disabled = false; }
   }
 }
 </script>
