@@ -786,9 +786,12 @@ body {
     <div id="seat-bar-card" onclick="openFPTPSheet()" style="cursor:pointer;background:var(--md-sys-color-surface);border-radius:24px;padding:16px;margin-bottom:8px;box-shadow:var(--md-elevation-2);border-top:4px solid var(--md-sys-color-primary);active:opacity:0.8">
       <div id="seat-bar-inner" style="display:flex;height:76px;border-radius:16px;overflow:hidden;gap:2px;box-shadow:var(--md-elevation-1);margin-bottom:10px"></div>
       <div id="seat-bar-verdict" style="text-align:center"></div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px">
-        <span style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Tap to explore · What is FPTP?</span>
-        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--md-sys-color-on-surface-variant)"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Tap to explore · What is FPTP?</span>
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--md-sys-color-on-surface-variant)"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+        </div>
+        <button onclick="event.stopPropagation();fetchECSeats(this)" style="background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border:none;border-radius:99px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;flex-shrink:0;transition:background var(--md-motion-short) var(--md-motion-standard)">🔄 Refresh seats</button>
       </div>
     </div>
     <div style="background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;margin-bottom:16px">
@@ -4635,6 +4638,55 @@ async function shareLeader(li) {
     if (!blob) { showToast('Could not build card — try again'); return; }
     await shareBlob(blob, l.name + ' — UK Poll Tracker', 'uk-poll-tracker-leader.png');
   }, 'image/png');
+}
+
+// ── Electoral Calculus live seat fetch ──
+async function fetchECSeats(btn) {
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Fetching...'; }
+  try {
+    var resp = await fetch(WORKER + '/ec-seats', {
+      headers: { 'X-App-Token': APP_TOKEN }
+    });
+    var data = await resp.json();
+    if (data.error) throw new Error(data.error);
+
+    // Update D.parties seat counts from live EC data
+    var updated = [];
+    Object.entries(data.seats).forEach(function([partyName, info]) {
+      var party = D.parties.find(function(p) { return p.name === partyName; });
+      if (party && info.predSeats !== undefined) {
+        if (info.predSeats !== party.seats) {
+          updated.push(partyName + ': ' + party.seats + ' → ' + info.predSeats);
+          party.seats = info.predSeats;
+        }
+      }
+    });
+
+    // Re-render to reflect new seat numbers
+    renderPolls();
+
+    // Update methodology box date if present
+    var methText = document.querySelector('#page-polls .card-tonal, #page-polls [style*="tonal-navy"]');
+    if (methText && data.updateDate) {
+      methText.innerHTML = methText.innerHTML.replace(/\w+ \d{4}(?= MRP model|\)|,)/, data.updateDate);
+    }
+
+    var msg = data.cached
+      ? '✓ Cached · EC ' + (data.updateDate || 'up to date')
+      : updated.length > 0
+        ? '✓ ' + updated.join(' · ')
+        : '✓ No change · EC ' + (data.updateDate || 'up to date');
+
+    showToast('🏛 ' + msg);
+
+    if (btn) {
+      btn.textContent = '✓ Updated';
+      setTimeout(function() { btn.textContent = '🔄 Refresh seats'; btn.disabled = false; }, 3000);
+    }
+  } catch(err) {
+    showToast('⚠️ EC fetch failed: ' + err.message);
+    if (btn) { btn.textContent = '⚠️ Retry'; btn.disabled = false; }
+  }
 }
 </script>
 </body>
