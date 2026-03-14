@@ -1223,18 +1223,18 @@ const WORKER = 'https://throbbing-base-05b6.craighow8.workers.dev';
 const APP_TOKEN = 'afc1e6a1834e52b57a583ad850daeb3e5d41440952946f594b20fb3c9dc96542';
 
 const D = {
-  fetchDate: "13 Mar 2026",
+  fetchDate: "14 Mar 2026",
   parties: [
-    {name:"Reform UK",abbr:"REF",pct:27,change:1,seats:335,color:"#12B7D4"},
+    {name:"Reform UK",abbr:"REF",pct:27,change:0,seats:335,color:"#12B7D4"},
     {name:"Labour",abbr:"LAB",pct:19,change:0,seats:41,color:"#E4003B"},
     {name:"Conservative",abbr:"CON",pct:18,change:0,seats:92,color:"#0087DC"},
-    {name:"Green",abbr:"GRN",pct:15,change:-2,seats:52,color:"#02A95B"},
+    {name:"Green",abbr:"GRN",pct:15,change:0,seats:52,color:"#02A95B"},
     {name:"Lib Dem",abbr:"LD",pct:12,change:0,seats:60,color:"#FAA61A"},
     {name:"SNP",abbr:"SNP",pct:3,change:0,seats:44,color:"#C4922A"},
     {name:"Restore Britain",abbr:"RB",pct:7,change:0,seats:1,color:"#1a4a9e"},
     {name:"Other",abbr:"OTH",pct:5,change:0,seats:null,color:"#6b7280"}
   ],
-  context: "Reform UK leads on ~27% (7-poll avg, 13 Mar 2026). YouGov (9-10 Mar) put Reform on 23%, Conservatives and Greens both on 19% — unusually tight. More in Common (6-9 Mar): Reform 30%, Labour 22%. Greens averaging 15% after post-Gorton bounce fades. Restore Britain surpassed 110,000 paid members by 10 Mar — faster growth than any party in modern UK history, yet receiving almost no mainstream media coverage. Starmer faces sleaze allegations over the Mandelson affair and approval ratings at new lows. Labour scored first-ever council by-election gain from Reform UK (Murton, Durham, 5 Mar). Electoral Calculus MRP: Reform UK 335 seats — projected majority.",
+  context: "Reform UK leads on 27% (7-poll avg, 14 Mar 2026). Averages stable for second consecutive day. Wide pollster spread: More in Common puts Reform at 30%, YouGov 23% — 7pt gap reflects methodological differences. Greens steady at 15% after Gorton bounce fades. Find Out Now (11 Mar) shows Green surge to 21%, Con and Green almost level with Labour in places. Restore Britain on 7% in prompted polls. 47 days to May 1 local elections — Reform's first major electoral test. Starmer approval at record lows. Electoral Calculus MRP: Reform UK 335 seats projected majority.",
   trends: [
     {month:"Sep","Reform UK":28,Labour:22,Conservative:20,"Lib Dem":12,Green:10},
     {month:"Oct","Reform UK":29,Labour:21,Conservative:19,"Lib Dem":12,Green:11},
@@ -1244,24 +1244,31 @@ const D = {
     {month:"Feb","Reform UK":27,Labour:18,Conservative:17,"Lib Dem":13,Green:17},
     {month:"Mar","Reform UK":27,Labour:19,Conservative:18,"Lib Dem":12,Green:15}
   ],
+  polls: [
+    {date:"11 Mar",pollster:"Find Out Now",ref:26,lab:15,con:17,ld:11,grn:21,rb:null},
+    {date:"10-12 Mar",pollster:"Techne",ref:27,lab:17,con:18,ld:14,grn:17,rb:null},
+    {date:"9-10 Mar",pollster:"YouGov",ref:23,lab:17,con:19,ld:14,grn:19,rb:null},
+    {date:"6-10 Mar",pollster:"Focaldata",ref:27,lab:20,con:18,ld:14,grn:13,rb:null},
+    {date:"6-9 Mar",pollster:"More in Common",ref:30,lab:22,con:19,ld:13,grn:11,rb:null},
+    {date:"5 Mar",pollster:"Survation",ref:29,lab:21,con:18,ld:10,grn:12,rb:null},
+    {date:"4-6 Mar",pollster:"Opinium",ref:29,lab:21,con:16,ld:10,grn:14,rb:null},
+  ],
   milestones: [
+    {date:"14 Mar",text:"7-poll avg: Reform 27% (NC), Lab 19% (NC), Con 18% (NC), Green 15% (NC), LD 12% (NC) — averages stable. 47 days to local elections"},
     {date:"13 Mar",text:"7-poll avg: Reform UK 27% (▲1), Green 15% (▼2) — More in Common puts Reform at 30%, highest of current cycle"},
-    {date:"12 Mar",text:"7-poll avg: Reform UK 26% (▼1), Green 17% (▲1) — Con and Green both on 19% in latest YouGov"},
+    {date:"11 Mar",text:"Find Out Now: Green surge to 21%, Reform 26% — Greens within 5pts of Reform in this pollster"},
     {date:"10 Mar",text:"Restore Britain surpasses 110,000 paid members — faster growth than any party in modern UK political history"},
-    {date:"8-9 Mar",text:"YouGov: Reform 23%, Con 19%, Green 19%, Lab 17% — three-way squeeze unlike any previous poll"},
-    {date:"6-10 Mar",text:"Focaldata: Reform 27%, Lab 20%, Con 18%, LD 14% — Labour running second in this pollster"},
+    {date:"9-10 Mar",text:"YouGov: Reform 23%, Con 19%, Green 19%, Lab 17% — three-way squeeze at the top unlike any previous poll"},
     {date:"5 Mar",text:"Labour wins Murton ward (Durham) from Reform UK — first ever Labour council gain from Reform"},
     {date:"4 Mar",text:"Restore Britain officially registered as a political party — polling 7% in Find Out Now prompted polls"},
     {date:"1 Mar",text:"Starmer faces sleaze allegations over Mandelson — accused of cover-up as PM approval hits new low"},
     {date:"1 Mar",text:"Starmer approves US use of UK bases for Iran strikes. Trump publicly attacks Starmer, says he lacks Churchill's courage"},
-    {date:"1-2 Mar",text:"YouGov puts Greens 2nd on 21% — highest ever recorded"},
-    {date:"28 Feb",text:"Restore Britain reaches 100,000 paid members — 12 days after launch"},
-    {date:"26 Feb",text:"Greens win Gorton & Denton by-election — 5th MP"},
+    {date:"26 Feb",text:"Greens win Gorton & Denton by-election — Hannah Spencer becomes 5th Green MP, first in North of England"},
     {date:"20 Feb",text:"Restore Britain reaches 80,000 members — 6 days after launch"},
     {date:"16 Feb",text:"Restore Britain reaches 50,000 members — fastest growing party in modern UK history"},
     {date:"Feb 2026",text:"Restore Britain launches — targeting the 42% who did not vote in 2024; support skews young and ex-non-voter"},
     {date:"Sep 2025",text:"Zack Polanski elected Green Party leader with 85% of the vote"},
-    {date:"May 2025",text:"Reform UK opens sustained polling lead"},
+    {date:"May 2025",text:"Reform UK wins Runcorn & Helsby by-election by 6 votes — overturns 14,696 Labour majority"},
     {date:"Mar 2025",text:"Rupert Lowe expelled from Reform UK after criticising Farage — later founds Restore Britain"},
     {date:"Jan 2025",text:"Reform UK neck-and-neck with Labour nationally"},
     {date:"Jul 2024",text:"Labour win GE with 33.7% — 170-seat majority"}
