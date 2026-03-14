@@ -2060,8 +2060,12 @@ function openFPTPSheet() {
     + '</div>'
     // Title
     + '<div style="padding:8px 24px 0">'
-    + '<div style="font-size:24px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:-0.5px;margin-bottom:4px">🏛 What is FPTP?</div>'
-    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;margin-bottom:16px">First Past The Post means <strong>winning constituencies</strong>, not total votes. A party with support concentrated in the right places wins far more seats than its vote share deserves — and vice versa.</div>'
+    + '<div style="font-size:24px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:-0.5px;margin-bottom:12px">🏛 What is FPTP?</div>'
+    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:14px;padding:14px 16px;margin-bottom:14px">'
+    + '<div style="font-size:13px;font-weight:900;color:var(--md-sys-color-primary);letter-spacing:0.5px;margin-bottom:6px">📌 THE 2024 PROOF</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.65">Labour won <strong>33.7% of votes</strong> — but <strong>63% of seats</strong>. Reform UK got <strong>14.3% of votes</strong> — but just <strong>5 seats</strong> out of 650. The Greens got <strong>6.7%</strong> — 1 seat. That\'s FPTP.</div>'
+    + '</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);line-height:1.7;margin-bottom:16px">Under First Past The Post, only the winner in each of the 650 constituencies gets an MP. Come second by one vote and you get nothing. This means a party whose supporters are <strong>spread thinly across many seats</strong> wins almost nothing, while a party whose vote is <strong>concentrated in the right places</strong> can win a majority on a minority of votes.<br><br>It also means that millions of votes are effectively wasted — cast for parties or candidates who don\'t win locally, they have zero influence on the result.</div>'
     + '</div>'
     // FPTP bar
     + '<div style="padding:0 16px 12px">'
@@ -2086,8 +2090,8 @@ function openFPTPSheet() {
     + '</div>'
     // Explainer tonal card
     + '<div style="margin:0 16px 24px;background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-large);padding:16px">'
-    + '<div style="font-size:13px;font-weight:900;color:var(--md-sys-color-primary);letter-spacing:0.5px;margin-bottom:8px">💡 Why does this happen?</div>'
-    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.7">Reform UK at <strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.pct||0) + '%</strong> projects to <strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.seats||0) + ' seats</strong> because their support is spread efficiently across winnable constituencies. Labour at <strong>' + (D.parties.find(function(p){return p.name==="Labour";})?.pct||0) + '%</strong> gets just <strong>~' + (D.parties.find(function(p){return p.name==="Labour";})?.seats||0) + ' seats</strong> — their vote piles up in safe seats, wasting millions of votes. Under PR, every vote counts equally.</div>'
+    + '<div style="font-size:13px;font-weight:900;color:var(--md-sys-color-primary);letter-spacing:0.5px;margin-bottom:8px">⚡ WHAT THIS MEANS NOW</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.7">Reform UK at <strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.pct||0) + '%</strong> projects to <strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.seats||0) + ' seats</strong> — a majority — because their vote is now efficiently distributed across winnable English seats. Labour at <strong>' + (D.parties.find(function(p){return p.name==="Labour";})?.pct||0) + '%</strong> projects just <strong>~' + (D.parties.find(function(p){return p.name==="Labour";})?.seats||0) + ' seats</strong> — their core vote is piling up in safe northern cities, wasting millions of votes. The Greens at <strong>' + (D.parties.find(function(p){return p.name==="Green";})?.pct||0) + '%</strong> get <strong>~' + (D.parties.find(function(p){return p.name==="Green";})?.seats||0) + ' seats</strong> because their support is still spread too thinly outside a few strongholds.</div>'
     + '</div>';
 
   document.body.appendChild(sheet);
