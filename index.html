@@ -1130,7 +1130,7 @@ body {
 
 <!-- Share Modal -->
 <div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(28,27,31,0.6);z-index:500;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeShare()">
-  <div id="share-modal-sheet" style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-extra-large) 28px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.12);transition:transform 0.25s cubic-bezier(0.05,0.7,0.1,1);touch-action:pan-x">
+  <div id="share-modal-sheet" style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-extra-large) 28px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:480px;box-shadow:0 -4px 32px rgba(0,0,0,0.12);transition:transform 0.25s cubic-bezier(0.05,0.7,0.1,1)">
     <div style="width:36px;height:4px;background:var(--md-sys-color-outline-variant);border-radius:2px;margin:0 auto 20px"></div>
     <div style="font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Share</div>
     <div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:16px;font-family:\'Nunito\',sans-serif">UK Poll Tracker</div>
@@ -1448,77 +1448,62 @@ const APP_URL = 'https://craighow8-creator.github.io/Ukpolls2/';
 
 // ── Reusable swipe-to-dismiss for bottom sheets ──
 function addSwipeToDismiss(sheet, closeFn) {
-  var startX = 0, startY = 0, currentY = 0;
-  var startTime = 0;
-  var dragging = false;
-  var locked = false; // true = locked to scroll (ignore swipe), false = locked to swipe
-  var LOCK_THRESHOLD = 8; // px before we decide: scroll or swipe
-  var DISMISS_DISTANCE = 120; // px downward needed to dismiss
-  var DISMISS_VELOCITY = 0.4; // px/ms — fast flick also dismisses
+  var startX = 0, startY = 0, currentY = 0, startTime = 0;
+  var dragging = false, cancelled = false;
+  var DIRECTION_THRESHOLD = 10; // px before locking direction
+  var DISMISS_DISTANCE = 100;
+  var DISMISS_VELOCITY = 0.35;
+
+  function getScrollTop() {
+    // Find the first scrollable child inside the sheet
+    var scrollable = sheet.querySelector('[style*="overflow-y:auto"],[style*="overflow-y: auto"]') || sheet;
+    return scrollable.scrollTop || 0;
+  }
 
   sheet.addEventListener('touchstart', function(e) {
-    // Only start tracking from the handle area (top 56px of sheet)
-    var rect = sheet.getBoundingClientRect();
-    var touchY = e.touches[0].clientY;
     startX = e.touches[0].clientX;
-    startY = touchY;
-    currentY = touchY;
+    startY = e.touches[0].clientY;
+    currentY = startY;
     startTime = Date.now();
     dragging = false;
-    locked = false;
-
-    // Only initiate potential dismiss from the top handle zone
-    if (touchY - rect.top <= 56) {
-      dragging = true;
-      locked = false; // not yet decided
-    }
+    cancelled = false;
+    sheet.style.transition = 'none';
   }, {passive: true});
 
   sheet.addEventListener('touchmove', function(e) {
-    if (!dragging && !locked) return;
+    if (cancelled) return;
     currentY = e.touches[0].clientY;
     var dy = currentY - startY;
     var dx = Math.abs(e.touches[0].clientX - startX);
 
-    // Once we've moved enough to decide direction, lock it
-    if (!locked && (Math.abs(dy) > LOCK_THRESHOLD || dx > LOCK_THRESHOLD)) {
-      if (dx > Math.abs(dy)) {
-        // Horizontal swipe — cancel entirely
-        dragging = false;
-        locked = true;
-        sheet.style.transform = 'translateY(0)';
-        return;
-      }
-      if (dy < 0) {
-        // Upward swipe — user is scrolling content, cancel dismiss
-        dragging = false;
-        locked = true;
-        sheet.style.transform = 'translateY(0)';
-        return;
-      }
-      // Downward swipe confirmed — engage dismiss drag
-      locked = true;
+    // Wait until we know the direction
+    if (!dragging && Math.abs(dy) < DIRECTION_THRESHOLD && dx < DIRECTION_THRESHOLD) return;
+
+    if (!dragging) {
+      // Horizontal → cancel
+      if (dx > Math.abs(dy)) { cancelled = true; sheet.style.transform = 'translateY(0)'; return; }
+      // Upward → user is scrolling up, cancel
+      if (dy < 0) { cancelled = true; return; }
+      // Downward but sheet content isn't at top → let content scroll, cancel
+      if (dy > 0 && getScrollTop() > 2) { cancelled = true; return; }
+      // Downward and sheet is at top → engage dismiss
+      dragging = true;
     }
 
     if (dragging && dy > 0) {
-      // Apply resistance so it doesn't feel too loose
-      var pull = Math.min(dy, 300);
+      // Rubber band feel — resistance increases as you pull further
+      var pull = dy * (1 - Math.min(dy / 800, 0.4));
       sheet.style.transform = 'translateY(' + pull + 'px)';
     }
   }, {passive: true});
 
   sheet.addEventListener('touchend', function() {
-    if (!dragging) {
-      dragging = false;
-      return;
-    }
-    dragging = false;
+    if (!dragging) { dragging = false; cancelled = false; return; }
+    dragging = false; cancelled = false;
     var dy = currentY - startY;
-    var elapsed = Date.now() - startTime;
-    var velocity = dy / Math.max(elapsed, 1);
+    var velocity = dy / Math.max(Date.now() - startTime, 1);
     sheet.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
-
-    if (dy > DISMISS_DISTANCE || (dy > 40 && velocity > DISMISS_VELOCITY)) {
+    if (dy > DISMISS_DISTANCE || (dy > 36 && velocity > DISMISS_VELOCITY)) {
       closeFn();
     } else {
       sheet.style.transform = 'translateY(0)';
@@ -1526,8 +1511,7 @@ function addSwipeToDismiss(sheet, closeFn) {
   });
 
   sheet.addEventListener('touchcancel', function() {
-    dragging = false;
-    locked = false;
+    dragging = false; cancelled = false;
     sheet.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
     sheet.style.transform = 'translateY(0)';
   });
@@ -1654,40 +1638,13 @@ function closeShare() {
   sheet.style.transform = 'translateY(100%)';
   setTimeout(function() { modal.style.display = 'none'; sheet.style.transform = ''; }, 260);
 }
-// Swipe-to-dismiss for share modal
+// Swipe-to-dismiss for share modal — use shared implementation
 (function() {
-  var sheet, startY, currentY, dragging = false;
-  document.addEventListener('DOMContentLoaded', function() {});
   function init() {
-    sheet = document.getElementById('share-modal-sheet');
+    var sheet = document.getElementById('share-modal-sheet');
     if (!sheet) return;
-    sheet.addEventListener('touchstart', function(e) {
-      // Only begin drag if touching near the top of the sheet (handle area)
-      var rect = sheet.getBoundingClientRect();
-      if (e.touches[0].clientY - rect.top > 80) return;
-      startY = e.touches[0].clientY;
-      dragging = true;
-      sheet.style.transition = 'none';
-    }, {passive: true});
-    sheet.addEventListener('touchmove', function(e) {
-      if (!dragging) return;
-      currentY = e.touches[0].clientY;
-      var dy = Math.max(0, currentY - startY);
-      sheet.style.transform = 'translateY(' + dy + 'px)';
-    }, {passive: true});
-    sheet.addEventListener('touchend', function() {
-      if (!dragging) return;
-      dragging = false;
-      var dy = Math.max(0, currentY - startY);
-      if (dy > 80) {
-        closeShare();
-      } else {
-        sheet.style.transition = 'transform 0.25s cubic-bezier(0.05,0.7,0.1,1)';
-        sheet.style.transform = 'translateY(0)';
-      }
-    });
+    addSwipeToDismiss(sheet, closeShare);
   }
-  // Init after DOM ready
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();
 function shareToX() {
