@@ -130,7 +130,6 @@ html[data-theme="dark"] #hdr { background: #0d1a3a !important; border-bottom-col
   html:not([data-theme="light"]) .btn-share { background: rgba(255,255,255,0.12); color: #ffffff; }
   html:not([data-theme="light"]) .btn-share:active { background: rgba(255,255,255,0.2); }
   html:not([data-theme="light"]) #nav { background: #1C1B22; border-top-color: var(--md-sys-color-outline-variant); }
-  html:not([data-theme="light"]) #splash { background: #010e2e; }
   html:not([data-theme="light"]) #share-modal-sheet { background: var(--md-sys-color-surface-container-high); }
   html:not([data-theme="light"]) .popup-box { background: var(--md-sys-color-surface-container-high); }
 }
@@ -140,7 +139,6 @@ html[data-theme="dark"] .hsub { color: rgba(255,255,255,0.65); }
 html[data-theme="dark"] .btn-share { background: rgba(255,255,255,0.12); color: #ffffff; }
 html[data-theme="dark"] .btn-share:active { background: rgba(255,255,255,0.2); }
 html[data-theme="dark"] #nav { background: #1C1B22; border-top-color: var(--md-sys-color-outline-variant); }
-html[data-theme="dark"] #splash { background: #010e2e; }
 html[data-theme="dark"] #share-modal-sheet { background: var(--md-sys-color-surface-container-high); }
 html[data-theme="dark"] .popup-box { background: var(--md-sys-color-surface-container-high); }
 
@@ -601,8 +599,6 @@ body {
   animation: slideUp 0.35s cubic-bezier(0.05,0.7,0.1,1);
 }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes splashPop { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-@keyframes splashFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes popIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .popup-icon { font-size: 48px; margin-bottom: 12px; }
 .popup-title { font-size: 22px; font-weight: 700; color: var(--md-sys-color-on-surface); margin-bottom: 8px; font-family: 'Nunito', sans-serif; }
@@ -659,35 +655,6 @@ body {
 </script>
 </head>
 <body>
-<div id="splash" style="position:fixed;inset:0;z-index:99999;background:#012169;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity 0.5s ease,transform 0.5s ease">
-  <!-- Big logo -->
-  <div style="width:96px;height:96px;border-radius:var(--md-sys-shape-corner-extra-large);overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.4);margin-bottom:24px;animation:splashPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both">
-    <svg viewBox="0 0 200 200" width="96" height="96" xmlns="http://www.w3.org/2000/svg">
-      <rect width="200" height="200" fill="#012169"/>
-      <line x1="0" y1="0" x2="200" y2="200" stroke="white" stroke-width="28"/>
-      <line x1="200" y1="0" x2="0" y2="200" stroke="white" stroke-width="28"/>
-      <line x1="0" y1="0" x2="200" y2="200" stroke="#C8102E" stroke-width="16"/>
-      <line x1="200" y1="0" x2="0" y2="200" stroke="#C8102E" stroke-width="16"/>
-      <rect x="0" y="82" width="200" height="36" fill="white"/>
-      <rect x="82" y="0" width="36" height="200" fill="white"/>
-      <rect x="0" y="90" width="200" height="20" fill="#C8102E"/>
-      <rect x="90" y="0" width="20" height="200" fill="#C8102E"/>
-      <rect x="16" y="108" width="168" height="76" rx="10" fill="rgba(0,0,0,0.55)"/>
-      <polyline points="28,172 62,155 96,162 130,138 164,118 172,112" fill="none" stroke="#4ade80" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="28"  cy="172" r="4" fill="#4ade80"/>
-      <circle cx="96"  cy="162" r="4" fill="#4ade80"/>
-      <circle cx="164" cy="118" r="4" fill="#4ade80"/>
-      <circle cx="172" cy="112" r="5.5" fill="white"/>
-    </svg>
-  </div>
-  <div style="font-family:'Nunito',sans-serif;font-size:26px;font-weight:900;color:white;letter-spacing:-0.5px;animation:splashFade 0.4s 0.15s ease both">UK Poll Tracker</div>
-  <div style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;color:rgba(255,255,255,0.6);margin-top:4px;animation:splashFade 0.4s 0.25s ease both">Straight-talking UK politics</div>
-  <!-- Animated bar -->
-  <div style="width:48px;height:4px;background:rgba(255,255,255,0.2);border-radius:99px;margin-top:40px;overflow:hidden;animation:splashFade 0.4s 0.3s ease both">
-    <div id="splash-bar" style="height:100%;width:0%;background:#4ade80;border-radius:99px;transition:width 0.8s ease"></div>
-  </div>
-</div>
-
 <!-- Header -->
 <div id="hdr">
   <div class="hdr-row">
@@ -3369,20 +3336,6 @@ function renderPOTDResults(q, myVote, votes) {
 
 renderPolls();
 
-// Splash screen dismiss
-(function() {
-  var bar = document.getElementById('splash-bar');
-  var splash = document.getElementById('splash');
-  if (!splash) return;
-  // Animate the loading bar
-  setTimeout(function() { if (bar) bar.style.width = '70%'; }, 50);
-  setTimeout(function() { if (bar) bar.style.width = '100%'; }, 400);
-  setTimeout(function() {
-    splash.style.opacity = '0';
-    splash.style.transform = 'scale(1.04)';
-    setTimeout(function() { if (splash.parentNode) splash.remove(); }, 500);
-  }, 900);
-})();
 // Auto-update header date and AI news date to today
 (function() {
   var now = new Date();
