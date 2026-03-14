@@ -3615,11 +3615,16 @@ function canvasHeader(ctx, titleRaw, subtitleRaw) {
 
 function canvasFooter(ctx) {
   ctx.fillStyle = CARD_PRIMARY;
-  ctx.fillRect(0, CARD_H - 50, CARD_W, 50);
+  ctx.fillRect(0, CARD_H - 64, CARD_W, 64);
+  // Line 1 — app name bold
   ctx.fillStyle = '#ffffff';
-  ctx.font = '700 16px ' + CARD_FONT;
+  ctx.font = '800 17px ' + CARD_FONT;
   ctx.textAlign = 'center';
-  ctx.fillText('UK Poll Tracker  ·  ukpolls2.github.io', CARD_W / 2, CARD_H - 18);
+  ctx.fillText('UK Poll Tracker', CARD_W / 2, CARD_H - 36);
+  // Line 2 — tagline + URL dimmed
+  ctx.font = '500 13px ' + CARD_FONT;
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.fillText('Free · No ads · Updated daily · ukpolls2.github.io', CARD_W / 2, CARD_H - 16);
   ctx.textAlign = 'left';
 }
 
