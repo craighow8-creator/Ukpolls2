@@ -1448,29 +1448,88 @@ const APP_URL = 'https://craighow8-creator.github.io/Ukpolls2/';
 
 // ── Reusable swipe-to-dismiss for bottom sheets ──
 function addSwipeToDismiss(sheet, closeFn) {
-  var startY = 0, currentY = 0, dragging = false;
+  var startX = 0, startY = 0, currentY = 0;
+  var startTime = 0;
+  var dragging = false;
+  var locked = false; // true = locked to scroll (ignore swipe), false = locked to swipe
+  var LOCK_THRESHOLD = 8; // px before we decide: scroll or swipe
+  var DISMISS_DISTANCE = 120; // px downward needed to dismiss
+  var DISMISS_VELOCITY = 0.4; // px/ms — fast flick also dismisses
+
   sheet.addEventListener('touchstart', function(e) {
-    startY = e.touches[0].clientY;
-    currentY = startY;
-    dragging = true;
-    sheet.style.transition = 'none';
-  }, {passive: true});
-  sheet.addEventListener('touchmove', function(e) {
-    if (!dragging) return;
-    currentY = e.touches[0].clientY;
-    var dist = Math.max(0, currentY - startY);
-    sheet.style.transform = 'translateY(' + dist + 'px)';
-  }, {passive: true});
-  sheet.addEventListener('touchend', function() {
-    if (!dragging) return;
+    // Only start tracking from the handle area (top 56px of sheet)
+    var rect = sheet.getBoundingClientRect();
+    var touchY = e.touches[0].clientY;
+    startX = e.touches[0].clientX;
+    startY = touchY;
+    currentY = touchY;
+    startTime = Date.now();
     dragging = false;
-    var dist = currentY - startY;
-    sheet.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
-    if (dist > 80) {
+    locked = false;
+
+    // Only initiate potential dismiss from the top handle zone
+    if (touchY - rect.top <= 56) {
+      dragging = true;
+      locked = false; // not yet decided
+    }
+  }, {passive: true});
+
+  sheet.addEventListener('touchmove', function(e) {
+    if (!dragging && !locked) return;
+    currentY = e.touches[0].clientY;
+    var dy = currentY - startY;
+    var dx = Math.abs(e.touches[0].clientX - startX);
+
+    // Once we've moved enough to decide direction, lock it
+    if (!locked && (Math.abs(dy) > LOCK_THRESHOLD || dx > LOCK_THRESHOLD)) {
+      if (dx > Math.abs(dy)) {
+        // Horizontal swipe — cancel entirely
+        dragging = false;
+        locked = true;
+        sheet.style.transform = 'translateY(0)';
+        return;
+      }
+      if (dy < 0) {
+        // Upward swipe — user is scrolling content, cancel dismiss
+        dragging = false;
+        locked = true;
+        sheet.style.transform = 'translateY(0)';
+        return;
+      }
+      // Downward swipe confirmed — engage dismiss drag
+      locked = true;
+    }
+
+    if (dragging && dy > 0) {
+      // Apply resistance so it doesn't feel too loose
+      var pull = Math.min(dy, 300);
+      sheet.style.transform = 'translateY(' + pull + 'px)';
+    }
+  }, {passive: true});
+
+  sheet.addEventListener('touchend', function() {
+    if (!dragging) {
+      dragging = false;
+      return;
+    }
+    dragging = false;
+    var dy = currentY - startY;
+    var elapsed = Date.now() - startTime;
+    var velocity = dy / Math.max(elapsed, 1);
+    sheet.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
+
+    if (dy > DISMISS_DISTANCE || (dy > 40 && velocity > DISMISS_VELOCITY)) {
       closeFn();
     } else {
       sheet.style.transform = 'translateY(0)';
     }
+  });
+
+  sheet.addEventListener('touchcancel', function() {
+    dragging = false;
+    locked = false;
+    sheet.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
+    sheet.style.transform = 'translateY(0)';
   });
 }
 
