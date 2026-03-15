@@ -353,7 +353,6 @@ body {
   flex-direction: column;
   align-items: center;
   padding-bottom: 8px;
-  /* NO overflow:hidden — keeps the tap area unclipped */
 }
 .party-pill-accent { height: 4px; width: 100%; border-radius: var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-large) 0 0; margin-bottom: 8px; }
 .party-pill-rank { font-size: 10px; font-weight: 700; color: var(--md-sys-color-on-surface-variant); margin-bottom: 2px; }
@@ -2050,7 +2049,9 @@ function renderPolls() {
     var chgColor = p.change > 0 ? '#7fff7f' : p.change < 0 ? '#ffaaaa' : '#fff';
     var numPolls = D.polls.length;
     return '<div class="rl-card" style="background:'+bg+';color:#fff;position:relative">'
-      + '<button onclick="event.stopPropagation();openPollingAvgInfo()" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:22px;height:22px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">ℹ</button>'
+      + '<button onclick="openPollingAvgInfo()" style="position:absolute;top:0;right:0;width:48px;height:48px;background:transparent;border:none;cursor:pointer;display:flex;align-items:flex-start;justify-content:flex-end;padding:10px;-webkit-tap-highlight-color:transparent;touch-action:manipulation">'
+      + '<span style="background:rgba(255,255,255,0.2);border-radius:50%;width:22px;height:22px;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;pointer-events:none">ℹ</span>'
+      + '</button>'
       + '<div class="rl-rank">'+label+'</div>'
       + '<div class="rl-name">'+p.name+'</div>'
       + '<div class="rl-pct">'+p.pct+'<small>%</small></div>'
@@ -2061,28 +2062,39 @@ function renderPolls() {
   }
   document.getElementById('race-leaders').innerHTML = `<div class="race-leaders">${leaderCard(top,1,'🥇 Leading')+(second ? leaderCard(second,2,'🥈 2nd') : '')}</div>`;
 
+
   // Ranked party pills — horizontal scroll
-  document.getElementById('party-bars').innerHTML = '<div class="party-pills-scroll">'
-    + sorted.map((p, i) => {
-      var barW = Math.round((p.pct / maxPct) * 100);
-      var chgText = p.change > 0 ? '▲ +'+p.change+'%' : p.change < 0 ? '▼ '+p.change+'%' : 'NC';
-      var chgColor = p.change > 0 ? 'var(--up)' : p.change < 0 ? 'var(--down)' : 'var(--md-sys-color-on-surface-variant)';
-      var seatsText = p.seats ? '~'+p.seats+' seats' : '';
-      var nameJson = JSON.stringify(p.name);
-      return '<div class="party-pill-card">'
-        + '<div class="party-pill-accent" style="background:'+p.color+'"></div>'
-        + '<div class="party-pill-rank">#'+(i+1)+'</div>'
-        + '<div class="party-pill-abbr" style="color:'+p.color+'">'+p.abbr+'</div>'
-        + '<div class="party-pill-pct" style="color:'+p.color+'">'+p.pct+'<span style="font-size:11px;font-weight:600">%</span></div>'
-        + '<div class="party-pill-bar-track"><div class="party-pill-bar-fill" style="width:'+barW+'%;background:'+p.color+'"></div></div>'
-        + '<div class="party-pill-change" style="color:'+chgColor+'">'+chgText+'</div>'
-        + '<div class="party-pill-seats">'+seatsText+'</div>'
-        + '<button class="party-pill-info" onclick="openPartyFundingInfo('+nameJson+')">'
-        + '<span class="party-pill-info-dot">ℹ</span>'
-        + '</button>'
-        + '</div>';
-    }).join('')
-    + '</div>';
+  var pillsHtml = '<div class="party-pills-scroll" id="party-pills-scroll">';
+  sorted.forEach(function(p, i) {
+    var barW = Math.round((p.pct / maxPct) * 100);
+    var chgText = p.change > 0 ? '▲ +'+p.change+'%' : p.change < 0 ? '▼ '+p.change+'%' : 'NC';
+    var chgColor = p.change > 0 ? 'var(--up)' : p.change < 0 ? 'var(--down)' : 'var(--md-sys-color-on-surface-variant)';
+    var seatsText = p.seats ? '~'+p.seats+' seats' : '';
+    pillsHtml += '<div class="party-pill-card">'
+      + '<div class="party-pill-accent" style="background:'+p.color+'"></div>'
+      + '<div class="party-pill-rank">#'+(i+1)+'</div>'
+      + '<div class="party-pill-abbr" style="color:'+p.color+'">'+p.abbr+'</div>'
+      + '<div class="party-pill-pct" style="color:'+p.color+'">'+p.pct+'<span style="font-size:11px;font-weight:600">%</span></div>'
+      + '<div class="party-pill-bar-track"><div class="party-pill-bar-fill" style="width:'+barW+'%;background:'+p.color+'"></div></div>'
+      + '<div class="party-pill-change" style="color:'+chgColor+'">'+chgText+'</div>'
+      + '<div class="party-pill-seats">'+seatsText+'</div>'
+      + '<button class="party-pill-info" data-party="'+p.name.replace(/"/g,'&quot;')+'">'
+      + '<span class="party-pill-info-dot">ℹ</span>'
+      + '</button>'
+      + '</div>';
+  });
+  pillsHtml += '</div>';
+  document.getElementById('party-bars').innerHTML = pillsHtml;
+
+  // Wire up pill info buttons via event delegation — avoids inline onclick string issues
+  var pillsScroll = document.getElementById('party-pills-scroll');
+  if (pillsScroll) {
+    pillsScroll.addEventListener('click', function(e) {
+      var btn = e.target.closest('.party-pill-info');
+      if (btn) openPartyFundingInfo(btn.getAttribute('data-party'));
+    });
+  }
+
   renderFPTPExplorer();
   renderTrends();
   renderPollCards();
@@ -3002,7 +3014,6 @@ function renderPollCards() {
     {k:'rb',  label:partyShort('Restore Britain'),  abbr:partyAbbr('Restore Britain'),color:partyColor('Restore Britain')}
   ];
 
-  // One row per poll — each a mini seat-projection style bar
   var rows = D.polls.map(function(p) {
     var segs = KEYS.filter(function(k) { return p[k.k] != null; }).sort(function(a,b) { return p[b.k] - p[a.k]; }).map(function(k) {
       var pct = p[k.k];
@@ -3014,11 +3025,11 @@ function renderPollCards() {
     }).join('');
 
     return '<div style="margin-bottom:14px">'
-      + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'
-      + '<div style="display:flex;align-items:center;gap:5px"><span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">' + p.pollster + '</span>'
-      + '<button onclick="openPollsterInfo(' + JSON.stringify(p.pollster) + ')" style="background:transparent;border:none;width:44px;height:32px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;vertical-align:middle">'
-      + '<span style="background:var(--md-sys-color-surface-container-high);border-radius:50%;width:20px;height:20px;color:var(--md-sys-color-on-surface-variant);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;pointer-events:none">ℹ</span>'
-      + '</button></div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+      + '<div style="display:flex;align-items:center;gap:6px">'
+      + '<span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">' + p.pollster + '</span>'
+      + '<button class="pollster-info-btn" data-pollster="' + p.pollster.replace(/"/g,'&quot;') + '" style="background:var(--md-sys-color-surface-container-high);border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;color:var(--md-sys-color-on-surface-variant);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation">ℹ</button>'
+      + '</div>'
       + '<span style="font-size:15px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + p.date + '</span>'
       + '</div>'
       + '<div style="display:flex;height:48px;border-radius:12px;overflow:hidden;gap:1.5px;background:var(--md-sys-color-outline-variant)">'
@@ -3027,7 +3038,6 @@ function renderPollCards() {
       + '</div>';
   }).join('');
 
-  // Party colour key
   var key = '<div style="display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--md-sys-color-outline-variant)">'
     + KEYS.map(function(k) {
       return '<div style="display:flex;align-items:center;gap:5px">'
@@ -3037,13 +3047,23 @@ function renderPollCards() {
     }).join('')
     + '</div>';
 
-  document.getElementById('polls-cards').innerHTML =
-    '<div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);padding:18px;border-top:4px solid var(--md-sys-color-primary)">'
+  var container = document.getElementById('polls-cards');
+  container.innerHTML =
+    '<div id="polls-cards-inner" style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);padding:18px;border-top:4px solid var(--md-sys-color-primary)">'
     + '<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:2px">Recent polls</div>'
     + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px">Bars show each party\'s share per pollster</div>'
     + rows
     + key
     + '</div>';
+
+  // Event delegation — avoids inline onclick string issues with pollster names
+  var inner = document.getElementById('polls-cards-inner');
+  if (inner) {
+    inner.addEventListener('click', function(e) {
+      var btn = e.target.closest('.pollster-info-btn');
+      if (btn) openPollsterInfo(btn.getAttribute('data-pollster'));
+    });
+  }
 }
 
 // ── Vote Page ──
@@ -3483,7 +3503,6 @@ function dismissPopup() {
     var dx = e.changedTouches[0].clientX - sx;
     var dy = e.changedTouches[0].clientY - sy;
     if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.8) return;
-    // Don't switch tabs if touch started inside a horizontally scrollable element
     var el = startTarget;
     while (el && el !== content) {
       var style = window.getComputedStyle(el);
