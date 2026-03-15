@@ -2269,20 +2269,47 @@ function renderForecast() {
   var SIMS = 10000;
   var currentError = 3;
 
+  // FPTP swing model — uses actual seat projections as baseline
+  // applies random polling error and recalculates seats via uniform swing
   function runSims(error) {
-    var baseParties = D.parties.filter(function(p){ return p.seats !== null && p.name !== 'Other'; });
+    var baseParties = D.parties.filter(function(p){ return p.seats !== null && p.seats > 0 && p.name !== 'Other'; });
+    var totalBaseSeats = baseParties.reduce(function(s,p){ return s + p.seats; }, 0);
     var outcomes = {majority:{}, hung:0};
 
     for (var i = 0; i < SIMS; i++) {
+      // Apply random polling error to each party's vote share
       var simParties = baseParties.map(function(p) {
         var noise = (Math.random() - 0.5) * 2 * error;
-        return {name: p.name, pct: Math.max(0, p.pct + noise), seats: p.seats, color: p.color};
+        return {name: p.name, pct: Math.max(0.5, p.pct + noise), seats: p.seats, color: p.color};
       });
-      var total = simParties.reduce(function(s,p){ return s + p.pct; }, 0);
-      var seats = {};
-      simParties.forEach(function(p) { seats[p.name] = Math.round((p.pct / total) * TOTAL_SEATS); });
+
+      // Calculate swing from base polling and apply to seats
+      // Each point of swing = proportional seat shift
+      var simTotal = simParties.reduce(function(s,p){ return s + p.pct; }, 0);
+      var baseTotal = baseParties.reduce(function(s,p){ return s + p.pct; }, 0);
+
+      var simSeats = {};
+      var allocatedSeats = 0;
+      simParties.forEach(function(p) {
+        // Swing multiplier: if party polls higher relative to others, gains seats
+        var baseShare = p.pct / baseTotal; // note: uses noisy pct vs original total — intentional
+        var swingFactor = (p.pct / simTotal) / (baseParties.find(function(b){ return b.name===p.name; }).pct / baseTotal);
+        var rawSeats = Math.round(p.seats * swingFactor);
+        simSeats[p.name] = Math.max(0, rawSeats);
+        allocatedSeats += simSeats[p.name];
+      });
+
+      // Normalise to TOTAL_SEATS if drift occurred
+      var scale = TOTAL_SEATS / Math.max(allocatedSeats, 1);
+      if (Math.abs(scale - 1) > 0.05) {
+        Object.keys(simSeats).forEach(function(k) { simSeats[k] = Math.round(simSeats[k] * scale); });
+      }
+
       var leader = null, leaderSeats = 0;
-      Object.entries(seats).forEach(function(e) { if (e[1] > leaderSeats) { leaderSeats = e[1]; leader = e[0]; } });
+      Object.entries(simSeats).forEach(function(e) {
+        if (e[1] > leaderSeats) { leaderSeats = e[1]; leader = e[0]; }
+      });
+
       if (leaderSeats >= MAJORITY) {
         outcomes.majority[leader] = (outcomes.majority[leader] || 0) + 1;
       } else {
@@ -2300,134 +2327,94 @@ function renderForecast() {
     return results;
   }
 
-  function animateBars(results) {
-    // First reset all bars to 0
-    el.querySelectorAll('.forecast-bar-fill').forEach(function(bar) {
-      bar.style.width = '0%';
-    });
-    // Then animate to new values after a short delay
-    setTimeout(function() {
-      results.forEach(function(r, i) {
-        var bar = document.getElementById('fbar-' + i);
-        var pctEl = document.getElementById('fpct-' + i);
-        var labelEl = document.getElementById('flabel-' + i);
-        if (bar) bar.style.width = r.pct + '%';
-        if (pctEl) {
-          // Count up animation
-          var start = 0;
-          var end = r.pct;
-          var duration = 600;
-          var startTime = null;
-          function step(ts) {
-            if (!startTime) startTime = ts;
-            var progress = Math.min((ts - startTime) / duration, 1);
-            var ease = 1 - Math.pow(1 - progress, 3);
-            pctEl.textContent = Math.round(start + (end - start) * ease) + '%';
-            if (progress < 1) requestAnimationFrame(step);
-          }
-          requestAnimationFrame(step);
-        }
-        if (labelEl) labelEl.textContent = r.label + (i === 0 ? ' 🔮' : '');
-      });
-    }, 80);
-  }
-
-  function update(error, animate) {
-    currentError = error;
-    // Update tab active states
-    el.querySelectorAll('.ferror-tab').forEach(function(btn) {
-      var isActive = parseInt(btn.getAttribute('data-err')) === error;
-      btn.classList.toggle('active', isActive);
-    });
-    var results = runSims(error);
-    if (animate) {
-      animateBars(results);
-    } else {
-      results.forEach(function(r, i) {
-        var bar = document.getElementById('fbar-' + i);
-        var pctEl = document.getElementById('fpct-' + i);
-        var labelEl = document.getElementById('flabel-' + i);
-        if (bar) { bar.style.transition = 'none'; bar.style.width = r.pct + '%'; }
-        if (pctEl) pctEl.textContent = r.pct + '%';
-        if (labelEl) labelEl.textContent = r.label + (i === 0 ? ' 🔮' : '');
-      });
-    }
-  }
-
-  // Initial render
   var initialResults = runSims(currentError);
-
   var errorLevels = [1, 2, 3, 4, 5];
 
   var tabsHtml = '<div class="be-tabs" style="margin-bottom:14px">'
     + errorLevels.map(function(e) {
       return '<button class="be-tab ferror-tab' + (e === currentError ? ' active' : '') + '" '
         + 'data-err="' + e + '" '
-        + 'onclick="(function(btn){ '
-        + 'var err=parseInt(btn.getAttribute(\'data-err\')); '
-        + 'var card=btn.closest(\'.card\'); '
-        + 'card.querySelectorAll(\'.ferror-tab\').forEach(function(b){b.classList.remove(\'active\');}); '
-        + 'btn.classList.add(\'active\'); '
-        + 'window._forecastUpdate(err,true); '
+        + 'onclick="(function(btn){'
+        + 'btn.closest(\'.card\').querySelectorAll(\'.ferror-tab\').forEach(function(b){b.classList.remove(\'active\');});'
+        + 'btn.classList.add(\'active\');'
+        + 'window._forecastUpdate(parseInt(btn.getAttribute(\'data-err\')));'
         + '})(this)">'
         + '±' + e + '%</button>';
     }).join('')
     + '</div>';
 
-  var barsHtml = initialResults.map(function(r, i) {
+  function barRow(r, i) {
     var isTop = i === 0;
-    return '<div style="margin-bottom:' + (isTop ? '14' : '10') + 'px">'
+    return '<div style="margin-bottom:' + (isTop?'14':'10') + 'px">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
-      + '<span id="flabel-' + i + '" style="font-size:' + (isTop?'16':'14') + 'px;font-weight:' + (isTop?'800':'700') + ';color:var(--md-sys-color-on-surface)">' + r.label + (isTop ? ' 🔮' : '') + '</span>'
+      + '<span id="flabel-' + i + '" style="font-size:' + (isTop?'16':'14') + 'px;font-weight:' + (isTop?'800':'700') + ';color:var(--md-sys-color-on-surface)">' + r.label + (isTop?' 🔮':'') + '</span>'
       + '<span id="fpct-' + i + '" style="font-size:' + (isTop?'18':'15') + 'px;font-weight:900;color:' + r.color + '">' + r.pct + '%</span>'
       + '</div>'
       + '<div style="background:var(--md-sys-color-surface-container-low);border-radius:99px;height:' + (isTop?'10':'7') + 'px;overflow:hidden">'
       + '<div id="fbar-' + i + '" class="forecast-bar-fill" style="width:' + r.pct + '%;background:' + r.color + ';height:100%;border-radius:99px;transition:width 0.7s cubic-bezier(0.34,1.56,0.64,1)"></div>'
       + '</div>'
       + '</div>';
-  }).join('');
+  }
 
   el.innerHTML =
-    '<div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Polling error assumption</div>'
-    + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px;font-weight:500">How wrong could the polls be? UK polling error has averaged ±2–3% historically.</div>'
+    '<div style="text-align:center;margin-bottom:6px">'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant)">Polling error assumption</div>'
+    + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:3px;font-weight:500">UK polling error has averaged ±2–3% historically</div>'
+    + '</div>'
     + tabsHtml
-    + barsHtml
+    + '<div id="forecast-bars">' + initialResults.map(barRow).join('') + '</div>'
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--md-sys-color-outline-variant)">'
-    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + SIMS.toLocaleString() + ' simulations · ±' + '<span id="ferror-label">' + currentError + '</span>% error</div>'
-    + '<button onclick="window._forecastUpdate(' + currentError + ',true)" '
-    + 'style="background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif;display:flex;align-items:center;gap:5px">'
+    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">'
+    + SIMS.toLocaleString() + ' simulations · ±<span id="ferror-label">' + currentError + '</span>% error</div>'
+    + '<button onclick="window._forecastUpdate(' + currentError + ')" '
+    + 'style="background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif;display:inline-flex;align-items:center;gap:5px">'
     + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-6.74"/></svg>'
     + 'Re-simulate</button>'
     + '</div>';
 
-  // Expose update function globally so inline handlers can reach it
-  window._forecastUpdate = function(error, animate) {
+  window._forecastUpdate = function(error) {
     currentError = error;
+    // Update error label
     var errLabel = document.getElementById('ferror-label');
     if (errLabel) errLabel.textContent = error;
+    // Update re-simulate button onclick to use new error
+    var reBtn = el.querySelector('button[onclick*="_forecastUpdate"]');
+    if (reBtn) reBtn.setAttribute('onclick', 'window._forecastUpdate(' + error + ')');
+    // Run sims
     var results = runSims(error);
-    if (animate) {
-      el.querySelectorAll('.forecast-bar-fill').forEach(function(bar) { bar.style.width = '0%'; });
-      setTimeout(function() {
+    // Animate: reset bars to 0 first, then fill
+    var fills = el.querySelectorAll('.forecast-bar-fill');
+    fills.forEach(function(bar) {
+      bar.style.transition = 'none';
+      bar.style.width = '0%';
+    });
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
         results.forEach(function(r, i) {
           var bar = document.getElementById('fbar-' + i);
           var pctEl = document.getElementById('fpct-' + i);
           var labelEl = document.getElementById('flabel-' + i);
-          if (bar) bar.style.width = r.pct + '%';
+          if (bar) {
+            bar.style.transition = 'width 0.7s cubic-bezier(0.34,1.56,0.64,1)';
+            bar.style.width = r.pct + '%';
+            bar.style.background = r.color;
+          }
           if (pctEl) {
+            pctEl.style.color = r.color;
+            // Count up
             var end = r.pct, startTime = null;
-            (function animate(ts) {
+            (function countUp(ts) {
               if (!startTime) startTime = ts;
               var p = Math.min((ts - startTime) / 600, 1);
               var ease = 1 - Math.pow(1 - p, 3);
               pctEl.textContent = Math.round(end * ease) + '%';
-              if (p < 1) requestAnimationFrame(animate);
+              if (p < 1) requestAnimationFrame(countUp);
             })(performance.now());
           }
           if (labelEl) labelEl.textContent = r.label + (i === 0 ? ' 🔮' : '');
         });
-      }, 80);
-    }
+      });
+    });
   };
 }
 
