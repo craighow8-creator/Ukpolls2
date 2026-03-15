@@ -700,6 +700,7 @@ body {
 
 /* ── By-Election Carousel ── */
 #be-carousel::-webkit-scrollbar { display: none; }
+#be-carousel { scroll-behavior: smooth; }
 .be-carousel-card {
   flex-shrink: 0;
   width: calc(100vw - 64px);
@@ -937,33 +938,7 @@ body {
     <div class="sec-label">⏳ Countdown<button class="sec-share" onclick="shareSection('⏳ Countdown', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="countdown-card" style="margin-bottom:12px"></div>
 
-    <div class="sec-label">🗓 Key Dates</div>
-    <div class="card" style="border-top:4px solid var(--md-sys-color-primary);padding:4px 0">
-      <div class="key-date-row" onclick="showMilestoneSearch('UK local elections May 2026 Runcorn by-election', this)" style="cursor:pointer" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
-        <div class="key-date-dot" style="background:#C8102E"></div>
-        <div class="key-date-info"><div class="key-date-label">Local Elections + Runcorn by-election</div><div class="key-date-sub">1 May 2026 · England &amp; Scotland councils</div></div>
-        <div style="display:flex;align-items:center;gap:8px"><div class="key-date-days" id="kd-may1"></div><span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">🔍</span></div>
-      </div>
-      <div class="key-date-row" onclick="showMilestoneSearch('Horsham by-election 2026 UK', this)" style="cursor:pointer" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
-        <div class="key-date-dot" style="background:#0087DC"></div>
-        <div class="key-date-info"><div class="key-date-label">Horsham by-election</div><div class="key-date-sub">TBC 2026 · Con hold under threat from LD/Reform</div></div>
-        <div style="display:flex;align-items:center;gap:8px"><div style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">TBC</div><span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">🔍</span></div>
-      </div>
-      <div class="key-date-row" onclick="showMilestoneSearch('UK Autumn Budget 2026 OBR forecast', this)" style="cursor:pointer" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
-        <div class="key-date-dot" style="background:#012169"></div>
-        <div class="key-date-info"><div class="key-date-label">Autumn Budget</div><div class="key-date-sub">Est. Oct/Nov 2026 · OBR forecasts due</div></div>
-        <div style="display:flex;align-items:center;gap:8px"><div style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">~7 months</div><span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">🔍</span></div>
-      </div>
-      <div class="key-date-row" style="border-bottom:none;cursor:pointer" onclick="showMilestoneSearch('UK next general election 2029 date', this)" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
-        <div class="key-date-dot" style="background:#E4003B"></div>
-        <div class="key-date-info"><div class="key-date-label">Next General Election deadline</div><div class="key-date-sub">No later than 2 May 2029</div></div>
-        <div style="display:flex;align-items:center;gap:8px"><div class="key-date-days" id="kd-ge"></div><span style="font-size:15px;color:var(--md-sys-color-on-surface-variant)">🔍</span></div>
-      </div>
-    </div>
-
-    <div class="sec-label">📅 Upcoming</div>
-
-    <!-- Explainer card -->
+    <!-- May 2026 Explainer -->
     <div class="explainer-card" onclick="var b=document.getElementById('may-explainer');var a=document.getElementById('may-arrow');b.classList.toggle('open');a.textContent=b.classList.contains('open')?'▲':'▼'">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
         <div>
@@ -977,48 +952,27 @@ body {
         <div style="font-size:18px;line-height:1.75;color:var(--md-sys-color-on-surface);margin-bottom:14px">
           The May elections are <strong>not for Westminster seats</strong>. Voters choose councillors for county councils, metropolitan boroughs and unitary authorities across England — plus every council in Scotland.
         </div>
-
         <div class="explainer-section" style="border-color:#E4003B;background:#E4003B08">
           <div class="explainer-section-label" style="color:#E4003B">⚠️ Labour's existential moment</div>
           <div class="explainer-section-text">With Starmer at −46% approval and Labour polling third nationally, these are the first major test since the collapse. Losing councils held for decades would intensify pressure on his leadership ahead of the general election.</div>
         </div>
-
         <div class="explainer-section" style="border-color:#12B7D4;background:#12B7D408">
           <div class="explainer-section-label" style="color:#0a8fa3">🔵 Reform UK's ground test</div>
           <div class="explainer-section-text">Can 26% national polling translate into councillors? Local elections favour parties with strong ground operations — traditionally the Lib Dems and Conservatives. Reform have the votes on paper but turning supporters into a local campaign machine is a different challenge entirely.</div>
         </div>
-
         <div class="explainer-section" style="border-color:#02A95B;background:#02A95B08">
           <div class="explainer-section-label" style="color:#02A95B">🟢 Green opportunity</div>
           <div class="explainer-section-text">Fresh from winning Gorton &amp; Denton and polling at 17% nationally, the Greens could make significant gains in university cities and inner-city wards where their coalition of young and graduate voters is concentrated.</div>
         </div>
-
         <div class="explainer-section" style="border-color:#0087DC;background:#0087DC08">
           <div class="explainer-section-label" style="color:#0087DC">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland — all councils up</div>
           <div class="explainer-section-text">Every Scottish council is contested. The SNP's Westminster decline to 3% UK-wide may not reflect local strength, but a bad night north of the border would test whether their coalition is still holding.</div>
         </div>
-
         <div class="explainer-section" style="border-color:#0087DC;background:#0087DC08">
           <div class="explainer-section-label" style="color:#0087DC">🏡 Conservatives defending 2021 peak</div>
           <div class="explainer-section-text">Many of these seats were last fought in 2021–22 when the Conservatives were at their local high-water mark. They face defending gains made under Boris Johnson while their national vote has since collapsed — creating a painful mismatch.</div>
         </div>
-
         <button onclick="event.stopPropagation();shareExplainer()" style="width:100%;padding:12px;border-radius:50px;border:none;background:#012169;color:#fff;font-size:15px;font-weight:800;font-family:'Nunito',sans-serif;cursor:pointer;margin-top:6px">🔗 Share this explainer</button>
-      </div>
-    </div>
-
-    <div class="ecard">
-      <div class="ecard-accent" style="background:linear-gradient(90deg,#12B7D4,#02A95B)"></div>
-      <div class="ecard-inner">
-        <div class="ed">1 MAY 2026</div>
-        <div class="et">Local Elections 2026</div>
-        <div class="es">England — county councils, unitaries &amp; mayoral contests</div>
-        <div class="ex">~1,600 seats across 23 councils. First major electoral test since Labour's polling collapse. Key mayoral contests: West of England, Cambridgeshire &amp; Peterborough.</div>
-        <div class="etags">
-          <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK target</span>
-          <span class="etag" style="background:#02A95B15;color:#02A95B">Green surge test</span>
-          <span class="etag" style="background:#E4003B15;color:#c00030">Lab existential</span>
-        </div>
       </div>
     </div>
 
@@ -1026,13 +980,13 @@ body {
     <div class="sec-label">🗳 By-Election Tracker<button class="sec-share" onclick="shareSection('🗳 Recent Results', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="be-tracker-wrap">
       <div class="be-tabs">
-        <button class="be-tab active" id="be-tab-upcoming" onclick="switchBeTab('upcoming')">⏳ Upcoming</button>
-        <button class="be-tab" id="be-tab-recent" onclick="switchBeTab('recent')">🏆 Recent Results</button>
-        <button class="be-tab" id="be-tab-stats" onclick="switchBeTab('stats')">📊 Stats</button>
+        <button class="be-tab active" id="be-tab-results" onclick="switchBeTab('results')">📊 Results</button>
+        <button class="be-tab" id="be-tab-swings" onclick="switchBeTab('swings')">📐 Swings</button>
+        <button class="be-tab" id="be-tab-context" onclick="switchBeTab('context')">🗺 Context</button>
       </div>
-      <div id="be-upcoming-list"></div>
-      <div id="be-recent-list" style="display:none"></div>
-      <div id="be-stats-panel" style="display:none"></div>
+      <div id="be-results-list"></div>
+      <div id="be-swings-panel" style="display:none"></div>
+      <div id="be-context-panel" style="display:none"></div>
     </div>
 
     <div class="sec-label">🎰 Betting Odds<button class="sec-share" onclick="shareSection('🎰 Betting Odds', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
@@ -4263,19 +4217,191 @@ var BY_ELECTIONS = {
   ],
 };
 
-var _beCurrentTab = 'upcoming';
+var _beCurrentTab = 'results';
 
 function switchBeTab(tab) {
   _beCurrentTab = tab;
-  ['upcoming','recent','stats'].forEach(function(t) {
+  ['results','swings','context'].forEach(function(t) {
     var btn = document.getElementById('be-tab-' + t);
-    var list = document.getElementById('be-' + t + (t === 'stats' ? '-panel' : '-list'));
+    var panel = document.getElementById('be-' + t + '-list') || document.getElementById('be-' + t + '-panel');
     if (btn) btn.classList.toggle('active', t === tab);
-    if (list) list.style.display = t === tab ? 'block' : 'none';
+    if (panel) panel.style.display = t === tab ? 'block' : 'none';
   });
-  if (tab === 'upcoming')  renderBeUpcoming();
-  if (tab === 'recent')    renderBeRecent();
-  if (tab === 'stats')     renderBeStats();
+  if (tab === 'results') renderBeResults();
+  if (tab === 'swings')  renderBeSwings();
+  if (tab === 'context') renderBeContext();
+}
+
+function renderBeResults() {
+  var el = document.getElementById('be-results-list');
+  if (!el) return;
+  var all = BY_ELECTIONS.recent;
+  var html = all.map(function(be) {
+    var maxPct = Math.max.apply(null, be.result.map(function(r){return r.pct;}));
+    return '<div class="be-card" onclick="openBeSheet(\'' + be.id + '\',\'recent\')">'
+      + '<div class="be-card-accent" style="background:' + be.winnerColor + '"></div>'
+      + '<div class="be-card-body">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
+      + '<div><div class="be-date-label">' + be.dateLabel + ' · ' + be.region + '</div>'
+      + '<div class="be-name">' + be.name + '</div>'
+      + '<div class="be-meta" style="margin-bottom:0"><span style="color:' + be.winnerColor + ';font-weight:800">'
+      + (be.gainLoss === 'GAIN' ? '🏆 ' + be.winner + ' GAIN' : '✅ ' + be.winner + ' HOLD')
+      + '</span> from ' + be.defending + '</div></div>'
+      + '<div style="text-align:right;flex-shrink:0">'
+      + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Swing</div>'
+      + '<div style="font-size:22px;font-weight:900;color:' + be.winnerColor + ';line-height:1">' + be.swing.pts + 'pt</div>'
+      + '<div style="font-size:10px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + partyShort(be.swing.from) + ' → ' + partyShort(be.swing.to) + '</div>'
+      + '</div></div>'
+      + be.result.slice(0,4).map(function(r) {
+          var w = Math.round((r.pct / maxPct) * 100);
+          var chg = r.change > 0 ? '+'+r.change.toFixed(1) : r.change < 0 ? r.change.toFixed(1) : '—';
+          var chgCol = r.change > 0 ? 'var(--up)' : r.change < 0 ? 'var(--down)' : 'var(--md-sys-color-on-surface-variant)';
+          return '<div class="be-mini-row">'
+            + '<div class="be-mini-dot" style="background:' + r.color + (r.winner?';box-shadow:0 0 0 2px '+r.color+'55':'') + '"></div>'
+            + '<div class="be-mini-name" style="color:' + r.color + '">' + partyShort(r.party) + (r.winner?' 🏆':'') + '</div>'
+            + '<div class="be-mini-track"><div class="be-mini-fill" style="width:0%;background:' + r.color + '" data-w="' + w + '"></div></div>'
+            + '<div class="be-mini-pct" style="color:' + r.color + '">' + r.pct + '%</div>'
+            + '<div class="be-mini-chg" style="color:' + chgCol + '">' + chg + '</div>'
+            + '</div>';
+        }).join('')
+      + '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;justify-content:space-between;align-items:center">'
+      + '<div style="display:flex;flex-wrap:wrap;gap:5px">' + beTagsHTML(be.tags, be.tagColors) + '</div>'
+      + '<span style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Full breakdown →</span>'
+      + '</div>'
+      + '</div></div>';
+  }).join('');
+  el.innerHTML = html;
+  setTimeout(function() {
+    el.querySelectorAll('.be-mini-fill').forEach(function(bar) { bar.style.width = bar.getAttribute('data-w') + '%'; });
+  }, 80);
+}
+
+function renderBeSwings() {
+  var el = document.getElementById('be-swings-panel');
+  if (!el) return;
+  var all = BY_ELECTIONS.recent;
+
+  // SVG swing chart — each by-election as a column, each party as a line
+  var parties = ['Reform UK','Labour','Green','Conservative','Lib Dem'];
+  var colors = {
+    'Reform UK':'#12B7D4','Labour':'#E4003B','Green':'#02A95B',
+    'Conservative':'#0087DC','Lib Dem':'#FAA61A'
+  };
+
+  // Collect swing data per party per by-election
+  var reversed = all.slice().reverse(); // chronological order
+  var W = 320, H = 160, PL = 32, PR = 12, PT = 12, PB = 32;
+  var CW = W - PL - PR, CH = H - PT - PB;
+  var allChanges = [];
+  parties.forEach(function(p) {
+    reversed.forEach(function(be) {
+      var r = be.result.find(function(r){ return r.party === p; });
+      if (r && r.change != null) allChanges.push(r.change);
+    });
+  });
+  var minC = Math.min.apply(null, allChanges) - 2;
+  var maxC = Math.max.apply(null, allChanges) + 2;
+  var zeroY = PT + CH - ((0 - minC) / (maxC - minC)) * CH;
+
+  function xp(i) { return PL + (i / (reversed.length - 1)) * CW; }
+  function yp(v) { return PT + CH - ((v - minC) / (maxC - minC)) * CH; }
+
+  // Zero line
+  var zeroLine = '<line x1="' + PL + '" y1="' + zeroY.toFixed(1) + '" x2="' + (W-PR) + '" y2="' + zeroY.toFixed(1) + '" stroke="var(--md-sys-color-outline-variant)" stroke-width="1" stroke-dasharray="3,3"/>'
+    + '<text x="' + (PL-4) + '" y="' + (zeroY+4).toFixed(1) + '" text-anchor="end" font-size="9" font-family="Nunito,sans-serif" fill="var(--md-sys-color-on-surface-variant)">0</text>';
+
+  // Y axis labels
+  var yLabels = [-20,-10,10,20].map(function(v) {
+    if (v < minC || v > maxC) return '';
+    var y = yp(v);
+    return '<text x="' + (PL-4) + '" y="' + (y+4).toFixed(1) + '" text-anchor="end" font-size="9" font-family="Nunito,sans-serif" fill="var(--md-sys-color-on-surface-variant)">' + (v>0?'+':'') + v + '</text>';
+  }).join('');
+
+  // X labels (abbreviated constituency)
+  var xLabels = reversed.map(function(be, i) {
+    var shortName = be.name.split(' ')[0];
+    return '<text x="' + xp(i).toFixed(1) + '" y="' + (H-4) + '" text-anchor="middle" font-size="8" font-family="Nunito,sans-serif" fill="var(--md-sys-color-on-surface-variant)">' + shortName + '</text>';
+  }).join('');
+
+  // Party lines
+  var lines = parties.map(function(p) {
+    var pts = reversed.map(function(be, i) {
+      var r = be.result.find(function(r){ return r.party === p; });
+      if (!r || r.change == null) return null;
+      return {x: xp(i), y: yp(r.change), v: r.change};
+    }).filter(Boolean);
+    if (pts.length < 2) return '';
+    var pathD = pts.map(function(pt, i) {
+      if (i === 0) return 'M' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1);
+      var prev = pts[i-1];
+      var cpx = (prev.x + pt.x) / 2;
+      return 'C' + cpx.toFixed(1) + ',' + prev.y.toFixed(1) + ' ' + cpx.toFixed(1) + ',' + pt.y.toFixed(1) + ' ' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1);
+    }).join(' ');
+    var dots = pts.map(function(pt) {
+      return '<circle cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="' + colors[p] + '"/>';
+    }).join('');
+    return '<path d="' + pathD + '" fill="none" stroke="' + colors[p] + '" stroke-width="2.5" stroke-linecap="round"/>' + dots;
+  }).join('');
+
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;display:block;overflow:visible">'
+    + zeroLine + yLabels + xLabels + lines + '</svg>';
+
+  // Legend
+  var legend = '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px">'
+    + parties.map(function(p) {
+      return '<div style="display:flex;align-items:center;gap:5px">'
+        + '<div style="width:16px;height:3px;border-radius:2px;background:' + colors[p] + '"></div>'
+        + '<span style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">' + partyShort(p) + '</span>'
+        + '</div>';
+    }).join('')
+    + '</div>';
+
+  // Biggest swings summary
+  var swingSummary = all.map(function(be) {
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
+      + '<div style="width:3px;align-self:stretch;border-radius:99px;background:' + be.winnerColor + ';flex-shrink:0"></div>'
+      + '<div style="flex:1"><div style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface)">' + be.name + '</div>'
+      + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + be.dateLabel + '</div></div>'
+      + '<div style="text-align:right">'
+      + '<div style="font-size:18px;font-weight:900;color:' + be.winnerColor + '">' + be.swing.pts + 'pt</div>'
+      + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + partyShort(be.swing.from) + ' → ' + partyShort(be.swing.to) + '</div>'
+      + '</div></div>';
+  }).join('');
+
+  el.innerHTML = '<div style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-large);padding:16px;box-shadow:var(--md-elevation-1);margin-bottom:10px">'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">Vote share change vs 2024 GE</div>'
+    + svg + legend
+    + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:8px;font-weight:600;text-align:center">Chronological order · Left = earliest</div>'
+    + '</div>'
+    + '<div style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;box-shadow:var(--md-elevation-1)">'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px">Swing by constituency</div>'
+    + swingSummary
+    + '</div>';
+}
+
+function renderBeContext() {
+  var el = document.getElementById('be-context-panel');
+  if (!el) return;
+
+  function contextBlock(color, emoji, title, body) {
+    return '<div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;margin-bottom:10px;border-left:4px solid ' + color + '">'
+      + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:' + color + ';margin-bottom:6px">' + emoji + ' ' + title + '</div>'
+      + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">' + body + '</div>'
+      + '</div>';
+  }
+
+  el.innerHTML = '<div style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-large);padding:16px;box-shadow:var(--md-elevation-1)">'
+    + contextBlock('#12B7D4', '📈', 'The Reform momentum story',
+        'Reform UK have gained two Westminster seats through by-elections since 2025 — Kingswood and Runcorn & Helsby. Both were seats where no serious challenger existed at the 2024 general election. The pattern is consistent: wherever the Conservative vote has collapsed in Leave-leaning seats, Reform are the primary beneficiary.')
+    + contextBlock('#02A95B', '🌿', 'The Green insurgency',
+        'Gorton & Denton confirmed the Greens are not just a protest vote. Winning a Manchester seat held by Labour since 1935, in a 56% Leave constituency, showed their coalition has expanded well beyond its graduate, urban core. They now hold 5 Westminster seats.')
+    + contextBlock('#E4003B', '⚠️', 'What it means for Labour',
+        'Labour have lost two by-elections and come dangerously close in a third. The Runcorn result — lost by 6 votes having held a 14,696 majority — is the starkest indicator of the scale of collapse. Both losses were in traditional heartlands. The pattern suggests structural rather than temporary decline.')
+    + contextBlock('#0087DC', '🏡', 'The Conservative squeeze',
+        'Conservatives are being squeezed from both sides simultaneously — Reform to the right in Leave seats, Lib Dems to the left in Remain seats. Horsham represents the latter: a seat that should be safe but is genuinely at risk from the Lib Dem advance into Blue Wall territory.')
+    + contextBlock('var(--md-sys-color-primary)', '🗳', 'What to watch in 2026',
+        'The May 1 Runcorn & Helsby by-election is the most watched vote of 2026. A Reform win would confirm the 2025 result was not a fluke. Horsham — whenever it is called — will test whether the Lib Dem Blue Wall advance continues or stalls. Between them, these two seats will tell us more about the next general election than any poll.')
+    + '</div>';
 }
 
 function beCountdown(dateStr) {
@@ -4515,13 +4641,13 @@ function openBeSheet(id, tab) {
       + '</div>';
   }).join('');
 
-  // Swingometer SVG (for both upcoming and results)
+  // Swingometer — starts at centre (0pts), animates to actual value after sheet opens
   var swingPts = isUpcoming ? be.swingNeeded : be.swing.pts;
   var swingFrom = isUpcoming ? be.swingFrom : be.swing.from;
   var swingTo = isUpcoming ? be.swingParty : be.swing.to;
   var swingFromColor = partyColor(swingFrom);
   var swingToColor = partyColor(swingTo);
-  var swingometerHtml = buildSwingometer(swingPts, swingFromColor, swingToColor, swingFrom, swingTo, isUpcoming);
+  var swingometerHtml = buildSwingometer(0, swingFromColor, swingToColor, swingFrom, swingTo, isUpcoming);
 
   // Odds section
   var oddsHtml = '';
@@ -4560,28 +4686,25 @@ function openBeSheet(id, tab) {
     '<div style="display:flex;justify-content:center;padding:12px 0 4px">'
     + '<div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>'
     + '</div>'
-    // Header
-    + '<div style="padding:4px 20px 16px;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
-    + '<div style="display:flex;justify-content:space-between;align-items:flex-start">'
-    + '<div style="flex:1">'
+    // Header — centred
+    + '<div style="padding:4px 20px 16px;border-bottom:1px solid var(--md-sys-color-outline-variant);text-align:center">'
     + '<div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:' + accentColor + ';margin-bottom:4px">' + (isUpcoming ? '⏳ Upcoming By-Election' : '🏆 By-Election Result') + '</div>'
     + '<div style="font-size:24px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:-0.4px;line-height:1.2">' + be.name + '</div>'
     + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:4px;font-weight:600">' + be.dateLabel + ' · ' + be.region + '</div>'
     + (isUpcoming
-        ? '<div style="margin-top:8px;display:flex;align-items:center;gap:6px"><span style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">Triggered by:</span><span style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface)">' + be.trigger + '</span></div>'
-        : '<div style="margin-top:6px;font-size:13px;font-weight:800;color:' + accentColor + '">' + (be.gainLoss === 'GAIN' ? '🏆 ' + be.winner + ' GAIN from ' + be.defending : '✅ ' + be.winner + ' HOLD') + '</div>'
+        ? '<div style="margin-top:6px;font-size:13px;color:var(--md-sys-color-on-surface-variant)">Triggered by: <strong style="color:var(--md-sys-color-on-surface)">' + be.trigger + '</strong></div>'
+        : '<div style="margin-top:6px;font-size:14px;font-weight:800;color:' + accentColor + '">' + (be.gainLoss === 'GAIN' ? '🏆 ' + be.winner + ' GAIN from ' + be.defending : '✅ ' + be.winner + ' HOLD') + '</div>'
       )
-    + '</div>'
-    + (days !== null ? '<div style="flex-shrink:0;margin-left:12px;text-align:center;background:' + accentColor + '18;border-radius:14px;padding:10px 14px"><div style="font-size:28px;font-weight:900;color:' + accentColor + ';line-height:1">' + days + '</div><div style="font-size:11px;font-weight:700;color:' + accentColor + '">days</div></div>' : '')
-    + '</div>'
+    + (days !== null ? '<div style="display:inline-block;margin-top:10px;background:' + accentColor + '18;border-radius:14px;padding:8px 20px"><div style="font-size:32px;font-weight:900;color:' + accentColor + ';line-height:1">' + days + '</div><div style="font-size:11px;font-weight:700;color:' + accentColor + '">days to go</div></div>' : '')
     + '</div>'
 
     // Body
     + '<div style="padding:16px 20px">'
 
-    // Verdict chip
-    + '<div style="display:inline-flex;align-items:center;padding:6px 14px;border-radius:99px;font-size:12px;font-weight:800;background:' + be.verdictColor + '18;color:' + be.verdictColor + ';margin-bottom:14px">'
-    + '⚡ ' + be.verdict + '</div>'
+    // Verdict chip — centred
+    + '<div style="text-align:center;margin-bottom:14px">'
+    + '<span style="display:inline-flex;align-items:center;padding:6px 14px;border-radius:99px;font-size:12px;font-weight:800;background:' + be.verdictColor + '18;color:' + be.verdictColor + '">⚡ ' + be.verdict + '</span>'
+    + '</div>'
 
     // Context
     + '<div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;margin-bottom:14px">'
@@ -4599,13 +4722,12 @@ function openBeSheet(id, tab) {
     + (isUpcoming ? '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:10px;font-weight:600">2024 GE baseline — used to calculate swing</div>' : '')
     + '</div>'
 
-    // Swingometer
+    // Swingometer — needle animates after sheet opens
     + '<div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;margin-bottom:14px">'
-    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px">' + (isUpcoming ? '⚖️ Swing needed to change hands' : '⚖️ Swing from 2024') + '</div>'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px;text-align:center">' + (isUpcoming ? '⚖️ Swing needed to change hands' : '⚖️ Swing from 2024') + '</div>'
     + swingometerHtml
     + '</div>'
 
-    // Odds (upcoming only)
     + oddsHtml
 
     // Watch for / significance
@@ -4614,8 +4736,8 @@ function openBeSheet(id, tab) {
     + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">' + (isUpcoming ? be.watchFor : be.significance) + '</div>'
     + '</div>'
 
-    // Tags
-    + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">' + beTagsHTML(be.tags, be.tagColors) + '</div>'
+    // Tags — centred
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;justify-content:center">' + beTagsHTML(be.tags, be.tagColors) + '</div>'
 
     // Action buttons
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">'
@@ -4628,12 +4750,15 @@ function openBeSheet(id, tab) {
   document.body.appendChild(sheet);
   setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
 
-  // Animate bars after mount
+  // Animate bars and swingometer after sheet has slid in
   setTimeout(function() {
+    // Bars
     sheet.querySelectorAll('[data-w]').forEach(function(bar) {
       bar.style.width = bar.getAttribute('data-w') + '%';
     });
-  }, 120);
+    // Swingometer needle — animate from centre (0) to actual value
+    animateSwingometer(swingPts, swingFromColor, swingToColor);
+  }, 400);
 
   function closeBeSheet() {
     sheet.style.transform = 'translateY(100%)';
@@ -4646,11 +4771,9 @@ function openBeSheet(id, tab) {
 }
 
 function buildSwingometer(swingPts, fromColor, toColor, fromParty, toParty, isNeeded) {
-  // Clamp needle to ±50 pts = ±85 degrees from vertical
   var maxPts = 45;
-  var clamped = Math.min(swingPts, maxPts);
-  var angleDeg = (clamped / maxPts) * 80; // 0 = left (fromParty), positive = right (toParty)
-  // Needle starts straight up (270 deg in SVG), swings right
+  var clamped = Math.min(Math.abs(swingPts), maxPts);
+  var angleDeg = (clamped / maxPts) * 80 * (swingPts < 0 ? -1 : 1);
   var needleRad = ((90 + angleDeg) * Math.PI) / 180;
   var cx = 140, cy = 110, r = 80;
   var nx = cx + r * Math.cos(needleRad - Math.PI);
@@ -4659,24 +4782,47 @@ function buildSwingometer(swingPts, fromColor, toColor, fromParty, toParty, isNe
 
   return '<div style="text-align:center">'
     + '<svg viewBox="0 0 280 120" width="100%" style="max-width:280px;overflow:visible">'
-    // Arc background
     + '<path d="' + arcPath + '" fill="none" stroke="var(--md-sys-color-outline-variant)" stroke-width="14" stroke-linecap="round"/>'
-    // Left half (fromParty color)
     + '<path d="M ' + (cx - r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + cx + ' ' + (cy - r) + '" fill="none" stroke="' + fromColor + '" stroke-width="14" stroke-linecap="round" opacity="0.5"/>'
-    // Right half (toParty color)
     + '<path d="M ' + cx + ' ' + (cy - r) + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx + r) + ' ' + cy + '" fill="none" stroke="' + toColor + '" stroke-width="14" stroke-linecap="round" opacity="0.5"/>'
-    // Needle
-    + '<line x1="' + cx + '" y1="' + cy + '" x2="' + nx.toFixed(1) + '" y2="' + ny.toFixed(1) + '" stroke="var(--md-sys-color-on-surface)" stroke-width="3" stroke-linecap="round" style="transition:x2 0.8s cubic-bezier(0.34,1.56,0.64,1),y2 0.8s cubic-bezier(0.34,1.56,0.64,1)"/>'
-    // Centre dot
+    + '<line id="swingo-needle" x1="' + cx + '" y1="' + cy + '" x2="' + cx + '" y2="' + (cy - r) + '" stroke="var(--md-sys-color-on-surface)" stroke-width="3" stroke-linecap="round"/>'
     + '<circle cx="' + cx + '" cy="' + cy + '" r="6" fill="var(--md-sys-color-on-surface)"/>'
-    // Labels
     + '<text x="' + (cx - r - 4) + '" y="' + (cy + 18) + '" text-anchor="end" font-size="11" font-weight="700" fill="' + fromColor + '" font-family="Nunito,sans-serif">' + partyShort(fromParty) + '</text>'
     + '<text x="' + (cx + r + 4) + '" y="' + (cy + 18) + '" text-anchor="start" font-size="11" font-weight="700" fill="' + toColor + '" font-family="Nunito,sans-serif">' + partyShort(toParty) + '</text>'
-    // Centre value
-    + '<text x="' + cx + '" y="' + (cy + 24) + '" text-anchor="middle" font-size="20" font-weight="900" fill="var(--md-sys-color-on-surface)" font-family="Nunito,sans-serif">' + swingPts + 'pt</text>'
-    + '<text x="' + cx + '" y="' + (cy + 36) + '" text-anchor="middle" font-size="10" font-weight="600" fill="var(--md-sys-color-on-surface-variant)" font-family="Nunito,sans-serif">' + (isNeeded ? 'swing needed' : 'actual swing') + '</text>'
+    + '<text id="swingo-val" x="' + cx + '" y="' + (cy + 36) + '" text-anchor="middle" font-size="20" font-weight="900" fill="var(--md-sys-color-on-surface)" font-family="Nunito,sans-serif">0pt</text>'
+    + '<text x="' + cx + '" y="' + (cy + 48) + '" text-anchor="middle" font-size="10" font-weight="600" fill="var(--md-sys-color-on-surface-variant)" font-family="Nunito,sans-serif">' + (isNeeded ? 'swing needed' : 'actual swing') + '</text>'
     + '</svg>'
     + '</div>';
+}
+
+function animateSwingometer(targetPts, fromColor, toColor) {
+  var needle = document.getElementById('swingo-needle');
+  var valEl = document.getElementById('swingo-val');
+  if (!needle) return;
+  var cx = 140, cy = 110, r = 80;
+  var maxPts = 45;
+  var duration = 1800;
+  var startTime = null;
+
+  function step(ts) {
+    if (!startTime) startTime = ts;
+    var progress = Math.min((ts - startTime) / duration, 1);
+    // Ease out cubic
+    var ease = 1 - Math.pow(1 - progress, 3);
+    var currentPts = targetPts * ease;
+    var clamped = Math.min(Math.abs(currentPts), maxPts);
+    var angleDeg = (clamped / maxPts) * 80 * (currentPts < 0 ? -1 : 1);
+    var needleRad = ((90 + angleDeg) * Math.PI) / 180;
+    var nx = cx + r * Math.cos(needleRad - Math.PI);
+    var ny = cy + r * Math.sin(needleRad - Math.PI);
+    needle.setAttribute('x2', nx.toFixed(2));
+    needle.setAttribute('y2', ny.toFixed(2));
+    // Update needle colour toward target
+    needle.setAttribute('stroke', currentPts < 0 ? fromColor : toColor);
+    if (valEl) valEl.textContent = Math.round(Math.abs(currentPts)) + 'pt';
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 function beAIAnalysis(id, tab) {
@@ -4806,6 +4952,23 @@ function renderBeCarousel() {
     }, 50);
   }, {passive: true});
 
+  // Prevent horizontal carousel swipes from triggering page tab-switch
+  var _cStartX = 0, _cStartY = 0, _cLocked = false;
+  wrap.addEventListener('touchstart', function(e) {
+    _cStartX = e.touches[0].clientX;
+    _cStartY = e.touches[0].clientY;
+    _cLocked = false;
+  }, {passive: true});
+  wrap.addEventListener('touchmove', function(e) {
+    if (_cLocked) { e.stopPropagation(); return; }
+    var dx = Math.abs(e.touches[0].clientX - _cStartX);
+    var dy = Math.abs(e.touches[0].clientY - _cStartY);
+    if (dx > dy && dx > 8) {
+      _cLocked = true;
+      e.stopPropagation();
+    }
+  }, {passive: false});
+
   // Auto-scroll
   var _carouselPaused = false;
   var _carouselIdx = 0;
@@ -4816,13 +4979,13 @@ function renderBeCarousel() {
     var cards = wrap.querySelectorAll('.be-carousel-card');
     if (!cards.length) return;
     _carouselIdx = (_carouselIdx + 1) % cards.length;
-    var cardWidth = cards[0].offsetWidth + 12;
-    wrap.scrollTo({ left: _carouselIdx * cardWidth, behavior: 'smooth' });
+    // Scroll the specific card into view — cleaner than scrollTo with calculated offset
+    cards[_carouselIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }
 
   function startCarousel() {
     clearInterval(_carouselTimer);
-    _carouselTimer = setInterval(carouselNext, 3500);
+    _carouselTimer = setInterval(carouselNext, 6000);
   }
 
   wrap.addEventListener('touchstart', function() {
@@ -4831,9 +4994,16 @@ function renderBeCarousel() {
   }, {passive: true});
   wrap.addEventListener('touchend', function() {
     setTimeout(function() {
+      // Snap to nearest card after user swipe
+      var cards = wrap.querySelectorAll('.be-carousel-card');
+      if (cards.length) {
+        var cardWidth = cards[0].offsetWidth + 12;
+        _carouselIdx = Math.round(wrap.scrollLeft / cardWidth);
+        _carouselIdx = Math.max(0, Math.min(_carouselIdx, cards.length - 1));
+      }
       _carouselPaused = false;
       startCarousel();
-    }, 4000);
+    }, 5000);
   }, {passive: true});
 
   if (allCards.length > 1) startCarousel();
@@ -4842,7 +5012,7 @@ function renderBeCarousel() {
 // Init by-election tracker on first render
 function initBeTracker() {
   renderBeCarousel();
-  renderBeUpcoming();
+  renderBeResults();
 }
 
 function renderCountdown() {
