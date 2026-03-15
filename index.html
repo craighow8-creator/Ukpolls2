@@ -698,7 +698,34 @@ body {
 /* ── Tonal chip tags ── */
 .tonal-tag { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: var(--md-sys-shape-corner-full); font-size: 12px; font-weight: 600; }
 
-/* ── By-Elections Tracker ── */
+/* ── By-Election Carousel ── */
+#be-carousel::-webkit-scrollbar { display: none; }
+.be-carousel-card {
+  flex-shrink: 0;
+  width: calc(100vw - 64px);
+  max-width: 320px;
+  border-radius: var(--md-sys-shape-corner-large);
+  overflow: hidden;
+  box-shadow: var(--md-elevation-2);
+  cursor: pointer;
+  scroll-snap-align: center;
+  transition: transform var(--md-motion-short) var(--md-motion-expressive);
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.be-carousel-card:active { transform: scale(0.97); }
+.be-carousel-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--md-sys-color-outline-variant);
+  transition: all var(--md-motion-short) var(--md-motion-standard);
+  flex-shrink: 0;
+}
+.be-carousel-dot.active {
+  width: 18px; border-radius: 3px;
+  background: var(--md-sys-color-primary);
+}
+
+
 .be-tabs { display: flex; gap: 4px; margin-bottom: 14px; padding: 4px; background: var(--md-sys-color-surface-container); border-radius: var(--md-sys-shape-corner-full); }
 .be-tab { flex: 1; padding: 9px 6px; border: none; border-radius: var(--md-sys-shape-corner-full); font-size: 13px; font-weight: 700; font-family: 'Nunito', sans-serif; cursor: pointer; background: transparent; color: var(--md-sys-color-on-surface-variant); transition: background var(--md-motion-short) var(--md-motion-standard), color var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive); }
 .be-tab.active { background: var(--md-sys-color-surface); color: var(--md-sys-color-primary); box-shadow: var(--md-elevation-1); }
@@ -900,6 +927,12 @@ body {
   <div class="page" id="page-elections">
     <div class="stitle">Elections</div>
     <div class="ssub">Upcoming votes &amp; results</div>
+
+    <!-- By-election carousel -->
+    <div id="be-carousel-wrap" style="margin:0 -16px 4px;position:relative">
+      <div id="be-carousel" style="display:flex;gap:12px;overflow-x:auto;padding:4px 16px 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory"></div>
+      <div id="be-carousel-dots" style="display:flex;justify-content:center;gap:6px;padding-bottom:4px"></div>
+    </div>
 
     <div class="sec-label">⏳ Countdown<button class="sec-share" onclick="shareSection('⏳ Countdown', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="countdown-card" style="margin-bottom:12px"></div>
@@ -4677,8 +4710,138 @@ function beShare(id, tab) {
   }, 300);
 }
 
+// ── By-Election Carousel ──
+function renderBeCarousel() {
+  var wrap = document.getElementById('be-carousel');
+  var dotsEl = document.getElementById('be-carousel-dots');
+  if (!wrap) return;
+
+  // Combine upcoming + recent into one ordered list — upcoming first, then recent
+  var allCards = [];
+  BY_ELECTIONS.upcoming.forEach(function(be) { allCards.push({be: be, tab: 'upcoming'}); });
+  BY_ELECTIONS.recent.forEach(function(be)   { allCards.push({be: be, tab: 'recent'}); });
+
+  wrap.innerHTML = allCards.map(function(item, idx) {
+    var be = item.be;
+    var isUpcoming = item.tab === 'upcoming';
+    var accentColor = isUpcoming ? be.defColor : be.winnerColor;
+    var days = isUpcoming && be.date ? Math.max(0, Math.ceil((new Date(be.date) - new Date()) / 86400000)) : null;
+
+    // Countdown or result badge
+    var badgeHtml;
+    if (isUpcoming) {
+      var urgency = days !== null && days <= 14 ? '#C8102E' : days !== null && days <= 47 ? '#FAA61A' : accentColor;
+      badgeHtml = '<div style="text-align:center;padding:20px 16px 12px">'
+        + '<div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.75);margin-bottom:4px">Days to go</div>'
+        + '<div style="font-size:56px;font-weight:900;color:#fff;line-height:1;font-family:\'Nunito\',sans-serif">'
+        + (days !== null ? days : '—') + '</div>'
+        + '<div style="font-size:12px;color:rgba(255,255,255,0.75);font-weight:600;margin-top:2px">' + be.dateLabel + '</div>'
+        + '</div>';
+    } else {
+      badgeHtml = '<div style="text-align:center;padding:20px 16px 12px">'
+        + '<div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.75);margin-bottom:6px">'
+        + (be.gainLoss === 'GAIN' ? '🏆 Seat gained' : '✅ Seat held') + '</div>'
+        + '<div style="font-size:28px;font-weight:900;color:#fff;line-height:1.2;font-family:\'Nunito\',sans-serif">' + be.winner + '</div>'
+        + '<div style="font-size:12px;color:rgba(255,255,255,0.75);font-weight:600;margin-top:4px">' + be.dateLabel + '</div>'
+        + '</div>';
+    }
+
+    // Top result bars (top 3)
+    var resultData = isUpcoming ? be.result2024 : be.result;
+    var maxPct = Math.max.apply(null, resultData.map(function(r){ return r.pct; }));
+    var barsHtml = resultData.slice(0,3).map(function(r) {
+      var w = Math.round((r.pct / maxPct) * 100);
+      return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">'
+        + '<div style="width:7px;height:7px;border-radius:50%;background:' + r.color + ';flex-shrink:0' + (r.winner ? ';box-shadow:0 0 0 2px rgba(255,255,255,0.5)' : '') + '"></div>'
+        + '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);width:48px;flex-shrink:0">' + partyShort(r.party) + '</div>'
+        + '<div style="flex:1;height:5px;background:rgba(255,255,255,0.2);border-radius:99px;overflow:hidden">'
+        + '<div style="width:' + w + '%;height:100%;background:' + r.color + ';border-radius:99px"></div>'
+        + '</div>'
+        + '<div style="font-size:11px;font-weight:800;color:#fff;width:28px;text-align:right">' + r.pct + '%</div>'
+        + '</div>';
+    }).join('');
+
+    return '<div class="be-carousel-card" onclick="openBeSheet(\'' + be.id + '\',\'' + item.tab + '\')" '
+      + 'style="background:linear-gradient(160deg,' + accentColor + ' 0%,' + accentColor + 'cc 100%)">'
+      // Subtle overlay pattern
+      + '<div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0) 40%,rgba(0,0,0,0.25) 100%);pointer-events:none"></div>'
+      // Content
+      + '<div style="position:relative">'
+      + badgeHtml
+      // Constituency name + region
+      + '<div style="padding:0 16px 10px;text-align:center">'
+      + '<div style="font-size:17px;font-weight:900;color:#fff;line-height:1.2;font-family:\'Nunito\',sans-serif">' + be.name + '</div>'
+      + '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;font-weight:600">' + be.region + '</div>'
+      + '</div>'
+      // Divider
+      + '<div style="margin:0 16px;height:1px;background:rgba(255,255,255,0.2)"></div>'
+      // Result bars
+      + '<div style="padding:10px 16px 16px">'
+      + '<div style="font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:6px">' + (isUpcoming ? '2024 result' : 'Result') + '</div>'
+      + barsHtml
+      + '</div>'
+      // Tap hint
+      + '<div style="text-align:center;padding-bottom:12px;font-size:11px;color:rgba(255,255,255,0.6);font-weight:600">Tap for full breakdown →</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  // Dots
+  dotsEl.innerHTML = allCards.map(function(_, i) {
+    return '<div class="be-carousel-dot' + (i === 0 ? ' active' : '') + '" id="be-dot-' + i + '"></div>';
+  }).join('');
+
+  // Update dots on scroll
+  var scrollTimer;
+  wrap.addEventListener('scroll', function() {
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function() {
+      var cardW = wrap.querySelector('.be-carousel-card');
+      if (!cardW) return;
+      var cardWidth = cardW.offsetWidth + 12;
+      var idx = Math.round(wrap.scrollLeft / cardWidth);
+      dotsEl.querySelectorAll('.be-carousel-dot').forEach(function(d, i) {
+        d.classList.toggle('active', i === idx);
+      });
+    }, 50);
+  }, {passive: true});
+
+  // Auto-scroll
+  var _carouselPaused = false;
+  var _carouselIdx = 0;
+  var _carouselTimer;
+
+  function carouselNext() {
+    if (_carouselPaused) return;
+    var cards = wrap.querySelectorAll('.be-carousel-card');
+    if (!cards.length) return;
+    _carouselIdx = (_carouselIdx + 1) % cards.length;
+    var cardWidth = cards[0].offsetWidth + 12;
+    wrap.scrollTo({ left: _carouselIdx * cardWidth, behavior: 'smooth' });
+  }
+
+  function startCarousel() {
+    clearInterval(_carouselTimer);
+    _carouselTimer = setInterval(carouselNext, 3500);
+  }
+
+  wrap.addEventListener('touchstart', function() {
+    _carouselPaused = true;
+    clearInterval(_carouselTimer);
+  }, {passive: true});
+  wrap.addEventListener('touchend', function() {
+    setTimeout(function() {
+      _carouselPaused = false;
+      startCarousel();
+    }, 4000);
+  }, {passive: true});
+
+  if (allCards.length > 1) startCarousel();
+}
+
 // Init by-election tracker on first render
 function initBeTracker() {
+  renderBeCarousel();
   renderBeUpcoming();
 }
 
