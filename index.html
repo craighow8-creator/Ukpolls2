@@ -341,7 +341,6 @@ body {
   -webkit-overflow-scrolling: touch;
   padding: 4px 2px 12px;
   scrollbar-width: none;
-  margin-bottom: 0;
 }
 .party-pills-scroll::-webkit-scrollbar { display: none; }
 .party-pill-card {
@@ -354,82 +353,52 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 10px;
+  padding-bottom: 0;
 }
-.party-pill-accent {
-  height: 4px;
+.party-pill-accent { height: 4px; width: 100%; margin-bottom: 8px; }
+.party-pill-rank { font-size: 10px; font-weight: 700; color: var(--md-sys-color-on-surface-variant); margin-bottom: 2px; }
+.party-pill-abbr { font-size: 12px; font-weight: 900; margin-bottom: 1px; }
+.party-pill-pct { font-size: 20px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+.party-pill-bar-track { width: 52px; height: 5px; background: var(--md-sys-color-outline-variant); border-radius: 99px; overflow: hidden; margin-bottom: 5px; }
+.party-pill-bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s var(--md-motion-expressive); }
+.party-pill-change { font-size: 10px; font-weight: 700; margin-bottom: 3px; }
+.party-pill-seats { font-size: 9px; color: var(--md-sys-color-on-surface-variant); min-height: 13px; margin-bottom: 0; }
+.party-pill-info-wrap {
   width: 100%;
-  margin-bottom: 8px;
-}
-.party-pill-rank {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--md-sys-color-on-surface-variant);
-  margin-bottom: 2px;
-}
-.party-pill-abbr {
-  font-size: 12px;
-  font-weight: 900;
-  margin-bottom: 1px;
-}
-.party-pill-pct {
-  font-size: 20px;
-  font-weight: 900;
-  line-height: 1;
-  margin-bottom: 4px;
-}
-.party-pill-bar-track {
-  width: 52px;
-  height: 5px;
-  background: var(--md-sys-color-outline-variant);
-  border-radius: 99px;
-  overflow: hidden;
-  margin-bottom: 5px;
-}
-.party-pill-bar-fill {
-  height: 100%;
-  border-radius: 99px;
-  transition: width 0.6s var(--md-motion-expressive);
-}
-.party-pill-change {
-  font-size: 10px;
-  font-weight: 700;
-  margin-bottom: 3px;
-}
-.party-pill-seats {
-  font-size: 9px;
-  color: var(--md-sys-color-on-surface-variant);
-  margin-bottom: 7px;
-  min-height: 12px;
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 8px;
 }
 .party-pill-info {
-  background: var(--md-sys-color-surface-container-high);
+  background: transparent;
   border: none;
+  width: 44px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.party-pill-info-dot {
+  background: var(--md-sys-color-surface-container-high);
   border-radius: 50%;
   width: 20px;
   height: 20px;
-  cursor: pointer;
   color: var(--md-sys-color-on-surface-variant);
   font-size: 12px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
-  line-height: 1;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+  pointer-events: none;
 }
 
 /* ── Party Bar List ── */
 .bar-list { margin-bottom: 0; }
-.bar-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
-}
+.bar-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); }
 .bar-row:last-child { border-bottom: none; }
 .bar-rank { font-size: 12px; font-weight: 700; color: var(--md-sys-color-on-surface-variant); width: 16px; text-align: center; flex-shrink: 0; }
 .bar-name { font-size: 14px; font-weight: 700; width: 80px; flex-shrink: 0; }
@@ -2087,7 +2056,9 @@ function renderPolls() {
     var chgColor = p.change > 0 ? '#7fff7f' : p.change < 0 ? '#ffaaaa' : '#fff';
     var numPolls = D.polls.length;
     return '<div class="rl-card" style="background:'+bg+';color:#fff;position:relative">'
-      + '<button onclick="event.stopPropagation();openPollingAvgInfo()" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:22px;height:22px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">ℹ</button>'
+      + '<button onclick="openPollingAvgInfo()" style="position:absolute;top:0;right:0;width:44px;height:44px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation">'
+      + '<span style="background:rgba(255,255,255,0.2);border-radius:50%;width:22px;height:22px;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;pointer-events:none">ℹ</span>'
+      + '</button>'
       + '<div class="rl-rank">'+label+'</div>'
       + '<div class="rl-name">'+p.name+'</div>'
       + '<div class="rl-pct">'+p.pct+'<small>%</small></div>'
@@ -2109,11 +2080,15 @@ function renderPolls() {
         + '<div class="party-pill-accent" style="background:'+p.color+'"></div>'
         + '<div class="party-pill-rank">#'+(i+1)+'</div>'
         + '<div class="party-pill-abbr" style="color:'+p.color+'">'+p.abbr+'</div>'
-        + '<div class="party-pill-pct" style="color:'+p.color+'">'+p.pct+'<span style="font-size:12px;font-weight:600">%</span></div>'
+        + '<div class="party-pill-pct" style="color:'+p.color+'">'+p.pct+'<span style="font-size:11px;font-weight:600">%</span></div>'
         + '<div class="party-pill-bar-track"><div class="party-pill-bar-fill" style="width:'+barW+'%;background:'+p.color+'"></div></div>'
         + '<div class="party-pill-change" style="color:'+chgColor+'">'+chgText+'</div>'
-        + (seatsText ? '<div class="party-pill-seats">'+seatsText+'</div>' : '<div class="party-pill-seats"></div>')
-        + '<button class="party-pill-info" onclick="openPartyFundingInfo('+JSON.stringify(p.name)+')">ℹ</button>'
+        + '<div class="party-pill-seats">'+seatsText+'</div>'
+        + '<div class="party-pill-info-wrap">'
+        + '<button class="party-pill-info" onclick="openPartyFundingInfo('+JSON.stringify(p.name)+')">'
+        + '<span class="party-pill-info-dot">ℹ</span>'
+        + '</button>'
+        + '</div>'
         + '</div>';
     }).join('')
     + '</div>';
@@ -3050,7 +3025,9 @@ function renderPollCards() {
     return '<div style="margin-bottom:14px">'
       + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'
       + '<div style="display:flex;align-items:center;gap:5px"><span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">' + p.pollster + '</span>'
-      + '<button onclick="openPollsterInfo(' + JSON.stringify(p.pollster) + ')" style="background:var(--md-sys-color-surface-container-high);border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;color:var(--md-sys-color-on-surface-variant);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;line-height:1;-webkit-tap-highlight-color:transparent;touch-action:manipulation">ℹ</button></div>'
+      + '<button onclick="openPollsterInfo(' + JSON.stringify(p.pollster) + ')" style="background:transparent;border:none;width:44px;height:32px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;vertical-align:middle">'
+      + '<span style="background:var(--md-sys-color-surface-container-high);border-radius:50%;width:20px;height:20px;color:var(--md-sys-color-on-surface-variant);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;pointer-events:none">ℹ</span>'
+      + '</button></div>'
       + '<span style="font-size:15px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + p.date + '</span>'
       + '</div>'
       + '<div style="display:flex;height:48px;border-radius:12px;overflow:hidden;gap:1.5px;background:var(--md-sys-color-outline-variant)">'
@@ -3519,8 +3496,7 @@ function dismissPopup() {
     var el = startTarget;
     while (el && el !== content) {
       var style = window.getComputedStyle(el);
-      var overflow = style.overflowX;
-      if ((overflow === 'auto' || overflow === 'scroll') && el.scrollWidth > el.clientWidth) return;
+      if ((style.overflowX === 'auto' || style.overflowX === 'scroll') && el.scrollWidth > el.clientWidth) return;
       el = el.parentElement;
     }
     var activeBtn = document.querySelector('.nb.active');
