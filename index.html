@@ -835,6 +835,9 @@ body {
       <div id="race-leaders"></div>
       <div id="party-bars"></div>
     </div>
+    <div class="sec-label">🔮 Election Forecast</div>
+    <div id="forecast-card" class="card" style="border-top:4px solid var(--md-sys-color-primary);padding:18px;margin-bottom:12px"></div>
+
     <div class="sec-label">🏛 Seat Projection<button class="sec-share" onclick="shareSection('🏛 Seat Projection', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="seat-bar-card" onclick="openFPTPSheet()" style="cursor:pointer;background:var(--md-sys-color-surface);border-radius:24px;padding:16px;margin-bottom:8px;box-shadow:var(--md-elevation-2);border-top:4px solid var(--md-sys-color-primary);active:opacity:0.8">
       <div id="seat-bar-inner" style="display:flex;height:76px;border-radius:16px;overflow:hidden;gap:2px;box-shadow:var(--md-elevation-1);margin-bottom:10px"></div>
@@ -1312,7 +1315,11 @@ function partyShort(name) { return (PARTY[name] || {}).short || name; }
 function partyAbbr(name)  { return (PARTY[name] || {}).abbr  || name; }
 
 const D = {
-  fetchDate: "14 Mar 2026",
+  fetchDate: (function() {
+    var now = new Date();
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  })(),
   parties: [
     {name:"Reform UK",abbr:"REF",pct:27,change:0,seats:335,color:"#12B7D4"},
     {name:"Labour",abbr:"LAB",pct:19,change:0,seats:41,color:"#E4003B"},
@@ -1921,7 +1928,7 @@ async function askParty(party, color) {
   out.scrollIntoView({behavior:'smooth', block:'nearest'});
 
   var ctx = 'You are a neutral, expert UK political analyst. Today is ' + D.fetchDate + '. '
-    + 'Current polling: Reform UK 27%, Labour 19%, Conservative 18%, Green 15%, Lib Dem 12%, SNP 3%, Restore Britain 7%. '
+    + buildPollingContext() + ' '
     + 'Always state policies as plain facts. Never editorialise. Be equally tough and fair on all parties.';
 
   try {
@@ -1976,11 +1983,9 @@ async function askAI(q) {
   out.innerHTML = '<div style="color:var(--md-sys-color-on-surface-variant);font-size:15px;text-align:center;padding:20px">⏳ Thinking...</div>';
   out.scrollIntoView({behavior:'smooth', block:'nearest'});
   var ctx = 'You are a neutral, expert UK political analyst. Today is ' + D.fetchDate + '. '
-    + 'Current polling averages: Reform UK 27%, Labour 19%, Conservative 18%, Green 15%, Lib Dem 12%, SNP 3%, Restore Britain 7% (FON prompted only). '
-    + 'MRP seat projection: Reform UK 335, Conservative 92, Lib Dem 60, Green 52, Labour 41, SNP 44 — a hung parliament. '
-    + 'Restore Britain has surpassed 110,000 paid members by 10 March 2026 — fastest growing party in modern UK history, yet receiving almost no MSM coverage. '
-    + 'Keir Starmer net approval: around -46. Nigel Farage: -17. Kemi Badenoch: -12. Zack Polanski: -8 to +11 (varies by pollster). '
-    + 'Key recent events: More in Common (6-9 Mar) put Reform 30% — highest of current cycle. '
+    + buildPollingContext() + ' '
+    + 'Restore Britain has surpassed 110,000 paid members — fastest growing party in modern UK history, yet receiving almost no MSM coverage. '
+    + 'Key recent events: More in Common put Reform at 30% — highest of current cycle. '
     + 'Starmer faces sleaze allegations over Mandelson affair. '
     + 'Starmer approved US use of UK bases for Iran strikes; Trump attacked Starmer publicly. '
     + 'Labour won first ever council by-election gain from Reform UK (Murton, Durham, 5 Mar). '
@@ -2004,6 +2009,20 @@ async function askAI(q) {
 }
 
 // ── Render Overview ──
+function buildPollingContext() {
+  var sorted = D.parties.slice().sort(function(a,b){ return b.pct - a.pct; });
+  var snap = sorted.filter(function(p){ return p.name !== 'Other'; })
+    .map(function(p){ return p.name + ' ' + p.pct + '%'; }).join(', ');
+  var seats = sorted.filter(function(p){ return p.seats; })
+    .map(function(p){ return p.name + ' ' + p.seats; }).join(', ');
+  var leaderSnap = D.leaders.map(function(l){
+    return l.name + ' net approval: ' + (l.net !== null ? l.net : 'unknown');
+  }).join('. ');
+  return 'Current polling averages: ' + snap + '. '
+    + 'Seat projection: ' + seats + '. '
+    + leaderSnap + '.';
+}
+
 function renderPolls() {
   // Freshness pill
   var fpEl = document.getElementById('freshness-pill');
@@ -2101,6 +2120,7 @@ function renderPolls() {
   }
 
   renderFPTPExplorer();
+  renderForecast();
   renderTrends();
   renderPollCards();
 }
@@ -2253,6 +2273,77 @@ function renderFPTPExplorer() {
     verdictEl.innerHTML = '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:3px">326 seats needed for majority</div>'
       + '<div style="font-size:17px;font-weight:900;color:' + oc + '">' + ot + '</div>';
   }
+}
+
+function renderForecast() {
+  var el = document.getElementById('forecast-card');
+  if (!el) return;
+
+  var MAJORITY = 326;
+  var TOTAL_SEATS = 650;
+  var SIMS = 10000;
+  var ERROR = 3; // polling error ± percentage points
+
+  // Simple uniform swing seat model
+  function simSeats(parties) {
+    var results = {};
+    var total = parties.reduce(function(s,p){ return s + p.pct; }, 0);
+    parties.forEach(function(p) {
+      if (p.seats === null) return;
+      var share = p.pct / total;
+      results[p.name] = Math.round(share * TOTAL_SEATS);
+    });
+    return results;
+  }
+
+  // Run simulations
+  var outcomes = {majority:{}, hung:0};
+  var baseParties = D.parties.filter(function(p){ return p.seats !== null && p.name !== 'Other'; });
+
+  for (var i = 0; i < SIMS; i++) {
+    // Add random polling error to each party
+    var simParties = baseParties.map(function(p) {
+      var noise = (Math.random() - 0.5) * 2 * ERROR;
+      return {name: p.name, pct: Math.max(0, p.pct + noise), seats: p.seats, color: p.color};
+    });
+    var seats = simSeats(simParties);
+    var leader = null, leaderSeats = 0;
+    Object.entries(seats).forEach(function(e) {
+      if (e[1] > leaderSeats) { leaderSeats = e[1]; leader = e[0]; }
+    });
+    if (leaderSeats >= MAJORITY) {
+      outcomes.majority[leader] = (outcomes.majority[leader] || 0) + 1;
+    } else {
+      outcomes.hung++;
+    }
+  }
+
+  // Build results
+  var results = [];
+  Object.entries(outcomes.majority).forEach(function(e) {
+    var party = D.parties.find(function(p){ return p.name === e[0]; });
+    results.push({label: e[0] + ' majority', pct: Math.round(e[1] / SIMS * 100), color: party ? party.color : '#6b7280'});
+  });
+  results.push({label: 'Hung parliament', pct: Math.round(outcomes.hung / SIMS * 100), color: 'var(--md-sys-color-on-surface-variant)'});
+  results.sort(function(a,b){ return b.pct - a.pct; });
+
+  var topResult = results[0];
+
+  el.innerHTML =
+    '<div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">Based on ' + SIMS.toLocaleString() + ' simulations · ±' + ERROR + '% polling error</div>'
+    + '<div style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px;background:var(--md-sys-color-surface-container-low);border-radius:12px;padding:10px 14px;line-height:1.6">Simulates random polling error across ' + SIMS.toLocaleString() + ' elections. Shows how often each outcome occurs given typical UK polling uncertainty.</div>'
+    + results.map(function(r, i) {
+      var isTop = i === 0;
+      return '<div style="margin-bottom:' + (isTop ? '14' : '10') + 'px">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+        + '<span style="font-size:' + (isTop ? '16' : '14') + 'px;font-weight:' + (isTop ? '800' : '700') + ';color:var(--md-sys-color-on-surface)">' + r.label + (isTop ? ' 🔮' : '') + '</span>'
+        + '<span style="font-size:' + (isTop ? '18' : '15') + 'px;font-weight:900;color:' + r.color + '">' + r.pct + '%</span>'
+        + '</div>'
+        + '<div style="background:var(--md-sys-color-surface-container-low);border-radius:99px;height:' + (isTop ? '10' : '7') + 'px;overflow:hidden">'
+        + '<div style="width:' + r.pct + '%;background:' + r.color + ';height:100%;border-radius:99px;transition:width 0.8s var(--md-motion-expressive)"></div>'
+        + '</div>'
+        + '</div>';
+    }).join('');
 }
 
 function openFPTPSheet() {
