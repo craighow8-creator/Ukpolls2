@@ -771,7 +771,7 @@ body {
 <div id="content">
   <div id="ptr-indicator" style="display:flex;align-items:center;justify-content:center;gap:8px;height:0;overflow:hidden;transition:height 0.2s ease;background:var(--md-sys-color-surface-container-low)">
     <div id="ptr-spinner" style="width:20px;height:20px;border:2.5px solid var(--md-sys-color-primary-container);border-top-color:var(--md-sys-color-primary);border-radius:50%;transition:transform 0.2s"></div>
-    <span id="ptr-label" style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface-variant);font-family:\'Nunito\',sans-serif">Pull to refresh</span>
+    <span id="ptr-label" style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface-variant);font-family:\'Nunito\',sans-serif">Pull to check for updates</span>
   </div>
 
   <!-- OVERVIEW -->
@@ -1484,6 +1484,7 @@ function sp(id, btn) {
   if (id === 'trends') setTimeout(renderTrends, 50);
   if (id === 'demo') setTimeout(renderMigration, 50);
   if (id === 'elections') setTimeout(renderCountdown, 50);
+  if (id === 'vote') setTimeout(loadVoteResults, 50);
 }
 
 const APP_URL = 'https://craighow8-creator.github.io/Ukpolls2/';
@@ -3530,11 +3531,11 @@ setTimeout(renderTrends, 100);
     spinner.style.transform = 'rotate(' + (progress * 300) + 'deg)';
     if (dist >= THRESHOLD && !triggered) {
       triggered = true;
-      label.textContent = 'Release to refresh';
+      label.textContent = 'Release to check for updates';
       spinner.style.borderTopColor = 'var(--md-sys-color-primary)';
     } else if (dist < THRESHOLD) {
       triggered = false;
-      label.textContent = 'Pull to refresh';
+      label.textContent = 'Pull to check for updates';
     }
   }, {passive: true});
 
