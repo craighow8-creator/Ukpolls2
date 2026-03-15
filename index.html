@@ -2829,7 +2829,22 @@ function renderLeaders() {
     try { localStorage.setItem('leader_rating_' + li, val); } catch(e) {}
   }
 
-  document.getElementById('leaders-content').innerHTML = D.leaders.map((l, li) => {
+  // Sort by net approval descending — null treated as very negative
+  var sortedLeaders = D.leaders.slice().sort(function(a, b) {
+    var an = a.net === null ? -999 : a.net;
+    var bn = b.net === null ? -999 : b.net;
+    return bn - an;
+  });
+  // Map sorted index back to original index for localStorage keys etc
+  var leaderIndexMap = sortedLeaders.map(function(l) { return D.leaders.indexOf(l); });
+
+  document.getElementById('leaders-content').innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px">'
+    + '<div style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">Ranked by net approval</div>'
+    + '<button id="net-approval-info-btn" style="background:var(--md-sys-color-surface-container-high);border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;color:var(--md-sys-color-on-surface-variant);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0;touch-action:manipulation">ℹ</button>'
+    + '</div>'
+    + sortedLeaders.map((l, sortedIdx) => {
+    var li = leaderIndexMap[sortedIdx];
     var initials = l.name.split(' ').map(w => w[0]).join('').slice(0,2);
     var myRating = getMyRating(li);
 
@@ -2931,6 +2946,46 @@ function renderLeaders() {
       + '</div>'
       + '</div>';
   }).join('');
+
+  // Wire up net approval info button
+  var naBtn = document.getElementById('net-approval-info-btn');
+  if (naBtn) naBtn.addEventListener('click', function() { openNetApprovalInfo(); });
+}
+
+function openNetApprovalInfo() {
+  var existing = document.getElementById('net-approval-sheet');
+  if (existing) { existing.remove(); document.getElementById('net-approval-sheet-bg').remove(); return; }
+  var bg = document.createElement('div');
+  bg.id = 'net-approval-sheet-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease';
+  document.body.appendChild(bg);
+  setTimeout(function(){ bg.style.background = 'rgba(0,0,0,0.45)'; }, 10);
+  var sheet = document.createElement('div');
+  sheet.id = 'net-approval-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--md-sys-color-surface-container-high);border-radius:28px 28px 0 0;padding:0 24px calc(32px + env(safe-area-inset-bottom));box-shadow:0 -4px 32px rgba(0,0,0,0.2);transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.05,0.7,0.1,1)';
+  sheet.innerHTML =
+    '<div style="display:flex;justify-content:center;padding:12px 0 4px"><div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div></div>'
+    + '<div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin:8px 0 16px;letter-spacing:-0.3px">What is net approval?</div>'
+    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;padding:16px;margin-bottom:12px">'
+    + '<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-primary);margin-bottom:8px">The formula</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">Net approval = % who approve <strong>minus</strong> % who disapprove. A score of +11 means more people approve than disapprove. A score of −42 means 42 more points disapprove — which is where Keir Starmer currently sits.</div>'
+    + '</div>'
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:16px;padding:16px;margin-bottom:12px">'
+    + '<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:8px">Why rank this way?</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);line-height:1.75">It\'s the most objective measure available — a single number that captures how the public actually feel, not an editorial choice. A positive score is genuinely rare in modern UK politics.</div>'
+    + '</div>'
+    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:20px;font-weight:600">Sources: Ipsos · YouGov · Opinium · latest available polling</div>'
+    + '<button id="net-approval-close" style="width:100%;padding:14px;border-radius:50px;border:none;background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface);font-size:15px;font-weight:700;cursor:pointer">Got it</button>';
+  document.body.appendChild(sheet);
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+  function closeSheet() {
+    sheet.style.transform = 'translateY(100%)';
+    bg.style.background = 'rgba(0,0,0,0)';
+    setTimeout(function(){ if(sheet.parentNode) sheet.remove(); if(bg.parentNode) bg.remove(); }, 350);
+  }
+  document.getElementById('net-approval-close').addEventListener('click', closeSheet);
+  bg.addEventListener('click', closeSheet);
+  addSwipeToDismiss(sheet, closeSheet);
 }
 
 function toggleLeader(li) {
