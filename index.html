@@ -348,27 +348,21 @@ body {
   width: 72px;
   background: var(--md-sys-color-surface-container-low);
   border-radius: var(--md-sys-shape-corner-large);
-  overflow: hidden;
   box-shadow: var(--md-elevation-1);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 0;
+  padding-bottom: 8px;
+  /* NO overflow:hidden — keeps the tap area unclipped */
 }
-.party-pill-accent { height: 4px; width: 100%; margin-bottom: 8px; }
+.party-pill-accent { height: 4px; width: 100%; border-radius: var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-large) 0 0; margin-bottom: 8px; }
 .party-pill-rank { font-size: 10px; font-weight: 700; color: var(--md-sys-color-on-surface-variant); margin-bottom: 2px; }
 .party-pill-abbr { font-size: 12px; font-weight: 900; margin-bottom: 1px; }
 .party-pill-pct { font-size: 20px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
 .party-pill-bar-track { width: 52px; height: 5px; background: var(--md-sys-color-outline-variant); border-radius: 99px; overflow: hidden; margin-bottom: 5px; }
 .party-pill-bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s var(--md-motion-expressive); }
 .party-pill-change { font-size: 10px; font-weight: 700; margin-bottom: 3px; }
-.party-pill-seats { font-size: 9px; color: var(--md-sys-color-on-surface-variant); min-height: 13px; margin-bottom: 0; }
-.party-pill-info-wrap {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 6px 0 8px;
-}
+.party-pill-seats { font-size: 9px; color: var(--md-sys-color-on-surface-variant); min-height: 13px; margin-bottom: 4px; }
 .party-pill-info {
   background: transparent;
   border: none;
@@ -2056,9 +2050,7 @@ function renderPolls() {
     var chgColor = p.change > 0 ? '#7fff7f' : p.change < 0 ? '#ffaaaa' : '#fff';
     var numPolls = D.polls.length;
     return '<div class="rl-card" style="background:'+bg+';color:#fff;position:relative">'
-      + '<button onclick="openPollingAvgInfo()" style="position:absolute;top:0;right:0;width:44px;height:44px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation">'
-      + '<span style="background:rgba(255,255,255,0.2);border-radius:50%;width:22px;height:22px;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;pointer-events:none">ℹ</span>'
-      + '</button>'
+      + '<button onclick="event.stopPropagation();openPollingAvgInfo()" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:22px;height:22px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">ℹ</button>'
       + '<div class="rl-rank">'+label+'</div>'
       + '<div class="rl-name">'+p.name+'</div>'
       + '<div class="rl-pct">'+p.pct+'<small>%</small></div>'
@@ -2076,6 +2068,7 @@ function renderPolls() {
       var chgText = p.change > 0 ? '▲ +'+p.change+'%' : p.change < 0 ? '▼ '+p.change+'%' : 'NC';
       var chgColor = p.change > 0 ? 'var(--up)' : p.change < 0 ? 'var(--down)' : 'var(--md-sys-color-on-surface-variant)';
       var seatsText = p.seats ? '~'+p.seats+' seats' : '';
+      var nameJson = JSON.stringify(p.name);
       return '<div class="party-pill-card">'
         + '<div class="party-pill-accent" style="background:'+p.color+'"></div>'
         + '<div class="party-pill-rank">#'+(i+1)+'</div>'
@@ -2084,11 +2077,9 @@ function renderPolls() {
         + '<div class="party-pill-bar-track"><div class="party-pill-bar-fill" style="width:'+barW+'%;background:'+p.color+'"></div></div>'
         + '<div class="party-pill-change" style="color:'+chgColor+'">'+chgText+'</div>'
         + '<div class="party-pill-seats">'+seatsText+'</div>'
-        + '<div class="party-pill-info-wrap">'
-        + '<button class="party-pill-info" onclick="openPartyFundingInfo('+JSON.stringify(p.name)+')">'
+        + '<button class="party-pill-info" onclick="openPartyFundingInfo('+nameJson+')">'
         + '<span class="party-pill-info-dot">ℹ</span>'
         + '</button>'
-        + '</div>'
         + '</div>';
     }).join('')
     + '</div>';
