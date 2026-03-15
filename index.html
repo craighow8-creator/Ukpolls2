@@ -336,7 +336,7 @@ body {
 /* ── Party Pill Scroll ── */
 .party-pills-scroll {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   padding: 4px 2px 12px;
@@ -346,7 +346,7 @@ body {
 .party-pills-scroll::-webkit-scrollbar { display: none; }
 .party-pill-card {
   flex-shrink: 0;
-  width: 86px;
+  width: 72px;
   background: var(--md-sys-color-surface-container-low);
   border-radius: var(--md-sys-shape-corner-large);
   overflow: hidden;
@@ -359,7 +359,7 @@ body {
 .party-pill-accent {
   height: 4px;
   width: 100%;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 .party-pill-rank {
   font-size: 10px;
@@ -368,19 +368,19 @@ body {
   margin-bottom: 2px;
 }
 .party-pill-abbr {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
   margin-bottom: 1px;
 }
 .party-pill-pct {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   line-height: 1;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 .party-pill-bar-track {
-  width: 64px;
-  height: 6px;
+  width: 52px;
+  height: 5px;
   background: var(--md-sys-color-outline-variant);
   border-radius: 99px;
   overflow: hidden;
@@ -392,31 +392,33 @@ body {
   transition: width 0.6s var(--md-motion-expressive);
 }
 .party-pill-change {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   margin-bottom: 3px;
-  color: var(--md-sys-color-on-surface-variant);
 }
 .party-pill-seats {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--md-sys-color-on-surface-variant);
-  margin-bottom: 6px;
+  margin-bottom: 7px;
+  min-height: 12px;
 }
 .party-pill-info {
   background: var(--md-sys-color-surface-container-high);
   border: none;
   border-radius: 50%;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 /* ── Party Bar List ── */
@@ -2111,7 +2113,7 @@ function renderPolls() {
         + '<div class="party-pill-bar-track"><div class="party-pill-bar-fill" style="width:'+barW+'%;background:'+p.color+'"></div></div>'
         + '<div class="party-pill-change" style="color:'+chgColor+'">'+chgText+'</div>'
         + (seatsText ? '<div class="party-pill-seats">'+seatsText+'</div>' : '<div class="party-pill-seats"></div>')
-        + '<button class="party-pill-info" onclick="event.stopPropagation();openPartyFundingInfo('+JSON.stringify(p.name)+')">ℹ</button>'
+        + '<button class="party-pill-info" onclick="openPartyFundingInfo('+JSON.stringify(p.name)+')">ℹ</button>'
         + '</div>';
     }).join('')
     + '</div>';
@@ -3048,7 +3050,7 @@ function renderPollCards() {
     return '<div style="margin-bottom:14px">'
       + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'
       + '<div style="display:flex;align-items:center;gap:5px"><span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">' + p.pollster + '</span>'
-      + '<button onclick="openPollsterInfo(' + JSON.stringify(p.pollster) + ')" style="background:none;border:none;cursor:pointer;padding:0;color:var(--md-sys-color-on-surface-variant);opacity:0.5;font-size:12px;line-height:1">ℹ</button></div>'
+      + '<button onclick="openPollsterInfo(' + JSON.stringify(p.pollster) + ')" style="background:var(--md-sys-color-surface-container-high);border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;color:var(--md-sys-color-on-surface-variant);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;line-height:1;-webkit-tap-highlight-color:transparent;touch-action:manipulation">ℹ</button></div>'
       + '<span style="font-size:15px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + p.date + '</span>'
       + '</div>'
       + '<div style="display:flex;height:48px;border-radius:12px;overflow:hidden;gap:1.5px;background:var(--md-sys-color-outline-variant)">'
@@ -3503,12 +3505,24 @@ function dismissPopup() {
 (function(){
   var TABS = ['polls','elections','leaders','demo','vote','ai'];
   var content = document.getElementById('content');
-  var sx = 0, sy = 0;
-  content.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
+  var sx = 0, sy = 0, startTarget = null;
+  content.addEventListener('touchstart', e => {
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    startTarget = e.target;
+  }, {passive:true});
   content.addEventListener('touchend', e => {
     var dx = e.changedTouches[0].clientX - sx;
     var dy = e.changedTouches[0].clientY - sy;
     if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.8) return;
+    // Don't switch tabs if touch started inside a horizontally scrollable element
+    var el = startTarget;
+    while (el && el !== content) {
+      var style = window.getComputedStyle(el);
+      var overflow = style.overflowX;
+      if ((overflow === 'auto' || overflow === 'scroll') && el.scrollWidth > el.clientWidth) return;
+      el = el.parentElement;
+    }
     var activeBtn = document.querySelector('.nb.active');
     if (!activeBtn) return;
     var oc = activeBtn.getAttribute('onclick') || '';
