@@ -2396,8 +2396,13 @@ function openFPTPSheet() {
 
     // Title block
     + '<div style="padding:8px 24px 20px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+    + '<div>'
     + '<div style="font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Explainer</div>'
     + '<div style="font-size:26px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:-0.5px;line-height:1.2;margin-bottom:12px">First Past<br>The Post</div>'
+    + '</div>'
+    + '<button onclick="closeFPTPSheet()" style="background:var(--md-sys-color-surface-container-highest);border:none;color:var(--md-sys-color-on-surface);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;flex-shrink:0;margin-top:4px">✕</button>'
+    + '</div>'
     + '<div style="font-size:16px;color:var(--md-sys-color-on-surface-variant);line-height:1.7">In each of the UK\'s <strong style="color:var(--md-sys-color-on-surface)">650 constituencies</strong>, only the candidate with the most votes wins a seat. Second place gets nothing — even by one vote. The total national vote share is irrelevant.</div>'
     + '</div>'
 
@@ -2431,7 +2436,7 @@ function openFPTPSheet() {
     + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Stable governments.</strong> Usually produces clear majorities — decisive, fast, accountable.</div>'
     + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Local link.</strong> Every voter has a named MP they can hold directly accountable.</div>'
     + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Simple.</strong> One vote, clear winner, result usually known by midnight.</div>'
-    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Filters extremes.</strong> Fringe parties struggle to win seats without concentrated local support.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Concentrated support rewarded.</strong> Parties with strong local roots convert votes into seats efficiently.</div>'
     + '</div>'
     + '</div>'
     // Against
@@ -2439,9 +2444,9 @@ function openFPTPSheet() {
     + '<div style="font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-secondary);margin-bottom:12px">Case against</div>'
     + '<div style="display:flex;flex-direction:column;gap:10px">'
     + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Wasted votes.</strong> Millions of votes have zero effect on the result.</div>'
-    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Safe seats.</strong> Much of the country is ignored — campaigns focus on a few swing seats.</div>'
-    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Disproportionate.</strong> Majorities on minorities of votes. Seats rarely reflect vote share.</div>'
-    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Two-party bias.</strong> Historically favours large parties; squeezes smaller ones.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Tactical voting.</strong> Many voters don\'t vote for their actual first choice — they vote to block a party they fear most. FPTP forces this trade-off.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Disproportionate.</strong> Large majorities on minorities of votes. Seats rarely reflect vote share.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.55"><strong>Punishes spread votes.</strong> A party with millions of evenly spread votes can win far fewer seats than one with fewer but concentrated votes — as 2024 showed starkly.</div>'
     + '</div>'
     + '</div>'
     + '</div>'
@@ -2472,13 +2477,16 @@ function openFPTPSheet() {
     + '</div>'
 
     // Current context — neutral
-    + '<div style="margin:0 16px 28px;background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:16px">'
+    + '<div style="margin:0 16px 12px;background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:16px">'
     + '<div style="font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px">At current polling</div>'
     + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.75">'
-    + 'Reform UK (<strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.pct||0) + '%</strong>) projects <strong>' + (D.parties.find(function(p){return p.name==="Reform UK";})?.seats||0) + ' seats</strong> — a majority — because their vote is efficiently spread across English constituencies. '
-    + 'Labour (<strong>' + (D.parties.find(function(p){return p.name==="Labour";})?.pct||0) + '%</strong>) projects just <strong>~' + (D.parties.find(function(p){return p.name==="Labour";})?.seats||0) + ' seats</strong> — their vote is concentrated in safe urban seats. '
-    + 'Under PR, both parties would have far fewer seats. Whether that is fairer depends on which case above you find more persuasive.'
+    + 'The current polling picture is the most fragmented in modern UK history — five parties above 10%. Under FPTP, vote efficiency matters enormously: a party whose support is geographically concentrated converts votes into seats far more effectively than one whose vote is spread evenly nationwide. The bars above show the difference between what votes would produce under each system. Whether that gap is a flaw or a feature depends on which case above you find more persuasive.'
     + '</div>'
+    + '</div>'
+
+    // Close button
+    + '<div style="padding:0 16px 28px;margin-top:4px">'
+    + '<button onclick="closeFPTPSheet()" style="width:100%;padding:14px;border-radius:50px;border:none;background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface);font-size:15px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif">Close</button>'
     + '</div>';
 
   document.body.appendChild(sheet);
