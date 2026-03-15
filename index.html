@@ -1151,7 +1151,7 @@ body {
     <div style="width:36px;height:4px;background:var(--md-sys-color-outline-variant);border-radius:2px;margin:0 auto 20px"></div>
     <div style="font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Share</div>
     <div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:16px;font-family:\'Nunito\',sans-serif">UK Poll Tracker</div>
-    <div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;border-top:3px solid var(--md-sys-color-primary);padding:14px 16px;font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.7;margin-bottom:18px;font-style:italic;max-height:120px;overflow-y:auto;-webkit-overflow-scrolling:touch" id="share-preview-text"></div>
+    <div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;border-top:3px solid var(--md-sys-color-primary);padding:14px 16px;font-size:13px;color:var(--md-sys-color-on-surface);line-height:1.6;margin-bottom:18px;font-style:italic;max-height:100px;overflow-y:auto;-webkit-overflow-scrolling:touch;white-space:pre-wrap" id="share-preview-text"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <button onclick="shareToX();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:18px;cursor:pointer;background:#000;color:#fff;font-family:\'Nunito\',sans-serif">X / Twitter</button>
       <button onclick="shareToWhatsApp();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:18px;cursor:pointer;background:#25D366;color:#fff;font-family:\'Nunito\',sans-serif">WhatsApp</button>
@@ -1557,6 +1557,69 @@ function addSwipeToDismiss(sheet, closeFn) {
     sheet.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
     sheet.style.transform = 'translateY(0)';
   });
+}
+
+function generateShareText() {
+  var p = D.parties;
+  var sorted = p.slice().sort(function(a,b) { return b.pct - a.pct; });
+  var leader = sorted[0];
+
+  var find = function(name) { return p.find(function(x) { return x.name === name; }) || {}; };
+  var labPct = find('Labour').pct || 0;
+  var conPct = find('Conservative').pct || 0;
+  var grnPct = find('Green').pct || 0;
+  var ldPct  = find('Lib Dem').pct || 0;
+  var rbPct  = find('Restore Britain').pct || 0;
+  var labPos = sorted.findIndex(function(x) { return x.name === 'Labour'; }) + 1;
+
+  var partyEmoji = {
+    'Reform UK':       '➡️',
+    'Labour':          '🌹',
+    'Conservative':    '🌳',
+    'Green':           '🌿',
+    'Lib Dem':         '🔶',
+    'Restore Britain': '🇬🇧',
+    'SNP':             '🏴󠁧󠁢󠁳󠁣󠁴󠁿'
+  };
+  var leaderEmoji = partyEmoji[leader.name] || '🗳️';
+
+  var minGap = 99, gapA, gapB;
+  for (var i = 0; i < sorted.length - 1; i++) {
+    var gap = sorted[i].pct - sorted[i+1].pct;
+    if (gap < minGap && sorted[i].pct > 5 && sorted[i+1].pct > 5) {
+      minGap = gap; gapA = sorted[i]; gapB = sorted[i+1];
+    }
+  }
+
+  var bigMover = p.reduce(function(best, x) {
+    return x.change !== null && Math.abs(x.change || 0) > Math.abs(best.change || 0) ? x : best;
+  }, {change: 0});
+
+  var line1 = leaderEmoji + ' ' + leader.name + ' are out front on ' + leader.pct + '% as British politics fragments.';
+
+  var snap = [];
+  if (labPct) snap.push('Labour ' + labPct + '%');
+  if (conPct) snap.push('Con ' + conPct + '%');
+  if (grnPct) snap.push('Green ' + grnPct + '%');
+  if (ldPct >= 5) snap.push('LD ' + ldPct + '%');
+  if (rbPct >= 5) snap.push('Restore Britain ' + rbPct + '%');
+  var line2 = snap.join(' · ');
+
+  var line3 = '';
+  if (labPos > 2) {
+    var posWord = ['','1st','2nd','3rd','4th','5th'][labPos] || labPos + 'th';
+    line3 = '🚨 Labour have fallen to ' + posWord + ' place — historic low.';
+  } else if (minGap <= 2 && gapA && gapB) {
+    line3 = '👀 Just ' + minGap + 'pt between ' + gapA.name + ' (' + gapA.pct + '%) and ' + gapB.name + ' (' + gapB.pct + '%).';
+  } else if (bigMover.change && Math.abs(bigMover.change) >= 2) {
+    line3 = (bigMover.change > 0 ? '📈' : '📉') + ' ' + bigMover.name + ' ' + (bigMover.change > 0 ? 'up' : 'down') + ' ' + Math.abs(bigMover.change) + 'pts to ' + bigMover.pct + '%.';
+  }
+
+  var line4 = rbPct >= 5 ? '📈 Restore Britain at ' + rbPct + '% and growing.' : '';
+
+  var lines = [line1, line2, line3, line4].filter(Boolean);
+  // Default (used for preview in modal) — polling snapshot + install hook
+  return lines.join('\n') + '\n\n🇬🇧 UK Poll Tracker — updated daily\n' + APP_URL;
 }
 
 // X/Twitter — must stay under 280 chars, punchy snapshot + install hook
