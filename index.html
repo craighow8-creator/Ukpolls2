@@ -2374,47 +2374,62 @@ function renderForecast() {
 
   window._forecastUpdate = function(error) {
     currentError = error;
-    // Update error label
     var errLabel = document.getElementById('ferror-label');
     if (errLabel) errLabel.textContent = error;
-    // Update re-simulate button onclick to use new error
     var reBtn = el.querySelector('button[onclick*="_forecastUpdate"]');
     if (reBtn) reBtn.setAttribute('onclick', 'window._forecastUpdate(' + error + ')');
-    // Run sims
-    var results = runSims(error);
-    // Animate: reset bars to 0 first, then fill
-    var fills = el.querySelectorAll('.forecast-bar-fill');
-    fills.forEach(function(bar) {
-      bar.style.transition = 'none';
+
+    // Step 1 — disable button, show spinning state, reset bars to 0
+    if (reBtn) {
+      reBtn.disabled = true;
+      reBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:ptr-spin 0.8s linear infinite"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-6.74"/></svg> Simulating…';
+    }
+    el.querySelectorAll('.forecast-bar-fill').forEach(function(bar) {
+      bar.style.transition = 'width 0.25s ease';
       bar.style.width = '0%';
     });
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        results.forEach(function(r, i) {
-          var bar = document.getElementById('fbar-' + i);
-          var pctEl = document.getElementById('fpct-' + i);
-          var labelEl = document.getElementById('flabel-' + i);
-          if (bar) {
-            bar.style.transition = 'width 0.7s cubic-bezier(0.34,1.56,0.64,1)';
-            bar.style.width = r.pct + '%';
-            bar.style.background = r.color;
-          }
-          if (pctEl) {
-            pctEl.style.color = r.color;
-            // Count up
-            var end = r.pct, startTime = null;
+    el.querySelectorAll('[id^="fpct-"]').forEach(function(pct) { pct.textContent = '—'; });
+
+    // Step 2 — run sims after pause so user sees the reset
+    setTimeout(function() {
+      var results = runSims(error);
+
+      // Step 3 — slow dramatic fill with count-up
+      results.forEach(function(r, i) {
+        var bar = document.getElementById('fbar-' + i);
+        var pctEl = document.getElementById('fpct-' + i);
+        var labelEl = document.getElementById('flabel-' + i);
+
+        if (bar) {
+          bar.style.transition = 'width 1.6s cubic-bezier(0.22, 1, 0.36, 1)';
+          bar.style.width = r.pct + '%';
+          bar.style.background = r.color;
+        }
+        if (pctEl) {
+          pctEl.style.color = r.color;
+          var end = r.pct, startTime = null;
+          setTimeout(function() {
             (function countUp(ts) {
               if (!startTime) startTime = ts;
-              var p = Math.min((ts - startTime) / 600, 1);
-              var ease = 1 - Math.pow(1 - p, 3);
+              var p = Math.min((ts - startTime) / 1400, 1);
+              var ease = 1 - Math.pow(1 - p, 4);
               pctEl.textContent = Math.round(end * ease) + '%';
               if (p < 1) requestAnimationFrame(countUp);
             })(performance.now());
-          }
-          if (labelEl) labelEl.textContent = r.label + (i === 0 ? ' 🔮' : '');
-        });
+          }, 100);
+        }
+        if (labelEl) labelEl.textContent = r.label + (i === 0 ? ' 🔮' : '');
       });
-    });
+
+      // Re-enable button after animation completes
+      setTimeout(function() {
+        if (reBtn) {
+          reBtn.disabled = false;
+          reBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-6.74"/></svg> Re-simulate';
+        }
+      }, 1800);
+
+    }, 400);
   };
 }
 
