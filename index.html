@@ -2019,7 +2019,7 @@ function renderPolls() {
       var barW = Math.round((p.pct / maxPct) * 100);
       return `<div class="bar-row">
         <div class="bar-rank">${i+1}</div>
-        <div class="bar-name" style="color:${p.color}">${p.name}</div>
+        <div class="bar-name" style="color:${p.color};display:flex;align-items:center;gap:4px">${p.name}<button onclick="event.stopPropagation();openPartyFundingInfo('${p.name}')" style="background:none;border:none;cursor:pointer;padding:0;color:var(--md-sys-color-on-surface-variant);opacity:0.5;font-size:12px;line-height:1;flex-shrink:0">ℹ</button></div>
         <div class="bar-track"><div class="bar-fill" style="width:${barW}%;background:${p.color}"></div></div>
         <div class="bar-pct" style="color:${p.color}">${p.pct}%</div>
         <div class="bar-change">${chg}</div>
@@ -2030,6 +2030,81 @@ function renderPolls() {
   renderFPTPExplorer();
   renderTrends();
   renderPollCards();
+}
+
+function openPartyFundingInfo(name) {
+  var FUNDING = {
+    'Reform UK':       {color:'#12B7D4', summary:'Almost entirely reliant on one man.', body:'Christopher Harborne — a British businessman based in Thailand who made his fortune in aviation fuel — has donated over £5 million, making him by far the party\'s dominant backer. The remainder comes from property developers and financial sector figures. No trade union money whatsoever.', source:'Electoral Commission · 2023–2024'},
+    'Labour':          {color:'#E4003B', summary:'Historically trade union money — but that\'s changing.', body:'Unite and Unison remain the largest single donors. But since 2023, Labour has increasingly attracted tech entrepreneurs, City professionals, and media figures. In 2024, major donations came from financial services and property — a notable shift for a party founded by the unions.', source:'Electoral Commission · 2023–2024'},
+    'Conservative':    {color:'#0087DC', summary:'The party of the City — and it shows.', body:'Hedge funds, private equity, and property are the bedrock. Lord Cruddas (City financial services, £3m+) and various asset managers feature prominently. The Conservatives have historically received more from the financial sector than all other parties combined. Donation levels have fallen sharply since 2019.', source:'Electoral Commission · 2023–2024'},
+    'Green':           {color:'#02A95B', summary:'Small donors and progressive wealth.', body:'The Greens rely heavily on a large base of small individual donations — a genuine grassroots funding model. Some larger donations come from individuals with backgrounds in environmental businesses and technology. No significant corporate or union backing.', source:'Electoral Commission · 2023–2024'},
+    'Lib Dem':         {color:'#FAA61A', summary:'Professional class donors and the anti-Brexit dividend.', body:'The Lib Dems draw heavily from professionals — lawyers, academics, consultants — and benefited enormously from Remain-aligned donors during and after Brexit. Their funding base is genuinely diffuse with no single dominant sector.', source:'Electoral Commission · 2023–2024'},
+    'SNP':             {color:'#C4922A', summary:'Membership-funded — and under scrutiny.', body:'The SNP relies primarily on membership fees and small donations. However, the party\'s finances came under serious scrutiny in 2023–24 following a police investigation into the handling of over £600,000 in ringfenced independence campaign funds.', source:'Electoral Commission · Police Scotland 2023–24'},
+    'Restore Britain': {color:'#1a4a9e', summary:'New party — primarily membership-funded.', body:'Founded early 2026, Restore Britain\'s initial funding comes from its paid membership base — 110,000 members at £25/year suggests initial revenues around £2.75m. No major third-party donors yet declared to the Electoral Commission given the party\'s very recent registration.', source:'Electoral Commission · 2026'},
+    'Other':           {color:'#6b7280', summary:'Varies by party.', body:'The "Other" category covers a range of minor parties with very different funding models. Check the Electoral Commission\'s public register for specific party returns at electoralcommission.org.uk.', source:'Electoral Commission'}
+  };
+  var info = FUNDING[name] || {color:'var(--md-sys-color-primary)', summary:'Funding data not available.', body:'Check the Electoral Commission\'s public register at electoralcommission.org.uk for official donation returns.', source:'Electoral Commission'};
+  var existing = document.getElementById('party-funding-sheet');
+  if (existing) { existing.remove(); document.getElementById('party-funding-sheet-bg').remove(); return; }
+  var bg = document.createElement('div');
+  bg.id = 'party-funding-sheet-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease';
+  document.body.appendChild(bg);
+  setTimeout(function(){ bg.style.background = 'rgba(0,0,0,0.45)'; }, 10);
+  var sheet = document.createElement('div');
+  sheet.id = 'party-funding-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--md-sys-color-surface-container-high);border-radius:28px 28px 0 0;padding:0 24px calc(32px + env(safe-area-inset-bottom));box-shadow:0 -4px 32px rgba(0,0,0,0.2);transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.05,0.7,0.1,1)';
+  sheet.innerHTML = '<div style="display:flex;justify-content:center;padding:12px 0 4px"><div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div></div>'
+    + '<div style="font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:'+info.color+';margin-top:8px;margin-bottom:4px">💰 Follow the money</div>'
+    + '<div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:4px;letter-spacing:-0.3px">'+name+'</div>'
+    + '<div style="font-size:15px;font-weight:700;color:'+info.color+';margin-bottom:16px">'+info.summary+'</div>'
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:16px;padding:16px;margin-bottom:12px"><div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.8">'+info.body+'</div></div>'
+    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:20px;font-weight:600">Source: '+info.source+'</div>'
+    + '<button id="party-funding-close" style="width:100%;padding:14px;border-radius:50px;border:none;background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface);font-size:15px;font-weight:700;cursor:pointer">Close</button>';
+  document.body.appendChild(sheet);
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+  function closeSheet() { sheet.style.transform = 'translateY(100%)'; bg.style.background = 'rgba(0,0,0,0)'; setTimeout(function(){ if(sheet.parentNode) sheet.remove(); if(bg.parentNode) bg.remove(); }, 350); }
+  document.getElementById('party-funding-close').addEventListener('click', closeSheet);
+  bg.addEventListener('click', closeSheet);
+  addSwipeToDismiss(sheet, closeSheet);
+}
+
+function openPollsterInfo(name) {
+  var POLLSTERS = {
+    'YouGov':          {summary:'Listed on the London Stock Exchange.', body:'Founded and chaired by Stephan Shakespeare. Major clients include The Times, Sky News, The Sun, and the BBC. Known for pioneering MRP modelling for UK elections. Their polls tend to show lower Reform UK numbers than some rivals, which some attribute to their weighting methodology.', source:'British Polling Council'},
+    'Focaldata':       {summary:'Independent, privately owned.', body:'Founded by Will Jennings and colleagues. Not affiliated with any media group or political party. Known for sophisticated MRP-style constituency modelling. One of the newer entrants to the UK polling market, generally regarded as methodologically rigorous.', source:'British Polling Council'},
+    'More in Common':  {summary:'Non-profit, not a traditional pollster.', body:'Founded originally inspired by the murder of Jo Cox MP. Funded by charitable foundations. Their polls frequently show higher Reform UK numbers than rivals — they argue their methodology better captures the "shy Reform" voter.', source:'British Polling Council'},
+    'Survation':       {summary:'Independent, privately owned.', body:'CEO Damian Lyons Lowe founded the company. Clients include the Daily Mirror and Channel 4 News — their client list skews centre-left. Famously called the 2017 general election most accurately but didn\'t publish their final poll.', source:'British Polling Council'},
+    'Opinium':         {summary:'Independent, privately owned.', body:'Primary media client is The Observer. Regarded as a solid mid-market pollster. Generally shows results in line with the polling average.', source:'British Polling Council'},
+    'Find Out Now':    {summary:'Independent. Primary client is GB News.', body:'Worth knowing when interpreting results — GB News is their main media client. Frequently shows higher Green and higher Reform numbers than rival pollsters. Their methodology uses a different online panel which may reach different demographics.', source:'British Polling Council'},
+    'BMG':             {summary:'Part of the ITWP data group.', body:'Primary media client is The Independent. Tends to produce results close to the polling average. Methodologically conventional.', source:'British Polling Council'},
+    'Techne':          {summary:'Independent, privately owned.', body:'Less widely cited than the major pollsters but included in BPC membership. Results generally in line with the average.', source:'British Polling Council'},
+    'Ipsos':           {summary:'French multinational, listed on Euronext Paris.', body:'One of the world\'s three largest research groups. Primary client The Guardian and Reuters. Conduct the net approval ratings used in this app — their monthly Political Monitor has tracked PM approval since the 1970s, giving the longest consistent time series in British polling.', source:'British Polling Council'}
+  };
+  var info = POLLSTERS[name] || {summary:'Details not available.', body:'Check the British Polling Council website for member details.', source:'British Polling Council'};
+  var existing = document.getElementById('pollster-info-sheet');
+  if (existing) { existing.remove(); document.getElementById('pollster-info-sheet-bg').remove(); return; }
+  var bg = document.createElement('div');
+  bg.id = 'pollster-info-sheet-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease';
+  document.body.appendChild(bg);
+  setTimeout(function(){ bg.style.background = 'rgba(0,0,0,0.45)'; }, 10);
+  var sheet = document.createElement('div');
+  sheet.id = 'pollster-info-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--md-sys-color-surface-container-high);border-radius:28px 28px 0 0;padding:0 24px calc(32px + env(safe-area-inset-bottom));max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -4px 32px rgba(0,0,0,0.2);transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.05,0.7,0.1,1)';
+  sheet.innerHTML = '<div style="display:flex;justify-content:center;padding:12px 0 4px"><div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div></div>'
+    + '<div style="font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--md-sys-color-primary);margin-top:8px;margin-bottom:4px">🔍 Who are they?</div>'
+    + '<div style="font-size:24px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:8px;letter-spacing:-0.3px">'+name+'</div>'
+    + '<div style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:16px">'+info.summary+'</div>'
+    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;padding:16px;margin-bottom:12px"><div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">'+info.body+'</div></div>'
+    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:20px;font-weight:600">Member of the '+info.source+' · All methods publicly disclosed</div>'
+    + '<button id="pollster-info-close" style="width:100%;padding:14px;border-radius:50px;border:none;background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface);font-size:15px;font-weight:700;cursor:pointer">Close</button>';
+  document.body.appendChild(sheet);
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+  function closeSheet() { sheet.style.transform = 'translateY(100%)'; bg.style.background = 'rgba(0,0,0,0)'; setTimeout(function(){ if(sheet.parentNode) sheet.remove(); if(bg.parentNode) bg.remove(); }, 350); }
+  document.getElementById('pollster-info-close').addEventListener('click', closeSheet);
+  bg.addEventListener('click', closeSheet);
+  addSwipeToDismiss(sheet, closeSheet);
 }
 
 function openPollingAvgInfo() {
@@ -2884,7 +2959,8 @@ function renderPollCards() {
 
     return '<div style="margin-bottom:14px">'
       + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'
-      + '<span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">' + p.pollster + '</span>'
+      + '<div style="display:flex;align-items:center;gap:5px"><span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">' + p.pollster + '</span>'
+      + '<button onclick="openPollsterInfo(' + JSON.stringify(p.pollster) + ')" style="background:none;border:none;cursor:pointer;padding:0;color:var(--md-sys-color-on-surface-variant);opacity:0.5;font-size:12px;line-height:1">ℹ</button></div>'
       + '<span style="font-size:15px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + p.date + '</span>'
       + '</div>'
       + '<div style="display:flex;height:48px;border-radius:12px;overflow:hidden;gap:1.5px;background:var(--md-sys-color-outline-variant)">'
