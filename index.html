@@ -2955,6 +2955,17 @@ function renderLeaders() {
       + '<span style="color:var(--down)">▼ ' + l.disapprove + '%</span></div>';
 
     // Policy pills
+    var PARTY_URLS = {
+      'Reform UK':       'https://www.reformparty.uk',
+      'Restore Britain': 'https://www.restorebritain.uk',
+      'Conservative':    'https://www.conservatives.com',
+      'Labour':          'https://labour.org.uk',
+      'Green Party':     'https://www.greenparty.org.uk',
+      'Lib Dems':        'https://www.libdems.org.uk',
+      'SNP':             'https://www.snp.org'
+    };
+    var partyUrl = PARTY_URLS[l.party] || null;
+
     var policyPills = '<div class="policy-pills">'
       + topics.filter(t => l[t.k]).map(t =>
         '<button class="policy-pill" id="pp-' + li + '-' + t.k + '" '
@@ -2963,6 +2974,7 @@ function renderLeaders() {
         + 'style="background:' + l.color + '18;color:' + l.color + '">'
         + t.emoji + ' ' + t.l.split(' ')[1] + '</button>'
       ).join('')
+      + (partyUrl ? '<a href="' + partyUrl + '" target="_blank" rel="noopener" class="policy-pill" style="background:' + l.color + '18;color:' + l.color + ';text-decoration:none">🌐 Website</a>' : '')
       + '</div>'
       + topics.filter(t => l[t.k]).map(t =>
         '<div class="policy-detail" id="pd-' + li + '-' + t.k + '" style="border-color:' + l.color + '">'
