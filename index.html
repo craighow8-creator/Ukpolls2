@@ -341,6 +341,7 @@ body {
   -webkit-overflow-scrolling: touch;
   padding: 4px 2px 12px;
   scrollbar-width: none;
+  align-items: flex-start;
 }
 .party-pills-scroll::-webkit-scrollbar { display: none; }
 .party-pill-card {
@@ -353,6 +354,7 @@ body {
   flex-direction: column;
   align-items: center;
   padding-bottom: 8px;
+  overflow: hidden;
 }
 .party-pill-accent { height: 4px; width: 100%; margin-bottom: 8px; }
 .party-pill-rank { font-size: 10px; font-weight: 700; color: var(--md-sys-color-on-surface-variant); margin-bottom: 2px; }
@@ -2071,7 +2073,8 @@ function renderPolls() {
     var chgText = p.change > 0 ? '▲ +'+p.change+'%' : p.change < 0 ? '▼ '+p.change+'%' : 'NC';
     var chgColor = p.change > 0 ? 'var(--up)' : p.change < 0 ? 'var(--down)' : 'var(--md-sys-color-on-surface-variant)';
     var seatsText = p.seats ? '~'+p.seats+' seats' : '';
-    pillsHtml += '<div class="party-pill-card">'
+    pillsHtml += '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:72px">'
+      + '<div class="party-pill-card" style="width:100%">'
       + '<div class="party-pill-accent" style="background:'+p.color+'"></div>'
       + '<div class="party-pill-rank">#'+(i+1)+'</div>'
       + '<div class="party-pill-abbr" style="color:'+p.color+'">'+p.abbr+'</div>'
@@ -2079,6 +2082,7 @@ function renderPolls() {
       + '<div class="party-pill-bar-track"><div class="party-pill-bar-fill" style="width:'+barW+'%;background:'+p.color+'"></div></div>'
       + '<div class="party-pill-change" style="color:'+chgColor+'">'+chgText+'</div>'
       + '<div class="party-pill-seats">'+seatsText+'</div>'
+      + '</div>'
       + '<button class="party-pill-info" data-party="'+p.name.replace(/"/g,'&quot;')+'">'
       + '<span class="party-pill-info-dot">ℹ</span>'
       + '</button>'
