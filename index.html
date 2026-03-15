@@ -3115,6 +3115,10 @@ function togglePolicy(li, key, color) {
     pill.classList.add('active');
     pill.style.background = color;
     pill.style.color = '#fff';
+  } else {
+    pill.classList.remove('active');
+    pill.style.background = color + '18';
+    pill.style.color = color;
   }
 }
 
