@@ -861,8 +861,10 @@ body {
     </div>
     <div class="sec-label" id="polls-anchor">📋 Recent Polls<button class="sec-share" onclick="shareSection('📋 Recent Polls', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="polls-cards"></div>
-    <div class="sec-label">📌 Milestones</div>
-    <div class="card" style="border-top:4px solid var(--md-sys-color-secondary)" id="milestones-list"></div>
+    <div class="sec-label">📰 Latest News</div>
+    <div class="card" style="border-top:4px solid var(--md-sys-color-primary);padding:0" id="news-card">
+      <div style="padding:18px;text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:15px">Loading news...</div>
+    </div>
 
 
     <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);padding:2px 4px 12px">BPC members · Restore Britain prompted only</div>
@@ -2136,6 +2138,7 @@ function renderPolls() {
   renderForecast();
   renderTrends();
   renderPollCards();
+  loadNews();
 }
 
 function openPartyFundingInfo(name) {
@@ -2609,31 +2612,6 @@ function showMilestoneSearch(text, el) {
 }
 
 function renderTrends() {
-  // movers-list removed — redundant with bar list
-  var SHOW_DEFAULT_M = 4;
-  function buildMilestoneRow(m) {
-    return '<div onclick="showMilestoneSearch(\'' + m.text.replace(/'/g, "\\'") + '\', this)" style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--md-sys-color-outline-variant);cursor:pointer" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">'
-      + '<div style="font-size:15px;color:var(--md-sys-color-secondary);white-space:nowrap;min-width:60px;font-weight:700;padding-top:2px">' + m.date + '</div>'
-      + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.5;flex:1">' + m.text + '</div>'
-      + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);padding-top:2px;flex-shrink:0">🔍</div>'
-      + '</div>';
-  }
-  var visibleM = D.milestones.slice(0, SHOW_DEFAULT_M).map(buildMilestoneRow).join('');
-  var hiddenM  = D.milestones.slice(SHOW_DEFAULT_M).map(buildMilestoneRow).join('');
-  var remainingM = D.milestones.length - SHOW_DEFAULT_M;
-  var milestoneEl = document.getElementById('milestones-list');
-  milestoneEl.innerHTML = visibleM
-    + '<div id="milestones-hidden" style="display:none">' + hiddenM + '</div>'
-    + '<button id="milestones-expand-btn" style="width:100%;padding:10px;border:none;background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border-radius:var(--md-sys-shape-corner-full);font-size:13px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif;margin-top:8px;transition:background var(--md-motion-short) var(--md-motion-standard)">▼ Show ' + remainingM + ' more</button>';
-  var expandBtnM = document.getElementById('milestones-expand-btn');
-  var hiddenDivM = document.getElementById('milestones-hidden');
-  var expandedM = false;
-  expandBtnM.addEventListener('click', function() {
-    expandedM = !expandedM;
-    hiddenDivM.style.display = expandedM ? 'block' : 'none';
-    expandBtnM.textContent = expandedM ? '▲ Show fewer' : '▼ Show ' + remainingM + ' more';
-  });
-
   const parties = ['Reform UK','Labour','Conservative','Lib Dem','Green'];
   const colors = {'Reform UK':'#12B7D4',Labour:'#E4003B',Conservative:'#0087DC','Lib Dem':'#FAA61A',Green:'#02A95B'};
   const labels = D.trends.map(t => t.month);
@@ -3749,6 +3727,81 @@ function dismissPopup() {
     }
   }, {passive:true});
 })();
+
+// ── News ──
+var _newsLoaded = false;
+async function loadNews() {
+  var card = document.getElementById('news-card');
+  if (!card) return;
+  if (_newsLoaded) return;
+
+  try {
+    var resp = await fetch(WORKER + '/news', {
+      headers: {'X-App-Token': APP_TOKEN}
+    });
+    var data = await resp.json();
+    var articles = data.articles || [];
+
+    if (!articles.length) {
+      card.innerHTML = '<div style="padding:18px;color:var(--md-sys-color-on-surface-variant);font-size:15px">No news available right now.</div>';
+      return;
+    }
+
+    _newsLoaded = true;
+
+    var SHOW = 4;
+    var expanded = false;
+
+    function formatDate(iso) {
+      try {
+        var d = new Date(iso);
+        var now = new Date();
+        var diff = Math.floor((now - d) / 60000);
+        if (diff < 60) return diff + 'm ago';
+        if (diff < 1440) return Math.floor(diff/60) + 'h ago';
+        return Math.floor(diff/1440) + 'd ago';
+      } catch(e) { return ''; }
+    }
+
+    function buildArticle(a, i) {
+      var id = 'news-summary-' + i;
+      return '<div style="padding:12px 16px;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
+        + '<div style="display:flex;align-items:flex-start;gap:8px">'
+        + '<div style="flex:1;cursor:pointer" onclick="var el=document.getElementById(\'' + id + '\');el.style.display=el.style.display===\'none\'?\'block\':\'none\'">'
+        + '<div style="font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface);line-height:1.4;margin-bottom:3px">' + a.title.replace(/</g,'&lt;') + '</div>'
+        + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + a.source + ' · ' + formatDate(a.date) + '</div>'
+        + '</div>'
+        + '<a href="' + a.url + '" target="_blank" rel="noopener" style="flex-shrink:0;background:var(--md-sys-color-surface-container-high);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;margin-top:2px" title="Read full article">↗</a>'
+        + '</div>'
+        + (a.description ? '<div id="' + id + '" style="display:none;font-size:13px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;margin-top:8px;padding:10px;background:var(--md-sys-color-surface-container-low);border-radius:12px">' + a.description.replace(/</g,'&lt;') + '</div>' : '')
+        + '</div>';
+    }
+
+    function render() {
+      var visible = articles.slice(0, SHOW).map(buildArticle).join('');
+      var hidden  = articles.slice(SHOW).map((a, i) => buildArticle(a, i + SHOW)).join('');
+      var remaining = articles.length - SHOW;
+      card.innerHTML =
+        '<div style="padding:16px 16px 4px;display:flex;justify-content:space-between;align-items:center">'
+        + '<div style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">Tap headline to expand · ↗ to read full article</div>'
+        + '</div>'
+        + visible
+        + '<div id="news-hidden" style="display:' + (expanded ? 'block' : 'none') + '">' + hidden + '</div>'
+        + '<button id="news-expand-btn" style="width:100%;padding:10px;border:none;background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border-radius:0 0 var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-large);font-size:13px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif">'
+        + (expanded ? '▲ Show fewer' : '▼ Show ' + remaining + ' more') + '</button>';
+
+      document.getElementById('news-expand-btn').addEventListener('click', function() {
+        expanded = !expanded;
+        render();
+      });
+    }
+
+    render();
+
+  } catch(e) {
+    if (card) card.innerHTML = '<div style="padding:18px;color:var(--md-sys-color-on-surface-variant);font-size:15px">Could not load news — check back later.</div>';
+  }
+}
 
 // ── Boot ──
 
