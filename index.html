@@ -888,7 +888,7 @@ body {
     </div>
     <div class="sec-label" id="polls-anchor">📋 Recent Polls<button class="sec-share" onclick="shareSection('📋 Recent Polls', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="polls-cards"></div>
-    <div class="sec-label">📰 Latest News</div>
+    <div class="sec-label">📰 Latest News<button class="sec-share" onclick="openNewsInfo()" title="About this feed" style="opacity:0.6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button></div>
     <div class="card" style="border-top:4px solid var(--md-sys-color-primary);padding:0" id="news-card">
       <div style="padding:18px;text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:15px">Loading news...</div>
     </div>
@@ -3697,7 +3697,100 @@ function dismissPopup() {
   }, {passive:true});
 })();
 
-// ── News ──
+// ── News Info Sheet ──
+function openNewsInfo() {
+  var existing = document.getElementById('news-info-sheet');
+  if (existing) { existing.remove(); document.getElementById('news-info-bg').remove(); return; }
+
+  var bg = document.createElement('div');
+  bg.id = 'news-info-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease';
+  document.body.appendChild(bg);
+  setTimeout(function(){ bg.style.background = 'rgba(0,0,0,0.55)'; }, 10);
+
+  var sheet = document.createElement('div');
+  sheet.id = 'news-info-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--md-sys-color-surface-container-high);border-radius:28px 28px 0 0;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -4px 32px rgba(0,0,0,0.25);transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.05,0.7,0.1,1);padding-bottom:env(safe-area-inset-bottom,20px)';
+
+  var sources = [
+    { name: 'BBC News',          lean: 'Centre',      color: '#BB1919', desc: 'Public broadcaster. Editorially independent, funded by licence fee.' },
+    { name: 'Sky News',          lean: 'Centre',      color: '#e60000', desc: 'Commercial broadcaster. Generally centrist, fast-moving news agenda.' },
+    { name: 'The Guardian',      lean: 'Left',        color: '#052962', desc: 'Broadsheet. Progressive, pro-public services, anti-Conservative.' },
+    { name: 'GB News',           lean: 'Right',       color: '#12B7D4', desc: 'TV channel and website. Right-leaning, platform for Reform and Conservative voices.' },
+    { name: 'The Sun',           lean: 'Right',       color: '#FF7F00', desc: 'Tabloid. Historically Conservative-backing, large popular readership.' },
+    { name: 'Conservative Home', lean: 'Right',       color: '#0087DC', desc: 'Grassroots Conservative website. Holds the Tory party to account from the right.' },
+    { name: 'Guido Fawkes',      lean: 'Right',       color: '#2d2d2d', desc: 'Westminster gossip and scoops. Right-leaning, known for breaking political stories.' },
+    { name: 'LabourList',        lean: 'Left',        color: '#E4003B', desc: 'Labour-focused news and commentary. Holds the Labour party to account from the left.' },
+  ];
+
+  var leanColor = { 'Left': '#E4003B', 'Centre': '#FAA61A', 'Right': '#0087DC' };
+
+  var sourceRows = sources.map(function(s) {
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
+      + '<div style="width:3px;border-radius:99px;align-self:stretch;background:' + s.color + ';flex-shrink:0"></div>'
+      + '<div style="flex:1">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">'
+      + '<span style="font-size:14px;font-weight:800;color:var(--md-sys-color-on-surface)">' + s.name + '</span>'
+      + '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:' + leanColor[s.lean] + '18;color:' + leanColor[s.lean] + '">' + s.lean + '</span>'
+      + '</div>'
+      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);line-height:1.5">' + s.desc + '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  sheet.innerHTML =
+    '<div style="display:flex;justify-content:center;padding:12px 0 4px">'
+    + '<div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>'
+    + '</div>'
+    + '<div style="padding:8px 20px 20px">'
+
+    // Title
+    + '<div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:4px;letter-spacing:-0.3px">📰 About this news feed</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px">How it works and why some sources aren\'t here</div>'
+
+    // How ranking works
+    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;padding:14px 16px;margin-bottom:14px;border-left:4px solid var(--md-sys-color-primary)">'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-primary);margin-bottom:6px">📊 How stories are ranked</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.75">Stories are ranked by <strong>how many outlets cover them</strong> — if BBC, GB News, Guardian and Sky News are all running the same story, it scores highly and rises to the top. A story only one outlet is covering ranks lower. Recency breaks ties. No human editorial decisions are made.</div>'
+    + '</div>'
+
+    // Sources
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px">🗞 Sources (' + sources.length + ')</div>'
+    + '<div style="margin-bottom:14px">' + sourceRows + '</div>'
+
+    // Why not others
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:16px;padding:14px 16px;margin-bottom:14px">'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px">❌ Why can\'t we include more?</div>'
+    + '<div style="display:flex;flex-direction:column;gap:8px">'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.6"><strong style="color:var(--md-sys-color-on-surface)">The Telegraph, Times, Daily Mail</strong> — their websites actively block automated server requests. This is a technical decision on their end, not a political one on ours.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.6"><strong style="color:var(--md-sys-color-on-surface)">X / Twitter</strong> — Elon Musk restricted the API in 2023. Basic access now costs ~$100/month. Not viable for a free app.</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.6"><strong style="color:var(--md-sys-color-on-surface)">Express, Spectator, Politics Home</strong> — tested and confirmed unavailable from server environments at the time of writing.</div>'
+    + '</div>'
+    + '</div>'
+
+    // Disclaimer
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:16px;padding:14px 16px;margin-bottom:16px">'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">⚖️ Our commitment</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface);line-height:1.75">UK Poll Tracker does not write, edit, filter or commission any news content. We deliberately include sources from across the political spectrum. Each source is capped at 3 articles to prevent any single outlet dominating. Headlines link directly to the original publisher.</div>'
+    + '</div>'
+
+    + '<button id="news-info-close" style="width:100%;padding:14px;border-radius:50px;border:none;background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface);font-size:15px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif">Got it</button>'
+    + '</div>';
+
+  document.body.appendChild(sheet);
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+
+  function closeSheet() {
+    sheet.style.transform = 'translateY(100%)';
+    bg.style.background = 'rgba(0,0,0,0)';
+    setTimeout(function(){ if(sheet.parentNode) sheet.remove(); if(bg.parentNode) bg.remove(); }, 350);
+  }
+  document.getElementById('news-info-close').addEventListener('click', closeSheet);
+  bg.addEventListener('click', closeSheet);
+  addSwipeToDismiss(sheet, closeSheet);
+}
+
+
 var _newsLoaded = false;
 async function loadNews() {
   var card = document.getElementById('news-card');
