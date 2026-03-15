@@ -769,11 +769,6 @@ body {
 </div>
 
 <div id="content">
-  <div id="ptr-indicator" style="display:flex;align-items:center;justify-content:center;gap:8px;height:0;overflow:hidden;transition:height 0.2s ease;background:var(--md-sys-color-surface-container-low)">
-    <div id="ptr-spinner" style="width:20px;height:20px;border:2.5px solid var(--md-sys-color-primary-container);border-top-color:var(--md-sys-color-primary);border-radius:50%;transition:transform 0.2s"></div>
-    <span id="ptr-label" style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface-variant);font-family:\'Nunito\',sans-serif">Pull to refresh</span>
-  </div>
-
   <!-- OVERVIEW -->
   <div class="page active" id="page-polls">
     <div id="freshness-pill" style="margin-bottom:4px;text-align:center"></div>
@@ -786,17 +781,16 @@ body {
     <div id="seat-bar-card" onclick="openFPTPSheet()" style="cursor:pointer;background:var(--md-sys-color-surface);border-radius:24px;padding:16px;margin-bottom:8px;box-shadow:var(--md-elevation-2);border-top:4px solid var(--md-sys-color-primary);active:opacity:0.8">
       <div id="seat-bar-inner" style="display:flex;height:76px;border-radius:16px;overflow:hidden;gap:2px;box-shadow:var(--md-elevation-1);margin-bottom:10px"></div>
       <div id="seat-bar-verdict" style="text-align:center"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px">
+      <div style="display:flex;align-items:center;margin-top:8px">
         <div style="display:flex;align-items:center;gap:6px">
           <span style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Tap to explore · What is FPTP?</span>
           <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--md-sys-color-on-surface-variant)"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
         </div>
-        <button onclick="event.stopPropagation();fetchECSeats(this)" style="background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;flex-shrink:0;transition:background var(--md-motion-short) var(--md-motion-standard),transform var(--md-motion-short) var(--md-motion-expressive)">🔄 Refresh seats</button>
       </div>
     </div>
     <div style="background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;margin-bottom:16px">
       <div style="font-size:13px;font-weight:800;color:var(--md-sys-color-primary);letter-spacing:0.4px;margin-bottom:6px">📐 Methodology</div>
-      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;font-weight:500">Seat projection uses the <strong style="color:var(--md-sys-color-on-surface)">Electoral Calculus MRP model</strong> (Mar 2026), which applies multi-level regression and post-stratification to current polling averages across all 650 constituencies. MRP is the same method used by YouGov and Sky News at general elections. Projections are <strong style="color:var(--md-sys-color-on-surface)">highly sensitive to small polling shifts</strong> — a 1–2pt swing can move dozens of seats. Treat as a directional indicator, not a forecast.</div>
+      <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;font-weight:500">Seat projection uses a <strong style="color:var(--md-sys-color-on-surface)">polling-based swing model</strong> (Mar 2026), applying uniform national swing from current polling averages across all 650 constituencies. Projections are <strong style="color:var(--md-sys-color-on-surface)">highly sensitive to small polling shifts</strong> — a 1–2pt swing can move dozens of seats under FPTP. Treat as a directional indicator, not a forecast.</div>
     </div>
 
     <div class="sec-label">📈 6-Month Trend<button class="sec-share" onclick="shareSection('📈 6-Month Trend', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
@@ -1051,6 +1045,9 @@ body {
     <div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);padding:20px;border-top:4px solid var(--md-sys-color-primary)" id="vote-results">
       <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:15px;padding:20px">Loading results...</div>
     </div>
+    <div style="text-align:center;margin-top:8px;margin-bottom:4px">
+      <button onclick="loadVoteResults()" style="background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif;transition:background var(--md-motion-short) var(--md-motion-standard),transform var(--md-motion-short) var(--md-motion-expressive)" ontouchstart="this.style.transform='scale(0.96)'" ontouchend="this.style.transform='scale(1)'">🔄 Refresh results</button>
+    </div>
 
     <div style="font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin:22px 0 10px 2px;text-align:center">🗳 Poll of the Day</div>
     <div class="card" style="border-top:4px solid var(--md-sys-color-secondary);padding:18px" id="potd-card">
@@ -1152,11 +1149,11 @@ body {
     <div style="width:36px;height:4px;background:var(--md-sys-color-outline-variant);border-radius:2px;margin:0 auto 20px"></div>
     <div style="font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Share</div>
     <div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:16px;font-family:\'Nunito\',sans-serif">UK Poll Tracker</div>
-    <div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;border-top:3px solid var(--md-sys-color-primary);padding:14px 16px;font-size:18px;color:var(--md-sys-color-on-surface);line-height:1.7;margin-bottom:18px;font-style:italic" id="share-preview-text"></div>
+    <div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;border-top:3px solid var(--md-sys-color-primary);padding:14px 16px;font-size:18px;color:var(--md-sys-color-on-surface);line-height:1.7;margin-bottom:18px;font-style:italic;max-height:130px;overflow-y:auto;-webkit-overflow-scrolling:touch" id="share-preview-text"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <button onclick="shareToX();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:18px;cursor:pointer;background:#000;color:#fff;font-family:\'Nunito\',sans-serif">X / Twitter</button>
       <button onclick="shareToWhatsApp();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:18px;cursor:pointer;background:#25D366;color:#fff;font-family:\'Nunito\',sans-serif">WhatsApp</button>
-      <button onclick="shareToFacebook();closeShare()" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:18px;cursor:pointer;background:#1877F2;color:#fff;font-family:\'Nunito\',sans-serif">Facebook</button>
+      <button onclick="copyForFacebook()" id="fb-copy-btn" style="padding:14px;border-radius:99px;border:none;font-weight:800;font-size:18px;cursor:pointer;background:#1877F2;color:#fff;font-family:\'Nunito\',sans-serif">📋 Copy for Facebook</button>
       <button onclick="copyLink()" id="copy-btn" style="padding:14px;border-radius:99px;border:2px solid var(--md-sys-color-outline-variant);font-weight:800;font-size:18px;cursor:pointer;background:var(--md-sys-color-surface);color:var(--md-sys-color-on-surface);font-family:\'Nunito\',sans-serif">📋 Copy</button>
     </div>
     <button onclick="shareNative()" style="width:100%;padding:14px;background:var(--md-sys-color-primary);color:#fff;border:none;font-size:18px;font-weight:800;cursor:pointer;border-radius:99px;font-family:'Nunito',sans-serif;margin-bottom:8px">🔗 More apps (Reddit, Telegram…)</button>
@@ -1327,26 +1324,26 @@ const D = {
      economy:"Would abolish income tax on earnings below £20,000, taking around 7 million people out of income tax entirely. Plans to cut corporation tax to 15% to attract global investment. Shadow Chancellor Robert Jenrick has pledged a full review of the 1.1 million-word tax code with the aim of radical simplification. Would scrap inheritance tax entirely and abolish stamp duty on homes under £750,000. Plans to cut overseas aid to 0.1% of GNI, saving around £10bn. Opposes the fiscal rules and believes supply-side growth, not tax rises, is the path to deficit reduction. Would reverse the October 2024 Budget tax rises in full.",
      nhs:"Would cut NHS management by 50% within two years, redirecting savings to frontline care. Prioritises recruiting British-trained staff, arguing the NHS has become too dependent on overseas recruitment at the expense of domestic training. Pledges to eliminate waiting lists within one parliament through a combination of private sector capacity and reformed NHS incentives. Would introduce a patients' passport system allowing NHS-funded treatment at any registered provider. Opposes any moves toward an insurance-based system, maintaining that the NHS should be free at the point of use. Would scrap NHS England and return commissioning power to local trusts.",
      climate:"Would scrap all net zero targets immediately, calling them an 'act of economic self-harm'. Plans to reinstate all North Sea oil and gas licences, including Rosebank, and fast-track new exploration. Would abolish all green levies on energy bills, which he says add around £300 per year to average bills. Opposes all new onshore and offshore wind farms. Would withdraw the UK from the Paris Climate Agreement. Believes nuclear energy should be the centrepiece of UK energy policy, with six new reactors commissioned within a decade. Disputes the scientific consensus that human activity is the primary driver of climate change.",
-     bio:"Born 3 April 1964 in Farnborough, Kent. Former commodity broker in the City. A lifelong Eurosceptic, he co-founded the Brexit Party (later Reform UK) in 2019 after leading UKIP from 2006–2016. His campaigning was central to the 2016 Brexit referendum result. Elected MP for Clacton at his eighth attempt in July 2024. Became Reform UK leader again in June 2024. Reform has led every national poll since May 2025. In February 2026 he announced a formal shadow cabinet including Robert Jenrick as shadow chancellor, Richard Tice as shadow deputy PM, Zia Yusuf on home affairs, and Suella Braverman on education — all former Tory figures."},
+     bio:"Born 3 April 1964 in Farnborough, Kent. Former commodity broker in the City. A lifelong Eurosceptic, he co-founded the Brexit Party (later Reform UK) in 2019 after leading UKIP from 2006–2016. His campaigning was central to the 2016 Brexit referendum result. Elected MP for Clacton at the 2024 general election after multiple previous unsuccessful attempts. Became Reform UK leader again in June 2024. Reform has led every national poll since May 2025. In February 2026 he announced a formal shadow cabinet including Robert Jenrick as shadow chancellor, Richard Tice as shadow deputy PM, Zia Yusuf on home affairs, and Suella Braverman on education — all former Tory figures."},
     {name:"Rupert Lowe",party:"Restore Britain",color:"#1a4a9e",approve:40,disapprove:29,net:11,
      note:null,
      immigration:"Calls for zero net migration as an explicit target written into law. Advocates mass deportations of those with no legal right to remain, including foreign nationals who have completed criminal sentences. Would withdraw from the UN Refugee Convention and the ECHR, removing legal constraints on removals. All illegal Channel arrivals would be intercepted and returned within 48 hours under a new bilateral agreement with France. Would end all asylum hotel accommodation and replace with secure processing centres. Believes the political class has failed the public on immigration for 30 years and that only a complete break with existing policy will work.",
      economy:"Prioritises cutting taxes for working people, particularly those on low and middle incomes. Would reduce foreign aid spending to zero, redirecting funds entirely to domestic priorities. Committed to ending what he calls 'globalist trade deals' that he argues have hollowed out British industry, particularly manufacturing. Wants to repatriate supply chains for critical goods — food, medicine, energy — as a matter of national security. Opposes the Bank of England's independence on monetary policy, arguing it has failed ordinary savers. Would introduce a British Sovereign Wealth Fund funded by North Sea revenues.",
      nhs:"Would drastically reduce NHS bureaucracy, targeting a 60% reduction in management roles. Supports performance-based pay for NHS staff, replacing the current Agenda for Change pay scales. Believes NHS staffing should prioritise British-trained workers, with a new domestic medical training programme. Would end what he calls 'health tourism' through strict eligibility checks at point of access. Supports introducing a modest co-payment for GP appointments for those who can afford it, to reduce no-shows. Believes the NHS needs root-and-branch cultural reform, not just extra funding.",
      climate:"Would abolish all green levies on energy bills immediately. Plans to withdraw from the Paris Climate Agreement, calling it a constraint on British sovereignty and economic competitiveness. Would reinstate all North Sea oil and gas licences and open new fields as quickly as possible. Opposes all new wind farms, both onshore and offshore. Does not accept that the current policy trajectory is cost-effective or democratically mandated. Believes energy security and affordability must take absolute priority over emissions targets. Supports nuclear energy as the only low-carbon technology worth investing in at scale.",
-     bio:"Born 1962. Former chairman of Southampton FC (1997–2006) and QPR. Elected Reform UK MP for Great Yarmouth in July 2024. In March 2025 he publicly criticised Farage's leadership style as running \"a protest party led by the Messiah\", leading to his expulsion from Reform UK. Founded Restore Britain in early 2026, targeting the 42% of voters who did not vote in 2024. By 10 March 2026 the party had surpassed 110,000 paid members — reaching 50,000 within days of launch and 100,000 within 12 days — the fastest membership growth of any party in modern UK political history. Despite this, mainstream media coverage has been almost non-existent."},
+     bio:"Born 1960. Former chairman of Southampton FC (1997–2006), overseeing the club's rise to and fall from the Premier League. Elected Reform UK MP for Great Yarmouth in July 2024. In March 2025 he publicly criticised Farage's leadership style as running \"a protest party led by the Messiah\", leading to his expulsion from Reform UK. Founded Restore Britain in early 2026, targeting the 42% of voters who did not vote in 2024. By 10 March 2026 the party had surpassed 110,000 paid members — reaching 50,000 within days of launch and 100,000 within 12 days — the fastest membership growth of any party in modern UK political history. Despite this, mainstream media coverage has been almost non-existent."},
     {name:"Kemi Badenoch",party:"Conservative",color:"#0087DC",approve:31,disapprove:42,net:-11,
      immigration:"Would extend the settlement route from 5 to 10 years, making it harder to gain permanent residency. Plans tougher visa rules across all categories, with higher salary thresholds for skilled worker visas. Would deport all foreign nationals who commit crimes after completing their sentences, removing the proportionality test. Supports maintaining ECHR membership but reforming the Human Rights Act to limit its use in blocking removals. Backs the principle of offshore processing but acknowledges Rwanda has failed. Would cap international student dependants more tightly. Believes net migration must return to the tens of thousands — the original Conservative promise.",
      economy:"Wants to reduce state spending to 35% of GDP over a parliament, from its current level of around 44% — a significant contraction of the state. Plans to cut regulation substantially, targeting a 25% reduction in regulatory burden on business within three years. Would reform the planning system to unlock housing and infrastructure, including relaxing green belt restrictions in specific cases. Opposes further tax rises and wants to reverse some of the October 2024 Budget measures. Backs supply-side growth through deregulation and lower business taxes rather than demand stimulus. Believes the Conservatives must occupy the ground of fiscal credibility that Labour has ceded.",
      nhs:"Focused on productivity reform rather than additional funding — argues the NHS receives enough money but spends it inefficiently. Would reduce management layers, targeting a leaner structure modelled on the best-performing NHS trusts. Wants outcome-based targets replacing process targets. Supports a greater role for the independent sector in clearing backlogs. Would reform the GP contract to improve access and incentivise prevention. Believes the NHS workforce plan needs to be honest about the limits of overseas recruitment and invest more in domestic training pipelines.",
      climate:"Committed to net zero by 2050 but opposes what she calls 'unrealistic near-term targets' that impose costs on ordinary households. Strongly pro-nuclear — would fast-track planning approval for new reactors including SMRs. Would maintain the North Sea licensing regime while it remains economically viable. Opposes new onshore wind but supports offshore wind development. Would not withdraw from the Paris Agreement but wants to renegotiate the UK's nationally determined contribution. Believes the transition must be technology-led, not subsidy-led, and opposes green levies that she says disproportionately hit low-income households.",
-     bio:"Born Olukemi Olufunto Adegoke on 2 January 1980 in Wimbledon. Her mother came to the UK for medical treatment and gave birth here. Grew up between Nigeria and the US; returned to the UK at 16 with very little money and worked at McDonald's while completing her A-levels. Studied Computer Systems Engineering at Sussex University and later law at Birkbeck. Worked as a software engineer, then at Coutts & Co and The Spectator. MP for North West Essex since 2017. The first Black woman and first Black person to lead the Conservative Party, elected leader in November 2024. Known for her outspoken anti-woke stance and sharp PMQs performances."},
+     bio:"Born Olukemi Olufunto Adegoke on 2 January 1980 in Wimbledon. Her mother came to the UK for medical treatment and gave birth here. Grew up between Nigeria and the US; returned to the UK at 16 with very little money and worked at McDonald's while completing her A-levels. Studied Computer Systems Engineering at Queen Mary University of London and later law at Birkbeck. Worked as a software engineer, then at Coutts & Co and The Spectator. MP for North West Essex since 2017. The first Black woman and first Black person to lead the Conservative Party, elected leader in November 2024. Known for her outspoken anti-woke stance and sharp PMQs performances."},
     {name:"Keir Starmer",party:"Labour",color:"#E4003B",approve:22,disapprove:64,net:-42,
      immigration:"Has established a Border Security Command with £100m in new funding to tackle organised immigration crime. Tightened rules on student visa dependants following a surge in numbers. Raised salary thresholds for skilled worker visas to £38,700. Extended the settlement route from 5 to 10 years. Deployed 1,000 extra returns caseworkers. Accepts that net migration must fall substantially from its record 944,000 peak in 2023. Defends the decision to scrap Rwanda as ineffective and expensive. Critics argue his measures are insufficient and that the government has no coherent plan to reduce overall numbers.",
      economy:"Has bound the government to strict fiscal rules: debt must be falling as a share of GDP by the fifth year of the forecast. Delivered a £40bn tax-raising Budget in October 2024, the largest in a generation — including a 1.2 percentage point rise in employer National Insurance. Has committed to investing in NHS, schools and clean energy, arguing growth requires public investment. Faces criticism that the NI rise has damaged business confidence and suppressed hiring. GDP growth has been weak since the Budget. Backs GB Energy as a publicly-owned clean energy vehicle. Opposes renationalisation of utilities beyond energy.",
      nhs:"Committed to 40,000 extra NHS appointments per week to cut waiting lists — the central pledge of the 2024 manifesto. Lists are falling from their 7.8 million peak. Has invested in mental health waiting time standards. Backs the 10-year NHS workforce plan. Under pressure over GP access — average waits remain too long despite the government's targets. Has resisted calls to increase NHS pay above inflation. Critics argue the pace of change is too slow given the scale of underfunding inherited from the Conservatives.",
      climate:"Committed to clean power by 2030 — 100% of electricity from clean sources including wind, solar and nuclear. Created GB Energy, a publicly-owned energy company to co-invest in renewable projects. Banned new North Sea oil and gas licences, a controversial decision criticised by trade unions representing energy workers. Backed the Hinkley C nuclear plant and approved new sites. Has set legally binding carbon budgets. Under pressure from some Labour MPs in coastal communities over the North Sea ban. Faces the challenge of delivering clean power by 2030 against a grid that is not yet capable of handling full variable renewables.",
-     bio:"Born 2 September 1962 in Surrey. Human rights barrister who defended high-profile cases including death row prisoners in the Caribbean. Director of Public Prosecutions 2008–2013, knighted for services to law. MP for Holborn & St Pancras since 2015. Won the Labour leadership in April 2020. Led Labour to a 170-seat majority in July 2024 after 14 years in opposition. His approval ratings have collapsed since entering government — the most unpopular PM since Ipsos records began in 1977. In February 2026, the Mandelson-Epstein scandal triggered the resignation of his chief of staff Morgan McSweeney, communications director Tim Allan, and cabinet secretary Chris Wormald. Scottish Labour leader Anas Sarwar publicly called on him to resign."}
+     bio:"Born 2 September 1962 in Surrey. Human rights barrister who defended high-profile cases including death row prisoners in the Caribbean. Director of Public Prosecutions 2008–2013, knighted for services to law. MP for Holborn & St Pancras since 2015. Won the Labour leadership in April 2020. Led Labour to a 174-seat majority in July 2024 after 14 years in opposition. His approval ratings have collapsed since entering government — the most unpopular PM since Ipsos records began in 1977. In February 2026, the Mandelson-Epstein scandal triggered the resignation of his chief of staff Morgan McSweeney, communications director Tim Allan, and cabinet secretary Chris Wormald. Scottish Labour leader Anas Sarwar publicly called on him to resign."}
   ],
   polls: [
     {date:"9-10 Mar", pollster:"YouGov",         ref:23,lab:17,con:19,ld:14,grn:19,rb:null},
@@ -1485,6 +1482,7 @@ function sp(id, btn) {
   if (id === 'trends') setTimeout(renderTrends, 50);
   if (id === 'demo') setTimeout(renderMigration, 50);
   if (id === 'elections') setTimeout(renderCountdown, 50);
+  if (id === 'vote') setTimeout(loadVoteResults, 50);
 }
 
 const APP_URL = 'https://craighow8-creator.github.io/Ukpolls2/';
@@ -1562,73 +1560,12 @@ function addSwipeToDismiss(sheet, closeFn) {
 
 function generateShareText() {
   var p = D.parties;
-  var sorted = p.slice().sort(function(a,b) { return b.pct - a.pct; });
-  var leader = sorted[0];
-
-  var find = function(name) { return p.find(function(x) { return x.name === name; }) || {}; };
-  var labPct = find('Labour').pct || 0;
-  var conPct = find('Conservative').pct || 0;
-  var grnPct = find('Green').pct || 0;
-  var ldPct  = find('Lib Dem').pct || 0;
-  var rbPct  = find('Restore Britain').pct || 0;
-  var labPos = sorted.findIndex(function(x) { return x.name === 'Labour'; }) + 1;
-
-  var partyEmoji = {
-    'Reform UK':       '➡️',
-    'Labour':          '🌹',
-    'Conservative':    '🌳',
-    'Green':           '🌿',
-    'Lib Dem':         '🔶',
-    'Restore Britain': '🇬🇧',
-    'SNP':             '🏴󠁧󠁢󠁳󠁣󠁴󠁿'
-  };
-  var leaderEmoji = partyEmoji[leader.name] || '🗳️';
-
-  var minGap = 99, gapA, gapB;
-  for (var i = 0; i < sorted.length - 1; i++) {
-    var gap = sorted[i].pct - sorted[i+1].pct;
-    if (gap < minGap && sorted[i].pct > 5 && sorted[i+1].pct > 5) {
-      minGap = gap; gapA = sorted[i]; gapB = sorted[i+1];
-    }
-  }
-
-  var bigMover = p.reduce(function(best, x) {
-    return x.change !== null && Math.abs(x.change || 0) > Math.abs(best.change || 0) ? x : best;
-  }, {change: 0});
-
-  var line1 = leaderEmoji + ' ' + leader.name + ' are out front on ' + leader.pct + '% as British politics fragments.';
-
-  var snap = [];
-  if (labPct) snap.push('Labour ' + labPct + '%');
-  if (conPct) snap.push('Con ' + conPct + '%');
-  if (grnPct) snap.push('Green ' + grnPct + '%');
-  if (ldPct >= 5) snap.push('LD ' + ldPct + '%');
-  if (rbPct >= 5) snap.push('Restore Britain ' + rbPct + '%');
-  var line2 = snap.join(' · ');
-
-  var line3 = '';
-  if (labPos > 2) {
-    var posWord = ['','1st','2nd','3rd','4th','5th'][labPos] || labPos + 'th';
-    line3 = '🚨 Labour have fallen to ' + posWord + ' place — historic low.';
-  } else if (minGap <= 2 && gapA && gapB) {
-    line3 = '👀 Just ' + minGap + 'pt between ' + gapA.name + ' (' + gapA.pct + '%) and ' + gapB.name + ' (' + gapB.pct + '%).';
-  } else if (bigMover.change && Math.abs(bigMover.change) >= 2) {
-    line3 = (bigMover.change > 0 ? '📈' : '📉') + ' ' + bigMover.name + ' ' + (bigMover.change > 0 ? 'up' : 'down') + ' ' + Math.abs(bigMover.change) + 'pts to ' + bigMover.pct + '%.';
-  }
-
-  var line4 = rbPct >= 5 ? '📈 Restore Britain at ' + rbPct + '% and growing.' : '';
-
-  var lines = [line1, line2, line3, line4].filter(Boolean);
-  // Default (used for preview in modal) — polling snapshot + install hook
-  return lines.join('\n') + '\n\n🇬🇧 UK Poll Tracker — updated daily\n' + APP_URL;
-}
-
 // X/Twitter — must stay under 280 chars, punchy snapshot + install hook
 function generateXText() {
   var p = D.parties;
-  var sorted = p.slice().sort(function(a,b) { return b.pct - a.pct; });
-  var snap = sorted.filter(function(x) { return x.pct >= 5 && x.name !== 'Other'; })
-    .map(function(x) { return x.abbr + ' ' + x.pct + '%'; }).join(' · ');
+  var sorted = p.slice().sort(function(a,b) { return (b.avgPct||b.pct) - (a.avgPct||a.pct); });
+  var snap = sorted.filter(function(x) { return (x.avgPct||x.pct) >= 5 && x.name !== 'Other'; })
+    .map(function(x) { return x.abbr + ' ' + (x.avgPct||x.pct) + '%'; }).join(' · ');
   var now = new Date();
   var may1 = new Date('2026-05-01T00:00:00');
   var days = Math.max(0, Math.ceil((may1 - now) / 86400000));
@@ -1663,7 +1600,7 @@ function generateInstallText() {
 
 function openShare() {
   try { window.goatcounter.count({path:'share-modal-open',title:'Share modal opened',event:true}); } catch(e) {}
-  document.getElementById('share-preview-text').textContent = generateInstallText();
+  document.getElementById('share-preview-text').textContent = generateXText();
   var modal = document.getElementById('share-modal');
   var sheet = document.getElementById('share-modal-sheet');
   sheet.style.transition = 'none';
@@ -1698,9 +1635,13 @@ function shareToWhatsApp() {
   try { window.goatcounter.count({path:'share-whatsapp',title:'Share: share-whatsapp',event:true}); } catch(e) {}
   window.open('https://wa.me/?text=' + encodeURIComponent(generateInstallText()), '_blank');
 }
-function shareToFacebook() {
-  try { window.goatcounter.count({path:'share-facebook',title:'Share: share-facebook',event:true}); } catch(e) {}
-  window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(APP_URL) + '&quote=' + encodeURIComponent(generateInstallText()), '_blank');
+function copyForFacebook() {
+  try { window.goatcounter.count({path:'share-facebook-copy',title:'Share: copy for Facebook',event:true}); } catch(e) {}
+  var btn = document.getElementById('fb-copy-btn');
+  navigator.clipboard.writeText(generateInstallText()).then(function() {
+    btn.textContent = '✓ Copied — paste into Facebook!';
+    setTimeout(function() { btn.textContent = '📋 Copy for Facebook'; }, 3000);
+  });
 }
 function shareNative() {
   try { window.goatcounter.count({path:'share-native',title:'Share: native sheet',event:true}); } catch(e) {}
@@ -1977,23 +1918,41 @@ function renderPolls() {
       + '</div>';
   }
   var overviewSub = document.getElementById('overview-sub'); if (overviewSub) overviewSub.textContent = '7-poll moving average';
-  // date shown in freshness pill only
 
-  // Sort by pct descending
-  var sorted = D.parties.slice().sort((a,b) => b.pct - a.pct);
+  // ── Compute polling averages from D.polls ──
+  var pollKeys = {
+    'Reform UK':'ref','Labour':'lab','Conservative':'con',
+    'Green':'grn','Lib Dem':'ld','Restore Britain':'rb','SNP':'snp'
+  };
+  D.parties.forEach(function(p) {
+    var key = pollKeys[p.name];
+    if (!key) return;
+    var vals = D.polls.map(function(poll) { return poll[key]; }).filter(function(v) { return v != null; });
+    if (vals.length > 0) {
+      p.avgPct = Math.round(vals.reduce(function(a,b){return a+b;},0) / vals.length);
+    } else {
+      p.avgPct = p.pct;
+    }
+  });
+
+  // Sort by avgPct descending for display
+  var sorted = D.parties.slice().sort((a,b) => (b.avgPct||b.pct) - (a.avgPct||a.pct));
   var top = sorted[0], second = sorted[1];
-  var maxPct = sorted[0].pct;
+  var maxPct = sorted[0].avgPct || sorted[0].pct;
 
   // Race leader cards — top 2 only
   function leaderCard(p, rank, label) {
     var isDark = ['#012169','#1B1B1B','#003087','#6AB023','#C8102E'].includes(p.color);
     var bg = p.color;
+    var displayPct = p.avgPct || p.pct;
     var chg = p.change > 0 ? '▲ +'+p.change+'%' : p.change < 0 ? '▼ '+p.change+'%' : '<span style="background:rgba(255,255,255,0.2);border-radius:99px;padding:2px 8px;font-size:11px;letter-spacing:0.5px">NC</span>';
     var chgColor = p.change > 0 ? '#7fff7f' : p.change < 0 ? '#ffaaaa' : '#fff';
-    return `<div class="rl-card" style="background:${bg};color:#fff">
+    return `<div class="rl-card" style="background:${bg};color:#fff;position:relative">
+      <button onclick="event.stopPropagation();openPollingAvgInfo()" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:24px;height:24px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;font-family:'Nunito',sans-serif">ℹ</button>
       <div class="rl-rank">${label}</div>
       <div class="rl-name">${p.name}</div>
-      <div class="rl-pct">${p.pct}<small>%</small></div>
+      <div class="rl-pct">${displayPct}<small>%</small></div>
+      <div style="font-size:11px;opacity:0.75;margin-top:2px;font-weight:600">avg. of last ${D.polls.length} polls</div>
       <div class="rl-change" style="color:${chgColor}">${chg}</div>
       <div class="rl-seats">${p.seats ? p.seats+' seats' : ''}</div>
     </div>`;
@@ -2006,12 +1965,13 @@ function renderPolls() {
       var chg = p.change > 0 ? '<span style="color:var(--up)">▲+'+p.change+'</span>'
               : p.change < 0 ? '<span style="color:var(--down)">▼'+p.change+'</span>'
               : '<span style="color:var(--md-sys-color-on-surface-variant)">NC</span>';
-      var barW = Math.round((p.pct / maxPct) * 100);
+      var displayPct = p.avgPct || p.pct;
+      var barW = Math.round((displayPct / maxPct) * 100);
       return `<div class="bar-row">
         <div class="bar-rank">${i+1}</div>
-        <div class="bar-name" style="color:${p.color}">${p.name}</div>
+        <div class="bar-name" style="color:${p.color};display:flex;align-items:center;gap:5px">${p.name}<button onclick="event.stopPropagation();openPartyFundingInfo('${p.name}')" style="background:none;border:none;cursor:pointer;padding:0;color:var(--md-sys-color-on-surface-variant);opacity:0.55;font-size:13px;line-height:1;display:inline-flex;align-items:center;flex-shrink:0" title="Who funds ${p.name}?">ℹ</button></div>
         <div class="bar-track"><div class="bar-fill" style="width:${barW}%;background:${p.color}"></div></div>
-        <div class="bar-pct" style="color:${p.color}">${p.pct}%</div>
+        <div class="bar-pct" style="color:${p.color}">${displayPct}%</div>
         <div class="bar-change">${chg}</div>
         <div class="bar-seats">${p.seats ? '~'+p.seats : ''}</div>
       </div>`;
@@ -2020,6 +1980,268 @@ function renderPolls() {
   renderFPTPExplorer();
   renderTrends();
   renderPollCards();
+}
+
+function openPollsterInfo(pollsterName) {
+  var existing = document.getElementById('pollster-info-sheet');
+  if (existing) existing.remove();
+  var existingBg = document.getElementById('pollster-info-sheet-bg');
+  if (existingBg) existingBg.remove();
+
+  var POLLSTERS = {
+    'YouGov': {
+      ownership: 'Listed on the London Stock Exchange. Founded and chaired by Stephan Shakespeare. Major institutional shareholders include various investment funds.',
+      clients: 'The Times, Sky News, The Sun (News UK), the BBC, and the Conservative Party have all been significant clients. YouGov is widely regarded as methodologically innovative — they pioneered MRP modelling for UK elections.',
+      note: 'Their polls tend to show lower Reform UK numbers than some rivals, which some attribute to their weighting methodology. Others argue they\'re simply more accurate — they called 2017 and 2024 better than most.',
+      founded: '2000'
+    },
+    'Focaldata': {
+      ownership: 'Independent, privately owned. Founded by Will Jennings and colleagues. Not affiliated with any media group or political party.',
+      clients: 'Works with a range of media and research clients. Known for sophisticated MRP-style constituency modelling.',
+      note: 'One of the newer entrants to the UK polling market. Generally regarded as methodologically rigorous.',
+      founded: '2017'
+    },
+    'More in Common': {
+      ownership: 'Non-profit organisation, not a traditional pollster. Founded by Tim Dixon and others, originally inspired by the murder of Jo Cox MP.',
+      clients: 'Funded by charitable foundations and civil society organisations. Explicitly focused on social cohesion research rather than commercial polling.',
+      note: 'Their polls frequently show higher Reform UK numbers than rivals — they argue their methodology better captures the "shy Reform" voter. They tend to show Labour lower than others too.',
+      founded: '2017'
+    },
+    'Survation': {
+      ownership: 'Independent, privately owned. CEO Damian Lyons Lowe founded the company. Not affiliated with any media group.',
+      clients: 'The Daily Mirror, Channel 4 News, trade unions including Unite. Their client list skews towards centre-left media.',
+      note: 'Famously called the 2017 general election most accurately but didn\'t publish their final poll — a decision that still haunts UK polling discourse. Known for being willing to show uncomfortable results.',
+      founded: '2009'
+    },
+    'Opinium': {
+      ownership: 'Independent, privately owned. Part of the Opinium Research group.',
+      clients: 'The Observer, Sky News, various corporate clients.',
+      note: 'Regarded as a solid, mid-market pollster. Generally shows results in line with the polling average.',
+      founded: '2008'
+    },
+    'Find Out Now': {
+      ownership: 'Independent, privately owned. Often used by GB News.',
+      clients: 'GB News is a primary media client — worth knowing when interpreting results. Also works with political campaigns.',
+      note: 'Frequently shows higher Green numbers and higher Reform numbers than rival pollsters. Their methodology uses a different online panel which may reach different demographics.',
+      founded: '2018'
+    },
+    'BMG': {
+      ownership: 'Part of the BMG Research group, which is owned by the ITWP group — a data and analytics conglomerate.',
+      clients: 'The Independent is the primary media client.',
+      note: 'Tends to produce results close to the polling average. Methodologically conventional.',
+      founded: '1978'
+    },
+    'Techne': {
+      ownership: 'Independent, privately owned UK pollster.',
+      clients: 'Various media and political clients.',
+      note: 'Less widely cited than the major pollsters but included in BPC membership. Results generally in line with the average.',
+      founded: '2015'
+    },
+    'Ipsos': {
+      ownership: 'French multinational, listed on Euronext Paris. One of the world\'s three largest research groups.',
+      clients: 'The Guardian, Reuters, various government departments. Conduct the net approval ratings used in this app.',
+      note: 'The gold standard for approval ratings — their monthly Political Monitor has tracked PM approval since the 1970s, giving the longest consistent time series in British polling.',
+      founded: '1975'
+    }
+  };
+
+  var info = POLLSTERS[pollsterName] || {
+    ownership: 'Ownership details not currently in our database.',
+    clients: 'Client information not available.',
+    note: 'Check the British Polling Council (BPC) website for member details.',
+    founded: 'Unknown'
+  };
+
+  var bg = document.createElement('div');
+  bg.id = 'pollster-info-sheet-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease;';
+  document.body.appendChild(bg);
+  setTimeout(function(){ bg.style.background = 'rgba(0,0,0,0.45)'; }, 10);
+
+  var sheet = document.createElement('div');
+  sheet.id = 'pollster-info-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;'
+    + 'background:var(--md-sys-color-surface-container-high);'
+    + 'border-radius:28px 28px 0 0;padding:0 24px calc(32px + env(safe-area-inset-bottom));'
+    + 'max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;'
+    + 'box-shadow:0 -4px 32px rgba(0,0,0,0.2);'
+    + 'transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.05,0.7,0.1,1);';
+
+  sheet.innerHTML =
+    '<div style="display:flex;justify-content:center;padding:12px 0 4px">'
+    + '<div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>'
+    + '</div>'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--md-sys-color-primary);margin-top:8px;margin-bottom:4px">🔍 Who are they?</div>'
+    + '<div style="font-size:24px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:16px;letter-spacing:-0.3px">' + pollsterName + '</div>'
+    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;padding:16px;margin-bottom:12px">'
+    + '<div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-primary);margin-bottom:6px">Ownership</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">' + info.ownership + '</div>'
+    + '</div>'
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:16px;padding:16px;margin-bottom:12px">'
+    + '<div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Key clients</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">' + info.clients + '</div>'
+    + '</div>'
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:16px;padding:16px;margin-bottom:16px">'
+    + '<div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Worth knowing</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">' + info.note + '</div>'
+    + '</div>'
+    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:20px;font-weight:600">Member of the British Polling Council · All methods publicly disclosed</div>'
+    + '<button onclick="(function(){var s=document.getElementById(\'pollster-info-sheet\');var b=document.getElementById(\'pollster-info-sheet-bg\');if(s)s.style.transform=\'translateY(100%)\';if(b)b.style.background=\'rgba(0,0,0,0)\';setTimeout(function(){if(s&&s.parentNode)s.remove();if(b&&b.parentNode)b.remove();},350);})()" style="width:100%;padding:14px;border-radius:50px;border:none;background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface);font-size:15px;font-weight:700;font-family:\'Nunito\',sans-serif;cursor:pointer;margin-bottom:8px">Close</button>';
+
+  document.body.appendChild(sheet);
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+
+  function closeSheet() {
+    sheet.style.transform = 'translateY(100%)';
+    bg.style.background = 'rgba(0,0,0,0)';
+    setTimeout(function(){ if(sheet.parentNode) sheet.remove(); if(bg.parentNode) bg.remove(); }, 350);
+  }
+  bg.addEventListener('click', closeSheet);
+  addSwipeToDismiss(sheet, closeSheet);
+}
+
+function openPartyFundingInfo(partyName) {
+  var existing = document.getElementById('party-funding-sheet');
+  if (existing) existing.remove();
+  var existingBg = document.getElementById('party-funding-sheet-bg');
+  if (existingBg) existingBg.remove();
+
+  var FUNDING = {
+    'Reform UK': {
+      color: '#12B7D4',
+      summary: 'Almost entirely reliant on one man.',
+      body: 'Christopher Harborne — a British businessman based in Thailand who made his fortune in aviation fuel — has donated over £5 million to Reform UK, making him by far the party\'s dominant backer. The remainder comes from a scatter of property developers, financial sector figures, and small donors. No trade union money whatsoever. The concentration of funding in a single donor is unusual even by UK party standards.',
+      source: 'Electoral Commission · 2023–2024 donation returns'
+    },
+    'Labour': {
+      color: '#E4003B',
+      summary: 'Historically trade union money — but that\'s changing.',
+      body: 'Unite and Unison remain the largest single donors, collectively contributing tens of millions over recent years. But since 2023, Labour has increasingly attracted tech entrepreneurs, City professionals, and media figures. The Blair-era shift towards business donors never fully reversed. In 2024, major donations came from figures in financial services and property — a notable shift for a party founded by the unions.',
+      source: 'Electoral Commission · 2023–2024 donation returns'
+    },
+    'Conservative': {
+      color: '#0087DC',
+      summary: 'The party of the City — and it shows.',
+      body: 'Hedge funds, private equity, and property are the bedrock. Lord Cruddas (City financial services, £3m+), Michael Davis (mining), and various asset managers feature prominently. The Conservatives have historically received more from the financial sector than all other parties combined. Donation levels have fallen sharply since 2019 as poll numbers collapsed.',
+      source: 'Electoral Commission · 2023–2024 donation returns'
+    },
+    'Green': {
+      color: '#02A95B',
+      summary: 'Small donors and progressive wealth.',
+      body: 'The Greens rely heavily on a large base of small individual donations — a genuine grassroots funding model. Some larger donations come from individuals with backgrounds in environmental businesses and technology. No significant corporate or union backing. Their fundraising has grown substantially since polling surged in 2024.',
+      source: 'Electoral Commission · 2023–2024 donation returns'
+    },
+    'Lib Dem': {
+      color: '#FAA61A',
+      summary: 'Professional class donors and the anti-Brexit dividend.',
+      body: 'The Lib Dems draw heavily from professionals — lawyers, academics, consultants — and benefited enormously from Remain-aligned donors during and after Brexit. JCB heir Anthony Bamford notably switched from the Conservatives to the Lib Dems in 2023. No significant union or corporate sector dominance — their funding base is genuinely diffuse.',
+      source: 'Electoral Commission · 2023–2024 donation returns'
+    },
+    'SNP': {
+      color: '#C4922A',
+      summary: 'Membership-funded — and under scrutiny.',
+      body: 'The SNP relies primarily on membership fees and small donations rather than big institutional backers. However, the party\'s finances came under serious scrutiny in 2023–24 following the police investigation into the handling of over £600,000 in ringfenced independence campaign funds. Former leader Nicola Sturgeon\'s husband Peter Murrell was charged.',
+      source: 'Electoral Commission · Police Scotland investigation 2023–24'
+    },
+    'Restore Britain': {
+      color: '#1a4a9e',
+      summary: 'New party — primarily membership-funded.',
+      body: 'Founded in early 2026, Restore Britain\'s initial funding comes from its paid membership base — which reached 110,000 by March 2026 at £25/year, suggesting initial revenues of around £2.75m from members alone. Rupert Lowe has self-funded some operational costs. No major third-party donors have been declared to the Electoral Commission yet given the party\'s very recent registration.',
+      source: 'Electoral Commission · party registration 2026'
+    },
+    'Other': {
+      color: '#6b7280',
+      summary: 'Varies by party.',
+      body: 'The "Other" category covers a range of minor parties with very different funding models — from UKIP (historically donor-funded) to Plaid Cymru (membership and small donors) to the SDP (small donor base). Check the Electoral Commission\'s public register for specific party returns.',
+      source: 'Electoral Commission · individual party returns'
+    }
+  };
+
+  var info = FUNDING[partyName] || {
+    color: 'var(--md-sys-color-primary)',
+    summary: 'Funding data not available.',
+    body: 'Detailed funding information for this party is not currently in our database. Check the Electoral Commission\'s public register at electoralcommission.org.uk for official donation returns.',
+    source: 'Electoral Commission'
+  };
+
+  var bg = document.createElement('div');
+  bg.id = 'party-funding-sheet-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease;';
+  document.body.appendChild(bg);
+  setTimeout(function(){ bg.style.background = 'rgba(0,0,0,0.45)'; }, 10);
+
+  var sheet = document.createElement('div');
+  sheet.id = 'party-funding-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;'
+    + 'background:var(--md-sys-color-surface-container-high);'
+    + 'border-radius:28px 28px 0 0;padding:0 24px calc(32px + env(safe-area-inset-bottom));'
+    + 'box-shadow:0 -4px 32px rgba(0,0,0,0.2);'
+    + 'transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.05,0.7,0.1,1);';
+
+  sheet.innerHTML =
+    '<div style="display:flex;justify-content:center;padding:12px 0 4px">'
+    + '<div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>'
+    + '</div>'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:' + info.color + ';margin-top:8px;margin-bottom:4px">💰 Follow the money</div>'
+    + '<div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:4px;letter-spacing:-0.3px">' + partyName + '</div>'
+    + '<div style="font-size:15px;font-weight:700;color:' + info.color + ';margin-bottom:16px">' + info.summary + '</div>'
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:16px;padding:16px;margin-bottom:14px">'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.8">' + info.body + '</div>'
+    + '</div>'
+    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:20px;font-weight:600">Source: ' + info.source + '</div>'
+    + '<button onclick="(function(){var s=document.getElementById(\'party-funding-sheet\');var b=document.getElementById(\'party-funding-sheet-bg\');if(s)s.style.transform=\'translateY(100%)\';if(b)b.style.background=\'rgba(0,0,0,0)\';setTimeout(function(){if(s&&s.parentNode)s.remove();if(b&&b.parentNode)b.remove();},350);})()" style="width:100%;padding:14px;border-radius:50px;border:none;background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface);font-size:15px;font-weight:700;font-family:\'Nunito\',sans-serif;cursor:pointer">Close</button>';
+
+  document.body.appendChild(sheet);
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+
+  function closeSheet() {
+    sheet.style.transform = 'translateY(100%)';
+    bg.style.background = 'rgba(0,0,0,0)';
+    setTimeout(function(){ if(sheet.parentNode) sheet.remove(); if(bg.parentNode) bg.remove(); }, 350);
+  }
+  bg.addEventListener('click', closeSheet);
+  addSwipeToDismiss(sheet, closeSheet);
+}
+
+function openPollingAvgInfo() {
+  var existing = document.getElementById('polling-avg-sheet');
+  if (existing) return;
+  var bg = document.createElement('div');
+  bg.id = 'polling-avg-sheet-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease;';
+  document.body.appendChild(bg);
+  setTimeout(function(){ bg.style.background = 'rgba(0,0,0,0.45)'; }, 10);
+  var sheet = document.createElement('div');
+  sheet.id = 'polling-avg-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;'
+    + 'background:var(--md-sys-color-surface-container-high);'
+    + 'border-radius:28px 28px 0 0;padding:0 24px calc(32px + env(safe-area-inset-bottom));'
+    + 'box-shadow:0 -4px 32px rgba(0,0,0,0.2);'
+    + 'transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.05,0.7,0.1,1);';
+  sheet.innerHTML =
+    '<div style="display:flex;justify-content:center;padding:12px 0 4px">'
+    + '<div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>'
+    + '</div>'
+    + '<div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin:8px 0 16px;letter-spacing:-0.3px">ℹ How are these figures calculated?</div>'
+    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;padding:16px;margin-bottom:16px">'
+    + '<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-primary);margin-bottom:8px">The headline number is a polling average</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">We take the most recent poll from each of the major pollsters and average their vote share figures for each party. This smooths out the noise from any single poll and gives a more accurate picture of where the parties actually stand.</div>'
+    + '</div>'
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:16px;padding:16px;margin-bottom:16px">'
+    + '<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:8px">Why does it differ from individual polls?</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);line-height:1.75">Every pollster uses slightly different methodology — different weighting, sampling, and question wording. That\'s why you\'ll see a 7-point spread between pollsters in the same week. The average cuts through that. No single poll is gospel.</div>'
+    + '</div>'
+    + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:20px;font-weight:600">Sources: YouGov · Focaldata · More in Common · Survation · Opinium · Find Out Now · BMG · Techne</div>'
+    + '<button onclick="document.getElementById(\'polling-avg-sheet\').style.transform=\'translateY(100%)\';setTimeout(function(){var s=document.getElementById(\'polling-avg-sheet\');var b=document.getElementById(\'polling-avg-sheet-bg\');if(s)s.remove();if(b)b.remove();},350);document.getElementById(\'polling-avg-sheet-bg\').style.background=\'rgba(0,0,0,0)\'" style="width:100%;padding:14px;border-radius:50px;border:none;background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface);font-size:15px;font-weight:700;font-family:\'Nunito\',sans-serif;cursor:pointer">Got it</button>';
+  document.body.appendChild(sheet);
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+  function closeSheet() {
+    sheet.style.transform = 'translateY(100%)';
+    bg.style.background = 'rgba(0,0,0,0)';
+    setTimeout(function(){ if(sheet.parentNode) sheet.remove(); if(bg.parentNode) bg.remove(); }, 350);
+  }
+  bg.addEventListener('click', closeSheet);
+  addSwipeToDismiss(sheet, closeSheet);
 }
 
 function renderFPTPExplorer() {
@@ -2612,7 +2834,22 @@ function renderLeaders() {
     try { localStorage.setItem('leader_rating_' + li, val); } catch(e) {}
   }
 
-  document.getElementById('leaders-content').innerHTML = D.leaders.map((l, li) => {
+  // Sort by net approval descending (null treated as very negative)
+  var sortedLeaders = D.leaders.slice().sort(function(a, b) {
+    var an = a.net === null ? -999 : a.net;
+    var bn = b.net === null ? -999 : b.net;
+    return bn - an;
+  });
+  // Remap indices so share/compare still work by original index
+  var leaderIndexMap = sortedLeaders.map(function(l) { return D.leaders.indexOf(l); });
+
+  document.getElementById('leaders-content').innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px">'
+    + '<div style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant);letter-spacing:0.3px">Ranked by net approval</div>'
+    + '<button onclick="openNetApprovalInfo()" style="background:var(--md-sys-color-surface-container);border:1.5px solid var(--md-sys-color-outline-variant);border-radius:50%;width:22px;height:22px;color:var(--md-sys-color-primary);font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;font-family:\'Nunito\',sans-serif;line-height:1">ℹ</button>'
+    + '</div>'
+    + sortedLeaders.map((l, sortedIdx) => {
+    var li = leaderIndexMap[sortedIdx];
     var initials = l.name.split(' ').map(w => w[0]).join('').slice(0,2);
     var myRating = getMyRating(li);
 
@@ -2714,6 +2951,47 @@ function renderLeaders() {
       + '</div>'
       + '</div>';
   }).join('');
+}
+
+function openNetApprovalInfo() {
+  var existing = document.getElementById('net-approval-sheet');
+  if (existing) return;
+  var bg = document.createElement('div');
+  bg.id = 'net-approval-sheet-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease;';
+  document.body.appendChild(bg);
+  setTimeout(function(){ bg.style.background = 'rgba(0,0,0,0.45)'; }, 10);
+  var sheet = document.createElement('div');
+  sheet.id = 'net-approval-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;'
+    + 'background:var(--md-sys-color-surface-container-high);'
+    + 'border-radius:28px 28px 0 0;padding:0 24px calc(32px + env(safe-area-inset-bottom));'
+    + 'box-shadow:0 -4px 32px rgba(0,0,0,0.2);'
+    + 'transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.05,0.7,0.1,1);';
+  sheet.innerHTML =
+    '<div style="display:flex;justify-content:center;padding:12px 0 4px">'
+    + '<div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>'
+    + '</div>'
+    + '<div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin:8px 0 16px;letter-spacing:-0.3px">ℹ What is net approval?</div>'
+    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;padding:16px;margin-bottom:14px">'
+    + '<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-primary);margin-bottom:8px">The formula</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">Net approval = % who approve <strong>minus</strong> % who disapprove. A score of +10 means 10 more points approve than disapprove. A score of −42 means 42 more points disapprove — which is where Keir Starmer currently sits.</div>'
+    + '</div>'
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:16px;padding:16px;margin-bottom:14px">'
+    + '<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:8px">Why rank leaders this way?</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);line-height:1.75">It\'s the most objective measure available — it\'s a single number that captures how the public actually feel, not how we\'d arrange them editorially. A positive score is genuinely rare in modern UK politics.</div>'
+    + '</div>'
+    + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:20px;font-weight:600">Sources: Ipsos · YouGov · Opinium · latest available polling</div>'
+    + '<button onclick="(function(){var s=document.getElementById(\'net-approval-sheet\');var b=document.getElementById(\'net-approval-sheet-bg\');if(s){s.style.transform=\'translateY(100%)\'}if(b){b.style.background=\'rgba(0,0,0,0)\'}setTimeout(function(){if(s&&s.parentNode)s.remove();if(b&&b.parentNode)b.remove();},350);})()" style="width:100%;padding:14px;border-radius:50px;border:none;background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface);font-size:15px;font-weight:700;font-family:\'Nunito\',sans-serif;cursor:pointer">Got it</button>';
+  document.body.appendChild(sheet);
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+  function closeSheet() {
+    sheet.style.transform = 'translateY(100%)';
+    bg.style.background = 'rgba(0,0,0,0)';
+    setTimeout(function(){ if(sheet.parentNode) sheet.remove(); if(bg.parentNode) bg.remove(); }, 350);
+  }
+  bg.addEventListener('click', closeSheet);
+  addSwipeToDismiss(sheet, closeSheet);
 }
 
 function toggleLeader(li) {
@@ -2832,7 +3110,8 @@ function renderPollCards() {
 
     return '<div style="margin-bottom:14px">'
       + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'
-      + '<span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">' + p.pollster + '</span>'
+      + '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface)">' + p.pollster + '</span>'
+      + '<button onclick="openPollsterInfo(\'' + p.pollster.replace(/'/g,"\\'") + '\')" style="background:none;border:none;cursor:pointer;padding:0;color:var(--md-sys-color-on-surface-variant);opacity:0.55;font-size:13px;line-height:1;display:inline-flex;align-items:center" title="About ' + p.pollster + '">ℹ</button></div>'
       + '<span style="font-size:15px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + p.date + '</span>'
       + '</div>'
       + '<div style="display:flex;height:48px;border-radius:12px;overflow:hidden;gap:1.5px;background:var(--md-sys-color-outline-variant)">'
@@ -3503,54 +3782,7 @@ renderCountdown();
 renderPOTD();
 showPopupIfDue();
 setTimeout(renderTrends, 100);
-/* ── Pull to Refresh ── */
-(function() {
-  var el = document.getElementById('content');
-  var indicator = document.getElementById('ptr-indicator');
-  var spinner = document.getElementById('ptr-spinner');
-  var label = document.getElementById('ptr-label');
-  var startY = 0, currentY = 0, pulling = false, triggered = false;
-  var THRESHOLD = 72;
 
-  el.addEventListener('touchstart', function(e) {
-    if (el.scrollTop === 0) {
-      startY = e.touches[0].clientY;
-      pulling = true;
-      triggered = false;
-    }
-  }, {passive: true});
-
-  el.addEventListener('touchmove', function(e) {
-    if (!pulling) return;
-    currentY = e.touches[0].clientY;
-    var dist = Math.min(currentY - startY, 120);
-    if (dist <= 0) { pulling = false; return; }
-    var h = Math.min(dist * 0.6, 56);
-    indicator.style.height = h + 'px';
-    var progress = Math.min(dist / THRESHOLD, 1);
-    spinner.style.transform = 'rotate(' + (progress * 300) + 'deg)';
-    if (dist >= THRESHOLD && !triggered) {
-      triggered = true;
-      label.textContent = 'Release to refresh';
-      spinner.style.borderTopColor = 'var(--md-sys-color-primary)';
-    } else if (dist < THRESHOLD) {
-      triggered = false;
-      label.textContent = 'Pull to refresh';
-    }
-  }, {passive: true});
-
-  el.addEventListener('touchend', function() {
-    if (!pulling) return;
-    pulling = false;
-    if (triggered) {
-      label.textContent = 'Refreshing...';
-      spinner.style.animation = 'ptr-spin 0.6s linear infinite';
-      setTimeout(function() { window.location.reload(); }, 400);
-    } else {
-      indicator.style.height = '0';
-    }
-  });
-})();
 
 </script>
 
