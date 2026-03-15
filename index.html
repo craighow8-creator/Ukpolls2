@@ -698,6 +698,33 @@ body {
 /* ── Tonal chip tags ── */
 .tonal-tag { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: var(--md-sys-shape-corner-full); font-size: 12px; font-weight: 600; }
 
+/* ── By-Elections Tracker ── */
+.be-tabs { display: flex; gap: 4px; margin-bottom: 14px; padding: 4px; background: var(--md-sys-color-surface-container); border-radius: var(--md-sys-shape-corner-full); }
+.be-tab { flex: 1; padding: 9px 6px; border: none; border-radius: var(--md-sys-shape-corner-full); font-size: 13px; font-weight: 700; font-family: 'Nunito', sans-serif; cursor: pointer; background: transparent; color: var(--md-sys-color-on-surface-variant); transition: background var(--md-motion-short) var(--md-motion-standard), color var(--md-motion-short) var(--md-motion-standard), transform var(--md-motion-short) var(--md-motion-expressive); }
+.be-tab.active { background: var(--md-sys-color-surface); color: var(--md-sys-color-primary); box-shadow: var(--md-elevation-1); }
+.be-tab:active { transform: scale(0.97); }
+.be-card { background: var(--md-sys-color-surface); border-radius: var(--md-sys-shape-corner-large); margin-bottom: 10px; box-shadow: var(--md-elevation-2); overflow: hidden; cursor: pointer; transition: transform var(--md-motion-short) var(--md-motion-expressive), box-shadow var(--md-motion-short); -webkit-tap-highlight-color: transparent; }
+.be-card:active { transform: scale(0.985); box-shadow: var(--md-elevation-1); }
+.be-card-accent { height: 4px; }
+.be-card-body { padding: 14px 16px 16px; }
+.be-date-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin-bottom: 4px; }
+.be-name { font-size: 18px; font-weight: 900; color: var(--md-sys-color-on-surface); line-height: 1.2; font-family: 'Nunito', sans-serif; }
+.be-meta { font-size: 13px; color: var(--md-sys-color-on-surface-variant); font-weight: 600; margin-top: 3px; margin-bottom: 10px; }
+.be-mini-bars { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+.be-mini-row { display: flex; align-items: center; gap: 8px; }
+.be-mini-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.be-mini-name { font-size: 12px; font-weight: 700; width: 56px; flex-shrink: 0; }
+.be-mini-track { flex: 1; height: 7px; background: var(--md-sys-color-outline-variant); border-radius: 99px; overflow: hidden; }
+.be-mini-fill { height: 100%; border-radius: 99px; transition: width 0.7s var(--md-motion-expressive); }
+.be-mini-pct { font-size: 12px; font-weight: 800; width: 32px; text-align: right; flex-shrink: 0; }
+.be-mini-chg { font-size: 11px; font-weight: 700; width: 38px; text-align: right; flex-shrink: 0; }
+.be-countdown-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: var(--md-sys-shape-corner-full); font-size: 12px; font-weight: 800; }
+/* Swing-o-meter */
+.swingometer-wrap { position: relative; width: 100%; height: 140px; overflow: visible; margin: 10px 0 4px; }
+.swingometer-wrap svg { display: block; margin: 0 auto; overflow: visible; }
+/* Sheet animations */
+@keyframes beSheetIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
 </style>
 <script>
 // Apply saved theme immediately to prevent flash
@@ -963,75 +990,17 @@ body {
       </div>
     </div>
 
-    <div class="ecard">
-      <div class="ecard-accent" style="background:linear-gradient(90deg,#E4003B,#12B7D4)"></div>
-      <div class="ecard-inner">
-        <div class="ed">1 MAY 2026</div>
-        <div class="et">Runcorn &amp; Helsby</div>
-        <div class="es">By-election — Labour hold (majority: 14,696)</div>
-        <div class="ex">Triggered by Mike Amesbury's resignation after assault video. Labour defending a once-safe Red Wall seat against a strong Reform UK challenge. A loss here would be seismic.</div>
-        <div class="etags">
-          <span class="etag" style="background:#E4003B15;color:#c00030">Lab defend</span>
-          <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK target</span>
-        </div>
+    <!-- ── By-Elections Tracker ── -->
+    <div class="sec-label">🗳 By-Election Tracker<button class="sec-share" onclick="shareSection('🗳 Recent Results', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
+    <div id="be-tracker-wrap">
+      <div class="be-tabs">
+        <button class="be-tab active" id="be-tab-upcoming" onclick="switchBeTab('upcoming')">⏳ Upcoming</button>
+        <button class="be-tab" id="be-tab-recent" onclick="switchBeTab('recent')">🏆 Recent Results</button>
+        <button class="be-tab" id="be-tab-stats" onclick="switchBeTab('stats')">📊 Stats</button>
       </div>
-    </div>
-
-    <div class="ecard">
-      <div class="ecard-accent" style="background:linear-gradient(90deg,#0087DC,#FAA61A,#12B7D4)"></div>
-      <div class="ecard-inner">
-        <div class="ed">TBC 2026</div>
-        <div class="et">Horsham</div>
-        <div class="es">By-election — Conservative hold (majority: 3,027)</div>
-        <div class="ex">Jeremy Quin resigned on health grounds. A genuine three-way fight between Conservatives, Lib Dems and Reform UK in a southern seat that could go any direction.</div>
-        <div class="etags">
-          <span class="etag" style="background:#0087DC15;color:#006bb3">Con defend</span>
-          <span class="etag" style="background:#FAA61A15;color:#c07d00">LD target</span>
-          <span class="etag" style="background:#12B7D415;color:#0a8fa3">Reform UK threat</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="sec-label">🗳 Recent Results<button class="sec-share" onclick="shareSection('🗳 Recent Results', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
-
-    <div class="ecard">
-      <div class="ecard-accent" style="background:#02A95B"></div>
-      <div class="ecard-inner">
-        <div class="ed">27 FEB 2026</div>
-        <div class="et">Gorton &amp; Denton</div>
-        <div class="es">By-election — <span style="color:#02A95B;font-weight:800">🟢 Green GAIN from Labour</span></div>
-        <div class="ri"><span class="rd" style="background:#02A95B"></span><span class="rp">Green</span><span class="rn">34.1%</span><span class="rm">+28.6% 🏆</span></div>
-        <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">29.4%</span><span class="rm">−24.7%</span></div>
-        <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">19.8%</span><span class="rm">+19.8%</span></div>
-        <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">7.2%</span><span class="rm">−16.4%</span></div>
-        <div class="ex" style="margin-top:12px;margin-bottom:0">Massive 28.6pt swing to Greens. Labour vote collapsed in a seat they held since 1935. Greens now have 5 MPs.</div>
-      </div>
-    </div>
-
-    <div class="ecard">
-      <div class="ecard-accent" style="background:#12B7D4"></div>
-      <div class="ecard-inner">
-        <div class="ed">6 FEB 2025</div>
-        <div class="et">Kingswood</div>
-        <div class="es">By-election — <span style="color:#12B7D4;font-weight:800">🔵 Reform UK GAIN from Conservative</span></div>
-        <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">38.7%</span><span class="rm">+38.7% 🏆</span></div>
-        <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">26.1%</span><span class="rm">−21.3%</span></div>
-        <div class="ri"><span class="rd" style="background:#E4003B"></span><span class="rp">Labour</span><span class="rn">19.4%</span><span class="rm">−8.2%</span></div>
-        <div class="ex" style="margin-top:12px;margin-bottom:0">Reform UK's first Westminster by-election gain. Signalled the collapse of the Conservative vote in Leave-leaning seats.</div>
-      </div>
-    </div>
-
-    <div class="ecard">
-      <div class="ecard-accent" style="background:#FAA61A"></div>
-      <div class="ecard-inner">
-        <div class="ed">10 OCT 2024</div>
-        <div class="et">Henley &amp; Thame</div>
-        <div class="es">By-election — <span style="color:#FAA61A;font-weight:800">🟡 Lib Dem HOLD</span></div>
-        <div class="ri"><span class="rd" style="background:#FAA61A"></span><span class="rp">Lib Dem</span><span class="rn">52.3%</span><span class="rm">+8.1% 🏆</span></div>
-        <div class="ri"><span class="rd" style="background:#0087DC"></span><span class="rp">Con</span><span class="rn">22.1%</span><span class="rm">−18.4%</span></div>
-        <div class="ri"><span class="rd" style="background:#12B7D4"></span><span class="rp">Reform UK</span><span class="rn">12.8%</span><span class="rm">+12.8%</span></div>
-        <div class="ex" style="margin-top:12px;margin-bottom:0">Lib Dems consolidating hold on southern Blue Wall seats formerly safe for Conservatives.</div>
-      </div>
+      <div id="be-upcoming-list"></div>
+      <div id="be-recent-list" style="display:none"></div>
+      <div id="be-stats-panel" style="display:none"></div>
     </div>
 
     <div class="sec-label">🎰 Betting Odds<button class="sec-share" onclick="shareSection('🎰 Betting Odds', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
@@ -1552,7 +1521,7 @@ function sp(id, btn) {
   btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
   if (id === 'trends') setTimeout(renderTrends, 50);
   if (id === 'demo') setTimeout(renderMigration, 50);
-  if (id === 'elections') setTimeout(renderCountdown, 50);
+  if (id === 'elections') setTimeout(function(){ renderCountdown(); if(_beCurrentTab) switchBeTab(_beCurrentTab); }, 50);
   if (id === 'vote') setTimeout(loadVoteResults, 50);
 }
 
@@ -3805,7 +3774,661 @@ async function loadNews() {
 
 // ── Boot ──
 
-/* ── Countdown + Key Dates ── */
+// ══════════════════════════════════════════
+// BY-ELECTIONS TRACKER
+// ══════════════════════════════════════════
+
+var BY_ELECTIONS = {
+  upcoming: [
+    {
+      id: 'runcorn',
+      name: 'Runcorn & Helsby',
+      date: '2026-05-01',
+      dateLabel: '1 May 2026',
+      status: 'upcoming',
+      defending: 'Labour',
+      defColor: '#E4003B',
+      majority2024: 14696,
+      majority2024Pct: 53.7,
+      trigger: 'Mike Amesbury resigned after assault video went viral',
+      region: 'North West England',
+      leaveVote: 60,
+      context: 'Labour defending a once-safe Red Wall seat against a surging Reform UK. Mike Amesbury\'s resignation after an assault video triggered the by-election in a constituency Labour have held comfortably since its creation. Reform UK are polling nationally at 27% — far above their 2024 share here. A Labour loss would be seismic and almost certainly trigger a leadership crisis.',
+      verdict: 'Bellwether',
+      verdictColor: '#C8102E',
+      result2024: [
+        {party:'Labour',       color:'#E4003B', pct:53.7, change:null},
+        {party:'Conservative', color:'#0087DC', pct:20.8, change:null},
+        {party:'Reform UK',    color:'#12B7D4', pct:14.2, change:null},
+        {party:'Lib Dem',      color:'#FAA61A', pct: 6.1, change:null},
+        {party:'Green',        color:'#02A95B', pct: 4.1, change:null},
+      ],
+      odds: {
+        'Labour': '6/4',
+        'Reform UK': '7/4',
+        'Conservative': '28/1',
+      },
+      oddsDate: 'Sky Bet · Mar 2026',
+      swingNeeded: 20,
+      swingParty: 'Reform UK',
+      swingFrom: 'Labour',
+      watchFor: 'If Reform wins, Starmer faces immediate leadership calls. If Labour holds with under 40%, still damaging.',
+      tags: ['Lab defend', 'Reform UK target', 'Red Wall', 'Bellwether'],
+      tagColors: ['#E4003B', '#12B7D4', '#8b5cf6', '#C8102E'],
+    },
+    {
+      id: 'horsham',
+      name: 'Horsham',
+      date: null,
+      dateLabel: 'TBC 2026',
+      status: 'upcoming',
+      defending: 'Conservative',
+      defColor: '#0087DC',
+      majority2024: 3027,
+      majority2024Pct: 6.8,
+      trigger: 'Jeremy Quin resigned on health grounds',
+      region: 'South East England',
+      leaveVote: 44,
+      context: 'Jeremy Quin\'s resignation on health grounds has created a rare genuine three-way fight in a safe-looking Surrey seat. The Lib Dems swept similar Blue Wall seats in 2024, Reform UK are targeting the Con vote, and the Conservatives are defending a 3,027 majority — their thinnest in the area. The date has not been set as of March 2026.',
+      verdict: 'Too close to call',
+      verdictColor: '#6b7280',
+      result2024: [
+        {party:'Conservative', color:'#0087DC', pct:37.4, change:null},
+        {party:'Lib Dem',      color:'#FAA61A', pct:30.6, change:null},
+        {party:'Reform UK',    color:'#12B7D4', pct:14.8, change:null},
+        {party:'Labour',       color:'#E4003B', pct:12.2, change:null},
+        {party:'Green',        color:'#02A95B', pct: 3.8, change:null},
+      ],
+      odds: {
+        'Lib Dem':      '6/4',
+        'Conservative': '2/1',
+        'Reform UK':    '9/2',
+      },
+      oddsDate: 'Betfair · Mar 2026',
+      swingNeeded: 3.4,
+      swingParty: 'Lib Dem',
+      swingFrom: 'Conservative',
+      watchFor: 'LD–Con swing is the key number. If Reform splits the right-of-centre vote, Lib Dems can win with under 35%.',
+      tags: ['Con defend', 'LD target', 'Reform UK threat', 'Blue Wall'],
+      tagColors: ['#0087DC', '#FAA61A', '#12B7D4', '#1e40af'],
+    },
+  ],
+  recent: [
+    {
+      id: 'gorton',
+      name: 'Gorton & Denton',
+      date: '2026-02-27',
+      dateLabel: '27 Feb 2026',
+      status: 'result',
+      defending: 'Labour',
+      defColor: '#E4003B',
+      winner: 'Green',
+      winnerColor: '#02A95B',
+      gainLoss: 'GAIN',
+      region: 'Greater Manchester',
+      leaveVote: 56,
+      context: 'Hannah Spencer became the Greens\' fifth MP and their first in the North of England. Labour have held the seat — or its predecessors — since 1935. The 28.6-point swing to the Greens in a 56% Leave constituency was not predicted by any pollster.',
+      verdict: 'Historic',
+      verdictColor: '#02A95B',
+      result: [
+        {party:'Green',        color:'#02A95B', pct:34.1, change:+28.6, winner:true},
+        {party:'Labour',       color:'#E4003B', pct:29.4, change:-24.7},
+        {party:'Reform UK',    color:'#12B7D4', pct:19.8, change:+19.8},
+        {party:'Conservative', color:'#0087DC', pct: 7.2, change:-16.4},
+        {party:'Lib Dem',      color:'#FAA61A', pct: 6.1, change: -3.8},
+      ],
+      majority: 477,
+      turnout: 41.2,
+      swing: {from:'Labour', to:'Green', pts:26.7},
+      significance: 'Greens now have 5 MPs. Labour\'s worst by-election loss since the 1990s. First Green seat north of the Midlands.',
+      tags: ['Green GAIN', 'Lab collapse', 'Historic', 'North England first'],
+      tagColors: ['#02A95B', '#C8102E', '#f59e0b', '#8b5cf6'],
+    },
+    {
+      id: 'runcorn_may25',
+      name: 'Runcorn & Helsby',
+      date: '2025-05-02',
+      dateLabel: '2 May 2025',
+      status: 'result',
+      defending: 'Labour',
+      defColor: '#E4003B',
+      winner: 'Reform UK',
+      winnerColor: '#12B7D4',
+      gainLoss: 'GAIN',
+      region: 'North West England',
+      leaveVote: 60,
+      context: 'Reform UK overturned a 14,696 majority — the largest ever overturned in a UK by-election — by just 6 votes. Triggered by Mike Amesbury\'s resignation after an assault video.',
+      verdict: 'Record-breaking',
+      verdictColor: '#12B7D4',
+      result: [
+        {party:'Reform UK',    color:'#12B7D4', pct:38.7, change:+24.5, winner:true},
+        {party:'Labour',       color:'#E4003B', pct:38.6, change:-15.1},
+        {party:'Conservative', color:'#0087DC', pct:10.6, change:-10.2},
+        {party:'Green',        color:'#02A95B', pct: 7.4, change: +3.3},
+        {party:'Lib Dem',      color:'#FAA61A', pct: 3.4, change: -1.8},
+      ],
+      majority: 6,
+      turnout: 46.1,
+      swing: {from:'Labour', to:'Reform UK', pts:19.8},
+      significance: 'Largest majority ever overturned in a UK by-election. Reform\'s second Westminster seat. Won by just 6 votes.',
+      tags: ['Reform GAIN', 'Record majority overturned', 'Won by 6 votes'],
+      tagColors: ['#12B7D4', '#f59e0b', '#C8102E'],
+    },
+    {
+      id: 'kingswood',
+      name: 'Kingswood',
+      date: '2025-02-06',
+      dateLabel: '6 Feb 2025',
+      status: 'result',
+      defending: 'Conservative',
+      defColor: '#0087DC',
+      winner: 'Reform UK',
+      winnerColor: '#12B7D4',
+      gainLoss: 'GAIN',
+      region: 'South West England',
+      leaveVote: 61,
+      context: 'Reform UK\'s first-ever Westminster by-election win. Signalled the structural collapse of the Conservative vote in Leave-leaning outer-suburban seats.',
+      verdict: 'Landmark',
+      verdictColor: '#12B7D4',
+      result: [
+        {party:'Reform UK',    color:'#12B7D4', pct:38.7, change:+38.7, winner:true},
+        {party:'Conservative', color:'#0087DC', pct:26.1, change:-21.3},
+        {party:'Labour',       color:'#E4003B', pct:19.4, change: -8.2},
+        {party:'Lib Dem',      color:'#FAA61A', pct: 9.4, change: +4.1},
+        {party:'Green',        color:'#02A95B', pct: 4.8, change: +2.6},
+      ],
+      majority: 3182,
+      turnout: 38.4,
+      swing: {from:'Conservative', to:'Reform UK', pts:30.0},
+      significance: 'Reform UK\'s first Westminster seat won in a by-election. Con vote halved. Labour third.',
+      tags: ['Reform GAIN', 'Con collapse', 'First Reform Westminster win'],
+      tagColors: ['#12B7D4', '#C8102E', '#f59e0b'],
+    },
+    {
+      id: 'henley',
+      name: 'Henley & Thame',
+      date: '2024-10-10',
+      dateLabel: '10 Oct 2024',
+      status: 'result',
+      defending: 'Lib Dem',
+      defColor: '#FAA61A',
+      winner: 'Lib Dem',
+      winnerColor: '#FAA61A',
+      gainLoss: 'HOLD',
+      region: 'South East England',
+      leaveVote: 46,
+      context: 'Lib Dems consolidated their grip on southern Blue Wall seats in the first post-GE by-election, increasing their majority significantly as the Conservative vote continued to collapse.',
+      verdict: 'Lib Dem fortress',
+      verdictColor: '#FAA61A',
+      result: [
+        {party:'Lib Dem',      color:'#FAA61A', pct:52.3, change: +8.1, winner:true},
+        {party:'Conservative', color:'#0087DC', pct:22.1, change:-18.4},
+        {party:'Reform UK',    color:'#12B7D4', pct:12.8, change:+12.8},
+        {party:'Labour',       color:'#E4003B', pct: 8.4, change: -4.6},
+        {party:'Green',        color:'#02A95B', pct: 3.2, change: +1.8},
+      ],
+      majority: 10882,
+      turnout: 43.7,
+      swing: {from:'Conservative', to:'Lib Dem', pts:13.3},
+      significance: 'LD majority tripled. Conservatives third in their former stronghold. Confirmed Blue Wall realignment is structural, not just 2024.',
+      tags: ['LD HOLD', 'Blue Wall', 'Con third place'],
+      tagColors: ['#FAA61A', '#1e40af', '#C8102E'],
+    },
+  ],
+};
+
+var _beCurrentTab = 'upcoming';
+
+function switchBeTab(tab) {
+  _beCurrentTab = tab;
+  ['upcoming','recent','stats'].forEach(function(t) {
+    var btn = document.getElementById('be-tab-' + t);
+    var list = document.getElementById('be-' + t + (t === 'stats' ? '-panel' : '-list'));
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (list) list.style.display = t === tab ? 'block' : 'none';
+  });
+  if (tab === 'upcoming')  renderBeUpcoming();
+  if (tab === 'recent')    renderBeRecent();
+  if (tab === 'stats')     renderBeStats();
+}
+
+function beCountdown(dateStr) {
+  if (!dateStr) return null;
+  var target = new Date(dateStr + 'T00:00:00');
+  var now = new Date();
+  var days = Math.ceil((target - now) / 86400000);
+  return days;
+}
+
+function beTagsHTML(tags, tagColors) {
+  return (tags || []).map(function(t, i) {
+    var c = tagColors[i] || '#6b7280';
+    return '<span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;background:' + c + '18;color:' + c + '">' + t + '</span>';
+  }).join('');
+}
+
+function renderBeUpcoming() {
+  var el = document.getElementById('be-upcoming-list');
+  if (!el) return;
+  var html = '';
+  BY_ELECTIONS.upcoming.forEach(function(be) {
+    var days = beCountdown(be.date);
+    var urgency = days !== null && days <= 14 ? '#C8102E' : days !== null && days <= 47 ? '#FAA61A' : be.defColor;
+    var countdownHtml = days !== null
+      ? '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:99px;font-size:12px;font-weight:800;background:' + urgency + '18;color:' + urgency + '">⏳ ' + (days === 0 ? 'TODAY' : days + ' days') + '</span>'
+      : '<span style="display:inline-flex;align-items:center;padding:4px 12px;border-radius:99px;font-size:12px;font-weight:700;background:var(--md-sys-color-surface-container);color:var(--md-sys-color-on-surface-variant)">📅 Date TBC</span>';
+
+    var topResults = be.result2024.slice(0, 3);
+    var maxPct = Math.max.apply(null, be.result2024.map(function(r){return r.pct;}));
+
+    html += '<div class="be-card" onclick="openBeSheet(\'' + be.id + '\',\'upcoming\')">'
+      + '<div class="be-card-accent" style="background:linear-gradient(90deg,' + be.defColor + ',' + (be.odds && Object.keys(be.odds)[0] ? partyColor(Object.keys(be.odds)[0]) : '#999') + ')"></div>'
+      + '<div class="be-card-body">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+      + '<div>'
+      + '<div class="be-date-label">' + be.dateLabel + ' · ' + be.region + '</div>'
+      + '<div class="be-name">' + be.name + '</div>'
+      + '<div class="be-meta">Defending: <strong style="color:' + be.defColor + '">' + be.defending + '</strong> · Majority: ' + be.majority2024.toLocaleString() + '</div>'
+      + '</div>'
+      + countdownHtml
+      + '</div>'
+      // Mini bar chart — 2024 result
+      + '<div style="margin-bottom:10px">'
+      + '<div style="font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">2024 result</div>'
+      + topResults.map(function(r) {
+        var w = Math.round((r.pct / maxPct) * 100);
+        return '<div class="be-mini-row">'
+          + '<div class="be-mini-dot" style="background:' + r.color + '"></div>'
+          + '<div class="be-mini-name" style="color:' + r.color + '">' + partyShort(r.party) + '</div>'
+          + '<div class="be-mini-track"><div class="be-mini-fill" style="width:0%;background:' + r.color + '" data-w="' + w + '"></div></div>'
+          + '<div class="be-mini-pct" style="color:' + r.color + '">' + r.pct + '%</div>'
+          + '</div>';
+      }).join('')
+      + '</div>'
+      // Tags + tap hint
+      + '<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;justify-content:space-between">'
+      + '<div style="display:flex;flex-wrap:wrap;gap:5px">' + beTagsHTML(be.tags, be.tagColors) + '</div>'
+      + '<span style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Tap for detail →</span>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
+  });
+  el.innerHTML = html;
+  // Animate bars
+  setTimeout(function() {
+    el.querySelectorAll('.be-mini-fill').forEach(function(bar) {
+      bar.style.width = bar.getAttribute('data-w') + '%';
+    });
+  }, 80);
+}
+
+function renderBeRecent() {
+  var el = document.getElementById('be-recent-list');
+  if (!el) return;
+  var html = '';
+  BY_ELECTIONS.recent.forEach(function(be) {
+    var winner = be.result.find(function(r){return r.winner;});
+    var maxPct = Math.max.apply(null, be.result.map(function(r){return r.pct;}));
+    html += '<div class="be-card" onclick="openBeSheet(\'' + be.id + '\',\'recent\')">'
+      + '<div class="be-card-accent" style="background:' + be.winnerColor + '"></div>'
+      + '<div class="be-card-body">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+      + '<div>'
+      + '<div class="be-date-label">' + be.dateLabel + ' · ' + be.region + '</div>'
+      + '<div class="be-name">' + be.name + '</div>'
+      + '<div class="be-meta" style="margin-bottom:0"><span style="color:' + be.winnerColor + ';font-weight:800">' + (be.gainLoss === 'GAIN' ? '🏆 ' + be.winner + ' GAIN' : '✅ ' + be.winner + ' HOLD') + '</span> from ' + be.defending + '</div>'
+      + '</div>'
+      + '<div style="text-align:right;flex-shrink:0">'
+      + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Swing</div>'
+      + '<div style="font-size:20px;font-weight:900;color:' + be.winnerColor + ';line-height:1">' + be.swing.pts + '</div>'
+      + '<div style="font-size:10px;color:var(--md-sys-color-on-surface-variant);font-weight:600">pts to ' + partyShort(be.swing.to) + '</div>'
+      + '</div>'
+      + '</div>'
+      + '<div style="margin-bottom:10px">'
+      + be.result.slice(0,3).map(function(r) {
+        var w = Math.round((r.pct / maxPct) * 100);
+        var chgStr = r.change > 0 ? '+' + r.change.toFixed(1) : r.change < 0 ? r.change.toFixed(1) : '—';
+        var chgCol = r.change > 0 ? 'var(--up)' : r.change < 0 ? 'var(--down)' : 'var(--md-sys-color-on-surface-variant)';
+        return '<div class="be-mini-row">'
+          + '<div class="be-mini-dot" style="background:' + r.color + ';' + (r.winner ? 'box-shadow:0 0 0 2px ' + r.color + '60' : '') + '"></div>'
+          + '<div class="be-mini-name" style="color:' + r.color + '">' + partyShort(r.party) + (r.winner ? ' 🏆' : '') + '</div>'
+          + '<div class="be-mini-track"><div class="be-mini-fill" style="width:0%;background:' + r.color + '" data-w="' + w + '"></div></div>'
+          + '<div class="be-mini-pct" style="color:' + r.color + '">' + r.pct + '%</div>'
+          + '<div class="be-mini-chg" style="color:' + chgCol + '">' + chgStr + '</div>'
+          + '</div>';
+      }).join('')
+      + '</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;justify-content:space-between">'
+      + '<div style="display:flex;flex-wrap:wrap;gap:5px">' + beTagsHTML(be.tags, be.tagColors) + '</div>'
+      + '<span style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Full breakdown →</span>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
+  });
+  el.innerHTML = html;
+  setTimeout(function() {
+    el.querySelectorAll('.be-mini-fill').forEach(function(bar) {
+      bar.style.width = bar.getAttribute('data-w') + '%';
+    });
+  }, 80);
+}
+
+function renderBeStats() {
+  var el = document.getElementById('be-stats-panel');
+  if (!el) return;
+  var allRecent = BY_ELECTIONS.recent;
+  var gains = allRecent.filter(function(be){return be.gainLoss==='GAIN';});
+  var gainsByParty = {};
+  gains.forEach(function(be) {
+    gainsByParty[be.winner] = (gainsByParty[be.winner]||0)+1;
+  });
+  var swings = allRecent.map(function(be){return be.swing.pts;});
+  var avgSwing = swings.length ? (swings.reduce(function(a,b){return a+b;},0)/swings.length).toFixed(1) : '—';
+  var maxSwingBe = allRecent.reduce(function(a,b){ return b.swing.pts > a.swing.pts ? b : a; }, allRecent[0]);
+
+  var statsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'
+    + statBox('🏆 Seats changed', gains.length + ' of ' + allRecent.length, '#f59e0b')
+    + statBox('📐 Avg swing', avgSwing + ' pts', '#8b5cf6')
+    + statBox('🔵 Reform gains', (gainsByParty['Reform UK']||0) + '', '#12B7D4')
+    + statBox('🟢 Green gains', (gainsByParty['Green']||0) + '', '#02A95B')
+    + '</div>';
+
+  // Biggest swing
+  if (maxSwingBe) {
+    statsHtml += '<div style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-large);padding:16px;box-shadow:var(--md-elevation-1);margin-bottom:10px;border-left:4px solid ' + maxSwingBe.winnerColor + '">'
+      + '<div style="font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px">📊 Biggest swing</div>'
+      + '<div style="font-size:17px;font-weight:900;color:var(--md-sys-color-on-surface)">' + maxSwingBe.name + '</div>'
+      + '<div style="font-size:30px;font-weight:900;color:' + maxSwingBe.winnerColor + ';line-height:1.1">' + maxSwingBe.swing.pts + ' pts</div>'
+      + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + maxSwingBe.swing.from + ' → ' + maxSwingBe.swing.to + ' · ' + maxSwingBe.dateLabel + '</div>'
+      + '</div>';
+  }
+
+  // Party performance table
+  var parties = ['Reform UK','Labour','Green','Conservative','Lib Dem'];
+  var perfRows = parties.map(function(pname) {
+    var inResults = allRecent.filter(function(be){return be.result.find(function(r){return r.party===pname;});});
+    if (!inResults.length) return '';
+    var avgChange = inResults.reduce(function(s, be){
+      var r = be.result.find(function(r){return r.party===pname;});
+      return s + (r && r.change != null ? r.change : 0);
+    }, 0) / inResults.length;
+    var col = partyColor(pname);
+    var chgStr = avgChange > 0 ? '+' + avgChange.toFixed(1) : avgChange.toFixed(1);
+    var chgCol = avgChange > 0 ? 'var(--up)' : 'var(--down)';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
+      + '<div style="width:8px;height:8px;border-radius:50%;background:' + col + ';flex-shrink:0"></div>'
+      + '<div style="flex:1;font-size:14px;font-weight:700;color:' + col + '">' + pname + '</div>'
+      + '<div style="font-size:14px;font-weight:900;color:' + chgCol + '">' + chgStr + '</div>'
+      + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant)">avg chg</div>'
+      + '</div>';
+  }).filter(Boolean).join('');
+
+  statsHtml += '<div style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;box-shadow:var(--md-elevation-1);margin-bottom:10px">'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:8px">Party performance — average swing</div>'
+    + perfRows + '</div>';
+
+  el.innerHTML = statsHtml;
+}
+
+function statBox(label, val, color) {
+  return '<div style="background:var(--md-sys-color-surface);border-radius:var(--md-sys-shape-corner-large);padding:14px;box-shadow:var(--md-elevation-1);text-align:center">'
+    + '<div style="font-size:22px;font-weight:900;color:' + color + ';line-height:1.1;margin-bottom:4px">' + val + '</div>'
+    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:700">' + label + '</div>'
+    + '</div>';
+}
+
+// ── By-Election Detail Bottom Sheet ──
+function openBeSheet(id, tab) {
+  var be = (tab === 'upcoming' ? BY_ELECTIONS.upcoming : BY_ELECTIONS.recent).find(function(b){return b.id===id;});
+  if (!be) return;
+
+  var existing = document.getElementById('be-detail-sheet');
+  if (existing) existing.remove();
+  var bgEx = document.getElementById('be-detail-bg');
+  if (bgEx) bgEx.remove();
+
+  var bg = document.createElement('div');
+  bg.id = 'be-detail-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease';
+  document.body.appendChild(bg);
+  setTimeout(function(){ bg.style.background = 'rgba(0,0,0,0.55)'; }, 10);
+
+  var sheet = document.createElement('div');
+  sheet.id = 'be-detail-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--md-sys-color-surface-container-high);border-radius:28px 28px 0 0;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 -4px 32px rgba(0,0,0,0.25);transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.05,0.7,0.1,1);padding-bottom:env(safe-area-inset-bottom,20px)';
+
+  var isUpcoming = tab === 'upcoming';
+  var accentColor = isUpcoming ? be.defColor : be.winnerColor;
+  var days = isUpcoming ? beCountdown(be.date) : null;
+
+  // Build result bars HTML
+  var resultData = isUpcoming ? be.result2024 : be.result;
+  var maxPct = Math.max.apply(null, resultData.map(function(r){return r.pct;}));
+
+  var resultBarsHtml = resultData.map(function(r, i) {
+    var w = Math.round((r.pct / maxPct) * 100);
+    var chgStr = (r.change != null)
+      ? (r.change > 0 ? '+' + r.change.toFixed(1) : r.change < 0 ? r.change.toFixed(1) : '—')
+      : '';
+    var chgCol = r.change > 0 ? 'var(--up)' : r.change < 0 ? 'var(--down)' : 'var(--md-sys-color-on-surface-variant)';
+    var isWinner = r.winner;
+    return '<div style="margin-bottom:' + (i < resultData.length-1 ? '10' : '0') + 'px">'
+      + '<div style="display:flex;justify-content:space-between;margin-bottom:3px">'
+      + '<div style="display:flex;align-items:center;gap:6px">'
+      + '<div style="width:9px;height:9px;border-radius:50%;background:' + r.color + ';flex-shrink:0' + (isWinner ? ';box-shadow:0 0 0 2.5px ' + r.color + '60' : '') + '"></div>'
+      + '<span style="font-size:14px;font-weight:' + (isWinner?'900':'700') + ';color:' + r.color + '">' + partyShort(r.party) + (isWinner ? ' 🏆' : '') + '</span>'
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      + (chgStr ? '<span style="font-size:12px;font-weight:700;color:' + chgCol + '">' + chgStr + '</span>' : '')
+      + '<span style="font-size:15px;font-weight:900;color:' + r.color + '">' + r.pct + '%</span>'
+      + '</div>'
+      + '</div>'
+      + '<div style="background:var(--md-sys-color-surface-container);border-radius:99px;height:' + (isWinner?'13':'9') + 'px;overflow:hidden">'
+      + '<div style="width:0%;background:' + r.color + ';height:100%;border-radius:99px;transition:width 0.75s cubic-bezier(0.34,1.56,0.64,1)" data-w="' + w + '"></div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  // Swingometer SVG (for both upcoming and results)
+  var swingPts = isUpcoming ? be.swingNeeded : be.swing.pts;
+  var swingFrom = isUpcoming ? be.swingFrom : be.swing.from;
+  var swingTo = isUpcoming ? be.swingParty : be.swing.to;
+  var swingFromColor = partyColor(swingFrom);
+  var swingToColor = partyColor(swingTo);
+  var swingometerHtml = buildSwingometer(swingPts, swingFromColor, swingToColor, swingFrom, swingTo, isUpcoming);
+
+  // Odds section
+  var oddsHtml = '';
+  if (isUpcoming && be.odds && Object.keys(be.odds).length) {
+    var oddsRows = Object.entries(be.odds).map(function(entry) {
+      var pname = entry[0], odds = entry[1];
+      var col = partyColor(pname);
+      var isFav = Object.values(be.odds)[0] === odds;
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:' + col + '12;border-radius:12px;border-left:3px solid ' + col + ';margin-bottom:6px">'
+        + '<div style="display:flex;align-items:center;gap:8px">'
+        + '<span style="font-size:15px;font-weight:800;color:' + col + '">' + pname + '</span>'
+        + (isFav ? '<span style="font-size:11px;font-weight:700;background:' + col + '20;color:' + col + ';border-radius:99px;padding:2px 8px">FAVE</span>' : '')
+        + '</div>'
+        + '<span style="font-size:15px;font-weight:900;color:' + col + '">' + odds + '</span>'
+        + '</div>';
+    }).join('');
+    oddsHtml = '<div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;margin-bottom:14px">'
+      + '<div style="font-size:12px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px">🎰 Betting odds · ' + be.oddsDate + '</div>'
+      + oddsRows
+      + '<div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);margin-top:6px">18+ · BeGambleAware.org</div>'
+      + '</div>';
+  }
+
+  // Stats row (results only)
+  var statsRowHtml = '';
+  if (!isUpcoming) {
+    statsRowHtml = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">'
+      + '<div style="background:var(--md-sys-color-surface-container);border-radius:14px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:900;color:' + accentColor + ';line-height:1">' + be.majority.toLocaleString() + '</div><div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:700;margin-top:3px">Majority</div></div>'
+      + '<div style="background:var(--md-sys-color-surface-container);border-radius:14px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:900;color:' + accentColor + ';line-height:1">' + be.turnout + '%</div><div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:700;margin-top:3px">Turnout</div></div>'
+      + '<div style="background:var(--md-sys-color-surface-container);border-radius:14px;padding:12px;text-align:center"><div style="font-size:20px;font-weight:900;color:' + accentColor + ';line-height:1">' + be.swing.pts + 'pt</div><div style="font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:700;margin-top:3px">Swing</div></div>'
+      + '</div>';
+  }
+
+  sheet.innerHTML =
+    // Handle
+    '<div style="display:flex;justify-content:center;padding:12px 0 4px">'
+    + '<div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>'
+    + '</div>'
+    // Header
+    + '<div style="padding:4px 20px 16px;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+    + '<div style="flex:1">'
+    + '<div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:' + accentColor + ';margin-bottom:4px">' + (isUpcoming ? '⏳ Upcoming By-Election' : '🏆 By-Election Result') + '</div>'
+    + '<div style="font-size:24px;font-weight:900;color:var(--md-sys-color-on-surface);letter-spacing:-0.4px;line-height:1.2">' + be.name + '</div>'
+    + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-top:4px;font-weight:600">' + be.dateLabel + ' · ' + be.region + '</div>'
+    + (isUpcoming
+        ? '<div style="margin-top:8px;display:flex;align-items:center;gap:6px"><span style="font-size:13px;color:var(--md-sys-color-on-surface-variant)">Triggered by:</span><span style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface)">' + be.trigger + '</span></div>'
+        : '<div style="margin-top:6px;font-size:13px;font-weight:800;color:' + accentColor + '">' + (be.gainLoss === 'GAIN' ? '🏆 ' + be.winner + ' GAIN from ' + be.defending : '✅ ' + be.winner + ' HOLD') + '</div>'
+      )
+    + '</div>'
+    + (days !== null ? '<div style="flex-shrink:0;margin-left:12px;text-align:center;background:' + accentColor + '18;border-radius:14px;padding:10px 14px"><div style="font-size:28px;font-weight:900;color:' + accentColor + ';line-height:1">' + days + '</div><div style="font-size:11px;font-weight:700;color:' + accentColor + '">days</div></div>' : '')
+    + '</div>'
+    + '</div>'
+
+    // Body
+    + '<div style="padding:16px 20px">'
+
+    // Verdict chip
+    + '<div style="display:inline-flex;align-items:center;padding:6px 14px;border-radius:99px;font-size:12px;font-weight:800;background:' + be.verdictColor + '18;color:' + be.verdictColor + ';margin-bottom:14px">'
+    + '⚡ ' + be.verdict + '</div>'
+
+    // Context
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;margin-bottom:14px">'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:8px">Context</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">' + be.context + '</div>'
+    + '</div>'
+
+    // Stats row (results)
+    + statsRowHtml
+
+    // Result bars
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;margin-bottom:14px">'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px">' + (isUpcoming ? '2024 General Election result' : 'Result') + '</div>'
+    + resultBarsHtml
+    + (isUpcoming ? '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:10px;font-weight:600">2024 GE baseline — used to calculate swing</div>' : '')
+    + '</div>'
+
+    // Swingometer
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;margin-bottom:14px">'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:4px">' + (isUpcoming ? '⚖️ Swing needed to change hands' : '⚖️ Swing from 2024') + '</div>'
+    + swingometerHtml
+    + '</div>'
+
+    // Odds (upcoming only)
+    + oddsHtml
+
+    // Watch for / significance
+    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:var(--md-sys-shape-corner-large);padding:14px 16px;border-left:4px solid ' + accentColor + ';margin-bottom:14px">'
+    + '<div style="font-size:13px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:' + accentColor + ';margin-bottom:6px">' + (isUpcoming ? '👀 What to watch for' : '📣 Why it matters') + '</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">' + (isUpcoming ? be.watchFor : be.significance) + '</div>'
+    + '</div>'
+
+    // Tags
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">' + beTagsHTML(be.tags, be.tagColors) + '</div>'
+
+    // Action buttons
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">'
+    + '<button onclick="beAIAnalysis(\'' + be.id + '\',\'' + tab + '\')" style="padding:12px;border-radius:50px;border:none;background:var(--md-sys-color-primary);color:#fff;font-size:14px;font-weight:800;font-family:\'Nunito\',sans-serif;cursor:pointer">🤖 AI Analysis</button>'
+    + '<button onclick="beShare(\'' + be.id + '\',\'' + tab + '\')" style="padding:12px;border-radius:50px;border:none;background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);font-size:14px;font-weight:800;font-family:\'Nunito\',sans-serif;cursor:pointer">🔗 Share</button>'
+    + '</div>'
+    + '<button onclick="closeBeSheet()" style="width:100%;padding:13px;border-radius:50px;border:none;background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface);font-size:15px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif">Close</button>'
+    + '</div>';
+
+  document.body.appendChild(sheet);
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+
+  // Animate bars after mount
+  setTimeout(function() {
+    sheet.querySelectorAll('[data-w]').forEach(function(bar) {
+      bar.style.width = bar.getAttribute('data-w') + '%';
+    });
+  }, 120);
+
+  function closeBeSheet() {
+    sheet.style.transform = 'translateY(100%)';
+    bg.style.background = 'rgba(0,0,0,0)';
+    setTimeout(function(){ if(sheet.parentNode) sheet.remove(); if(bg.parentNode) bg.remove(); }, 350);
+  }
+  window.closeBeSheet = closeBeSheet;
+  bg.addEventListener('click', closeBeSheet);
+  addSwipeToDismiss(sheet, closeBeSheet);
+}
+
+function buildSwingometer(swingPts, fromColor, toColor, fromParty, toParty, isNeeded) {
+  // Clamp needle to ±50 pts = ±85 degrees from vertical
+  var maxPts = 45;
+  var clamped = Math.min(swingPts, maxPts);
+  var angleDeg = (clamped / maxPts) * 80; // 0 = left (fromParty), positive = right (toParty)
+  // Needle starts straight up (270 deg in SVG), swings right
+  var needleRad = ((90 + angleDeg) * Math.PI) / 180;
+  var cx = 140, cy = 110, r = 80;
+  var nx = cx + r * Math.cos(needleRad - Math.PI);
+  var ny = cy + r * Math.sin(needleRad - Math.PI);
+  var arcPath = 'M ' + (cx - r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx + r) + ' ' + cy;
+
+  return '<div style="text-align:center">'
+    + '<svg viewBox="0 0 280 120" width="100%" style="max-width:280px;overflow:visible">'
+    // Arc background
+    + '<path d="' + arcPath + '" fill="none" stroke="var(--md-sys-color-outline-variant)" stroke-width="14" stroke-linecap="round"/>'
+    // Left half (fromParty color)
+    + '<path d="M ' + (cx - r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + cx + ' ' + (cy - r) + '" fill="none" stroke="' + fromColor + '" stroke-width="14" stroke-linecap="round" opacity="0.5"/>'
+    // Right half (toParty color)
+    + '<path d="M ' + cx + ' ' + (cy - r) + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx + r) + ' ' + cy + '" fill="none" stroke="' + toColor + '" stroke-width="14" stroke-linecap="round" opacity="0.5"/>'
+    // Needle
+    + '<line x1="' + cx + '" y1="' + cy + '" x2="' + nx.toFixed(1) + '" y2="' + ny.toFixed(1) + '" stroke="var(--md-sys-color-on-surface)" stroke-width="3" stroke-linecap="round" style="transition:x2 0.8s cubic-bezier(0.34,1.56,0.64,1),y2 0.8s cubic-bezier(0.34,1.56,0.64,1)"/>'
+    // Centre dot
+    + '<circle cx="' + cx + '" cy="' + cy + '" r="6" fill="var(--md-sys-color-on-surface)"/>'
+    // Labels
+    + '<text x="' + (cx - r - 4) + '" y="' + (cy + 18) + '" text-anchor="end" font-size="11" font-weight="700" fill="' + fromColor + '" font-family="Nunito,sans-serif">' + partyShort(fromParty) + '</text>'
+    + '<text x="' + (cx + r + 4) + '" y="' + (cy + 18) + '" text-anchor="start" font-size="11" font-weight="700" fill="' + toColor + '" font-family="Nunito,sans-serif">' + partyShort(toParty) + '</text>'
+    // Centre value
+    + '<text x="' + cx + '" y="' + (cy + 24) + '" text-anchor="middle" font-size="20" font-weight="900" fill="var(--md-sys-color-on-surface)" font-family="Nunito,sans-serif">' + swingPts + 'pt</text>'
+    + '<text x="' + cx + '" y="' + (cy + 36) + '" text-anchor="middle" font-size="10" font-weight="600" fill="var(--md-sys-color-on-surface-variant)" font-family="Nunito,sans-serif">' + (isNeeded ? 'swing needed' : 'actual swing') + '</text>'
+    + '</svg>'
+    + '</div>';
+}
+
+function beAIAnalysis(id, tab) {
+  closeBeSheet();
+  var be = (tab === 'upcoming' ? BY_ELECTIONS.upcoming : BY_ELECTIONS.recent).find(function(b){return b.id===id;});
+  if (!be) return;
+  var q = tab === 'upcoming'
+    ? be.name + ' by-election (' + be.dateLabel + '): ' + be.context + ' Key question: ' + be.watchFor + ' Based on current national polling (Reform UK 27%, Labour 19%, Green 15%, Con 18%, LD 12%), give a clear-eyed prediction of the likely result, what it would mean for each party, and what\'s the most likely outcome.'
+    : be.name + ' by-election result (' + be.dateLabel + '): ' + be.winner + ' ' + be.gainLoss + '. ' + be.significance + ' ' + be.context + ' What does this result tell us about the state of UK politics, and what were the most significant implications for each party?';
+  setTimeout(function() {
+    // Navigate to AI tab and fire question
+    var aiBtn = document.querySelector('.nb[onclick*="ai"]');
+    if (aiBtn) aiBtn.click();
+    setTimeout(function() { askAI(q); }, 200);
+  }, 400);
+}
+
+function beShare(id, tab) {
+  var be = (tab === 'upcoming' ? BY_ELECTIONS.upcoming : BY_ELECTIONS.recent).find(function(b){return b.id===id;});
+  if (!be) return;
+  var txt = tab === 'upcoming'
+    ? '📍 ' + be.name + ' by-election — ' + be.dateLabel + '\n\nDefending: ' + be.defending + ' (majority: ' + be.majority2024.toLocaleString() + ')\n' + be.context + '\n\n🇬🇧 UK Poll Tracker: ' + APP_URL
+    : '🏆 ' + be.name + ' (' + be.dateLabel + ')\n' + be.winner + ' ' + be.gainLoss + '\n' + be.significance + '\n\n🇬🇧 UK Poll Tracker: ' + APP_URL;
+  closeBeSheet();
+  setTimeout(function() {
+    if (navigator.share) {
+      navigator.share({ title: 'UK Poll Tracker · ' + be.name, text: txt }).catch(function(){});
+    } else {
+      navigator.clipboard.writeText(txt).then(function(){ showToast('📋 Copied!'); });
+    }
+  }, 300);
+}
+
+// Init by-election tracker on first render
+function initBeTracker() {
+  renderBeUpcoming();
+}
+
 function renderCountdown() {
   var el = document.getElementById('countdown-card');
   if (!el) return;
@@ -3994,6 +4617,7 @@ renderLeaders();
 renderPollCards();
 initVotePage();
 renderCountdown();
+initBeTracker();
 renderPOTD();
 showPopupIfDue();
 setTimeout(renderTrends, 100);
