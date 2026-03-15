@@ -2506,12 +2506,29 @@ function showMilestoneSearch(text, el) {
 
 function renderTrends() {
   // movers-list removed — redundant with bar list
-  document.getElementById('milestones-list').innerHTML = D.milestones.map(m => `
-    <div onclick="showMilestoneSearch('${m.text.replace(/'/g, "\\'")}', this)" style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--md-sys-color-outline-variant);cursor:pointer" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
-      <div style="font-size:15px;color:var(--md-sys-color-secondary);white-space:nowrap;min-width:60px;font-weight:700;padding-top:2px">${m.date}</div>
-      <div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.5;flex:1">${m.text}</div>
-      <div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);padding-top:2px;flex-shrink:0">🔍</div>
-    </div>`).join('');
+  var SHOW_DEFAULT_M = 4;
+  function buildMilestoneRow(m) {
+    return '<div onclick="showMilestoneSearch(\'' + m.text.replace(/'/g, "\\'") + '\', this)" style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--md-sys-color-outline-variant);cursor:pointer" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">'
+      + '<div style="font-size:15px;color:var(--md-sys-color-secondary);white-space:nowrap;min-width:60px;font-weight:700;padding-top:2px">' + m.date + '</div>'
+      + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.5;flex:1">' + m.text + '</div>'
+      + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);padding-top:2px;flex-shrink:0">🔍</div>'
+      + '</div>';
+  }
+  var visibleM = D.milestones.slice(0, SHOW_DEFAULT_M).map(buildMilestoneRow).join('');
+  var hiddenM  = D.milestones.slice(SHOW_DEFAULT_M).map(buildMilestoneRow).join('');
+  var remainingM = D.milestones.length - SHOW_DEFAULT_M;
+  var milestoneEl = document.getElementById('milestones-list');
+  milestoneEl.innerHTML = visibleM
+    + '<div id="milestones-hidden" style="display:none">' + hiddenM + '</div>'
+    + '<button id="milestones-expand-btn" style="width:100%;padding:10px;border:none;background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border-radius:var(--md-sys-shape-corner-full);font-size:13px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif;margin-top:8px;transition:background var(--md-motion-short) var(--md-motion-standard)">▼ Show ' + remainingM + ' more</button>';
+  var expandBtnM = document.getElementById('milestones-expand-btn');
+  var hiddenDivM = document.getElementById('milestones-hidden');
+  var expandedM = false;
+  expandBtnM.addEventListener('click', function() {
+    expandedM = !expandedM;
+    hiddenDivM.style.display = expandedM ? 'block' : 'none';
+    expandBtnM.textContent = expandedM ? '▲ Show fewer' : '▼ Show ' + remainingM + ' more';
+  });
 
   const parties = ['Reform UK','Labour','Conservative','Lib Dem','Green'];
   const colors = {'Reform UK':'#12B7D4',Labour:'#E4003B',Conservative:'#0087DC','Lib Dem':'#FAA61A',Green:'#02A95B'};
