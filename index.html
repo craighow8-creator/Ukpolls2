@@ -354,7 +354,7 @@ body {
   align-items: center;
   padding-bottom: 8px;
 }
-.party-pill-accent { height: 4px; width: 100%; border-radius: var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-large) 0 0; margin-bottom: 8px; }
+.party-pill-accent { height: 4px; width: 100%; margin-bottom: 8px; }
 .party-pill-rank { font-size: 10px; font-weight: 700; color: var(--md-sys-color-on-surface-variant); margin-bottom: 2px; }
 .party-pill-abbr { font-size: 12px; font-weight: 900; margin-bottom: 1px; }
 .party-pill-pct { font-size: 20px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
@@ -479,6 +479,7 @@ body {
   background: linear-gradient(to bottom, rgba(0,0,0,0.015), transparent);
   transition: background var(--md-motion-short) var(--md-motion-standard);
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 .lcard-header:active { background: var(--md-sys-color-tonal-navy); }
 .lcard-avatar {
