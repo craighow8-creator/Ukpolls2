@@ -2345,13 +2345,13 @@ function renderForecast() {
 
   function barRow(r, i) {
     var isTop = i === 0;
-    return '<div style="margin-bottom:' + (isTop?'14':'10') + 'px">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+    return '<div style="margin-bottom:' + (isTop?'16':'12') + 'px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
       + '<span id="flabel-' + i + '" style="font-size:' + (isTop?'16':'14') + 'px;font-weight:' + (isTop?'800':'700') + ';color:var(--md-sys-color-on-surface)">' + r.label + (isTop?' 🔮':'') + '</span>'
       + '<span id="fpct-' + i + '" style="font-size:' + (isTop?'18':'15') + 'px;font-weight:900;color:' + r.color + '">' + r.pct + '%</span>'
       + '</div>'
-      + '<div style="background:var(--md-sys-color-surface-container-low);border-radius:99px;height:' + (isTop?'10':'7') + 'px;overflow:hidden">'
-      + '<div id="fbar-' + i + '" class="forecast-bar-fill" style="width:' + r.pct + '%;background:' + r.color + ';height:100%;border-radius:99px;transition:width 0.7s cubic-bezier(0.34,1.56,0.64,1)"></div>'
+      + '<div style="background:var(--md-sys-color-surface-container-low);border-radius:99px;height:' + (isTop?'18':'13') + 'px;overflow:hidden">'
+      + '<div id="fbar-' + i + '" class="forecast-bar-fill" style="width:' + r.pct + '%;background:' + r.color + ';height:100%;border-radius:99px;transition:width 4s cubic-bezier(0.22,1,0.36,1)"></div>'
       + '</div>'
       + '</div>';
   }
@@ -2363,45 +2363,32 @@ function renderForecast() {
     + '</div>'
     + tabsHtml
     + '<div id="forecast-bars">' + initialResults.map(barRow).join('') + '</div>'
-    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--md-sys-color-outline-variant)">'
+    + '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--md-sys-color-outline-variant)">'
     + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">'
-    + SIMS.toLocaleString() + ' simulations · ±<span id="ferror-label">' + currentError + '</span>% error</div>'
-    + '<button onclick="window._forecastUpdate(' + currentError + ')" '
-    + 'style="background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif;display:inline-flex;align-items:center;gap:5px">'
-    + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-6.74"/></svg>'
-    + 'Re-simulate</button>'
+    + SIMS.toLocaleString() + ' simulations · ±<span id="ferror-label">' + currentError + '</span>% error assumed</div>'
     + '</div>';
 
   window._forecastUpdate = function(error) {
     currentError = error;
     var errLabel = document.getElementById('ferror-label');
     if (errLabel) errLabel.textContent = error;
-    var reBtn = el.querySelector('button[onclick*="_forecastUpdate"]');
-    if (reBtn) reBtn.setAttribute('onclick', 'window._forecastUpdate(' + error + ')');
 
-    // Step 1 — disable button, show spinning state, reset bars to 0
-    if (reBtn) {
-      reBtn.disabled = true;
-      reBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:ptr-spin 0.8s linear infinite"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-6.74"/></svg> Simulating…';
-    }
+    // Reset bars to 0 quickly
     el.querySelectorAll('.forecast-bar-fill').forEach(function(bar) {
-      bar.style.transition = 'width 0.25s ease';
+      bar.style.transition = 'width 0.2s ease';
       bar.style.width = '0%';
     });
     el.querySelectorAll('[id^="fpct-"]').forEach(function(pct) { pct.textContent = '—'; });
 
-    // Step 2 — run sims after pause so user sees the reset
+    // Run sims after reset has painted, then slow fill
     setTimeout(function() {
       var results = runSims(error);
-
-      // Step 3 — slow dramatic fill with count-up
       results.forEach(function(r, i) {
         var bar = document.getElementById('fbar-' + i);
         var pctEl = document.getElementById('fpct-' + i);
         var labelEl = document.getElementById('flabel-' + i);
-
         if (bar) {
-          bar.style.transition = 'width 1.6s cubic-bezier(0.22, 1, 0.36, 1)';
+          bar.style.transition = 'width 4s cubic-bezier(0.22,1,0.36,1)';
           bar.style.width = r.pct + '%';
           bar.style.background = r.color;
         }
@@ -2411,7 +2398,7 @@ function renderForecast() {
           setTimeout(function() {
             (function countUp(ts) {
               if (!startTime) startTime = ts;
-              var p = Math.min((ts - startTime) / 1400, 1);
+              var p = Math.min((ts - startTime) / 3600, 1);
               var ease = 1 - Math.pow(1 - p, 4);
               pctEl.textContent = Math.round(end * ease) + '%';
               if (p < 1) requestAnimationFrame(countUp);
@@ -2420,16 +2407,7 @@ function renderForecast() {
         }
         if (labelEl) labelEl.textContent = r.label + (i === 0 ? ' 🔮' : '');
       });
-
-      // Re-enable button after animation completes
-      setTimeout(function() {
-        if (reBtn) {
-          reBtn.disabled = false;
-          reBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-6.74"/></svg> Re-simulate';
-        }
-      }, 1800);
-
-    }, 400);
+    }, 300);
   };
 }
 
