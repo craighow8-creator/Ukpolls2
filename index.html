@@ -771,7 +771,7 @@ body {
 <div id="content">
   <div id="ptr-indicator" style="display:flex;align-items:center;justify-content:center;gap:8px;height:0;overflow:hidden;transition:height 0.2s ease;background:var(--md-sys-color-surface-container-low)">
     <div id="ptr-spinner" style="width:20px;height:20px;border:2.5px solid var(--md-sys-color-primary-container);border-top-color:var(--md-sys-color-primary);border-radius:50%;transition:transform 0.2s"></div>
-    <span id="ptr-label" style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface-variant);font-family:\'Nunito\',sans-serif">Pull to check for updates</span>
+    <span id="ptr-label" style="font-size:15px;font-weight:700;color:var(--md-sys-color-on-surface-variant);font-family:\'Nunito\',sans-serif">Pull to refresh</span>
   </div>
 
   <!-- OVERVIEW -->
@@ -1050,9 +1050,6 @@ body {
     <div style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);padding:20px;border-top:4px solid var(--md-sys-color-primary)" id="vote-results">
       <div style="text-align:center;color:var(--md-sys-color-on-surface-variant);font-size:15px;padding:20px">Loading results...</div>
     </div>
-    <div style="text-align:center;margin-top:8px;margin-bottom:4px">
-      <button onclick="loadVoteResults()" style="background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif">🔄 Refresh results</button>
-    </div>
 
     <div style="font-size:15px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin:22px 0 10px 2px;text-align:center">🗳 Poll of the Day</div>
     <div class="card" style="border-top:4px solid var(--md-sys-color-secondary);padding:18px" id="potd-card">
@@ -1280,6 +1277,15 @@ const D = {
     {month:"Feb","Reform UK":27,Labour:18,Conservative:17,"Lib Dem":13,Green:17},
     {month:"Mar","Reform UK":27,Labour:19,Conservative:18,"Lib Dem":12,Green:15}
   ],
+  polls: [
+    {date:"11 Mar",pollster:"Find Out Now",ref:26,lab:15,con:17,ld:11,grn:21,rb:null},
+    {date:"10-12 Mar",pollster:"Techne",ref:27,lab:17,con:18,ld:14,grn:17,rb:null},
+    {date:"9-10 Mar",pollster:"YouGov",ref:23,lab:17,con:19,ld:14,grn:19,rb:null},
+    {date:"6-10 Mar",pollster:"Focaldata",ref:27,lab:20,con:18,ld:14,grn:13,rb:null},
+    {date:"6-9 Mar",pollster:"More in Common",ref:30,lab:22,con:19,ld:13,grn:11,rb:null},
+    {date:"5 Mar",pollster:"Survation",ref:29,lab:21,con:18,ld:10,grn:12,rb:null},
+    {date:"4-6 Mar",pollster:"Opinium",ref:29,lab:21,con:16,ld:10,grn:14,rb:null}
+  ],
   milestones: [
     {date:"14 Mar",text:"7-poll avg: Reform 27% (NC), Lab 19% (NC), Con 18% (NC), Green 15% (NC), LD 12% (NC) — averages stable. 47 days to local elections"},
     {date:"Mar 2026",text:"Sky Bet: Reform UK 6/4 favourite for most seats, Restore Britain 12/1 — entering major markets for first time. William Hill Next PM: Rayner 3/1, Farage 6/1, Rupert Lowe 8/1"},
@@ -1320,35 +1326,35 @@ const D = {
      economy:"Would abolish income tax on earnings below £20,000, taking around 7 million people out of income tax entirely. Plans to cut corporation tax to 15% to attract global investment. Shadow Chancellor Robert Jenrick has pledged a full review of the 1.1 million-word tax code with the aim of radical simplification. Would scrap inheritance tax entirely and abolish stamp duty on homes under £750,000. Plans to cut overseas aid to 0.1% of GNI, saving around £10bn. Opposes the fiscal rules and believes supply-side growth, not tax rises, is the path to deficit reduction. Would reverse the October 2024 Budget tax rises in full.",
      nhs:"Would cut NHS management by 50% within two years, redirecting savings to frontline care. Prioritises recruiting British-trained staff, arguing the NHS has become too dependent on overseas recruitment at the expense of domestic training. Pledges to eliminate waiting lists within one parliament through a combination of private sector capacity and reformed NHS incentives. Would introduce a patients' passport system allowing NHS-funded treatment at any registered provider. Opposes any moves toward an insurance-based system, maintaining that the NHS should be free at the point of use. Would scrap NHS England and return commissioning power to local trusts.",
      climate:"Would scrap all net zero targets immediately, calling them an 'act of economic self-harm'. Plans to reinstate all North Sea oil and gas licences, including Rosebank, and fast-track new exploration. Would abolish all green levies on energy bills, which he says add around £300 per year to average bills. Opposes all new onshore and offshore wind farms. Would withdraw the UK from the Paris Climate Agreement. Believes nuclear energy should be the centrepiece of UK energy policy, with six new reactors commissioned within a decade. Disputes the scientific consensus that human activity is the primary driver of climate change.",
-     bio:"Born 3 April 1964 in Farnborough, Kent. Former commodity broker in the City. A lifelong Eurosceptic, he co-founded the Brexit Party (later Reform UK) in 2019 after leading UKIP from 2006–2016. His campaigning was central to the 2016 Brexit referendum result. Elected MP for Clacton at the 2024 general election after multiple previous unsuccessful attempts. Became Reform UK leader again in June 2024. Reform has led every national poll since May 2025. In February 2026 he announced a formal shadow cabinet including Robert Jenrick as shadow chancellor, Richard Tice as shadow deputy PM, Zia Yusuf on home affairs, and Suella Braverman on education — all former Tory figures."},
+     bio:"Born 3 April 1964 in Farnborough, Kent. Former commodity broker in the City. A lifelong Eurosceptic, he co-founded the Brexit Party (later Reform UK) in 2019 after leading UKIP from 2006–2016. His campaigning was central to the 2016 Brexit referendum result. Elected MP for Clacton at his eighth attempt in July 2024. Became Reform UK leader again in June 2024. Reform has led every national poll since May 2025. In February 2026 he announced a formal shadow cabinet including Robert Jenrick as shadow chancellor, Richard Tice as shadow deputy PM, Zia Yusuf on home affairs, and Suella Braverman on education — all former Tory figures."},
     {name:"Rupert Lowe",party:"Restore Britain",color:"#1a4a9e",approve:40,disapprove:29,net:11,
      note:null,
      immigration:"Calls for zero net migration as an explicit target written into law. Advocates mass deportations of those with no legal right to remain, including foreign nationals who have completed criminal sentences. Would withdraw from the UN Refugee Convention and the ECHR, removing legal constraints on removals. All illegal Channel arrivals would be intercepted and returned within 48 hours under a new bilateral agreement with France. Would end all asylum hotel accommodation and replace with secure processing centres. Believes the political class has failed the public on immigration for 30 years and that only a complete break with existing policy will work.",
      economy:"Prioritises cutting taxes for working people, particularly those on low and middle incomes. Would reduce foreign aid spending to zero, redirecting funds entirely to domestic priorities. Committed to ending what he calls 'globalist trade deals' that he argues have hollowed out British industry, particularly manufacturing. Wants to repatriate supply chains for critical goods — food, medicine, energy — as a matter of national security. Opposes the Bank of England's independence on monetary policy, arguing it has failed ordinary savers. Would introduce a British Sovereign Wealth Fund funded by North Sea revenues.",
      nhs:"Would drastically reduce NHS bureaucracy, targeting a 60% reduction in management roles. Supports performance-based pay for NHS staff, replacing the current Agenda for Change pay scales. Believes NHS staffing should prioritise British-trained workers, with a new domestic medical training programme. Would end what he calls 'health tourism' through strict eligibility checks at point of access. Supports introducing a modest co-payment for GP appointments for those who can afford it, to reduce no-shows. Believes the NHS needs root-and-branch cultural reform, not just extra funding.",
      climate:"Would abolish all green levies on energy bills immediately. Plans to withdraw from the Paris Climate Agreement, calling it a constraint on British sovereignty and economic competitiveness. Would reinstate all North Sea oil and gas licences and open new fields as quickly as possible. Opposes all new wind farms, both onshore and offshore. Does not accept that the current policy trajectory is cost-effective or democratically mandated. Believes energy security and affordability must take absolute priority over emissions targets. Supports nuclear energy as the only low-carbon technology worth investing in at scale.",
-     bio:"Born 1964. Former chairman of Southampton FC (2001–2006), overseeing the club's rise to the Premier League. Elected Reform UK MP for Great Yarmouth in July 2024. In March 2025 he publicly criticised Farage's leadership style as running \"a protest party led by the Messiah\", leading to his expulsion from Reform UK. Founded Restore Britain in early 2026, targeting the 42% of voters who did not vote in 2024. By 10 March 2026 the party had surpassed 110,000 paid members — reaching 50,000 within days of launch and 100,000 within 12 days — the fastest membership growth of any party in modern UK political history. Despite this, mainstream media coverage has been almost non-existent."},
+     bio:"Born 1962. Former chairman of Southampton FC (1997–2006) and QPR. Elected Reform UK MP for Great Yarmouth in July 2024. In March 2025 he publicly criticised Farage's leadership style as running \"a protest party led by the Messiah\", leading to his expulsion from Reform UK. Founded Restore Britain in early 2026, targeting the 42% of voters who did not vote in 2024. By 10 March 2026 the party had surpassed 110,000 paid members — reaching 50,000 within days of launch and 100,000 within 12 days — the fastest membership growth of any party in modern UK political history. Despite this, mainstream media coverage has been almost non-existent."},
     {name:"Kemi Badenoch",party:"Conservative",color:"#0087DC",approve:31,disapprove:42,net:-11,
      immigration:"Would extend the settlement route from 5 to 10 years, making it harder to gain permanent residency. Plans tougher visa rules across all categories, with higher salary thresholds for skilled worker visas. Would deport all foreign nationals who commit crimes after completing their sentences, removing the proportionality test. Supports maintaining ECHR membership but reforming the Human Rights Act to limit its use in blocking removals. Backs the principle of offshore processing but acknowledges Rwanda has failed. Would cap international student dependants more tightly. Believes net migration must return to the tens of thousands — the original Conservative promise.",
      economy:"Wants to reduce state spending to 35% of GDP over a parliament, from its current level of around 44% — a significant contraction of the state. Plans to cut regulation substantially, targeting a 25% reduction in regulatory burden on business within three years. Would reform the planning system to unlock housing and infrastructure, including relaxing green belt restrictions in specific cases. Opposes further tax rises and wants to reverse some of the October 2024 Budget measures. Backs supply-side growth through deregulation and lower business taxes rather than demand stimulus. Believes the Conservatives must occupy the ground of fiscal credibility that Labour has ceded.",
      nhs:"Focused on productivity reform rather than additional funding — argues the NHS receives enough money but spends it inefficiently. Would reduce management layers, targeting a leaner structure modelled on the best-performing NHS trusts. Wants outcome-based targets replacing process targets. Supports a greater role for the independent sector in clearing backlogs. Would reform the GP contract to improve access and incentivise prevention. Believes the NHS workforce plan needs to be honest about the limits of overseas recruitment and invest more in domestic training pipelines.",
      climate:"Committed to net zero by 2050 but opposes what she calls 'unrealistic near-term targets' that impose costs on ordinary households. Strongly pro-nuclear — would fast-track planning approval for new reactors including SMRs. Would maintain the North Sea licensing regime while it remains economically viable. Opposes new onshore wind but supports offshore wind development. Would not withdraw from the Paris Agreement but wants to renegotiate the UK's nationally determined contribution. Believes the transition must be technology-led, not subsidy-led, and opposes green levies that she says disproportionately hit low-income households.",
-     bio:"Born Olukemi Olufunto Adegoke on 2 January 1980 in Wimbledon. Her mother came to the UK for medical treatment and gave birth here. Grew up between Nigeria and the US; returned to the UK at 16 with very little money and worked at McDonald's while completing her A-levels. Studied Computer Systems Engineering at Queen Mary University of London and later law at Birkbeck. Worked as a software engineer, then at Coutts & Co and The Spectator. MP for North West Essex since 2017. The first Black woman and first Black person to lead the Conservative Party, elected leader in November 2024. Known for her outspoken anti-woke stance and sharp PMQs performances."},
+     bio:"Born Olukemi Olufunto Adegoke on 2 January 1980 in Wimbledon. Her mother came to the UK for medical treatment and gave birth here. Grew up between Nigeria and the US; returned to the UK at 16 with very little money and worked at McDonald's while completing her A-levels. Studied Computer Systems Engineering at Sussex University and later law at Birkbeck. Worked as a software engineer, then at Coutts & Co and The Spectator. MP for North West Essex since 2017. The first Black woman and first Black person to lead the Conservative Party, elected leader in November 2024. Known for her outspoken anti-woke stance and sharp PMQs performances."},
     {name:"Keir Starmer",party:"Labour",color:"#E4003B",approve:22,disapprove:64,net:-42,
      immigration:"Has established a Border Security Command with £100m in new funding to tackle organised immigration crime. Tightened rules on student visa dependants following a surge in numbers. Raised salary thresholds for skilled worker visas to £38,700. Extended the settlement route from 5 to 10 years. Deployed 1,000 extra returns caseworkers. Accepts that net migration must fall substantially from its record 944,000 peak in 2023. Defends the decision to scrap Rwanda as ineffective and expensive. Critics argue his measures are insufficient and that the government has no coherent plan to reduce overall numbers.",
      economy:"Has bound the government to strict fiscal rules: debt must be falling as a share of GDP by the fifth year of the forecast. Delivered a £40bn tax-raising Budget in October 2024, the largest in a generation — including a 1.2 percentage point rise in employer National Insurance. Has committed to investing in NHS, schools and clean energy, arguing growth requires public investment. Faces criticism that the NI rise has damaged business confidence and suppressed hiring. GDP growth has been weak since the Budget. Backs GB Energy as a publicly-owned clean energy vehicle. Opposes renationalisation of utilities beyond energy.",
      nhs:"Committed to 40,000 extra NHS appointments per week to cut waiting lists — the central pledge of the 2024 manifesto. Lists are falling from their 7.8 million peak. Has invested in mental health waiting time standards. Backs the 10-year NHS workforce plan. Under pressure over GP access — average waits remain too long despite the government's targets. Has resisted calls to increase NHS pay above inflation. Critics argue the pace of change is too slow given the scale of underfunding inherited from the Conservatives.",
      climate:"Committed to clean power by 2030 — 100% of electricity from clean sources including wind, solar and nuclear. Created GB Energy, a publicly-owned energy company to co-invest in renewable projects. Banned new North Sea oil and gas licences, a controversial decision criticised by trade unions representing energy workers. Backed the Hinkley C nuclear plant and approved new sites. Has set legally binding carbon budgets. Under pressure from some Labour MPs in coastal communities over the North Sea ban. Faces the challenge of delivering clean power by 2030 against a grid that is not yet capable of handling full variable renewables.",
-     bio:"Born 2 September 1962 in Surrey. Human rights barrister who defended high-profile cases including death row prisoners in the Caribbean. Director of Public Prosecutions 2008–2013, knighted for services to law. MP for Holborn & St Pancras since 2015. Won the Labour leadership in April 2020. Led Labour to a 174-seat majority in July 2024 after 14 years in opposition. His approval ratings have collapsed since entering government — the most unpopular PM since Ipsos records began in 1977. In February 2026, the Mandelson-Epstein scandal triggered the resignation of his chief of staff Morgan McSweeney, communications director Tim Allan, and cabinet secretary Chris Wormald. Scottish Labour leader Anas Sarwar publicly called on him to resign."}
+     bio:"Born 2 September 1962 in Surrey. Human rights barrister who defended high-profile cases including death row prisoners in the Caribbean. Director of Public Prosecutions 2008–2013, knighted for services to law. MP for Holborn & St Pancras since 2015. Won the Labour leadership in April 2020. Led Labour to a 170-seat majority in July 2024 after 14 years in opposition. His approval ratings have collapsed since entering government — the most unpopular PM since Ipsos records began in 1977. In February 2026, the Mandelson-Epstein scandal triggered the resignation of his chief of staff Morgan McSweeney, communications director Tim Allan, and cabinet secretary Chris Wormald. Scottish Labour leader Anas Sarwar publicly called on him to resign."}
   ],
   polls: [
-    {date:"11 Mar",   pollster:"Find Out Now",   ref:26,lab:15,con:17,ld:11,grn:21,rb:null},
-    {date:"10-12 Mar",pollster:"Techne",          ref:27,lab:17,con:18,ld:14,grn:17,rb:null},
-    {date:"9-10 Mar", pollster:"YouGov",          ref:23,lab:17,con:19,ld:14,grn:19,rb:null},
+    {date:"9-10 Mar", pollster:"YouGov",         ref:23,lab:17,con:19,ld:14,grn:19,rb:null},
     {date:"6-10 Mar", pollster:"Focaldata",       ref:27,lab:20,con:18,ld:14,grn:13,rb:null},
     {date:"6-9 Mar",  pollster:"More in Common",  ref:30,lab:22,con:19,ld:13,grn:11,rb:null},
     {date:"5 Mar",    pollster:"Survation",        ref:29,lab:21,con:18,ld:10,grn:12,rb:null},
     {date:"4-6 Mar",  pollster:"Opinium",          ref:29,lab:21,con:16,ld:10,grn:14,rb:null},
+    {date:"4-6 Mar",  pollster:"Find Out Now",     ref:27,lab:15,con:17,ld:10,grn:21,rb:7},
+    {date:"4-5 Mar",  pollster:"BMG",              ref:27,lab:20,con:18,ld:12,grn:14,rb:null},
   ],
 };
 
@@ -1478,7 +1484,6 @@ function sp(id, btn) {
   if (id === 'trends') setTimeout(renderTrends, 50);
   if (id === 'demo') setTimeout(renderMigration, 50);
   if (id === 'elections') setTimeout(renderCountdown, 50);
-  if (id === 'vote') setTimeout(loadVoteResults, 50);
 }
 
 const APP_URL = 'https://craighow8-creator.github.io/Ukpolls2/';
@@ -1997,13 +2002,16 @@ function renderPolls() {
     var bg = p.color;
     var chg = p.change > 0 ? '▲ +'+p.change+'%' : p.change < 0 ? '▼ '+p.change+'%' : '<span style="background:rgba(255,255,255,0.2);border-radius:99px;padding:2px 8px;font-size:11px;letter-spacing:0.5px">NC</span>';
     var chgColor = p.change > 0 ? '#7fff7f' : p.change < 0 ? '#ffaaaa' : '#fff';
-    return `<div class="rl-card" style="background:${bg};color:#fff">
-      <div class="rl-rank">${label}</div>
-      <div class="rl-name">${p.name}</div>
-      <div class="rl-pct">${p.pct}<small>%</small></div>
-      <div class="rl-change" style="color:${chgColor}">${chg}</div>
-      <div class="rl-seats">${p.seats ? p.seats+' seats' : ''}</div>
-    </div>`;
+    var numPolls = D.polls.length;
+    return '<div class="rl-card" style="background:'+bg+';color:#fff;position:relative">'
+      + '<button onclick="event.stopPropagation();openPollingAvgInfo()" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:22px;height:22px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">ℹ</button>'
+      + '<div class="rl-rank">'+label+'</div>'
+      + '<div class="rl-name">'+p.name+'</div>'
+      + '<div class="rl-pct">'+p.pct+'<small>%</small></div>'
+      + '<div style="font-size:11px;opacity:0.7;margin-top:2px;font-weight:600">avg. of '+numPolls+' polls</div>'
+      + '<div class="rl-change" style="color:'+chgColor+'">'+chg+'</div>'
+      + '<div class="rl-seats">'+(p.seats ? p.seats+' seats' : '')+'</div>'
+      + '</div>';
   }
   document.getElementById('race-leaders').innerHTML = `<div class="race-leaders">${leaderCard(top,1,'🥇 Leading')+(second ? leaderCard(second,2,'🥈 2nd') : '')}</div>`;
 
@@ -2027,6 +2035,48 @@ function renderPolls() {
   renderFPTPExplorer();
   renderTrends();
   renderPollCards();
+}
+
+function openPollingAvgInfo() {
+  var existing = document.getElementById('polling-avg-sheet');
+  if (existing) { existing.remove(); document.getElementById('polling-avg-sheet-bg').remove(); return; }
+  var bg = document.createElement('div');
+  bg.id = 'polling-avg-sheet-bg';
+  bg.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);transition:background 0.25s ease';
+  document.body.appendChild(bg);
+  setTimeout(function(){ bg.style.background = 'rgba(0,0,0,0.45)'; }, 10);
+  var sheet = document.createElement('div');
+  sheet.id = 'polling-avg-sheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;'
+    + 'background:var(--md-sys-color-surface-container-high);'
+    + 'border-radius:28px 28px 0 0;padding:0 24px calc(32px + env(safe-area-inset-bottom));'
+    + 'box-shadow:0 -4px 32px rgba(0,0,0,0.2);'
+    + 'transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.05,0.7,0.1,1)';
+  sheet.innerHTML =
+    '<div style="display:flex;justify-content:center;padding:12px 0 4px">'
+    + '<div style="width:36px;height:4px;border-radius:2px;background:var(--md-sys-color-outline-variant)"></div>'
+    + '</div>'
+    + '<div style="font-size:22px;font-weight:900;color:var(--md-sys-color-on-surface);margin:8px 0 16px;letter-spacing:-0.3px">How is this calculated?</div>'
+    + '<div style="background:var(--md-sys-color-tonal-navy);border-radius:16px;padding:16px;margin-bottom:12px">'
+    + '<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-primary);margin-bottom:8px">It\'s a polling average</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75">We take the most recent poll from each major pollster and average their vote share figures. This smooths out noise from any single poll and gives a more accurate picture of where parties actually stand.</div>'
+    + '</div>'
+    + '<div style="background:var(--md-sys-color-surface-container);border-radius:16px;padding:16px;margin-bottom:12px">'
+    + '<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:8px">Why does it differ from individual polls?</div>'
+    + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);line-height:1.75">Every pollster uses slightly different methods — different weighting, sampling, and question wording. That\'s why you\'ll see a 7-point spread between pollsters in the same week. The average cuts through that. No single poll is gospel.</div>'
+    + '</div>'
+    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-bottom:20px;font-weight:600">Sources: YouGov · Focaldata · More in Common · Survation · Opinium · Find Out Now · Techne</div>'
+    + '<button id="polling-avg-close-btn" style="width:100%;padding:14px;border-radius:50px;border:none;background:var(--md-sys-color-surface-container-highest);color:var(--md-sys-color-on-surface);font-size:15px;font-weight:700;cursor:pointer">Got it</button>';
+  document.body.appendChild(sheet);
+  setTimeout(function(){ sheet.style.transform = 'translateY(0)'; }, 10);
+  function closeSheet() {
+    sheet.style.transform = 'translateY(100%)';
+    bg.style.background = 'rgba(0,0,0,0)';
+    setTimeout(function(){ if(sheet.parentNode) sheet.remove(); if(bg.parentNode) bg.remove(); }, 350);
+  }
+  document.getElementById('polling-avg-close-btn').addEventListener('click', closeSheet);
+  bg.addEventListener('click', closeSheet);
+  addSwipeToDismiss(sheet, closeSheet);
 }
 
 function renderFPTPExplorer() {
@@ -3538,11 +3588,11 @@ setTimeout(renderTrends, 100);
     spinner.style.transform = 'rotate(' + (progress * 300) + 'deg)';
     if (dist >= THRESHOLD && !triggered) {
       triggered = true;
-      label.textContent = 'Release to check for updates';
+      label.textContent = 'Release to refresh';
       spinner.style.borderTopColor = 'var(--md-sys-color-primary)';
     } else if (dist < THRESHOLD) {
       triggered = false;
-      label.textContent = 'Pull to check for updates';
+      label.textContent = 'Pull to refresh';
     }
   }, {passive: true});
 
