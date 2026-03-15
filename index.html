@@ -881,10 +881,9 @@ body {
       <div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);line-height:1.6;font-weight:500">Seat projection uses a <strong style="color:var(--md-sys-color-on-surface)">polling-based swing model</strong> (Mar 2026), applying uniform national swing from current polling averages across all 650 constituencies. Projections are <strong style="color:var(--md-sys-color-on-surface)">highly sensitive to small polling shifts</strong> — a 1–2pt swing can move dozens of seats under FPTP. Treat as a directional indicator, not a forecast.</div>
     </div>
 
-    <div class="sec-label">📈 6-Month Trend<button class="sec-share" onclick="shareSection('📈 6-Month Trend', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
-    <div class="card" style="padding:20px;border-top:4px solid var(--md-sys-color-primary)" id="trend-card">
-      <canvas id="trend-chart" style="width:100%;display:block"></canvas>
-      <div id="trend-legend" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center"></div>
+    <div class="sec-label">📈 12-Month Trend<button class="sec-share" onclick="shareSection('📈 6-Month Trend', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
+    <div class="card" style="padding:0;border-top:4px solid var(--md-sys-color-primary);overflow:hidden" id="trend-card">
+      <div id="trend-inner"></div>
     </div>
     <div class="sec-label" id="polls-anchor">📋 Recent Polls<button class="sec-share" onclick="shareSection('📋 Recent Polls', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div id="polls-cards"></div>
@@ -1303,6 +1302,11 @@ const D = {
   ],
   context: "Reform UK leads on 27% (7-poll avg, 14 Mar 2026). Averages stable for second consecutive day. Wide pollster spread: More in Common puts Reform at 30%, YouGov 23% — 7pt gap reflects methodological differences. Greens steady at 15% after Gorton bounce fades. Find Out Now (11 Mar) shows Green surge to 21%. Restore Britain on 7% in prompted polls — 110,000+ members, targeting 123,000 to overtake Conservatives as 3rd largest UK party by membership. 47 days to May 1 local elections — Reform's first major electoral test. Starmer approval at record lows (-42 net, Opinium). Electoral Calculus MRP: Reform UK 335 seats projected majority.",
   trends: [
+    {month:"Apr","Reform UK":22,Labour:25,Conservative:23,"Lib Dem":11,Green:8},
+    {month:"May","Reform UK":23,Labour:24,Conservative:22,"Lib Dem":11,Green:8},
+    {month:"Jun","Reform UK":24,Labour:24,Conservative:22,"Lib Dem":11,Green:9},
+    {month:"Jul","Reform UK":25,Labour:23,Conservative:21,"Lib Dem":11,Green:9},
+    {month:"Aug","Reform UK":26,Labour:23,Conservative:21,"Lib Dem":11,Green:9},
     {month:"Sep","Reform UK":28,Labour:22,Conservative:20,"Lib Dem":12,Green:10},
     {month:"Oct","Reform UK":29,Labour:21,Conservative:19,"Lib Dem":12,Green:11},
     {month:"Nov","Reform UK":30,Labour:20,Conservative:19,"Lib Dem":13,Green:11},
@@ -2669,77 +2673,144 @@ function showMilestoneSearch(text, el) {
 }
 
 function renderTrends() {
-  const parties = ['Reform UK','Labour','Conservative','Lib Dem','Green'];
-  const colors = {'Reform UK':'#12B7D4',Labour:'#E4003B',Conservative:'#0087DC','Lib Dem':'#FAA61A',Green:'#02A95B'};
-  const labels = D.trends.map(t => t.month);
-  const datasets = parties.map(p => ({
-    label: p,
-    data: D.trends.map(t => t[p] ?? null),
-    borderColor: colors[p],
-    backgroundColor: colors[p] + '30',
-    pointBackgroundColor: colors[p],
-    pointRadius: 5, pointHoverRadius: 7,
-    borderWidth: 2.5,
-    tension: 0.4, fill: true,
-  }));
-  const el = document.getElementById('trend-chart');
-  if (window._trendChart) window._trendChart.destroy();
-  window._trendChart = new Chart(el, {
-    type: 'line',
-    data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: true, aspectRatio: 1.4,
-      layout: { padding: { right: 8 } },
-      animation: { duration: 600, easing: 'easeOutCubic' },
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(28,27,31,0.92)',
-          borderColor: 'rgba(255,255,255,0.1)',
-          borderWidth: 1,
-          titleColor: '#ffffff',
-          titleFont: { size: 14, weight: '700', family: "'Nunito', sans-serif" },
-          bodyColor: '#e8ecf4',
-          bodyFont: { size: 13, family: "'Nunito', sans-serif" },
-          padding: 14, cornerRadius: 16, caretSize: 6,
-          displayColors: true, boxWidth: 10, boxHeight: 10,
-          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%` }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          border: { display: false },
-          ticks: { color: '#79747E', font: { size: 12, family: "'Nunito',sans-serif" }, padding: 6 }
-        },
-        y: {
-          grid: { color: 'rgba(0,0,0,0.05)', lineWidth: 1 },
-          border: { display: false },
-          ticks: { color: '#79747E', font: { size: 12, family: "'Nunito',sans-serif" }, callback: v => v + '%', padding: 6, maxTicksLimit: 5 },
-          suggestedMin: 8, suggestedMax: 35,
-        }
-      }
-    }
-  });
-  document.getElementById('trend-legend').innerHTML = parties.map((p,i) =>
-    `<button onclick="toggleTrendParty(${i})" id="tlegend-${i}"
-      style="background:${colors[p]};color:#fff;border:none;border-radius:50px;padding:6px 14px;
-      font-size:18px;font-weight:600;font-family:'Nunito',sans-serif;cursor:pointer;
-      transition:opacity 0.2s,transform 0.15s;opacity:1">${p}</button>`
-  ).join('');
+  var el = document.getElementById('trend-inner');
+  if (!el) return;
+
+  var PARTIES = [
+    {key:'Reform UK',  color:'#12B7D4'},
+    {key:'Labour',     color:'#E4003B'},
+    {key:'Conservative', color:'#0087DC'},
+    {key:'Green',      color:'#02A95B'},
+    {key:'Lib Dem',    color:'#FAA61A'},
+  ];
+
+  var data = D.trends;
+  var months = data.map(function(d){ return d.month; });
+  var allVals = [];
+  PARTIES.forEach(function(p){ data.forEach(function(d){ if(d[p.key]!=null) allVals.push(d[p.key]); }); });
+  var minV = Math.max(0, Math.min.apply(null,allVals) - 3);
+  var maxV = Math.min(100, Math.max.apply(null,allVals) + 3);
+
+  // Active party state
+  if (!window._trendActive) window._trendActive = {};
+
+  // ── SVG chart ────────────────────────────────────────────────────────────
+  var W = 340, H = 180;
+  var PL = 28, PR = 8, PT = 8, PB = 28;
+  var CW = W - PL - PR, CH = H - PT - PB;
+
+  function xPos(i) { return PL + (i / (months.length - 1)) * CW; }
+  function yPos(v) { return PT + CH - ((v - minV) / (maxV - minV)) * CH; }
+
+  // Grid lines
+  var gridVals = [];
+  var step = 5;
+  for (var v = Math.ceil(minV/step)*step; v <= maxV; v += step) gridVals.push(v);
+
+  var gridLines = gridVals.map(function(v) {
+    var y = yPos(v);
+    return '<line x1="' + PL + '" y1="' + y.toFixed(1) + '" x2="' + (W-PR) + '" y2="' + y.toFixed(1) + '" stroke="var(--md-sys-color-outline-variant)" stroke-width="0.8"/>'
+      + '<text x="' + (PL-4) + '" y="' + (y+4).toFixed(1) + '" text-anchor="end" font-size="9" font-family="Nunito,sans-serif" fill="var(--md-sys-color-on-surface-variant)">' + v + '</text>';
+  }).join('');
+
+  // Month labels — every other on mobile to avoid cramping
+  var monthLabels = months.map(function(m, i) {
+    if (months.length > 8 && i % 2 !== 0 && i !== months.length - 1) return '';
+    return '<text x="' + xPos(i).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle" font-size="9" font-family="Nunito,sans-serif" fill="var(--md-sys-color-on-surface-variant)">' + m + '</text>';
+  }).join('');
+
+  // Lines and dots per party
+  var lines = PARTIES.map(function(p) {
+    var hidden = window._trendActive[p.key] === false;
+    var opacity = hidden ? 0.15 : 1;
+    var pts = data.map(function(d, i) {
+      var v = d[p.key];
+      if (v == null) return null;
+      return {x: xPos(i), y: yPos(v), v: v};
+    }).filter(Boolean);
+    if (pts.length < 2) return '';
+    var pathD = pts.map(function(pt, i) {
+      if (i === 0) return 'M' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1);
+      // Smooth curve
+      var prev = pts[i-1];
+      var cpx = (prev.x + pt.x) / 2;
+      return 'C' + cpx.toFixed(1) + ',' + prev.y.toFixed(1) + ' ' + cpx.toFixed(1) + ',' + pt.y.toFixed(1) + ' ' + pt.x.toFixed(1) + ',' + pt.y.toFixed(1);
+    }).join(' ');
+    var dots = pts.map(function(pt, i) {
+      var isLast = i === pts.length - 1;
+      return '<circle cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="' + (isLast ? 4 : 2.5) + '" fill="' + (isLast ? p.color : 'var(--md-sys-color-surface)') + '" stroke="' + p.color + '" stroke-width="' + (isLast ? 0 : 2) + '"/>'
+        + (isLast ? '<text x="' + (pt.x + 5).toFixed(1) + '" y="' + (pt.y + 4).toFixed(1) + '" font-size="9" font-weight="700" font-family="Nunito,sans-serif" fill="' + p.color + '">' + pt.v + '%</text>' : '');
+    }).join('');
+    return '<g opacity="' + opacity + '" style="transition:opacity 0.3s">'
+      + '<path d="' + pathD + '" fill="none" stroke="' + p.color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
+      + dots
+      + '</g>';
+  }).join('');
+
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;display:block;overflow:visible">'
+    + gridLines + monthLabels + lines
+    + '</svg>';
+
+  // ── Party rows ────────────────────────────────────────────────────────────
+  // Each party: colour dot | name | sparkline mini | current% | 12m change
+  var partyRows = PARTIES.map(function(p, pi) {
+    var hidden = window._trendActive[p.key] === false;
+    var vals = data.map(function(d){ return d[p.key]; }).filter(function(v){ return v != null; });
+    var current = vals[vals.length - 1] || 0;
+    var first = vals[0] || 0;
+    var change = current - first;
+    var chgStr = change > 0 ? '+' + change : String(change);
+    var chgCol = change > 0 ? 'var(--up)' : change < 0 ? 'var(--down)' : 'var(--md-sys-color-on-surface-variant)';
+
+    // Mini sparkline SVG (60x24)
+    var sw = 60, sh = 24, spad = 2;
+    var smin = Math.min.apply(null, vals) - 1;
+    var smax = Math.max.apply(null, vals) + 1;
+    var spx = function(i) { return spad + (i / (vals.length-1)) * (sw - spad*2); };
+    var spy = function(v) { return sh - spad - ((v-smin)/(smax-smin)) * (sh - spad*2); };
+    var sparkPts = vals.map(function(v,i){ return spx(i).toFixed(1) + ',' + spy(v).toFixed(1); }).join(' ');
+    var sparkFill = vals.map(function(v,i){ return spx(i).toFixed(1) + ',' + spy(v).toFixed(1); }).join(' ')
+      + ' ' + spx(vals.length-1).toFixed(1) + ',' + sh + ' ' + spx(0).toFixed(1) + ',' + sh;
+    var spark = '<svg width="' + sw + '" height="' + sh + '" viewBox="0 0 ' + sw + ' ' + sh + '">'
+      + '<polygon points="' + sparkFill + '" fill="' + p.color + '" opacity="0.15"/>'
+      + '<polyline points="' + sparkPts + '" fill="none" stroke="' + p.color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '</svg>';
+
+    return '<div onclick="toggleTrendParty(\'' + p.key + '\')" id="trow-' + pi + '" '
+      + 'style="display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;'
+      + 'border-bottom:1px solid var(--md-sys-color-outline-variant);'
+      + 'opacity:' + (hidden ? '0.4' : '1') + ';transition:opacity 0.25s;-webkit-tap-highlight-color:transparent">'
+      + '<div style="width:10px;height:10px;border-radius:50%;background:' + p.color + ';flex-shrink:0"></div>'
+      + '<div style="flex:1;font-size:14px;font-weight:700;color:var(--md-sys-color-on-surface)">' + p.key + '</div>'
+      + '<div style="flex-shrink:0">' + spark + '</div>'
+      + '<div style="width:36px;text-align:right;font-size:18px;font-weight:900;color:' + p.color + ';flex-shrink:0">' + current + '<span style="font-size:11px">%</span></div>'
+      + '<div style="width:32px;text-align:right;font-size:12px;font-weight:700;color:' + chgCol + ';flex-shrink:0">' + chgStr + '</div>'
+      + '</div>';
+  }).join('');
+
+  // ── Header row ────────────────────────────────────────────────────────────
+  var header = '<div style="display:flex;align-items:center;gap:12px;padding:8px 16px 4px;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
+    + '<div style="width:10px;flex-shrink:0"></div>'
+    + '<div style="flex:1;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant)">Party</div>'
+    + '<div style="flex-shrink:0;width:60px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);text-align:center">12 months</div>'
+    + '<div style="width:36px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);text-align:right;flex-shrink:0">Now</div>'
+    + '<div style="width:32px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);text-align:right;flex-shrink:0">Chg</div>'
+    + '</div>';
+
+  // ── Chart container ───────────────────────────────────────────────────────
+  var chartBlock = '<div style="padding:16px 16px 8px">' + svg + '</div>'
+    + '<div style="padding:0 16px 8px;font-size:11px;color:var(--md-sys-color-on-surface-variant);font-weight:600">Apr 2025 – Mar 2026 · Monthly polling averages · Tap a party to hide/show</div>';
+
+  el.innerHTML = chartBlock + header + partyRows;
 }
-function toggleTrendParty(i) {
-  const chart = window._trendChart;
-  const meta = chart.getDatasetMeta(i);
-  meta.hidden = !meta.hidden;
-  const btn = document.getElementById('tlegend-' + i);
-  btn.style.opacity = meta.hidden ? '0.3' : '1';
-  btn.style.transform = meta.hidden ? 'scale(0.92)' : 'scale(1)';
-  chart.tooltip.setActiveElements([], {x:0,y:0});
-  chart.update();
+
+function toggleTrendParty(key) {
+  if (!window._trendActive) window._trendActive = {};
+  var current = window._trendActive[key];
+  window._trendActive[key] = current === false ? true : false;
+  renderTrends();
 }
-window.addEventListener('resize', () => {
+window.addEventListener('resize', function() {
   if (document.getElementById('page-polls').classList.contains('active')) renderTrends();
 });
 
