@@ -2267,68 +2267,168 @@ function renderForecast() {
   var MAJORITY = 326;
   var TOTAL_SEATS = 650;
   var SIMS = 10000;
-  var ERROR = 3; // polling error ± percentage points
+  var currentError = 3;
 
-  // Simple uniform swing seat model
-  function simSeats(parties) {
-    var results = {};
-    var total = parties.reduce(function(s,p){ return s + p.pct; }, 0);
-    parties.forEach(function(p) {
-      if (p.seats === null) return;
-      var share = p.pct / total;
-      results[p.name] = Math.round(share * TOTAL_SEATS);
+  function runSims(error) {
+    var baseParties = D.parties.filter(function(p){ return p.seats !== null && p.name !== 'Other'; });
+    var outcomes = {majority:{}, hung:0};
+
+    for (var i = 0; i < SIMS; i++) {
+      var simParties = baseParties.map(function(p) {
+        var noise = (Math.random() - 0.5) * 2 * error;
+        return {name: p.name, pct: Math.max(0, p.pct + noise), seats: p.seats, color: p.color};
+      });
+      var total = simParties.reduce(function(s,p){ return s + p.pct; }, 0);
+      var seats = {};
+      simParties.forEach(function(p) { seats[p.name] = Math.round((p.pct / total) * TOTAL_SEATS); });
+      var leader = null, leaderSeats = 0;
+      Object.entries(seats).forEach(function(e) { if (e[1] > leaderSeats) { leaderSeats = e[1]; leader = e[0]; } });
+      if (leaderSeats >= MAJORITY) {
+        outcomes.majority[leader] = (outcomes.majority[leader] || 0) + 1;
+      } else {
+        outcomes.hung++;
+      }
+    }
+
+    var results = [];
+    Object.entries(outcomes.majority).forEach(function(e) {
+      var party = D.parties.find(function(p){ return p.name === e[0]; });
+      results.push({label: e[0] + ' majority', pct: Math.round(e[1] / SIMS * 100), color: party ? party.color : '#6b7280'});
     });
+    results.push({label: 'Hung parliament', pct: Math.round(outcomes.hung / SIMS * 100), color: 'var(--md-sys-color-on-surface-variant)'});
+    results.sort(function(a,b){ return b.pct - a.pct; });
     return results;
   }
 
-  // Run simulations
-  var outcomes = {majority:{}, hung:0};
-  var baseParties = D.parties.filter(function(p){ return p.seats !== null && p.name !== 'Other'; });
+  function animateBars(results) {
+    // First reset all bars to 0
+    el.querySelectorAll('.forecast-bar-fill').forEach(function(bar) {
+      bar.style.width = '0%';
+    });
+    // Then animate to new values after a short delay
+    setTimeout(function() {
+      results.forEach(function(r, i) {
+        var bar = document.getElementById('fbar-' + i);
+        var pctEl = document.getElementById('fpct-' + i);
+        var labelEl = document.getElementById('flabel-' + i);
+        if (bar) bar.style.width = r.pct + '%';
+        if (pctEl) {
+          // Count up animation
+          var start = 0;
+          var end = r.pct;
+          var duration = 600;
+          var startTime = null;
+          function step(ts) {
+            if (!startTime) startTime = ts;
+            var progress = Math.min((ts - startTime) / duration, 1);
+            var ease = 1 - Math.pow(1 - progress, 3);
+            pctEl.textContent = Math.round(start + (end - start) * ease) + '%';
+            if (progress < 1) requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+        }
+        if (labelEl) labelEl.textContent = r.label + (i === 0 ? ' 🔮' : '');
+      });
+    }, 80);
+  }
 
-  for (var i = 0; i < SIMS; i++) {
-    // Add random polling error to each party
-    var simParties = baseParties.map(function(p) {
-      var noise = (Math.random() - 0.5) * 2 * ERROR;
-      return {name: p.name, pct: Math.max(0, p.pct + noise), seats: p.seats, color: p.color};
+  function update(error, animate) {
+    currentError = error;
+    // Update tab active states
+    el.querySelectorAll('.ferror-tab').forEach(function(btn) {
+      var isActive = parseInt(btn.getAttribute('data-err')) === error;
+      btn.classList.toggle('active', isActive);
     });
-    var seats = simSeats(simParties);
-    var leader = null, leaderSeats = 0;
-    Object.entries(seats).forEach(function(e) {
-      if (e[1] > leaderSeats) { leaderSeats = e[1]; leader = e[0]; }
-    });
-    if (leaderSeats >= MAJORITY) {
-      outcomes.majority[leader] = (outcomes.majority[leader] || 0) + 1;
+    var results = runSims(error);
+    if (animate) {
+      animateBars(results);
     } else {
-      outcomes.hung++;
+      results.forEach(function(r, i) {
+        var bar = document.getElementById('fbar-' + i);
+        var pctEl = document.getElementById('fpct-' + i);
+        var labelEl = document.getElementById('flabel-' + i);
+        if (bar) { bar.style.transition = 'none'; bar.style.width = r.pct + '%'; }
+        if (pctEl) pctEl.textContent = r.pct + '%';
+        if (labelEl) labelEl.textContent = r.label + (i === 0 ? ' 🔮' : '');
+      });
     }
   }
 
-  // Build results
-  var results = [];
-  Object.entries(outcomes.majority).forEach(function(e) {
-    var party = D.parties.find(function(p){ return p.name === e[0]; });
-    results.push({label: e[0] + ' majority', pct: Math.round(e[1] / SIMS * 100), color: party ? party.color : '#6b7280'});
-  });
-  results.push({label: 'Hung parliament', pct: Math.round(outcomes.hung / SIMS * 100), color: 'var(--md-sys-color-on-surface-variant)'});
-  results.sort(function(a,b){ return b.pct - a.pct; });
+  // Initial render
+  var initialResults = runSims(currentError);
 
-  var topResult = results[0];
+  var errorLevels = [1, 2, 3, 4, 5];
+
+  var tabsHtml = '<div class="be-tabs" style="margin-bottom:14px">'
+    + errorLevels.map(function(e) {
+      return '<button class="be-tab ferror-tab' + (e === currentError ? ' active' : '') + '" '
+        + 'data-err="' + e + '" '
+        + 'onclick="(function(btn){ '
+        + 'var err=parseInt(btn.getAttribute(\'data-err\')); '
+        + 'var card=btn.closest(\'.card\'); '
+        + 'card.querySelectorAll(\'.ferror-tab\').forEach(function(b){b.classList.remove(\'active\');}); '
+        + 'btn.classList.add(\'active\'); '
+        + 'window._forecastUpdate(err,true); '
+        + '})(this)">'
+        + '±' + e + '%</button>';
+    }).join('')
+    + '</div>';
+
+  var barsHtml = initialResults.map(function(r, i) {
+    var isTop = i === 0;
+    return '<div style="margin-bottom:' + (isTop ? '14' : '10') + 'px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+      + '<span id="flabel-' + i + '" style="font-size:' + (isTop?'16':'14') + 'px;font-weight:' + (isTop?'800':'700') + ';color:var(--md-sys-color-on-surface)">' + r.label + (isTop ? ' 🔮' : '') + '</span>'
+      + '<span id="fpct-' + i + '" style="font-size:' + (isTop?'18':'15') + 'px;font-weight:900;color:' + r.color + '">' + r.pct + '%</span>'
+      + '</div>'
+      + '<div style="background:var(--md-sys-color-surface-container-low);border-radius:99px;height:' + (isTop?'10':'7') + 'px;overflow:hidden">'
+      + '<div id="fbar-' + i + '" class="forecast-bar-fill" style="width:' + r.pct + '%;background:' + r.color + ';height:100%;border-radius:99px;transition:width 0.7s cubic-bezier(0.34,1.56,0.64,1)"></div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
 
   el.innerHTML =
-    '<div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">Based on ' + SIMS.toLocaleString() + ' simulations · ±' + ERROR + '% polling error</div>'
-    + '<div style="font-size:13px;font-weight:700;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px;background:var(--md-sys-color-surface-container-low);border-radius:12px;padding:10px 14px;line-height:1.6">Simulates random polling error across ' + SIMS.toLocaleString() + ' elections. Shows how often each outcome occurs given typical UK polling uncertainty.</div>'
-    + results.map(function(r, i) {
-      var isTop = i === 0;
-      return '<div style="margin-bottom:' + (isTop ? '14' : '10') + 'px">'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
-        + '<span style="font-size:' + (isTop ? '16' : '14') + 'px;font-weight:' + (isTop ? '800' : '700') + ';color:var(--md-sys-color-on-surface)">' + r.label + (isTop ? ' 🔮' : '') + '</span>'
-        + '<span style="font-size:' + (isTop ? '18' : '15') + 'px;font-weight:900;color:' + r.color + '">' + r.pct + '%</span>'
-        + '</div>'
-        + '<div style="background:var(--md-sys-color-surface-container-low);border-radius:99px;height:' + (isTop ? '10' : '7') + 'px;overflow:hidden">'
-        + '<div style="width:' + r.pct + '%;background:' + r.color + ';height:100%;border-radius:99px;transition:width 0.8s var(--md-motion-expressive)"></div>'
-        + '</div>'
-        + '</div>';
-    }).join('');
+    '<div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Polling error assumption</div>'
+    + '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:10px;font-weight:500">How wrong could the polls be? UK polling error has averaged ±2–3% historically.</div>'
+    + tabsHtml
+    + barsHtml
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--md-sys-color-outline-variant)">'
+    + '<div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);font-weight:600">' + SIMS.toLocaleString() + ' simulations · ±' + '<span id="ferror-label">' + currentError + '</span>% error</div>'
+    + '<button onclick="window._forecastUpdate(' + currentError + ',true)" '
+    + 'style="background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border:none;border-radius:var(--md-sys-shape-corner-full);padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif;display:flex;align-items:center;gap:5px">'
+    + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-6.74"/></svg>'
+    + 'Re-simulate</button>'
+    + '</div>';
+
+  // Expose update function globally so inline handlers can reach it
+  window._forecastUpdate = function(error, animate) {
+    currentError = error;
+    var errLabel = document.getElementById('ferror-label');
+    if (errLabel) errLabel.textContent = error;
+    var results = runSims(error);
+    if (animate) {
+      el.querySelectorAll('.forecast-bar-fill').forEach(function(bar) { bar.style.width = '0%'; });
+      setTimeout(function() {
+        results.forEach(function(r, i) {
+          var bar = document.getElementById('fbar-' + i);
+          var pctEl = document.getElementById('fpct-' + i);
+          var labelEl = document.getElementById('flabel-' + i);
+          if (bar) bar.style.width = r.pct + '%';
+          if (pctEl) {
+            var end = r.pct, startTime = null;
+            (function animate(ts) {
+              if (!startTime) startTime = ts;
+              var p = Math.min((ts - startTime) / 600, 1);
+              var ease = 1 - Math.pow(1 - p, 3);
+              pctEl.textContent = Math.round(end * ease) + '%';
+              if (p < 1) requestAnimationFrame(animate);
+            })(performance.now());
+          }
+          if (labelEl) labelEl.textContent = r.label + (i === 0 ? ' 🔮' : '');
+        });
+      }, 80);
+    }
+  };
 }
 
 function openFPTPSheet() {
