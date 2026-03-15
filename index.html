@@ -4979,8 +4979,8 @@ function renderBeCarousel() {
     var cards = wrap.querySelectorAll('.be-carousel-card');
     if (!cards.length) return;
     _carouselIdx = (_carouselIdx + 1) % cards.length;
-    // Scroll the specific card into view — cleaner than scrollTo with calculated offset
-    cards[_carouselIdx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    var cardWidth = cards[0].offsetWidth + 12;
+    wrap.scrollLeft = _carouselIdx * cardWidth;
   }
 
   function startCarousel() {
