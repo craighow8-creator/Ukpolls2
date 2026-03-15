@@ -3014,7 +3014,7 @@ function renderPollCards() {
     {k:'rb',  label:partyShort('Restore Britain'),  abbr:partyAbbr('Restore Britain'),color:partyColor('Restore Britain')}
   ];
 
-  var rows = D.polls.map(function(p) {
+  function buildPollRow(p) {
     var segs = KEYS.filter(function(k) { return p[k.k] != null; }).sort(function(a,b) { return p[b.k] - p[a.k]; }).map(function(k) {
       var pct = p[k.k];
       var show = pct >= 8;
@@ -3023,7 +3023,6 @@ function renderPollCards() {
         + (show ? '<span style="font-size:15px;font-weight:700;color:#fff;line-height:1.3;opacity:0.9">' + pct + '%</span>' : '')
         + '</div>';
     }).join('');
-
     return '<div style="margin-bottom:14px">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
       + '<div style="display:flex;align-items:center;gap:6px">'
@@ -3036,7 +3035,12 @@ function renderPollCards() {
       + segs
       + '</div>'
       + '</div>';
-  }).join('');
+  }
+
+  var SHOW_DEFAULT = 2;
+  var visibleRows = D.polls.slice(0, SHOW_DEFAULT).map(buildPollRow).join('');
+  var hiddenRows  = D.polls.slice(SHOW_DEFAULT).map(buildPollRow).join('');
+  var remaining   = D.polls.length - SHOW_DEFAULT;
 
   var key = '<div style="display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--md-sys-color-outline-variant)">'
     + KEYS.map(function(k) {
@@ -3052,11 +3056,23 @@ function renderPollCards() {
     '<div id="polls-cards-inner" style="background:var(--md-sys-color-surface);border-radius:24px;box-shadow:var(--md-elevation-2);padding:18px;border-top:4px solid var(--md-sys-color-primary)">'
     + '<div style="font-size:15px;font-weight:800;color:var(--md-sys-color-on-surface);margin-bottom:2px">Recent polls</div>'
     + '<div style="font-size:15px;color:var(--md-sys-color-on-surface-variant);margin-bottom:16px">Bars show each party\'s share per pollster</div>'
-    + rows
+    + visibleRows
+    + '<div id="polls-hidden-rows" style="display:none">' + hiddenRows + '</div>'
+    + '<button id="polls-expand-btn" style="width:100%;padding:10px;border:none;background:var(--md-sys-color-tonal-navy);color:var(--md-sys-color-primary);border-radius:var(--md-sys-shape-corner-full);font-size:13px;font-weight:700;cursor:pointer;font-family:\'Nunito\',sans-serif;margin-top:4px;margin-bottom:14px;transition:background var(--md-motion-short) var(--md-motion-standard)">▼ Show ' + remaining + ' more polls</button>'
     + key
     + '</div>';
 
-  // Event delegation — avoids inline onclick string issues with pollster names
+  // Expand/collapse
+  var expandBtn = document.getElementById('polls-expand-btn');
+  var hiddenDiv = document.getElementById('polls-hidden-rows');
+  var expanded = false;
+  expandBtn.addEventListener('click', function() {
+    expanded = !expanded;
+    hiddenDiv.style.display = expanded ? 'block' : 'none';
+    expandBtn.textContent = expanded ? '▲ Show fewer polls' : '▼ Show ' + remaining + ' more polls';
+  });
+
+  // Event delegation for pollster info buttons
   var inner = document.getElementById('polls-cards-inner');
   if (inner) {
     inner.addEventListener('click', function(e) {
