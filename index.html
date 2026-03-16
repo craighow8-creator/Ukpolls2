@@ -935,9 +935,6 @@ body {
       <div id="be-carousel-dots" style="display:flex;justify-content:center;gap:6px;padding-bottom:4px"></div>
     </div>
 
-    <div class="sec-label">⏳ Countdown<button class="sec-share" onclick="shareSection('⏳ Countdown', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
-    <div id="countdown-card" style="margin-bottom:12px"></div>
-
     <!-- May 2026 Explainer -->
     <div class="explainer-card" onclick="var b=document.getElementById('may-explainer');var a=document.getElementById('may-arrow');b.classList.toggle('open');a.textContent=b.classList.contains('open')?'▲':'▼'">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
@@ -976,18 +973,9 @@ body {
       </div>
     </div>
 
-    <!-- ── By-Elections Tracker ── -->
-    <div class="sec-label">🗳 By-Election Tracker<button class="sec-share" onclick="shareSection('🗳 Recent Results', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
-    <div id="be-tracker-wrap">
-      <div class="be-tabs">
-        <button class="be-tab active" id="be-tab-results" onclick="switchBeTab('results')">📊 Results</button>
-        <button class="be-tab" id="be-tab-swings" onclick="switchBeTab('swings')">📐 Swings</button>
-        <button class="be-tab" id="be-tab-context" onclick="switchBeTab('context')">🗺 Context</button>
-      </div>
-      <div id="be-results-list"></div>
-      <div id="be-swings-panel" style="display:none"></div>
-      <div id="be-context-panel" style="display:none"></div>
-    </div>
+    <!-- ── Political Landscape ── -->
+    <div class="sec-label">🗺 Political Landscape</div>
+    <div id="be-context-card"></div>
 
     <div class="sec-label">🎰 Betting Odds<button class="sec-share" onclick="shareSection('🎰 Betting Odds', this)" title="Share"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button></div>
     <div class="ecard" style="margin-bottom:12px">
@@ -1512,7 +1500,7 @@ function sp(id, btn) {
   btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
   if (id === 'trends') setTimeout(renderTrends, 50);
   if (id === 'demo') setTimeout(renderMigration, 50);
-  if (id === 'elections') setTimeout(function(){ renderCountdown(); if(_beCurrentTab) switchBeTab(_beCurrentTab); }, 50);
+  if (id === 'elections') setTimeout(function(){ renderBeCarousel(); }, 50);
   if (id === 'vote') setTimeout(loadVoteResults, 50);
 }
 
@@ -4756,8 +4744,19 @@ function openBeSheet(id, tab) {
     sheet.querySelectorAll('[data-w]').forEach(function(bar) {
       bar.style.width = bar.getAttribute('data-w') + '%';
     });
-    // Swingometer needle — animate from centre (0) to actual value
-    animateSwingometer(swingPts, swingFromColor, swingToColor);
+    // Swingometer — animate when scrolled into view
+    var swingoWrap = sheet.querySelector('#swingo-needle');
+    if (swingoWrap) {
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            animateSwingometer(swingPts, swingFromColor, swingToColor);
+            observer.disconnect();
+          }
+        });
+      }, { threshold: 0.5 });
+      observer.observe(swingoWrap.closest('div') || swingoWrap);
+    }
   }, 400);
 
   function closeBeSheet() {
@@ -4781,16 +4780,16 @@ function buildSwingometer(swingPts, fromColor, toColor, fromParty, toParty, isNe
   var arcPath = 'M ' + (cx - r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx + r) + ' ' + cy;
 
   return '<div style="text-align:center">'
-    + '<svg viewBox="0 0 280 120" width="100%" style="max-width:280px;overflow:visible">'
-    + '<path d="' + arcPath + '" fill="none" stroke="var(--md-sys-color-outline-variant)" stroke-width="14" stroke-linecap="round"/>'
+    + '<svg viewBox="0 0 280 145" width="100%" style="max-width:280px;overflow:visible">'
+    + '<path d="' + 'M ' + (cx - r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx + r) + ' ' + cy + '" fill="none" stroke="var(--md-sys-color-outline-variant)" stroke-width="14" stroke-linecap="round"/>'
     + '<path d="M ' + (cx - r) + ' ' + cy + ' A ' + r + ' ' + r + ' 0 0 1 ' + cx + ' ' + (cy - r) + '" fill="none" stroke="' + fromColor + '" stroke-width="14" stroke-linecap="round" opacity="0.5"/>'
     + '<path d="M ' + cx + ' ' + (cy - r) + ' A ' + r + ' ' + r + ' 0 0 1 ' + (cx + r) + ' ' + cy + '" fill="none" stroke="' + toColor + '" stroke-width="14" stroke-linecap="round" opacity="0.5"/>'
     + '<line id="swingo-needle" x1="' + cx + '" y1="' + cy + '" x2="' + cx + '" y2="' + (cy - r) + '" stroke="var(--md-sys-color-on-surface)" stroke-width="3" stroke-linecap="round"/>'
     + '<circle cx="' + cx + '" cy="' + cy + '" r="6" fill="var(--md-sys-color-on-surface)"/>'
     + '<text x="' + (cx - r - 4) + '" y="' + (cy + 18) + '" text-anchor="end" font-size="11" font-weight="700" fill="' + fromColor + '" font-family="Nunito,sans-serif">' + partyShort(fromParty) + '</text>'
     + '<text x="' + (cx + r + 4) + '" y="' + (cy + 18) + '" text-anchor="start" font-size="11" font-weight="700" fill="' + toColor + '" font-family="Nunito,sans-serif">' + partyShort(toParty) + '</text>'
-    + '<text id="swingo-val" x="' + cx + '" y="' + (cy + 36) + '" text-anchor="middle" font-size="20" font-weight="900" fill="var(--md-sys-color-on-surface)" font-family="Nunito,sans-serif">0pt</text>'
-    + '<text x="' + cx + '" y="' + (cy + 48) + '" text-anchor="middle" font-size="10" font-weight="600" fill="var(--md-sys-color-on-surface-variant)" font-family="Nunito,sans-serif">' + (isNeeded ? 'swing needed' : 'actual swing') + '</text>'
+    + '<text id="swingo-val" x="' + cx + '" y="' + (cy + 42) + '" text-anchor="middle" font-size="22" font-weight="900" fill="var(--md-sys-color-on-surface)" font-family="Nunito,sans-serif">0pt</text>'
+    + '<text x="' + cx + '" y="' + (cy + 58) + '" text-anchor="middle" font-size="10" font-weight="600" fill="var(--md-sys-color-on-surface-variant)" font-family="Nunito,sans-serif">' + (isNeeded ? 'swing needed' : 'actual swing') + '</text>'
     + '</svg>'
     + '</div>';
 }
@@ -4930,10 +4929,12 @@ function renderBeCarousel() {
       + '<div style="text-align:center;padding-bottom:12px;font-size:11px;color:rgba(255,255,255,0.6);font-weight:600">Tap for full breakdown →</div>'
       + '</div>'
       + '</div>';
-  }).join('');
+  }).join('') + buildGECarouselCard();
+
+  var totalCards = allCards.length + 1; // +1 for GE card
 
   // Dots
-  dotsEl.innerHTML = allCards.map(function(_, i) {
+  dotsEl.innerHTML = Array.from({length: totalCards}).map(function(_, i) {
     return '<div class="be-carousel-dot' + (i === 0 ? ' active' : '') + '" id="be-dot-' + i + '"></div>';
   }).join('');
 
@@ -5006,13 +5007,135 @@ function renderBeCarousel() {
     }, 5000);
   }, {passive: true});
 
-  if (allCards.length > 1) startCarousel();
+  if (allCards.length + 1 > 1) startCarousel();
 }
 
 // Init by-election tracker on first render
 function initBeTracker() {
   renderBeCarousel();
-  renderBeResults();
+  renderBeContextCard();
+}
+
+// ── GE Card for carousel ──
+function buildGECarouselCard() {
+  var ge = new Date('2029-05-02T00:00:00');
+  var now = new Date();
+  var days = Math.ceil((ge - now) / 86400000);
+  var years = (days / 365).toFixed(1);
+
+  // Union flag SVG background pattern
+  var flagSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40" style="position:absolute;inset:0;width:100%;height:100%;opacity:0.12">'
+    + '<rect width="60" height="40" fill="#012169"/>'
+    + '<line x1="0" y1="0" x2="60" y2="40" stroke="white" stroke-width="8"/>'
+    + '<line x1="60" y1="0" x2="0" y2="40" stroke="white" stroke-width="8"/>'
+    + '<line x1="0" y1="0" x2="60" y2="40" stroke="#C8102E" stroke-width="4"/>'
+    + '<line x1="60" y1="0" x2="0" y2="40" stroke="#C8102E" stroke-width="4"/>'
+    + '<rect x="0" y="14" width="60" height="12" fill="white"/>'
+    + '<rect x="22" y="0" width="16" height="40" fill="white"/>'
+    + '<rect x="0" y="16" width="60" height="8" fill="#C8102E"/>'
+    + '<rect x="26" y="0" width="8" height="40" fill="#C8102E"/>'
+    + '</svg>';
+
+  return '<div class="be-carousel-card" style="background:linear-gradient(160deg,#012169 0%,#0d3285 100%);cursor:default" onclick="void(0)">'
+    + '<div style="position:absolute;inset:0;overflow:hidden;border-radius:var(--md-sys-shape-corner-large)">' + flagSvg + '</div>'
+    + '<div style="position:relative;text-align:center;padding:20px 16px 16px">'
+    + '<div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.7);margin-bottom:4px">Next General Election</div>'
+    + '<div style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);margin-bottom:12px">No later than 2 May 2029</div>'
+    + '<div style="font-size:56px;font-weight:900;color:#fff;line-height:1;font-family:\'Nunito\',sans-serif">' + days.toLocaleString() + '</div>'
+    + '<div style="font-size:12px;color:rgba(255,255,255,0.75);font-weight:600;margin-top:2px">days maximum</div>'
+    + '</div>'
+    + '<div style="position:relative;margin:0 16px;height:1px;background:rgba(255,255,255,0.2)"></div>'
+    + '<div style="position:relative;display:grid;grid-template-columns:1fr 1fr;gap:0;padding:10px 0 16px">'
+    + '<div style="text-align:center;border-right:1px solid rgba(255,255,255,0.15)">'
+    + '<div style="font-size:20px;font-weight:900;color:#fff">' + years + '</div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,0.65);font-weight:600">years away</div>'
+    + '</div>'
+    + '<div style="text-align:center">'
+    + '<div style="font-size:20px;font-weight:900;color:#fff">650</div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,0.65);font-weight:600">seats at stake</div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="position:relative;text-align:center;padding-bottom:12px;font-size:11px;color:rgba(255,255,255,0.5);font-weight:600">Deadline — could be called earlier</div>'
+    + '</div>';
+}
+
+// ── Political Landscape Context Card ──
+function renderBeContextCard() {
+  var el = document.getElementById('be-context-card');
+  if (!el) return;
+
+  var parties = [
+    {
+      name: 'Reform UK', color: '#12B7D4', emoji: '🔵', poll: '27%',
+      headline: 'Poll leader — but can they govern?',
+      body: 'Reform UK lead every national poll and have now won two Westminster by-elections. The structural question for 2029 is whether a 27% national share translates into seats under FPTP, or whether their vote is spread too widely. Kingswood and Runcorn showed they can concentrate support in Leave-leaning seats. The May 2026 local elections are their first mass test of ground-level organisation.'
+    },
+    {
+      name: 'Labour', color: '#E4003B', emoji: '🔴', poll: '19%',
+      headline: 'Governing party in historic collapse',
+      body: 'Labour won a 170-seat majority in July 2024 on 33.7% of the vote. By March 2026 they poll third at 19% — the sharpest collapse for an incumbent government in modern British polling history. They have lost two by-elections, including Runcorn & Helsby by six votes having held it with a 14,696 majority. Starmer\'s net approval sits at −42. The question is no longer whether Labour will lose the next election, but by how much.'
+    },
+    {
+      name: 'Green', color: '#02A95B', emoji: '🟢', poll: '15%',
+      headline: 'Biggest rise — five MPs and climbing',
+      body: 'The Greens have gone from 1 MP and 6.7% at the 2024 GE to 5 MPs and 15% in the polls. Zack Polanski\'s leadership has broadened the coalition beyond the graduate left — Gorton & Denton, a 56% Leave constituency in Greater Manchester, showed they can win in unexpected territory. Under PR they would have ~97 seats. Under FPTP, converting 15% into seats remains their central strategic challenge.'
+    },
+    {
+      name: 'Conservative', color: '#0087DC', emoji: '🔵', poll: '18%',
+      headline: 'Squeezed from both sides',
+      body: 'The Conservatives face an existential strategic problem: Reform is eating their Leave vote in the north and midlands; the Lib Dems are taking their Remain vote in the south. Kemi Badenoch leads a party at 18% — their lowest sustained polling in modern history. Horsham, a seat that should be safe, is a genuine three-way marginal. The 2021 local election gains they are defending were made at peak Boris Johnson — the mismatch is brutal.'
+    },
+    {
+      name: 'Lib Dem', color: '#FAA61A', emoji: '🟡', poll: '12%',
+      headline: 'Blue Wall consolidators',
+      body: 'The Lib Dems won 72 seats in 2024 — their best result since 1923 — by targeting southern Conservative seats with high Remain votes. Henley & Thame confirmed that hold. At 12% nationally they are unlikely to advance further unless the Blue Wall squeeze on the Conservatives continues, which current polling suggests it will. Ed Davey\'s pitch — rejoin the single market, reform public services — is aimed squarely at disaffected moderate Conservatives.'
+    },
+    {
+      name: 'Restore Britain', color: '#1a4a9e', emoji: '🔷', poll: '7%',
+      headline: 'Fastest-growing party in modern history',
+      body: 'Restore Britain launched in February 2026 and reached 110,000 paid members within weeks — faster than any party in modern UK history. Founded by former Reform MP Rupert Lowe, they poll 7% in prompted polls and are entering major betting markets. Their coalition is explicitly built around the 42% who did not vote in 2024. Whether 100,000 members translates into votes and ultimately seats remains the open question.'
+    },
+    {
+      name: 'SNP', color: '#C4922A', emoji: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', poll: '3% UK',
+      headline: 'Westminster decline, Holyrood focus',
+      body: 'The SNP collapsed from 48 Westminster seats in 2019 to 9 in 2024. In UK-wide polls they sit at 3%. Their focus has shifted entirely to the May 2026 Holyrood election, where they lead at 35% and are defending their position as Scotland\'s dominant party. The independence question remains unresolved but dormant — no second referendum is in sight.'
+    },
+    {
+      name: 'Plaid Cymru', color: '#3F8428', emoji: '🏴󠁧󠁢󠁷󠁬󠁳󠁿', poll: 'Wales only',
+      headline: 'Senedd contenders under new PR',
+      body: 'The May 2026 Senedd election — the first under a new proportional system with 96 seats — gives Plaid their best realistic chance of leading the Welsh Government. They poll level with Reform UK at 26% in Wales. Rhun ap Iorwerth has broadened the party\'s appeal beyond its Welsh-speaking heartland. A Plaid-led Welsh Government would be historic and would intensify questions about the constitutional future of the union.'
+    },
+  ];
+
+  var html = '<div class="card" style="padding:0;border-top:4px solid var(--md-sys-color-primary);overflow:hidden">';
+
+  // Intro
+  html += '<div style="padding:16px 18px 12px;border-bottom:1px solid var(--md-sys-color-outline-variant)">'
+    + '<div style="font-size:16px;font-weight:900;color:var(--md-sys-color-on-surface);margin-bottom:4px">Where every party stands</div>'
+    + '<div style="font-size:14px;color:var(--md-sys-color-on-surface-variant);line-height:1.6">The political landscape heading toward the next general election — what the polls and by-election results mean for each party.</div>'
+    + '</div>';
+
+  // Party sections — collapsible
+  parties.forEach(function(p, i) {
+    var isLast = i === parties.length - 1;
+    html += '<div style="border-bottom:' + (isLast ? 'none' : '1px solid var(--md-sys-color-outline-variant)') + '">'
+      + '<div onclick="var b=document.getElementById(\'ctx-' + i + '\');var a=document.getElementById(\'ctx-arr-' + i + '\');b.style.display=b.style.display===\'none\'?\'block\':\'none\';a.textContent=b.style.display===\'none\'?\'▼\':\'▲\'" '
+      + 'style="display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;-webkit-tap-highlight-color:transparent">'
+      + '<div style="width:10px;height:10px;border-radius:50%;background:' + p.color + ';flex-shrink:0"></div>'
+      + '<div style="flex:1">'
+      + '<div style="font-size:15px;font-weight:800;color:' + p.color + '">' + p.name + ' <span style="font-size:12px;font-weight:700;color:var(--md-sys-color-on-surface-variant)">' + p.poll + '</span></div>'
+      + '<div style="font-size:13px;font-weight:600;color:var(--md-sys-color-on-surface-variant);margin-top:1px">' + p.headline + '</div>'
+      + '</div>'
+      + '<span id="ctx-arr-' + i + '" style="font-size:13px;color:var(--md-sys-color-on-surface-variant);flex-shrink:0">▼</span>'
+      + '</div>'
+      + '<div id="ctx-' + i + '" style="display:none;padding:0 18px 14px">'
+      + '<div style="font-size:15px;color:var(--md-sys-color-on-surface);line-height:1.75;background:' + p.color + '08;border-radius:12px;padding:12px 14px;border-left:3px solid ' + p.color + '">' + p.body + '</div>'
+      + '</div>'
+      + '</div>';
+  });
+
+  html += '</div>';
+  el.innerHTML = html;
 }
 
 function renderCountdown() {
