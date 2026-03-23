@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#e8f8fc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a1628" media="(prefers-color-scheme: dark)" />
+    <meta name="description" content="Politiscope — Your full view on UK politics. Live polls, leaders, elections and AI briefings." />
+    <link rel="manifest" href="/Ukpolls2/manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <title>Politiscope</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+      html, body { height: 100%; overscroll-behavior: none; }
+      body { font-family: 'Outfit', system-ui, sans-serif; }
+      /* M3E Global typography rules */
+      .card-label, [data-label] { text-align: center !important; }
+
+      #root { height: 100dvh; overflow: hidden; }
+
+      /* Splash */
+      #splash {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        background: linear-gradient(175deg, #e8f8fc 0%, #cdf0f7 40%, #a8e4f0 100%);
+        transition: opacity 0.5s ease;
+      }
+      #splash.fade { opacity: 0; pointer-events: none; }
+      #splash .logo { width: 80px; height: 80px; margin-bottom: 20px; }
+      #splash .title { color: #041C24; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+      #splash .sub { color: rgba(4,28,36,0.45); font-size: 13px; font-weight: 500; margin-top: 5px; }
+      #splash .dots { display: flex; gap: 6px; margin-top: 32px; }
+      #splash .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(4,28,36,0.25); animation: dp 1.4s ease-in-out infinite; }
+      #splash .dot:nth-child(2) { animation-delay: .2s; }
+      #splash .dot:nth-child(3) { animation-delay: .4s; }
+      @keyframes dp { 0%,80%,100%{opacity:.3} 40%{opacity:1} }
+
+      @media (prefers-color-scheme: dark) {
+        #splash { background: linear-gradient(175deg, #0a9ab8 0%, #0d7a94 40%, #020c12 100%); }
+        #splash .title { color: #fff; }
+        #splash .sub { color: rgba(255,255,255,0.45); }
+        #splash .dot { background: rgba(255,255,255,0.3); }
+      }
+    </style>
+    <script type="module" crossorigin src="/Ukpolls2/assets/main-BTEHp0Ux.js"></script>
+    <link rel="modulepreload" crossorigin href="/Ukpolls2/assets/constants-BM0pRqua.js">
+  </head>
+  <body>
+    <div id="splash">
+      <svg class="logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="sg" cx="32%" cy="26%" r="72%">
+            <stop offset="0%" stop-color="#0d4a5c"/>
+            <stop offset="55%" stop-color="#051e2a"/>
+            <stop offset="100%" stop-color="#020c12"/>
+          </radialGradient>
+          <clipPath id="sc"><circle cx="40" cy="40" r="38"/></clipPath>
+        </defs>
+        <circle cx="40" cy="40" r="38" fill="url(#sg)"/>
+        <path d="M 9 17 A 38 38 0 0 1 71 17" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" stroke-linecap="round"/>
+        <g clip-path="url(#sc)">
+          <line x1="2" y1="2" x2="78" y2="78" stroke="white" stroke-width="14"/>
+          <line x1="78" y1="2" x2="2" y2="78" stroke="white" stroke-width="14"/>
+          <line x1="2" y1="2" x2="78" y2="78" stroke="#C8102E" stroke-width="8"/>
+          <line x1="78" y1="2" x2="2" y2="78" stroke="#C8102E" stroke-width="8"/>
+          <line x1="2" y1="40" x2="78" y2="40" stroke="white" stroke-width="5"/>
+          <line x1="2" y1="40" x2="78" y2="40" stroke="#C8102E" stroke-width="3"/>
+          <line x1="40" y1="2" x2="40" y2="78" stroke="white" stroke-width="5"/>
+          <line x1="40" y1="2" x2="40" y2="78" stroke="#C8102E" stroke-width="3"/>
+        </g>
+        <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+        <circle cx="40" cy="40" r="2.2" fill="white" opacity="0.95"/>
+        <circle cx="40" cy="40" r="38" fill="none" stroke="rgba(255,255,255,0.30)" stroke-width="1"/>
+      </svg>
+      <div class="title">Politiscope</div>
+      <div class="sub">Your full view on UK politics</div>
+      <div class="dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+    <div id="root"></div>
+  </body>
+</html>
