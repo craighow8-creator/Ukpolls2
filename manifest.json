@@ -1,7 +1,7 @@
 {
   "name": "Politiscope",
   "short_name": "Politiscope",
-  "description": "Your full view on UK politics — live polling, leaders, elections & AI briefings",
+  "description": "Your full view on UK politics \u2014 live polling, leaders, elections & AI briefings",
   "start_url": "/Ukpolls2/",
   "scope": "/Ukpolls2/",
   "display": "standalone",
@@ -13,7 +13,7 @@
       "src": "/Ukpolls2/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/Ukpolls2/icons/icon-512.png",
@@ -22,6 +22,9 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["news", "politics"],
+  "categories": [
+    "news",
+    "politics"
+  ],
   "lang": "en-GB"
 }
