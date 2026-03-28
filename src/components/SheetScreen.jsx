@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect } from 'react'
-import { SP } from '../constants'
 
 export default function SheetScreen({ children, T, onClose }) {
   const [dragging, setDragging] = useState(false)
@@ -15,30 +14,66 @@ export default function SheetScreen({ children, T, onClose }) {
     }
   }, [])
 
-  const onHandleStart = (clientY) => {
+  useEffect(() => {
+    if (!dragging) return
+
+    const handleMouseMove = (e) => {
+      const delta = Math.max(0, e.clientY - startY.current)
+      setDragY(delta)
+    }
+
+    const handleMouseUp = () => {
+      setDragging(false)
+      setDragY((current) => {
+        if (current > 120) {
+          setDismissed(true)
+          window.setTimeout(onClose, 320)
+          return current
+        }
+        return 0
+      })
+    }
+
+    const handleTouchMove = (e) => {
+      const touch = e.touches[0]
+      if (!touch) return
+      const delta = Math.max(0, touch.clientY - startY.current)
+      setDragY(delta)
+    }
+
+    const handleTouchEnd = () => {
+      setDragging(false)
+      setDragY((current) => {
+        if (current > 120) {
+          setDismissed(true)
+          window.setTimeout(onClose, 320)
+          return current
+        }
+        return 0
+      })
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('touchmove', handleTouchMove, { passive: true })
+    window.addEventListener('touchend', handleTouchEnd)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [dragging, onClose])
+
+  const beginDrag = (clientY) => {
     startY.current = clientY
     setDragging(true)
     setDragY(0)
   }
 
-  const onHandleMove = (clientY) => {
-    if (!dragging) return
-    const delta = Math.max(0, clientY - startY.current)
-    setDragY(delta)
-  }
-
-  const onHandleEnd = () => {
-    setDragging(false)
-    if (dragY > 120) {
-      setDismissed(true)
-      setTimeout(onClose, 320)
-    } else {
-      setDragY(0)
-    }
-  }
-
   const translateY = dismissed ? '100%' : dragging ? `${dragY}px` : '0px'
-  const transition = dragging ? 'none' : `transform 0.38s cubic-bezier(0.32,0.72,0,1)`
+  const transition = dragging ? 'none' : 'transform 0.38s cubic-bezier(0.32,0.72,0,1)'
 
   return (
     <>
@@ -74,23 +109,20 @@ export default function SheetScreen({ children, T, onClose }) {
         }}
       >
         <div
-          onMouseDown={(e) => onHandleStart(e.clientY)}
-          onMouseMove={(e) => onHandleMove(e.clientY)}
-          onMouseUp={() => onHandleEnd()}
-          onTouchStart={(e) => onHandleStart(e.touches[0].clientY)}
-          onTouchMove={(e) => onHandleMove(e.touches[0].clientY)}
-          onTouchEnd={() => onHandleEnd()}
+          onMouseDown={(e) => beginDrag(e.clientY)}
+          onTouchStart={(e) => beginDrag(e.touches[0].clientY)}
           style={{
             flexShrink: 0,
+            minHeight: 56,
             padding: '14px 0 12px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'flex-start',
             cursor: 'grab',
             touchAction: 'none',
             position: 'relative',
             zIndex: 5,
-            minHeight: 54,
           }}
         >
           <div
@@ -124,7 +156,15 @@ export default function SheetScreen({ children, T, onClose }) {
             outline: 'none',
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.tm} strokeWidth="2" strokeLinecap="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={T.tm}
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
@@ -145,8 +185,8 @@ export default function SheetScreen({ children, T, onClose }) {
       </div>
 
       <style>{`
-        @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
-        @keyframes sheetUp { from{transform:translateX(-50%) translateY(100%)} to{transform:translateX(-50%) translateY(0)} }
+        @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes sheetUp { from { transform: translateX(-50%) translateY(100%) } to { transform: translateX(-50%) translateY(0) } }
       `}</style>
     </>
   )
