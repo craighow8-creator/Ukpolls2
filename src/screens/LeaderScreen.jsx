@@ -45,116 +45,121 @@ export default function LeaderScreen({ T, lIdx, nav, goBack, leaders, parties })
       }}
     >
       <div style={{ padding: '18px 18px 0', flexShrink: 0 }}>
+        <div style={{ minWidth: 0, marginBottom: 12 }}>
+          <div
+            style={{
+              fontSize: 24,
+              fontWeight: 800,
+              letterSpacing: -0.8,
+              color: T.th,
+              lineHeight: 1,
+            }}
+          >
+            {l.name}
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>
+            {l.role} · {l.party}
+          </div>
+        </div>
+
         <div
           style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 12,
+            display: 'grid',
+            gridTemplateColumns: '1fr auto',
+            gap: 14,
+            alignItems: 'center',
             marginBottom: 10,
           }}
         >
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div
-              style={{
-                fontSize: 24,
-                fontWeight: 800,
-                letterSpacing: -0.8,
-                color: T.th,
-                lineHeight: 1,
-              }}
-            >
-              {l.name}
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>
-              {l.role} · {l.party}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div
-        style={{
-          padding: '6px 18px 8px',
-          display: 'grid',
-          gridTemplateColumns: '1.15fr 1fr auto',
-          gap: 12,
-          alignItems: 'center',
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            minWidth: 0,
-          }}
-        >
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <style>{`@keyframes breathe{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.05);opacity:0.9}}`}</style>
-            <div
-              style={{
-                position: 'absolute',
-                inset: -7,
-                borderRadius: '50%',
-                border: `2px solid ${l.color}44`,
-                animation: 'breathe 2.8s ease-in-out infinite',
-              }}
-            />
-            <PortraitAvatar name={l.name} color={l.color} size={90} radius={45} />
-          </div>
-
-          <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 800,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: T.tl,
-                marginBottom: 6,
-              }}
-            >
-              Net approval
-            </div>
-
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 11px 6px 8px',
-                borderRadius: R.pill,
-                background: `${party?.color || l.color}22`,
-                color: party?.color || l.color,
-                fontSize: 14,
-                fontWeight: 700,
-                marginBottom: 8,
-              }}
-            >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              minWidth: 0,
+            }}
+          >
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <style>{`@keyframes breathe{0%,100%{transform:scale(1);opacity:0.45}50%{transform:scale(1.04);opacity:0.85}}`}</style>
               <div
                 style={{
-                  width: 8,
-                  height: 8,
+                  position: 'absolute',
+                  inset: -7,
                   borderRadius: '50%',
-                  background: party?.color || l.color,
+                  border: `2px solid ${l.color}44`,
+                  animation: 'breathe 2.8s ease-in-out infinite',
                 }}
               />
-              {party?.abbr || l.party}
+              <PortraitAvatar name={l.name} color={l.color} size={92} radius={46} />
             </div>
 
-            <div
-              style={{
-                fontSize: 16,
-                fontWeight: 700,
-                color: l.net >= 0 ? '#02A95B' : '#C8102E',
-                lineHeight: 1.1,
-              }}
-            >
-              {l.net >= 0 ? '+' : ''}
-              {l.net} net
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: T.tl,
+                  marginBottom: 8,
+                  lineHeight: 1.2,
+                }}
+              >
+                Net approval
+              </div>
+
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 11px 6px 8px',
+                  borderRadius: R.pill,
+                  background: `${party?.color || l.color}22`,
+                  color: party?.color || l.color,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  marginBottom: 10,
+                }}
+              >
+                <div
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: party?.color || l.color,
+                  }}
+                />
+                {party?.abbr || l.party}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: l.net >= 0 ? '#02A95B' : '#C8102E',
+                  lineHeight: 1,
+                }}
+              >
+                {l.net >= 0 ? '+' : ''}
+                {l.net}
+              </div>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: T.tl,
+                  marginTop: 4,
+                  lineHeight: 1,
+                }}
+              >
+                net approval
+              </div>
             </div>
+          </div>
+
+          <div style={{ flexShrink: 0, justifySelf: 'end' }}>
+            <Ring value={l.net} size={76} />
           </div>
         </div>
 
@@ -163,55 +168,55 @@ export default function LeaderScreen({ T, lIdx, nav, goBack, leaders, parties })
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            minWidth: 0,
-            gap: 8,
+            minHeight: 18,
+            marginBottom: 8,
           }}
         >
-          {prev ? (
-            <div
-              onClick={() => {
-                haptic(6)
-                nav('leader', { lIdx: leaders.indexOf(prev) })
-              }}
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: prev.color,
-                cursor: 'pointer',
-                WebkitTapHighlightColor: 'transparent',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              ‹ {prev.name.split(' ').pop()}
-            </div>
-          ) : (
-            <div />
-          )}
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: prev ? prev.color : 'transparent',
+              cursor: prev ? 'pointer' : 'default',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+            onClick={() => {
+              if (!prev) return
+              haptic(6)
+              nav('leader', { lIdx: leaders.indexOf(prev) })
+            }}
+          >
+            {prev ? `‹ ${prev.name.split(' ').pop()}` : '•'}
+          </div>
 
-          {next ? (
-            <div
-              onClick={() => {
-                haptic(6)
-                nav('leader', { lIdx: leaders.indexOf(next) })
-              }}
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: next.color,
-                cursor: 'pointer',
-                WebkitTapHighlightColor: 'transparent',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {next.name.split(' ').pop()} ›
-            </div>
-          ) : (
-            <div />
-          )}
-        </div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: T.tl,
+            }}
+          >
+            Approval ranking
+          </div>
 
-        <div style={{ flexShrink: 0, justifySelf: 'end' }}>
-          <Ring value={l.net} size={72} />
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: next ? next.color : 'transparent',
+              cursor: next ? 'pointer' : 'default',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+            onClick={() => {
+              if (!next) return
+              haptic(6)
+              nav('leader', { lIdx: leaders.indexOf(next) })
+            }}
+          >
+            {next ? `${next.name.split(' ').pop()} ›` : '•'}
+          </div>
         </div>
       </div>
 
