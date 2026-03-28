@@ -127,27 +127,6 @@ export default function PartyScreen({ T, idx, from, nav, goBack, parties, leader
               Party profile · polling · funding
             </div>
           </div>
-
-          <div
-            onClick={goBack}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 999,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: T.c0,
-              border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-              color: T.tl,
-              fontSize: 18,
-              cursor: 'pointer',
-              flexShrink: 0,
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            ×
-          </div>
         </div>
 
         <div
