@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { SP, EZ } from '../constants'
+import { useState, useRef, useEffect } from 'react'
 import { haptic } from '../components/ui'
 
 // Info content — explanations for every data point in the app
@@ -54,7 +53,7 @@ Betting markets can reflect information not captured in polls — including poli
 This produces dramatic disproportionality:
 • In 2024, Labour won 63% of seats with 34% of votes
 • Reform won 0.8% of seats with 14% of votes
-• The Greens won 4 seats with 7% of votes; the SNP won 9 seats with 2.5%
+• The Greens won 4 seats with 7% of votes; the SNP won 9 seats with 2.5% of votes
 
 Under proportional representation, a party with 27% of votes would win roughly 176 seats. Under FPTP at current polling, the same 27% could win 335 seats — because Reform's support is spread across marginal seats where Labour previously had thin majorities.`,
     source: 'Electoral Reform Society analysis',
@@ -123,7 +122,175 @@ The Runcorn & Helsby by-election in May 2025 recorded a 19.8-point swing from La
   },
 }
 
-// The ℹ️ button itself
+function InfoSheet({ info, T, onClose }) {
+  const [dragging, setDragging] = useState(false)
+  const [dragY, setDragY] = useState(0)
+  const [dismissed, setDismissed] = useState(false)
+  const startY = useRef(0)
+
+  useEffect(() => {
+    if (!dragging) return
+
+    const handleMouseMove = (e) => {
+      const delta = Math.max(0, e.clientY - startY.current)
+      setDragY(delta)
+    }
+
+    const handleMouseUp = () => {
+      setDragging(false)
+      setDragY((current) => {
+        if (current > 110) {
+          setDismissed(true)
+          window.setTimeout(onClose, 260)
+          return current
+        }
+        return 0
+      })
+    }
+
+    const handleTouchMove = (e) => {
+      const touch = e.touches[0]
+      if (!touch) return
+      const delta = Math.max(0, touch.clientY - startY.current)
+      setDragY(delta)
+    }
+
+    const handleTouchEnd = () => {
+      setDragging(false)
+      setDragY((current) => {
+        if (current > 110) {
+          setDismissed(true)
+          window.setTimeout(onClose, 260)
+          return current
+        }
+        return 0
+      })
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('touchmove', handleTouchMove, { passive: true })
+    window.addEventListener('touchend', handleTouchEnd)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [dragging, onClose])
+
+  const beginDrag = (clientY) => {
+    startY.current = clientY
+    setDragging(true)
+    setDragY(0)
+  }
+
+  const translateY = dismissed ? '100%' : dragging ? `${dragY}px` : '0px'
+  const transition = dragging ? 'none' : 'transform 0.28s cubic-bezier(0.32,0.72,0,1)'
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.12)' }}
+      />
+
+      <div
+        style={{
+          position: 'fixed',
+          left: '50%',
+          bottom: 0,
+          transform: `translateX(-50%) translateY(${translateY})`,
+          transition,
+          width: '100%',
+          maxWidth: 560,
+          maxHeight: '82dvh',
+          zIndex: 502,
+          background: T.sf,
+          backdropFilter: 'blur(60px)',
+          WebkitBackdropFilter: 'blur(60px)',
+          borderRadius: '24px 24px 0 0',
+          border: `1px solid ${T.cardBorder || 'rgba(255,255,255,0.3)'}`,
+          boxShadow: '0 -8px 40px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.5)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          animation: dismissed ? 'none' : 'infoUp 0.32s cubic-bezier(0.32,0.72,0,1) forwards',
+          willChange: 'transform',
+        }}
+      >
+        <div
+          onMouseDown={(e) => beginDrag(e.clientY)}
+          onTouchStart={(e) => beginDrag(e.touches[0].clientY)}
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: 32,
+            paddingTop: 12,
+            paddingBottom: 8,
+            cursor: 'grab',
+            touchAction: 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ width: 36, height: 4, borderRadius: 999, background: T.tl, opacity: 0.25 }} />
+        </div>
+
+        <div
+          style={{
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            padding: '0 24px 32px',
+            flex: 1,
+          }}
+        >
+          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: -0.3, color: T.th, marginBottom: 12 }}>
+            {info.title}
+          </div>
+
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 500,
+              color: T.th,
+              lineHeight: 1.75,
+              whiteSpace: 'pre-line',
+              marginBottom: 16,
+            }}
+          >
+            {info.body}
+          </div>
+
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: T.tl,
+              padding: '10px 14px',
+              background: T.c1,
+              borderRadius: 12,
+              display: 'inline-block',
+            }}
+          >
+            {info.source}
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes infoUp {
+          from { transform: translateX(-50%) translateY(100%) }
+          to { transform: translateX(-50%) translateY(0) }
+        }
+      `}</style>
+    </>
+  )
+}
+
 export function InfoButton({ id, T, size = 18 }) {
   const [open, setOpen] = useState(false)
   const info = INFO[id]
@@ -132,67 +299,43 @@ export function InfoButton({ id, T, size = 18 }) {
   return (
     <>
       <button
-        onClick={e => { e.stopPropagation(); haptic(6); setOpen(true) }}
+        onClick={(e) => {
+          e.stopPropagation()
+          haptic(6)
+          setOpen(true)
+        }}
         style={{
-          width: size, height: size,
+          width: size,
+          height: size,
           borderRadius: '50%',
           background: T.c1,
           border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', flexShrink: 0,
-          WebkitTapHighlightColor: 'transparent', outline: 'none',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          flexShrink: 0,
+          WebkitTapHighlightColor: 'transparent',
+          outline: 'none',
           padding: 0,
         }}
       >
-        <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 24 24" fill="none" stroke={T.tl} strokeWidth="2" strokeLinecap="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="16" x2="12" y2="12"/>
-          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        <svg
+          width={size * 0.55}
+          height={size * 0.55}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={T.tl}
+          strokeWidth="2"
+          strokeLinecap="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="16" x2="12" y2="12" />
+          <line x1="12" y1="8" x2="12.01" y2="8" />
         </svg>
       </button>
 
-      {open && (
-        <>
-          {/* Backdrop */}
-          <div
-            onClick={() => setOpen(false)}
-            style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(0,0,0,0.12)' }}
-          />
-          {/* Info sheet — slides up from bottom, compact */}
-          <div style={{
-            position: 'fixed',
-            bottom: 0, left: '50%',
-            transform: 'translateX(-50%)',
-            width: '100%', maxWidth: 560,
-            zIndex: 502,
-            background: T.sf,
-            backdropFilter: 'blur(60px)', WebkitBackdropFilter: 'blur(60px)',
-            borderRadius: '24px 24px 0 0',
-            border: `1px solid ${T.cardBorder || 'rgba(255,255,255,0.3)'}`,
-            boxShadow: '0 -8px 40px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.5)',
-            padding: '16px 24px 40px',
-            animation: 'infoUp 0.32s cubic-bezier(0.32,0.72,0,1) forwards',
-          }}>
-            {/* Pill handle */}
-            <div style={{ display:'flex', justifyContent:'center', marginBottom:16 }}>
-              <div style={{ width:36, height:4, borderRadius:999, background:T.tl, opacity:0.25 }}/>
-            </div>
-            {/* Title */}
-            <div style={{ fontSize:18, fontWeight:700, letterSpacing:-0.3, color:T.th, marginBottom:12 }}>
-              {info.title}
-            </div>
-            {/* Body */}
-            <div style={{ fontSize:14, fontWeight:500, color:T.th, lineHeight:1.75, whiteSpace:'pre-line', marginBottom:16 }}>
-              {info.body}
-            </div>
-            {/* Source */}
-            <div style={{ fontSize:13, fontWeight:600, color:T.tl, padding:'10px 14px', background:T.c1, borderRadius:12, display:'inline-block' }}>
-              {info.source}
-            </div>
-          </div>
-          <style>{`@keyframes infoUp { from{transform:translateX(-50%) translateY(100%)} to{transform:translateX(-50%) translateY(0)} }`}</style>
-        </>
-      )}
+      {open && <InfoSheet info={info} T={T} onClose={() => setOpen(false)} />}
     </>
   )
 }
