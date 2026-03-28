@@ -73,7 +73,6 @@ export function BentoCard({
         transition: `transform 0.16s ${SP}, box-shadow 0.3s ${EZ}`,
         userSelect: 'none',
         WebkitTapHighlightColor: 'transparent',
-        // Party colour tint
         backgroundColor: T.cardTint
           ? `color-mix(in srgb, ${T.c0}, ${T.cardTint})`
           : T.c0,
@@ -81,7 +80,6 @@ export function BentoCard({
       }}
     >
       {children}
-      {/* Chevron for drillable cards */}
       {isClickable && (
         <div style={{
           position:'absolute', top:14, right:14,
@@ -159,9 +157,7 @@ export function StickyPills({ pills, active, onSelect, T, accentColor }) {
 
   const bindRef = (el) => {
     setScrollRef(el)
-    if (el) {
-      requestAnimationFrame(() => updateScrollState(el))
-    }
+    if (el) requestAnimationFrame(() => updateScrollState(el))
   }
 
   const scrollByAmount = (dir) => {
@@ -177,9 +173,18 @@ export function StickyPills({ pills, active, onSelect, T, accentColor }) {
   const pillBg = isDark ? 'rgba(255,255,255,0.10)' : '#F2F2F2'
   const pillText = isDark ? 'rgba(255,255,255,0.78)' : T.tm
   const activeBg = accentColor || '#012169'
-  const edgeFade = isDark
+  const shellBg = T.sf
+  const leftFade = isDark
     ? 'linear-gradient(to right, rgba(13,26,36,1), rgba(13,26,36,0))'
     : 'linear-gradient(to right, rgba(245,247,250,1), rgba(245,247,250,0))'
+  const rightFade = isDark
+    ? 'linear-gradient(to left, rgba(13,26,36,1), rgba(13,26,36,0))'
+    : 'linear-gradient(to left, rgba(245,247,250,1), rgba(245,247,250,0))'
+
+  const arrowBgEnabled = isDark ? 'rgba(255,255,255,0.08)' : '#ECEFF3'
+  const arrowBgDisabled = isDark ? 'rgba(255,255,255,0.04)' : '#F5F7F9'
+  const arrowColorEnabled = isDark ? 'rgba(255,255,255,0.7)' : T.tl
+  const arrowColorDisabled = isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)'
 
   return (
     <div
@@ -189,15 +194,77 @@ export function StickyPills({ pills, active, onSelect, T, accentColor }) {
         position: 'sticky',
         top: 0,
         zIndex: 5,
-        background: T.sf,
-        padding: '8px 16px 10px',
+        background: shellBg,
+        padding: '6px 16px 10px',
       }}
     >
+      {(canScrollLeft || canScrollRight) && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 6,
+            marginBottom: 6,
+            minHeight: 24,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => scrollByAmount(-1)}
+            disabled={!canScrollLeft}
+            aria-label="Scroll pills left"
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 999,
+              border: 'none',
+              cursor: canScrollLeft ? 'pointer' : 'default',
+              background: canScrollLeft ? arrowBgEnabled : arrowBgDisabled,
+              color: canScrollLeft ? arrowColorEnabled : arrowColorDisabled,
+              opacity: canScrollLeft ? 1 : 0.65,
+              fontSize: 14,
+              fontWeight: 700,
+              lineHeight: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+            }}
+          >
+            ‹
+          </button>
+
+          <button
+            type="button"
+            onClick={() => scrollByAmount(1)}
+            disabled={!canScrollRight}
+            aria-label="Scroll pills right"
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 999,
+              border: 'none',
+              cursor: canScrollRight ? 'pointer' : 'default',
+              background: canScrollRight ? arrowBgEnabled : arrowBgDisabled,
+              color: canScrollRight ? arrowColorEnabled : arrowColorDisabled,
+              opacity: canScrollRight ? 1 : 0.65,
+              fontSize: 14,
+              fontWeight: 700,
+              lineHeight: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+            }}
+          >
+            ›
+          </button>
+        </div>
+      )}
+
       <div
         style={{
           position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
           minHeight: 42,
         }}
       >
@@ -208,9 +275,9 @@ export function StickyPills({ pills, active, onSelect, T, accentColor }) {
               left: 0,
               top: 0,
               bottom: 0,
-              width: 28,
+              width: 24,
               pointerEvents: 'none',
-              background: edgeFade,
+              background: leftFade,
               zIndex: 2,
             }}
           />
@@ -220,14 +287,12 @@ export function StickyPills({ pills, active, onSelect, T, accentColor }) {
           <div
             style={{
               position: 'absolute',
-              right: 74,
+              right: 0,
               top: 0,
               bottom: 0,
-              width: 28,
+              width: 24,
               pointerEvents: 'none',
-              background: isDark
-                ? 'linear-gradient(to left, rgba(13,26,36,1), rgba(13,26,36,0))'
-                : 'linear-gradient(to left, rgba(245,247,250,1), rgba(245,247,250,0))',
+              background: rightFade,
               zIndex: 2,
             }}
           />
@@ -243,9 +308,8 @@ export function StickyPills({ pills, active, onSelect, T, accentColor }) {
             scrollbarWidth: 'none',
             touchAction: 'pan-x',
             WebkitOverflowScrolling: 'touch',
-            paddingRight: 84,
             minWidth: 0,
-            flex: 1,
+            width: '100%',
           }}
         >
           <style>{`::-webkit-scrollbar{display:none}`}</style>
@@ -283,68 +347,11 @@ export function StickyPills({ pills, active, onSelect, T, accentColor }) {
             )
           })}
         </div>
-
-        <div
-          style={{
-            position: 'absolute',
-            right: 0,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            gap: 6,
-            zIndex: 3,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => scrollByAmount(-1)}
-            disabled={!canScrollLeft}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 999,
-              border: 'none',
-              cursor: canScrollLeft ? 'pointer' : 'default',
-              background: canScrollLeft
-                ? (isDark ? 'rgba(255,255,255,0.10)' : '#E9EDF2')
-                : (isDark ? 'rgba(255,255,255,0.05)' : '#F3F5F7'),
-              color: canScrollLeft ? T.th : T.tl,
-              opacity: canScrollLeft ? 1 : 0.45,
-              fontSize: 18,
-              fontWeight: 700,
-              lineHeight: 1,
-            }}
-          >
-            ‹
-          </button>
-
-          <button
-            type="button"
-            onClick={() => scrollByAmount(1)}
-            disabled={!canScrollRight}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 999,
-              border: 'none',
-              cursor: canScrollRight ? 'pointer' : 'default',
-              background: canScrollRight
-                ? (isDark ? 'rgba(255,255,255,0.10)' : '#E9EDF2')
-                : (isDark ? 'rgba(255,255,255,0.05)' : '#F3F5F7'),
-              color: canScrollRight ? T.th : T.tl,
-              opacity: canScrollRight ? 1 : 0.45,
-              fontSize: 18,
-              fontWeight: 700,
-              lineHeight: 1,
-            }}
-          >
-            ›
-          </button>
-        </div>
       </div>
     </div>
   )
 }
+
 // ── Horizontal Snap Carousel ──────────────────────────────
 export function SnapCarousel({ children, T, style = {} }) {
   return (
