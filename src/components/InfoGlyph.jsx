@@ -32,6 +32,15 @@ Current pollsters included: YouGov, Savanta, Opinium, Redfield & Wilton, More in
 All polls use some form of likelihood to vote weighting. Fieldwork is typically conducted online over 2-4 days.`,
     source: 'BPC member polls · 7-poll rolling average',
   },
+  news_feed: {
+    title: 'About this news feed',
+    body: `Stories are ranked by how many outlets cover them. If BBC, GB News, Guardian and Sky News all run the same story, it scores highly. A story only one outlet covers ranks lower. Recency breaks ties.
+
+Sources include a mix of broadcasters, newspapers, and party-adjacent political outlets. Some outlets such as the Telegraph, Daily Mail and Times restrict automated access, so coverage can never be fully universal.
+
+This feed is designed as a fast political briefing layer, not a complete substitute for reading full source reporting.`,
+    source: 'Ranked by coverage · recency first',
+  },
   betting_odds: {
     title: 'Betting Odds & Implied Probability',
     body: `Betting odds represent the bookmaker's assessment of probability, adjusted for their margin (the "overround").
