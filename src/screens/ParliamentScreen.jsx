@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ScrollArea, StickyPills, haptic } from '../components/ui'
+import { API_BASE } from '../constants'
 
 const TABS = [
   { key: 'howworks', label: 'How it Works' },
@@ -188,8 +189,157 @@ function daysFrom(dateStr) {
   }
 }
 
+function openExternal(url) {
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+function LiveLinkCard({ T, title, desc, color, cta, onClick, emoji }) {
+  return (
+    <div
+      onClick={() => {
+        haptic(6)
+        onClick()
+      }}
+      style={{
+        borderRadius: 14,
+        padding: '16px',
+        marginBottom: 10,
+        background: T.c0,
+        border: `1px solid ${color}28`,
+        cursor: 'pointer',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>{emoji}</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: T.th, marginBottom: 4 }}>{title}</div>
+          <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.6 }}>{desc}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color, marginTop: 10 }}>{cta} →</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function VideoCard({ T, video }) {
+  if (!video?.videoId) return null
+
+  const src = `https://www.youtube.com/embed/${video.videoId}?autoplay=1&mute=1&cc_load_policy=1&playsinline=1&rel=0`
+
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        overflow: 'hidden',
+        marginBottom: 12,
+        background: T.c0,
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+      }}
+    >
+      <div style={{ padding: '14px 16px 0', fontSize: 15, fontWeight: 800, color: T.th }}>
+        {video.isLive ? 'UK Parliament live' : 'Latest UK Parliament video'}
+      </div>
+
+      <div
+        style={{
+          padding: '6px 16px 12px',
+          fontSize: 13,
+          fontWeight: 500,
+          color: T.tl,
+          lineHeight: 1.6,
+        }}
+      >
+        {video.title}
+      </div>
+
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          paddingTop: '56.25%',
+          background: '#000',
+        }}
+      >
+        <iframe
+          src={src}
+          title={video.title || 'UK Parliament video'}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            border: 'none',
+          }}
+        />
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: 10,
+          padding: '12px 16px 14px',
+          fontSize: 13,
+          fontWeight: 700,
+          color: T.tl,
+          flexWrap: 'wrap',
+        }}
+      >
+        <span>{video.isLive ? 'Source: live stream' : 'Source: latest upload'}</span>
+        {video.publishedAt && (
+          <span>{new Date(video.publishedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function ParliamentScreen({ T, nav }) {
   const [tab, setTab] = useState('howworks')
+  const [video, setVideo] = useState(null)
+  const [videoError, setVideoError] = useState('')
+  const [videoLoading, setVideoLoading] = useState(false)
+
+  useEffect(() => {
+    if (tab !== 'live') return
+
+    let cancelled = false
+
+    async function loadVideo() {
+      setVideoLoading(true)
+      setVideoError('')
+
+      try {
+        const res = await fetch(`${API_BASE}/api/parliament-video`)
+        const data = await res.json()
+
+        if (!res.ok) {
+          throw new Error(data?.message || 'Could not load Parliament video')
+        }
+
+        if (!cancelled) {
+          setVideo(data)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setVideo(null)
+          setVideoError(err instanceof Error ? err.message : 'Could not load Parliament video')
+        }
+      } finally {
+        if (!cancelled) {
+          setVideoLoading(false)
+        }
+      }
+    }
+
+    loadVideo()
+
+    return () => {
+      cancelled = true
+    }
+  }, [tab])
 
   return (
     <div
@@ -305,23 +455,63 @@ export default function ParliamentScreen({ T, nav }) {
 
         {tab === 'live' && (
           <>
-            <div
-              style={{
-                borderRadius: 14,
-                overflow: 'hidden',
-                marginBottom: 14,
-                background: '#000',
-                position: 'relative',
-                paddingTop: '56.25%',
-              }}
-            >
-              <iframe
-                src="https://www.parliamentlive.tv/live"
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
-                allowFullScreen
-                title="Parliament Live TV"
-              />
-            </div>
+            {videoLoading && (
+              <div
+                style={{
+                  borderRadius: 14,
+                  padding: '16px',
+                  marginBottom: 12,
+                  background: T.c0,
+                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: T.tl,
+                }}
+              >
+                Loading latest Parliament video…
+              </div>
+            )}
+
+            {!videoLoading && video && <VideoCard T={T} video={video} />}
+
+            {!videoLoading && videoError && (
+              <div
+                style={{
+                  borderRadius: 14,
+                  padding: '16px',
+                  marginBottom: 12,
+                  background: T.c0,
+                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                }}
+              >
+                <div style={{ fontSize: 15, fontWeight: 800, color: T.th, marginBottom: 6 }}>
+                  Video unavailable
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.65 }}>
+                  {videoError}
+                </div>
+              </div>
+            )}
+
+            <LiveLinkCard
+              T={T}
+              title="Watch House of Commons"
+              desc="Open the official Commons live page in a full browser tab."
+              color="#C8102E"
+              cta="Open Commons"
+              emoji="🏛"
+              onClick={() => openExternal('https://www.parliamentlive.tv/Commons')}
+            />
+
+            <LiveLinkCard
+              T={T}
+              title="Watch UK Parliament on YouTube"
+              desc="Use the official YouTube channel for live streams, replays and clips."
+              color="#E4003B"
+              cta="Open YouTube channel"
+              emoji="▶️"
+              onClick={() => openExternal('https://www.youtube.com/@UKParliament')}
+            />
 
             <div
               style={{
