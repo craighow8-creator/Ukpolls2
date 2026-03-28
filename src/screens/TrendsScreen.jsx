@@ -23,7 +23,7 @@ function InteractiveTrendChart({ trends, hidden, onToggle, T }) {
   PARTY_KEYS.forEach((p) =>
     trends.forEach((d) => {
       if (d[p.key] != null) allVals.push(d[p.key])
-    })
+    }),
   )
 
   const minV = Math.max(0, Math.min(...allVals) - 3)
@@ -47,9 +47,7 @@ function InteractiveTrendChart({ trends, hidden, onToggle, T }) {
     if (hidden[p.key]) return null
 
     const pts = trends
-      .map((d, i) =>
-        d[p.key] != null ? { x: xPos(i), y: yPos(d[p.key]), v: d[p.key], i } : null
-      )
+      .map((d, i) => (d[p.key] != null ? { x: xPos(i), y: yPos(d[p.key]), v: d[p.key], i } : null))
       .filter(Boolean)
 
     if (pts.length < 2) return null
@@ -229,10 +227,7 @@ function InteractiveTrendChart({ trends, hidden, onToggle, T }) {
                 alignItems: 'center',
                 gap: 12,
                 padding: '10px 0',
-                borderBottom:
-                  i < PARTY_KEYS.length - 1
-                    ? `1px solid ${T.cardBorder || 'rgba(0,0,0,0.06)'}`
-                    : 'none',
+                borderBottom: i < PARTY_KEYS.length - 1 ? `1px solid ${T.cardBorder || 'rgba(0,0,0,0.06)'}` : 'none',
                 opacity: hidden[p.key] ? 0.35 : 1,
                 cursor: 'pointer',
                 transition: 'opacity 0.2s',
@@ -262,7 +257,7 @@ function InteractiveTrendChart({ trends, hidden, onToggle, T }) {
       </div>
 
       <div style={{ fontSize: 12, color: T.tl, padding: '8px 2px', lineHeight: 1.5 }}>
-        Apr 2025 – Mar 2026 · Tap any dot for details · Tap party name to hide · * Restore Britain: prompted polls only
+        Apr 2025 – Mar 2026 · Tap any dot for details · Tap party name to hide · Restore Britain: prompted polls only
       </div>
     </div>
   )
@@ -305,9 +300,7 @@ function MilestoneCard({ T, m }) {
           >
             {m.date}
           </div>
-          <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.65 }}>
-            {m.text}
-          </div>
+          <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.65 }}>{m.text}</div>
         </div>
       </div>
     </div>
@@ -330,10 +323,10 @@ export default function TrendsScreen({ T, trends = [], milestones = [] }) {
         background: T.sf,
       }}
     >
-      <div style={{ padding: '20px 18px 0', flexShrink: 0 }}>
+      <div style={{ padding: '18px 18px 0', flexShrink: 0 }}>
         <div
           style={{
-            fontSize: 26,
+            fontSize: 24,
             fontWeight: 800,
             letterSpacing: -0.8,
             color: T.th,
