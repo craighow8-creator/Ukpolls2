@@ -262,45 +262,44 @@ export default function PollsScreen({ T, parties, polls, meta }) {
       <div style={{ padding: '20px 20px 0', flexShrink: 0 }}>
         <div
           style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 12,
+            fontSize: 32,
+            fontWeight: 700,
+            letterSpacing: -1,
+            color: T.th,
           }}
         >
-          <div>
-            <div
-              style={{
-                fontSize: 32,
-                fontWeight: 700,
-                letterSpacing: -1,
-                color: T.th,
-              }}
-            >
-              Polls
-            </div>
+          Polls
+        </div>
 
-            <div style={{ fontSize: 13, fontWeight: 500, color: T.tl }}>
-              BPC member polls · 7-poll average
-            </div>
-
-            {meta?.fetchDate && (
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: T.tl,
-                  marginTop: 3,
-                  opacity: 0.7,
-                }}
-              >
-                Updated {meta.fetchDate} · BPC pollsters
-              </div>
-            )}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap',
+            marginTop: 2,
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 500, color: T.tl }}>
+            BPC member polls · 7-poll average
           </div>
 
-          <InfoButton id="poll_average" T={T} size={22} />
+          <InfoButton id="poll_average" T={T} size={18} />
         </div>
+
+        {meta?.fetchDate && (
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: T.tl,
+              marginTop: 3,
+              opacity: 0.7,
+            }}
+          >
+            Updated {meta.fetchDate} · BPC pollsters
+          </div>
+        )}
       </div>
 
       <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />

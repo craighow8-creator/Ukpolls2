@@ -2,20 +2,19 @@ import { useRef, useState, useEffect } from 'react'
 import { SP } from '../constants'
 
 export default function SheetScreen({ children, T, onClose }) {
-  const [dragging,  setDragging]  = useState(false)
-  const [dragY,     setDragY]     = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const [dragY, setDragY] = useState(0)
   const [dismissed, setDismissed] = useState(false)
-  const startY    = useRef(0)
-  const handleRef = useRef()
+  const startY = useRef(0)
 
-  // Lock body scroll
   useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    return () => {
+      document.body.style.overflow = prev
+    }
   }, [])
 
-  // Drag-to-dismiss on pill handle only
   const onHandleStart = (clientY) => {
     startY.current = clientY
     setDragging(true)
@@ -43,97 +42,104 @@ export default function SheetScreen({ children, T, onClose }) {
 
   return (
     <>
-      {/* Backdrop */}
       <div
         onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, zIndex: 200,
+          position: 'fixed',
+          inset: 0,
+          zIndex: 200,
           background: 'rgba(0,0,0,0.28)',
           animation: 'fadeIn 0.2s ease forwards',
         }}
       />
 
-      {/* Sheet — always full-height, always bottom-up, all screen sizes */}
       <div
         style={{
-          position:  'fixed',
-          bottom:    0,
-          left:      '50%',
+          position: 'fixed',
+          bottom: 0,
+          left: '50%',
           transform: `translateX(-50%) translateY(${translateY})`,
           transition,
-          width:     '100%',
-          maxWidth:  1440,
-          height:    '100dvh',
-          zIndex:    201,
-          display:   'flex',
+          width: '100%',
+          maxWidth: 1440,
+          height: '100dvh',
+          zIndex: 201,
+          display: 'flex',
           flexDirection: 'column',
           background: T.sf || T.c0,
           borderTop: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
           borderRadius: '16px 16px 0 0',
-          overflow:  'hidden',
+          overflow: 'hidden',
           animation: dismissed ? 'none' : 'sheetUp 0.42s cubic-bezier(0.32,0.72,0,1) forwards',
         }}
       >
-        {/* Drag handle — only drag zone, not the whole sheet */}
         <div
-          ref={handleRef}
-          onMouseDown={e  => onHandleStart(e.clientY)}
-          onMouseMove={e  => onHandleMove(e.clientY)}
-          onMouseUp={()   => onHandleEnd()}
-          onTouchStart={e => onHandleStart(e.touches[0].clientY)}
-          onTouchMove={e  => onHandleMove(e.touches[0].clientY)}
-          onTouchEnd={()  => onHandleEnd()}
+          onMouseDown={(e) => onHandleStart(e.clientY)}
+          onMouseMove={(e) => onHandleMove(e.clientY)}
+          onMouseUp={() => onHandleEnd()}
+          onTouchStart={(e) => onHandleStart(e.touches[0].clientY)}
+          onTouchMove={(e) => onHandleMove(e.touches[0].clientY)}
+          onTouchEnd={() => onHandleEnd()}
           style={{
             flexShrink: 0,
-            padding: '14px 0 10px',
+            padding: '14px 0 12px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 0,
             cursor: 'grab',
             touchAction: 'none',
             position: 'relative',
             zIndex: 5,
+            minHeight: 54,
           }}
         >
-          {/* Pill handle */}
-          <div style={{
-            width: 40, height: 5,
-            borderRadius: 999,
-            background: T.tl,
-            opacity: 0.35,
-          }}/>
+          <div
+            style={{
+              width: 40,
+              height: 5,
+              borderRadius: 999,
+              background: T.tl,
+              opacity: 0.35,
+            }}
+          />
         </div>
 
-        {/* X button */}
         <button
           onClick={onClose}
           style={{
-            position: 'absolute', top: 12, right: 16, zIndex: 10,
-            width: 36, height: 36, borderRadius: '50%',
+            position: 'absolute',
+            top: 12,
+            right: 16,
+            zIndex: 10,
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
             background: T.c1,
-            border:'1px solid rgba(255,255,255,0.30)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: '1px solid rgba(255,255,255,0.30)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             cursor: 'pointer',
-            WebkitTapHighlightColor: 'transparent', outline: 'none',
+            WebkitTapHighlightColor: 'transparent',
+            outline: 'none',
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke={T.tm} strokeWidth="2" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.tm} strokeWidth="2" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
 
-        {/* Scrollable content */}
-        <div style={{
-          flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain',
-          paddingBottom: 60,
-        }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            paddingBottom: 60,
+          }}
+        >
           {children}
         </div>
       </div>
