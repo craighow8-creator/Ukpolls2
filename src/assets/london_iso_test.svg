@@ -1,0 +1,126 @@
+<svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" width="800" height="400" style="background:#e8f8fc">
+<!-- LONDON isometric test -->
+<g>
+  <!-- Sky gradient suggestion - background layer (lightest) -->
+  <!-- Layer 3 - far background buildings (most transparent) -->
+  <g opacity="0.25">
+    <rect x="0" y="180" width="60" height="220"/>
+    <rect x="65" y="160" width="45" height="240"/>
+    <rect x="115" y="195" width="35" height="205"/>
+    <rect x="580" y="170" width="50" height="230"/>
+    <rect x="635" y="155" width="40" height="245"/>
+    <rect x="680" y="185" width="55" height="215"/>
+    <rect x="740" y="165" width="60" height="235"/>
+  </g>
+  
+  <!-- Layer 2 - mid background (medium opacity) -->
+  <g opacity="0.5">
+    <!-- Big Ben simplified mid-distance -->
+    <rect x="80" y="120" width="35" height="260"/>
+    <!-- Shard mid distance -->
+    <polygon points="650,80 675,320 625,320"/>
+    <rect x="700" y="140" width="45" height="240"/>
+    <rect x="750" y="160" width="40" height="220"/>
+  </g>
+
+  <!-- Layer 1 - foreground buildings (full opacity) -->
+  <g opacity="0.85">
+    <!-- LEFT foreground cluster -->
+    <!-- Tall office tower with windows -->
+    <rect x="0" y="100" width="55" height="300"/>
+    <!-- Side face of tower (isometric) -->
+    <polygon points="55,100 80,120 80,400 55,400" opacity="0.6"/>
+    <!-- Window grid on front -->
+    <rect x="5" y="110" width="8" height="12" fill="white" opacity="0.3"/>
+    <rect x="18" y="110" width="8" height="12" fill="white" opacity="0.3"/>
+    <rect x="31" y="110" width="8" height="12" fill="white" opacity="0.3"/>
+    <rect x="44" y="110" width="8" height="12" fill="white" opacity="0.3"/>
+    <rect x="5" y="130" width="8" height="12" fill="white" opacity="0.3"/>
+    <rect x="18" y="130" width="8" height="12" fill="white" opacity="0.3"/>
+    <rect x="31" y="130" width="8" height="12" fill="white" opacity="0.3"/>
+    <rect x="44" y="130" width="8" height="12" fill="white" opacity="0.3"/>
+    
+    <!-- Big Ben foreground - iconic shape -->
+    <rect x="88" y="200" width="42" height="200"/>
+    <!-- Side face -->
+    <polygon points="130,200 155,218 155,400 130,400" opacity="0.55"/>
+    <!-- Clock section -->
+    <rect x="83" y="168" width="52" height="35"/>
+    <polygon points="83,168 108,148 135,168" opacity="0.9"/>
+    <!-- Spire -->
+    <rect x="102" y="108" width="12" height="42"/>
+    <polygon points="108,88 120,108 96,108"/>
+    <rect x="106" y="78" width="4" height="12"/>
+    
+    <!-- Low Parliament building -->
+    <rect x="0" y="280" width="200" height="120"/>
+    <polygon points="200,280 230,298 230,400 200,400" opacity="0.55"/>
+    <!-- Battlements -->
+    <rect x="5" y="268" width="10" height="14"/><rect x="22" y="268" width="10" height="14"/>
+    <rect x="39" y="268" width="10" height="14"/><rect x="56" y="268" width="10" height="14"/>
+    <rect x="73" y="268" width="10" height="14"/><rect x="90" y="268" width="10" height="14"/>
+    <rect x="107" y="268" width="10" height="14"/><rect x="124" y="268" width="10" height="14"/>
+    <rect x="141" y="268" width="10" height="14"/><rect x="158" y="268" width="10" height="14"/>
+    <rect x="175" y="268" width="10" height="14"/>
+
+    <!-- London Eye - centre landmark -->
+    <!-- Support structure -->
+    <rect x="368" y="305" width="8" height="95"/>
+    <rect x="390" y="305" width="8" height="95"/>
+    <line x1="372" y1="308" x2="340" y2="400" stroke="currentColor" stroke-width="5"/>
+    <line x1="394" y1="308" x2="426" y2="400" stroke="currentColor" stroke-width="5"/>
+    <!-- Wheel -->
+    <circle cx="383" cy="218" r="88" fill="none" stroke="currentColor" stroke-width="7"/>
+    <circle cx="383" cy="218" r="9"/>
+    <!-- Spokes -->
+    <line x1="383" y1="218" x2="383" y2="130" stroke="currentColor" stroke-width="2.5"/>
+    <line x1="383" y1="218" x2="383" y2="306" stroke="currentColor" stroke-width="2.5"/>
+    <line x1="383" y1="218" x2="471" y2="218" stroke="currentColor" stroke-width="2.5"/>
+    <line x1="383" y1="218" x2="295" y2="218" stroke="currentColor" stroke-width="2.5"/>
+    <line x1="383" y1="218" x2="445" y2="156" stroke="currentColor" stroke-width="2.5"/>
+    <line x1="383" y1="218" x2="321" y2="280" stroke="currentColor" stroke-width="2.5"/>
+    <line x1="383" y1="218" x2="445" y2="280" stroke="currentColor" stroke-width="2.5"/>
+    <line x1="383" y1="218" x2="321" y2="156" stroke="currentColor" stroke-width="2.5"/>
+    <!-- Gondolas -->
+    <circle cx="383" cy="130" r="7"/><circle cx="471" cy="218" r="7"/>
+    <circle cx="383" cy="306" r="7"/><circle cx="295" cy="218" r="7"/>
+    <circle cx="445" cy="156" r="7"/><circle cx="321" cy="280" r="7"/>
+    <circle cx="445" cy="280" r="7"/><circle cx="321" cy="156" r="7"/>
+
+    <!-- RIGHT foreground cluster -->
+    <!-- Tower Bridge left tower -->
+    <rect x="548" y="245" width="38" height="155"/>
+    <polygon points="586,245 610,260 610,400 586,400" opacity="0.55"/>
+    <rect x="543" y="215" width="48" height="32"/>
+    <polygon points="543,215 567,200 591,215"/>
+    <rect x="562" y="188" width="10" height="14"/><rect x="574" y="188" width="10" height="14"/>
+    <!-- Bridge walkway -->
+    <rect x="586" y="228" width="68" height="12"/>
+    <!-- Road deck -->
+    <rect x="528" y="305" width="180" height="14"/>
+    <!-- Cables -->
+    <line x1="562" y1="245" x2="528" y2="319" stroke="currentColor" stroke-width="3.5"/>
+    <line x1="586" y1="240" x2="528" y2="319" stroke="currentColor" stroke-width="2.5"/>
+    <!-- Tower Bridge right tower -->
+    <rect x="654" y="245" width="38" height="155"/>
+    <polygon points="692,245 716,260 716,400 692,400" opacity="0.55"/>
+    <rect x="649" y="215" width="48" height="32"/>
+    <polygon points="649,215 673,200 697,215"/>
+    <rect x="668" y="188" width="10" height="14"/><rect x="680" y="188" width="10" height="14"/>
+    <line x1="692" y1="245" x2="716" y2="319" stroke="currentColor" stroke-width="3.5"/>
+    <line x1="668" y1="240" x2="716" y2="319" stroke="currentColor" stroke-width="2.5"/>
+
+    <!-- The Shard foreground -->
+    <polygon points="740,15 772,345 708,345"/>
+    <polygon points="740,15 764,320 740,320" fill="white" opacity="0.12"/>
+    <!-- Side face -->
+    <polygon points="772,345 800,355 800,400 772,400" opacity="0.45"/>
+
+  </g>
+
+  <!-- Foreground road/ground -->
+  <ellipse cx="400" cy="420" rx="500" ry="60" opacity="0.15"/>
+  <rect x="0" y="385" width="800" height="15" opacity="0.8"/>
+
+</g>
+</svg>

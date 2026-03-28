@@ -1,0 +1,94 @@
+{
+  "meta": {
+    "fetchDate": "20 Mar 2026",
+    "appVersion": "2.0",
+    "context": "Reform UK leads on 27% (7-poll avg, 20 Mar 2026). Greens up to 16% as YouGov (15-16 Mar) shows Con and Lab level at 17% for first time. Pollster spread: More in Common 30%, YouGov 25%. Ipsos (5-11 Mar): Starmer approval −53, new record low. 48 days to May 7 local elections. Restore Britain 7% in prompted polls, 110,000+ members. Electoral Calculus MRP: Reform UK 335 seats projected majority.",
+    "nextElectionDate": "2026-05-07",
+    "nextElectionLabel": "Local + Devolved Elections",
+    "ge2029Date": "2029-05-02",
+    "appUrl": "https://craighow8-creator.github.io/Ukpolls2/"
+  },
+  "parties": [
+    { "id": 1, "name": "Reform UK", "pct": 27, "change": 0, "seats": 335 },
+    { "id": 2, "name": "Labour", "pct": 19, "change": 0, "seats": 141 },
+    { "id": 3, "name": "Conservative", "pct": 18, "change": 0, "seats": 98 },
+    { "id": 4, "name": "Green", "pct": 16, "change": 1, "seats": 28 },
+    { "id": 5, "name": "Lib Dem", "pct": 12, "change": 0, "seats": 87 },
+    { "id": 6, "name": "SNP", "pct": 3, "change": 0, "seats": 44 },
+    { "id": 7, "name": "Plaid Cymru", "pct": 1, "change": 0, "seats": 4 },
+    { "id": 8, "name": "Restore Britain", "pct": 7, "change": 0, "seats": 1 },
+    { "id": 9, "name": "Other", "pct": 5, "change": 0, "seats": 0 }
+  ],
+  "leaders": [
+    { "id": 1, "name": "Zack Polanski", "net": 15, "role": "Co-Leader", "bio": "Born David Paulden on 2 November 1982 in Salford. Changed his name at 18 to restore his family's original Jewish surname. Studied at Aberystwyth University and drama school in the US. Worked in community theatre, hospitality, and as a hypnotherapist before entering politics. Joined the Greens in 2017 after leaving the Lib Dems. Elected to the London Assembly in 2021. Won the Green leadership in September 2025 with 85% of the vote — the first Jewish leader of a Westminster party since Ed Miliband. Under his leadership, Green membership has tripled to over 200,000 and the party won the Gorton & Denton by-election in February 2026.", "party": "Green" },
+    { "id": 2, "name": "Ed Davey", "net": 6, "role": "Leader", "bio": "Sir Ed Davey led the Lib Dems to their best ever result at GE2024, winning 72 seats primarily in the Blue Wall. He is known for his campaigning style and focus on health and social care issues. Approval remains positive.", "party": "Lib Dem" },
+    { "id": 3, "name": "Kemi Badenoch", "net": -7, "role": "Leader", "bio": "Born Olukemi Olufunto Adegoke on 2 January 1980 in Wimbledon. Her mother came to the UK for medical treatment and gave birth here. Grew up between Nigeria and the US; returned to the UK at 16 with very little money and worked at McDonald's while completing her A-levels. Studied Computer Systems Engineering at Queen Mary University of London and later law at Birkbeck. MP for North West Essex since 2017. The first Black woman and first Black person to lead the Conservative Party, elected leader in November 2024.", "party": "Conservative" },
+    { "id": 4, "name": "Keir Starmer", "net": -42, "role": "Prime Minister", "bio": "Born 2 September 1962 in Surrey. Human rights barrister who defended high-profile cases including death row prisoners in the Caribbean. Director of Public Prosecutions 2008–2013, knighted for services to law. MP for Holborn & St Pancras since 2015. Led Labour to a 174-seat majority in July 2024 after 14 years in opposition. His approval ratings have collapsed since entering government — the most unpopular PM since Ipsos records began in 1977. In February 2026, the Mandelson-Epstein scandal triggered the resignation of his chief of staff, communications director and cabinet secretary.", "party": "Labour" },
+    { "id": 5, "name": "Nigel Farage", "net": -4, "role": "Leader", "bio": "Born 3 April 1964 in Farnborough, Kent. Former commodity broker in the City. A lifelong Eurosceptic, he co-founded the Brexit Party (later Reform UK) in 2019 after leading UKIP from 2006–2016. His campaigning was central to the 2016 Brexit referendum result. Elected MP for Clacton at the 2024 general election. Reform has led every national poll since May 2025. In February 2026 he announced a formal shadow cabinet including Robert Jenrick as shadow chancellor, Richard Tice as shadow deputy PM, Zia Yusuf on home affairs, and Suella Braverman on education.", "party": "Reform UK" },
+    { "id": 6, "name": "Rupert Lowe", "net": 3, "role": "Leader", "bio": "Born 1964. Former chairman of Southampton FC (2001–2006). Elected Reform UK MP for Great Yarmouth in July 2024. In March 2025 he publicly criticised Farage's leadership style, leading to his expulsion from Reform UK. Founded Restore Britain in early 2026, targeting the 42% of voters who did not vote in 2024. By 10 March 2026 the party had surpassed 110,000 paid members — the fastest membership growth of any party in modern UK political history.", "party": "Restore Britain" },
+    { "id": 7, "name": "John Swinney", "net": -10, "role": "First Minister of Scotland", "bio": "Born 13 April 1964 in Perthshire. Studied economics at Edinburgh University. Has served in Scottish politics for over 30 years, first elected to the Scottish Parliament in 1999. Served as Deputy First Minister and Finance Secretary under Alex Salmond and Nicola Sturgeon. Became First Minister in May 2024 following Humza Yousaf's resignation. Faces the Holyrood election in May 2026 as the SNP's poll ratings continue to soften.", "party": "SNP" },
+    { "id": 8, "name": "Rhun ap Iorwerth", "net": 4, "role": "Leader", "bio": "Born 1971 in Llangefni, Anglesey. Raised Welsh-speaking. Former BBC Wales journalist and television presenter before entering politics. MS for Anglesey since 2011. Became Plaid Cymru leader in 2023. Leads Plaid into the 2026 Senedd election with polling suggesting they could become the largest party in Wales for the first time, as Labour's dominance collapses.", "party": "Plaid Cymru" }
+  ],
+  "elections": {
+    "date": "7 May 2026",
+    "totalEnglishCouncils": 136
+  },
+  "trends": [
+    { "month":"Apr",  "Reform UK":22, "Labour":25, "Conservative":23, "Lib Dem":11, "Green":8,  "Restore Britain":null },
+    { "month":"May",  "Reform UK":23, "Labour":24, "Conservative":22, "Lib Dem":11, "Green":8,  "Restore Britain":null },
+    { "month":"Jun",  "Reform UK":24, "Labour":24, "Conservative":22, "Lib Dem":11, "Green":9,  "Restore Britain":null },
+    { "month":"Jul",  "Reform UK":25, "Labour":23, "Conservative":21, "Lib Dem":11, "Green":9,  "Restore Britain":null },
+    { "month":"Aug",  "Reform UK":26, "Labour":23, "Conservative":21, "Lib Dem":11, "Green":9,  "Restore Britain":null },
+    { "month":"Sep",  "Reform UK":28, "Labour":22, "Conservative":20, "Lib Dem":12, "Green":10, "Restore Britain":null },
+    { "month":"Oct",  "Reform UK":29, "Labour":21, "Conservative":19, "Lib Dem":12, "Green":11, "Restore Britain":null },
+    { "month":"Nov",  "Reform UK":30, "Labour":20, "Conservative":19, "Lib Dem":13, "Green":11, "Restore Britain":null },
+    { "month":"Dec",  "Reform UK":29, "Labour":21, "Conservative":18, "Lib Dem":13, "Green":11, "Restore Britain":null },
+    { "month":"Jan",  "Reform UK":28, "Labour":20, "Conservative":18, "Lib Dem":13, "Green":13, "Restore Britain":null },
+    { "month":"Feb",  "Reform UK":27, "Labour":18, "Conservative":17, "Lib Dem":13, "Green":17, "Restore Britain":5 },
+    { "month":"Mar",  "Reform UK":27, "Labour":19, "Conservative":18, "Lib Dem":12, "Green":16, "Restore Britain":7 }
+  ],
+  "polls": [
+    { "date":"15-16 Mar", "pollster":"YouGov", "ref":25, "lab":17, "con":17, "ld":14, "grn":19, "rb":null },
+    { "date":"11 Mar", "pollster":"Find Out Now", "ref":26, "lab":15, "con":17, "ld":11, "grn":21, "rb":null },
+    { "date":"10-12 Mar", "pollster":"Techne", "ref":27, "lab":17, "con":18, "ld":14, "grn":17, "rb":null },
+    { "date":"6-10 Mar", "pollster":"Focaldata", "ref":27, "lab":20, "con":18, "ld":14, "grn":13, "rb":null },
+    { "date":"6-9 Mar", "pollster":"More in Common", "ref":30, "lab":22, "con":19, "ld":13, "grn":11, "rb":null },
+    { "date":"5-11 Mar", "pollster":"Ipsos", "ref":28, "lab":21, "con":17, "ld":9, "grn":17, "rb":null },
+    { "date":"5 Mar", "pollster":"Survation", "ref":29, "lab":21, "con":18, "ld":10, "grn":12, "rb":null },
+    { "date":"4-6 Mar", "pollster":"Opinium", "ref":29, "lab":21, "con":16, "ld":10, "grn":14, "rb":null },
+    { "date":"3-4 Mar", "pollster":"Find Out Now (prompted)", "ref":24, "lab":16, "con":17, "ld":10, "grn":20, "rb":7 }
+  ],
+  "milestones": [
+    { "date":"20 Mar", "text":"7-poll avg: Reform 27% (NC), Lab 19% (NC), Con 18% (NC), Green 16% (▲1), LD 12% (NC) — 48 days to local elections" },
+    { "date":"15-16 Mar", "text":"YouGov: Reform 25%, Green 19%, Con 17%, Lab 17%, LD 14% — Conservatives and Labour level for first time in current cycle. Ipsos puts Starmer approval at −53, new record low" }
+  ],
+  "betting": {
+    "source": "Betfair / Oddschecker · Mar 2026",
+    "market": "Most seats at next General Election",
+    "odds": [
+      { "name":"Reform UK", "odds":"6/4", "color":"#12B7D4", "favourite":true },
+      { "name":"Labour", "odds":"9/4", "color":"#E4003B", "favourite":false }
+    ]
+  },
+  "byElections": {
+    "upcoming": [],
+    "recent": []
+  },
+  "migration": {
+    "fetchYear": "Year ending June 2025 · ONS",
+    "netTotal": 204000,
+    "netPrev": 649000,
+    "netPrev2": 944000
+  },
+  "demographics": {
+    "age": {
+      "headline": "Reform lead 45+, Greens lead under-35",
+      "insight": "Age is the single biggest predictor of vote choice in current UK polling.",
+      "source": "Find Out Now, JL Partners · 2026",
+      "groups": [
+        { "label":"18–24", "ref":18, "grn":32, "lab":20, "con":8, "ld":12 }
+      ]
+    }
+  },
+  "newsItems": []
+}

@@ -1,0 +1,10 @@
+name = "politiscope-api"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+account_id = "c41a226e2d0f7ae9050b6cab5caeae76"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "politiscope-db"
+database_id = "9707a11f-fe53-47e0-9e80-1fa95cc372d8"
