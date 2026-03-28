@@ -285,7 +285,7 @@ export default function App() {
 
       <AnimatePresence mode="wait">
         {expanded && currentNav && (
-          <ExpandedCard key={expanded.layoutId} layoutId={expanded.layoutId} T={T} onClose={goBack}>
+         <ExpandedCard key={expanded.layoutId} layoutId={expanded.layoutId} T={T} onClose={closeExpanded}>
             {renderScreen(currentNav.screen, currentNav.params || {})}
           </ExpandedCard>
         )}
