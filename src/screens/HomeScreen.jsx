@@ -335,8 +335,6 @@ export default function HomeScreen({
 
   const winProb = topBet?.odds ? impliedProb(topBet.odds) : null
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
-  const leaderDelta = trendDelta(leader.name)
-  const secondDelta = trendDelta(second.name)
   const leaderWeeklyChange = Number(leader.change || 0)
   const secondWeeklyChange = Number(second.change || 0)
 
@@ -654,7 +652,7 @@ export default function HomeScreen({
           </LargeCard>
 
           <SmallPair>
-            <SmallCard T={T} onClick={() => nav('elections')}>
+            <SmallCard T={T} onClick={() => nav('byelections')}>
               <div style={pS}>
                 <Lbl T={T}>By-elections</Lbl>
                 {recBE[0] ? (
@@ -676,7 +674,7 @@ export default function HomeScreen({
                 ) : (
                   <Sub T={T}>See all results</Sub>
                 )}
-                <Cta T={T}>Elections →</Cta>
+                <Cta T={T}>Open by-elections →</Cta>
               </div>
             </SmallCard>
 
@@ -923,30 +921,6 @@ export default function HomeScreen({
                 </Stat>
                 <Sub T={T}>Commons · Lords · PMQs</Sub>
                 <Cta T={T}>Open live coverage →</Cta>
-              </div>
-            </SmallCard>
-          </SmallPair>
-
-          <SmallPair>
-            <SmallCard T={T} onClick={() => nav('seatbuilder')}>
-              <div style={pS}>
-                <Lbl T={T}>Seat Builder</Lbl>
-                <Stat color="#012169" T={T} size={32}>
-                  🏛️
-                </Stat>
-                <Sub T={T}>Set vote shares · project seats</Sub>
-                <Cta T={T}>Build your parliament →</Cta>
-              </div>
-            </SmallCard>
-
-            <SmallCard T={T} onClick={() => nav('pollpredictor')}>
-              <div style={pS}>
-                <Lbl T={T}>Predictor</Lbl>
-                <Stat color="#02A95B" T={T} size={32}>
-                  🎯
-                </Stat>
-                <Sub T={T}>Predict elections · track record</Sub>
-                <Cta T={T}>Make predictions →</Cta>
               </div>
             </SmallCard>
           </SmallPair>
