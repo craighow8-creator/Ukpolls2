@@ -14,6 +14,142 @@ export const CARD_SIZES = {
 const SPRING_OPEN = { type: 'spring', stiffness: 350, damping: 32 }
 const SPRING_DISMISS = { type: 'spring', stiffness: 400, damping: 36 }
 
+function BrandHeader({ T, onClose }) {
+  const logoSrc = `${import.meta.env.BASE_URL}icon-192.png`
+
+  return (
+    <div
+      style={{
+        flexShrink: 0,
+        background: T.sf,
+        borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.14)'}`,
+        boxShadow: '0 1px 0 rgba(0,0,0,0.03)',
+        padding: '8px 14px 10px',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: 8,
+        }}
+      >
+        <div
+          style={{
+            width: 52,
+            height: 6,
+            borderRadius: 999,
+            background: T.tl,
+            opacity: 0.22,
+          }}
+        />
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          minHeight: 44,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            minWidth: 0,
+            flex: 1,
+          }}
+        >
+          <img
+            src={logoSrc}
+            alt="Politiscope"
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 999,
+              flexShrink: 0,
+              objectFit: 'cover',
+            }}
+          />
+
+          <div
+            style={{
+              minWidth: 0,
+              lineHeight: 1.05,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 16,
+                fontWeight: 800,
+                color: T.th,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              Politiscope
+            </div>
+
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                color: T.tl,
+                lineHeight: 1.2,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              The full picture of British politics
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onClose()
+          }}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: T.c1,
+            border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            WebkitTapHighlightColor: 'transparent',
+            outline: 'none',
+            flexShrink: 0,
+          }}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={T.tm}
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function ExpandedCard({ layoutId, T, children, onClose }) {
   const y = useMotionValue(0)
   const bgOpacity = useTransform(y, [0, 180], [1, 0])
@@ -79,63 +215,10 @@ export function ExpandedCard({ layoutId, T, children, onClose }) {
           dragMomentum={false}
           onDrag={(_, info) => y.set(Math.max(0, info.offset.y))}
           onDragEnd={handleDragEnd}
-          style={{
-            flexShrink: 0,
-            minHeight: 42,
-            padding: '6px 56px 4px',
-            borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.14)'}`,
-            boxShadow: '0 1px 0 rgba(0,0,0,0.03)',
-            background: T.sf,
-          }}
+          style={{ flexShrink: 0 }}
         >
-          <div
-            style={{
-              width: 52,
-              height: 6,
-              borderRadius: 999,
-              background: T.tl,
-              opacity: 0.22,
-              marginTop: 0,
-            }}
-          />
+          <BrandHeader T={T} onClose={onClose} />
         </motion.div>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onClose()
-          }}
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 16,
-            zIndex: 10,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            background: T.c1,
-            border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            WebkitTapHighlightColor: 'transparent',
-            outline: 'none',
-          }}
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke={T.tm}
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
 
         <div
           onTouchStart={onTouchStart}
