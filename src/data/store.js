@@ -1,7 +1,6 @@
 import { API_BASE } from '../constants'
 import DEFAULTS from './data.js'
 
-// localStorage keys
 const KEYS = {
   parties: 'PS_parties',
   trends: 'PS_trends',
@@ -152,6 +151,34 @@ function attachLeaderRefs(parties, leaders) {
   }))
 }
 
+function normalisePollArray(value, fallback = []) {
+  const arr = withFallbackArray(value, fallback)
+  return arr
+    .filter((p) => p && typeof p === 'object')
+    .map((p, idx) => ({
+      id: p.id || `${normaliseName(p.pollster || 'poll')}-${idx}`,
+      pollster: p.pollster || '',
+      isBpcMember: !!p.isBpcMember,
+      fieldworkStart: p.fieldworkStart || null,
+      fieldworkEnd: p.fieldworkEnd || null,
+      publishedAt: p.publishedAt || null,
+      date: p.date || null,
+      sample: p.sample ?? null,
+      method: p.method || null,
+      mode: p.mode || null,
+      commissioner: p.commissioner || null,
+      sourceUrl: p.sourceUrl || null,
+      source: p.source || null,
+      ref: p.ref ?? null,
+      lab: p.lab ?? null,
+      con: p.con ?? null,
+      grn: p.grn ?? null,
+      ld: p.ld ?? null,
+      rb: p.rb ?? null,
+      snp: p.snp ?? null,
+    }))
+}
+
 function getLocalOverrides(defaults) {
   const localLeaders = enrichLeaders(readJson(KEYS.leaders, null), defaults.leaders)
   const localParties = attachLeaderRefs(
@@ -169,7 +196,7 @@ function getLocalOverrides(defaults) {
     byElections: mergeObject(defaults.byElections, readJson(KEYS.byElections, null)),
     migration: mergeObject(defaults.migration, readJson(KEYS.migration, null)),
     milestones: withFallbackArray(readJson(KEYS.milestones, null), defaults.milestones),
-    polls: withFallbackArray(readJson(KEYS.polls, null), defaults.polls),
+    polls: normalisePollArray(readJson(KEYS.polls, null), defaults.polls),
     demographics: mergeObject(defaults.demographics, readJson(KEYS.demographics, null)),
     newsItems: withFallbackArray(readJson(KEYS.newsItems, null), defaults.newsItems),
   }
@@ -197,10 +224,21 @@ function normaliseRemote(remote, defaults) {
     byElections: mergeObject(defaults.byElections, withFallbackObject(remote?.byElections, {})),
     migration: mergeObject(defaults.migration, withFallbackObject(remote?.migration, {})),
     milestones: withFallbackArray(remote?.milestones, defaults.milestones),
-    polls: withFallbackArray(remote?.pollsData || remote?.pollsArchive || remote?.polls_history, defaults.polls),
+    polls: normalisePollArray(remote?.pollsData || remote?.pollsArchive || remote?.polls_history, defaults.polls),
     demographics: mergeObject(defaults.demographics, withFallbackObject(remote?.demographics, {})),
     newsItems: withFallbackArray(remote?.newsItems || remote?.news, defaults.newsItems),
   }
+}
+
+async function fetchLatestPolls() {
+  const res = await fetch(`${API_BASE}/api/polls/latest`, { cache: 'no-store' })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Live polls failed: ${res.status} ${text}`)
+  }
+
+  const data = await res.json()
+  return normalisePollArray(data?.polls, [])
 }
 
 export function loadTimestamps() {
@@ -288,20 +326,24 @@ export async function saveSection(key, value) {
 
 export async function getData() {
   const defaults = getDefaultData()
-console.log('STORE defaults.parties[0]', defaults.parties?.[0])
   const local = getLocalOverrides(defaults)
 
   try {
-    const res = await fetch(`${API_BASE}/api/data`, { cache: 'no-store' })
+    const [remoteRes, livePolls] = await Promise.all([
+      fetch(`${API_BASE}/api/data`, { cache: 'no-store' }),
+      fetchLatestPolls().catch((e) => {
+        console.warn('Store: live polls fetch failed, falling back', e)
+        return null
+      }),
+    ])
 
-    if (!res.ok) {
-      const text = await res.text()
-      throw new Error(`Load failed: ${res.status} ${text}`)
+    if (!remoteRes.ok) {
+      const text = await remoteRes.text()
+      throw new Error(`Load failed: ${remoteRes.status} ${text}`)
     }
 
-    const remote = await res.json()
+    const remote = await remoteRes.json()
     const normalised = normaliseRemote(remote, defaults)
-console.log('STORE normalised.parties[0]', normalised.parties?.[0])
 
     const finalLeaders = enrichLeaders(readJson(KEYS.leaders, null), normalised.leaders)
     const finalParties = attachLeaderRefs(
@@ -309,7 +351,14 @@ console.log('STORE normalised.parties[0]', normalised.parties?.[0])
       finalLeaders
     )
 
-console.log('STORE finalParties', finalParties)
+    const mergedPolls =
+      livePolls && livePolls.length
+        ? livePolls
+        : normalisePollArray(readJson(KEYS.polls, null), normalised.polls)
+
+    if (livePolls && livePolls.length) {
+      cacheSection('polls', livePolls)
+    }
 
     return {
       meta: mergeObject(normalised.meta, readJson(KEYS.meta, null)),
@@ -321,7 +370,7 @@ console.log('STORE finalParties', finalParties)
       byElections: mergeObject(normalised.byElections, readJson(KEYS.byElections, null)),
       migration: mergeObject(normalised.migration, readJson(KEYS.migration, null)),
       milestones: withFallbackArray(readJson(KEYS.milestones, null), normalised.milestones),
-      polls: withFallbackArray(readJson(KEYS.polls, null), normalised.polls),
+      polls: mergedPolls,
       demographics: mergeObject(normalised.demographics, readJson(KEYS.demographics, null)),
       newsItems: withFallbackArray(readJson(KEYS.newsItems, null), normalised.newsItems),
     }

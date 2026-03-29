@@ -13,7 +13,7 @@ export default {
     }
 
     const jsonResponse = (data, init = {}) =>
-      new Response(JSON.stringify(data), {
+      new Response(JSON.stringify(data, null, 2), {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
@@ -22,10 +22,149 @@ export default {
         status: init.status || 200,
       })
 
+    const BPC_MEMBERS = new Set([
+      'ipsos',
+      'orb international',
+      'savanta',
+      'verian',
+      'yougov',
+      'bmg research',
+      'censuswide',
+      'deltapoll',
+      'electoral calculus',
+      'find out now',
+      'focaldata',
+      'hanbury strategy',
+      'j.l. partners',
+      'lucidtalk',
+      'more in common',
+      'norstat',
+      'obsurvant',
+      'opinium',
+      'public first',
+      'redfield & wilton strategies',
+      'survation',
+      'techne',
+      'whitestone insight',
+      'yonder consulting',
+    ])
+
+    function norm(value) {
+      return String(value || '').trim().toLowerCase()
+    }
+
+    function titleCase(value) {
+      return String(value || '').trim().replace(/\s+/g, ' ')
+    }
+
+    function safeNumber(value) {
+      if (value === null || value === undefined || value === '') return null
+      const raw = String(value).trim().replace(/%/g, '').replace(/,/g, '')
+      if (!raw) return null
+      const n = Number(raw)
+      return Number.isFinite(n) ? n : null
+    }
+
+    function formatDateRange(start, end, fallback) {
+      if (fallback) return String(fallback)
+      if (start && end && start !== end) return `${start} – ${end}`
+      return start || end || null
+    }
+
+    function makePollId(pollster, publishedAt, fieldworkEnd, idx = 0) {
+      return `${norm(pollster).replace(/[^a-z0-9]+/g, '-')}-${publishedAt || fieldworkEnd || 'undated'}-${idx}`
+    }
+
+    function normalizePollRecord(row, idx = 0) {
+      if (!row || typeof row !== 'object') return null
+
+      const pollster =
+        row.pollster ||
+        row.pollsterName ||
+        row.house ||
+        row.company ||
+        row.organisation ||
+        row.organization ||
+        ''
+
+      if (!pollster) return null
+
+      const fieldworkStart =
+        row.fieldworkStart ||
+        row.startDate ||
+        row.fieldwork_from ||
+        row.from ||
+        null
+
+      const fieldworkEnd =
+        row.fieldworkEnd ||
+        row.endDate ||
+        row.fieldwork_to ||
+        row.to ||
+        null
+
+      const publishedAt =
+        row.publishedAt ||
+        row.publishDate ||
+        row.published ||
+        row.releaseDate ||
+        row.datePublished ||
+        null
+
+      return {
+        id: row.id || makePollId(pollster, publishedAt, fieldworkEnd, idx),
+        pollster: titleCase(pollster),
+        isBpcMember:
+          row.isBpcMember != null ? !!row.isBpcMember : BPC_MEMBERS.has(norm(pollster)),
+        fieldworkStart,
+        fieldworkEnd,
+        publishedAt,
+        date: row.date || formatDateRange(fieldworkStart, fieldworkEnd, null),
+        sample: safeNumber(row.sample || row.sampleSize || row.n),
+        method: row.method || row.methodology || null,
+        mode: row.mode || row.collectionMode || null,
+        commissioner: row.commissioner || row.client || null,
+        sourceUrl: row.sourceUrl || row.url || row.link || null,
+        source: row.source || row.sourceLabel || null,
+        ref: safeNumber(row.ref ?? row.reform ?? row.reform_uk),
+        lab: safeNumber(row.lab ?? row.labour),
+        con: safeNumber(row.con ?? row.conservative),
+        grn: safeNumber(row.grn ?? row.green),
+        ld: safeNumber(
+          row.ld ?? row.libdem ?? row.lib_dem ?? row.liberal_democrats
+        ),
+        rb: safeNumber(row.rb ?? row.restore_britain),
+        snp: safeNumber(row.snp),
+      }
+    }
+
+    function sortPollsNewestFirst(polls) {
+      const score = (p) => p.publishedAt || p.fieldworkEnd || p.fieldworkStart || ''
+      return [...polls].sort((a, b) => score(b).localeCompare(score(a)))
+    }
+
+    function mergePolls(existingPolls, incomingPolls) {
+      const map = new Map()
+
+      for (const poll of existingPolls || []) {
+        const normal = normalizePollRecord(poll)
+        if (normal?.id) map.set(normal.id, normal)
+      }
+
+      for (const poll of incomingPolls || []) {
+        const normal = normalizePollRecord(poll)
+        if (normal?.id) map.set(normal.id, normal)
+      }
+
+      return sortPollsNewestFirst([...map.values()])
+    }
+
     async function tableExists(tableName) {
       const res = await env.DB.prepare(
         "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
-      ).bind(tableName).first()
+      )
+        .bind(tableName)
+        .first()
       return !!res
     }
 
@@ -44,7 +183,9 @@ export default {
 
       const row = await env.DB.prepare(
         'SELECT section, data, updated_at FROM content WHERE section = ? LIMIT 1'
-      ).bind(section).first()
+      )
+        .bind(section)
+        .first()
 
       if (!row) return null
 
@@ -58,7 +199,7 @@ export default {
     async function saveContentSection(section, payload) {
       const hasContent = await tableExists('content')
       if (!hasContent) {
-        throw new Error(`Missing D1 table: content`)
+        throw new Error('Missing D1 table: content')
       }
 
       await env.DB.prepare(
@@ -67,18 +208,14 @@ export default {
          ON CONFLICT(section) DO UPDATE SET
            data = excluded.data,
            updated_at = excluded.updated_at`
-      ).bind(
-        section,
-        JSON.stringify(payload ?? null),
-        new Date().toISOString()
-      ).run()
+      )
+        .bind(section, JSON.stringify(payload ?? null), new Date().toISOString())
+        .run()
     }
 
-    async function ytFetch(url, apiKey) {
-      const res = await fetch(url, {
-        headers: {
-          Accept: 'application/json',
-        },
+    async function ytFetch(urlValue, apiKey) {
+      const res = await fetch(urlValue, {
+        headers: { Accept: 'application/json' },
       })
 
       if (!res.ok) {
@@ -97,6 +234,7 @@ export default {
       const data = await ytFetch(endpoint, apiKey)
       const item = data?.items?.[0]
       if (!item?.id) throw new Error('Could not resolve UK Parliament YouTube channel')
+
       return {
         channelId: item.id,
         uploadsPlaylistId: item?.contentDetails?.relatedPlaylists?.uploads || null,
@@ -156,6 +294,16 @@ export default {
       }
     }
 
+    async function loadNormalizedPolls() {
+      const pollsData = await loadContentSection('pollsData')
+      const raw = Array.isArray(pollsData) ? pollsData : []
+      const normalized = raw
+        .map((row, idx) => normalizePollRecord(row, idx))
+        .filter(Boolean)
+
+      return sortPollsNewestFirst(normalized)
+    }
+
     try {
       if (request.method === 'GET' && url.pathname === '/api/parliament-video') {
         if (!env.YOUTUBE_API_KEY) {
@@ -198,6 +346,76 @@ export default {
           youtubeUrl: `https://www.youtube.com/watch?v=${video.videoId}`,
           channelUrl: 'https://www.youtube.com/@UKParliament',
           commonsUrl: 'https://www.parliamentlive.tv/Commons',
+        })
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/polls/import') {
+        const body = await request.json()
+        const polls = Array.isArray(body?.polls) ? body.polls : null
+
+        if (!polls) {
+          return jsonResponse(
+            { error: 'Missing polls array' },
+            { status: 400 }
+          )
+        }
+
+        const existingPolls = await loadContentSection('pollsData')
+        const mergedPolls = mergePolls(existingPolls, polls)
+
+        await saveContentSection('pollsData', mergedPolls)
+
+        return jsonResponse({
+          ok: true,
+          imported: polls.length,
+          totalPolls: mergedPolls.length,
+        })
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/polls/latest') {
+        const polls = await loadNormalizedPolls()
+        return jsonResponse({
+          count: polls.length,
+          polls,
+        })
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/pollsters') {
+        const polls = await loadNormalizedPolls()
+        const groups = new Map()
+
+        for (const poll of polls) {
+          if (!poll.pollster) continue
+
+          if (!groups.has(poll.pollster)) {
+            groups.set(poll.pollster, {
+              name: poll.pollster,
+              isBpcMember: !!poll.isBpcMember,
+              pollCount: 0,
+              latestPoll: null,
+            })
+          }
+
+          const g = groups.get(poll.pollster)
+          g.pollCount += 1
+
+          if (
+            !g.latestPoll ||
+            (poll.publishedAt || poll.fieldworkEnd || poll.fieldworkStart || '') >
+              (g.latestPoll.publishedAt ||
+                g.latestPoll.fieldworkEnd ||
+                g.latestPoll.fieldworkStart ||
+                '')
+          ) {
+            g.latestPoll = poll
+          }
+        }
+
+        return jsonResponse({
+          count: groups.size,
+          pollsters: [...groups.values()].sort(
+            (a, b) => b.pollCount - a.pollCount || a.name.localeCompare(b.name)
+          ),
         })
       }
 
@@ -257,7 +475,9 @@ export default {
           for (const [key, value] of entries) {
             await env.DB.prepare(
               'INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)'
-            ).bind(key, String(value ?? '')).run()
+            )
+              .bind(key, String(value ?? ''))
+              .run()
           }
 
           return new Response('ok', { headers: corsHeaders })
@@ -269,14 +489,16 @@ export default {
           for (const row of payload || []) {
             await env.DB.prepare(
               'INSERT INTO polls (id, name, pct, change, seats, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-            ).bind(
-              row.id ?? null,
-              row.name ?? '',
-              row.pct ?? 0,
-              row.change ?? 0,
-              row.seats ?? 0,
-              row.updated_at ?? new Date().toISOString()
-            ).run()
+            )
+              .bind(
+                row.id ?? null,
+                row.name ?? '',
+                row.pct ?? 0,
+                row.change ?? 0,
+                row.seats ?? 0,
+                row.updated_at ?? new Date().toISOString()
+              )
+              .run()
           }
 
           return new Response('ok', { headers: corsHeaders })
@@ -288,14 +510,16 @@ export default {
           for (const row of payload || []) {
             await env.DB.prepare(
               'INSERT INTO leaders (id, name, net, role, bio, party) VALUES (?, ?, ?, ?, ?, ?)'
-            ).bind(
-              row.id ?? null,
-              row.name ?? '',
-              row.net ?? 0,
-              row.role ?? '',
-              row.bio ?? '',
-              row.party ?? ''
-            ).run()
+            )
+              .bind(
+                row.id ?? null,
+                row.name ?? '',
+                row.net ?? 0,
+                row.role ?? '',
+                row.bio ?? '',
+                row.party ?? ''
+              )
+              .run()
           }
 
           return new Response('ok', { headers: corsHeaders })
@@ -307,12 +531,14 @@ export default {
           for (const row of payload || []) {
             await env.DB.prepare(
               'INSERT INTO elections (id, name, date, data) VALUES (?, ?, ?, ?)'
-            ).bind(
-              row.id ?? null,
-              row.name ?? '',
-              row.date ?? '',
-              JSON.stringify(row.data ?? null)
-            ).run()
+            )
+              .bind(
+                row.id ?? null,
+                row.name ?? '',
+                row.date ?? '',
+                JSON.stringify(row.data ?? null)
+              )
+              .run()
           }
 
           return new Response('ok', { headers: corsHeaders })
@@ -352,35 +578,43 @@ export default {
         for (const p of body.parties || []) {
           await env.DB.prepare(
             'INSERT INTO polls (id, name, pct, change, seats, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-          ).bind(
-            p.id ?? null,
-            p.name ?? '',
-            p.pct ?? 0,
-            p.change ?? 0,
-            p.seats ?? 0,
-            new Date().toISOString()
-          ).run()
+          )
+            .bind(
+              p.id ?? null,
+              p.name ?? '',
+              p.pct ?? 0,
+              p.change ?? 0,
+              p.seats ?? 0,
+              new Date().toISOString()
+            )
+            .run()
         }
 
         for (const leader of body.leaders || []) {
           await env.DB.prepare(
             'INSERT INTO leaders (id, name, net, role, bio, party) VALUES (?, ?, ?, ?, ?, ?)'
-          ).bind(
-            leader.id ?? null,
-            leader.name ?? '',
-            leader.net ?? 0,
-            leader.role ?? '',
-            leader.bio ?? '',
-            leader.party ?? ''
-          ).run()
+          )
+            .bind(
+              leader.id ?? null,
+              leader.name ?? '',
+              leader.net ?? 0,
+              leader.role ?? '',
+              leader.bio ?? '',
+              leader.party ?? ''
+            )
+            .run()
         }
 
         await env.DB.prepare(
           'INSERT INTO elections (id, name, date, data) VALUES (?, ?, ?, ?)'
-        ).bind(1, 'main', '', JSON.stringify(body.elections ?? {})).run()
+        )
+          .bind(1, 'main', '', JSON.stringify(body.elections ?? {}))
+          .run()
 
         for (const [key, value] of Object.entries(body.meta || {})) {
-          await env.DB.prepare('INSERT INTO meta (key, value) VALUES (?, ?)').bind(key, String(value ?? '')).run()
+          await env.DB.prepare('INSERT INTO meta (key, value) VALUES (?, ?)')
+            .bind(key, String(value ?? ''))
+            .run()
         }
 
         if (await tableExists('content')) {
@@ -402,7 +636,9 @@ export default {
                ON CONFLICT(section) DO UPDATE SET
                  data = excluded.data,
                  updated_at = excluded.updated_at`
-            ).bind(section, JSON.stringify(data), new Date().toISOString()).run()
+            )
+              .bind(section, JSON.stringify(data), new Date().toISOString())
+              .run()
           }
         }
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ScrollArea, StickyPills, haptic } from '../components/ui'
 
 const PARTY_KEYS = [
@@ -14,6 +14,268 @@ const TABS = [
   { key: 'chart', label: 'Chart' },
   { key: 'milestones', label: 'Timeline' },
 ]
+
+function norm(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function SectionLabel({ children, T }) {
+  return (
+    <div
+      style={{
+        fontSize: 13,
+        fontWeight: 800,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: T.tl,
+        marginBottom: 10,
+        textAlign: 'center',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function Badge({ children, color, subtle = false }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 12,
+        fontWeight: 800,
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
+        color,
+        background: subtle ? `${color}12` : `${color}1F`,
+        border: `1px solid ${color}2B`,
+        borderRadius: 999,
+        padding: '4px 9px',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
+function getLatestValues(trends) {
+  if (!trends?.length) return []
+
+  const latest = trends[trends.length - 1]
+  const first = trends[0]
+
+  return PARTY_KEYS.map((p) => {
+    const current = latest?.[p.key]
+    const start = first?.[p.key]
+    const delta =
+      current != null && start != null ? +(current - start).toFixed(1) : null
+
+    return {
+      ...p,
+      current,
+      start,
+      delta,
+    }
+  })
+    .filter((p) => p.current != null)
+    .sort((a, b) => b.current - a.current)
+}
+
+function buildTrendStory(trends) {
+  const vals = getLatestValues(trends)
+  if (vals.length < 2) {
+    return {
+      headline: 'Polling movement view',
+      subhead: 'Not enough trend data yet to describe the race clearly.',
+    }
+  }
+
+  const leader = vals[0]
+  const second = vals[1]
+  const rising = [...vals]
+    .filter((p) => p.delta != null)
+    .sort((a, b) => (b.delta || 0) - (a.delta || 0))[0]
+  const falling = [...vals]
+    .filter((p) => p.delta != null)
+    .sort((a, b) => (a.delta || 0) - (b.delta || 0))[0]
+
+  const gap = +((leader.current || 0) - (second.current || 0)).toFixed(1)
+
+  let subhead = `${leader.key} lead by ${gap}pt.`
+
+  if (rising && (rising.delta || 0) > 0) {
+    subhead += ` ${rising.key} are up ${rising.delta}pt over the visible period.`
+  }
+
+  if (falling && (falling.delta || 0) < 0) {
+    subhead += ` ${falling.key} are down ${Math.abs(falling.delta)}pt.`
+  }
+
+  return {
+    headline: `${leader.key} still lead the trend picture`,
+    subhead,
+    leader,
+    second,
+    rising,
+    falling,
+    gap,
+  }
+}
+
+function TrendHero({ T, trends }) {
+  const story = buildTrendStory(trends)
+
+  return (
+    <div
+      style={{
+        borderRadius: 18,
+        padding: '18px 18px 16px',
+        marginBottom: 14,
+        background: T.c0,
+        border: `1px solid ${(story.leader?.color || T.pr)}30`,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        <Badge color={story.leader?.color || T.pr}>Trend Hero</Badge>
+        {story.rising && (story.rising.delta || 0) > 0 ? (
+          <Badge color="#02A95B" subtle>Rising: {story.rising.abbr}</Badge>
+        ) : null}
+        {story.falling && (story.falling.delta || 0) < 0 ? (
+          <Badge color="#C8102E" subtle>Falling: {story.falling.abbr}</Badge>
+        ) : null}
+      </div>
+
+      <div
+        style={{
+          fontSize: 26,
+          fontWeight: 800,
+          letterSpacing: '-0.03em',
+          color: T.th,
+          textAlign: 'center',
+          lineHeight: 1.1,
+        }}
+      >
+        {story.headline}
+      </div>
+
+      <div
+        style={{
+          fontSize: 14,
+          fontWeight: 600,
+          color: T.tl,
+          textAlign: 'center',
+          lineHeight: 1.6,
+          marginTop: 10,
+        }}
+      >
+        {story.subhead}
+      </div>
+
+      {story.leader && story.second ? (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 8,
+            flexWrap: 'wrap',
+            marginTop: 12,
+          }}
+        >
+          <Badge color={story.leader.color}>
+            {story.leader.abbr} {story.leader.current}%
+          </Badge>
+          <Badge color={story.second.color} subtle>
+            {story.second.abbr} {story.second.current}%
+          </Badge>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function RaceShapeCard({ T, trends }) {
+  const vals = getLatestValues(trends)
+  if (vals.length < 2) return null
+
+  const leader = vals[0]
+  const second = vals[1]
+  const latestGap = +((leader.current || 0) - (second.current || 0)).toFixed(1)
+  const firstGap =
+    leader.start != null && second.start != null
+      ? +((leader.start || 0) - (second.start || 0)).toFixed(1)
+      : null
+
+  const gapDelta =
+    firstGap != null ? +(latestGap - firstGap).toFixed(1) : null
+
+  let label = 'Stable race'
+  let color = T.tl
+
+  if (gapDelta != null) {
+    if (gapDelta > 0.4) {
+      label = 'Lead widening'
+      color = '#02A95B'
+    } else if (gapDelta < -0.4) {
+      label = 'Race tightening'
+      color = '#C8102E'
+    }
+  }
+
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        padding: '14px 16px',
+        marginBottom: 12,
+        background: T.c0,
+        border: `1px solid ${color}26`,
+      }}
+    >
+      <SectionLabel T={T}>Race shape</SectionLabel>
+
+      <div
+        style={{
+          fontSize: 22,
+          fontWeight: 800,
+          color: T.th,
+          textAlign: 'center',
+          lineHeight: 1.1,
+        }}
+      >
+        {latestGap}pt gap
+      </div>
+
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: 700,
+          color,
+          textAlign: 'center',
+          marginTop: 8,
+        }}
+      >
+        {label}
+      </div>
+
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: 500,
+          color: T.tl,
+          textAlign: 'center',
+          lineHeight: 1.6,
+          marginTop: 6,
+        }}
+      >
+        {leader.key} vs {second.key}
+        {gapDelta != null ? ` · change of ${gapDelta > 0 ? '+' : ''}${gapDelta}pt across the visible range` : ''}
+      </div>
+    </div>
+  )
+}
 
 function InteractiveTrendChart({ trends, hidden, onToggle, T }) {
   const [tooltip, setTooltip] = useState(null)
@@ -158,7 +420,7 @@ function InteractiveTrendChart({ trends, hidden, onToggle, T }) {
 
             {lines}
 
-            {tooltip !== null && (
+            {tooltip !== null ? (
               <line
                 x1={xPos(tooltip)}
                 y1={PT}
@@ -168,12 +430,12 @@ function InteractiveTrendChart({ trends, hidden, onToggle, T }) {
                 strokeWidth={1}
                 strokeDasharray="4,3"
               />
-            )}
+            ) : null}
           </svg>
         </div>
       </div>
 
-      {tooltip !== null && trends[tooltip] && (
+      {tooltip !== null && trends[tooltip] ? (
         <div
           style={{
             borderRadius: 12,
@@ -183,7 +445,7 @@ function InteractiveTrendChart({ trends, hidden, onToggle, T }) {
             border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
           }}
         >
-          <div style={{ fontSize: 13, fontWeight: 800, color: T.th, marginBottom: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: T.th, marginBottom: 8, textAlign: 'center' }}>
             {trends[tooltip].month} {tooltip <= 8 ? '2025' : '2026'}
           </div>
 
@@ -203,62 +465,83 @@ function InteractiveTrendChart({ trends, hidden, onToggle, T }) {
               ))}
           </div>
         </div>
-      )}
+      ) : null}
 
-      <div style={{ borderTop: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`, marginTop: 4 }}>
-        {PARTY_KEYS.map((p, i) => {
-          const vals = trends.map((d) => d[p.key]).filter((v) => v != null)
-          if (!vals.length) return null
+      <div style={{ fontSize: 12, color: T.tl, padding: '8px 2px 0', lineHeight: 1.5, textAlign: 'center' }}>
+        Tap any dot for details · Tap a party row below to hide it
+      </div>
+    </div>
+  )
+}
 
-          const current = vals[vals.length - 1]
-          const first = vals[0]
-          const delta = +(current - first).toFixed(1)
-          const isNew = vals.length <= 3
+function MovementCards({ trends, hidden, onToggle, T }) {
+  const latest = getLatestValues(trends)
 
-          return (
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {latest.map((p) => {
+        const hiddenNow = !!hidden[p.key]
+        let label = 'Flat'
+        let labelColor = T.tl
+
+        if (p.delta != null) {
+          if (p.delta > 0.4) {
+            label = 'Rising'
+            labelColor = '#02A95B'
+          } else if (p.delta < -0.4) {
+            label = 'Slipping'
+            labelColor = '#C8102E'
+          }
+        }
+
+        return (
+          <div
+            key={p.key}
+            onClick={() => {
+              haptic(4)
+              onToggle(p.key)
+            }}
+            style={{
+              borderRadius: 14,
+              padding: '12px 14px',
+              background: T.c0,
+              border: `1px solid ${p.color}24`,
+              opacity: hiddenNow ? 0.4 : 1,
+              cursor: 'pointer',
+              transition: 'opacity 0.2s',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
             <div
-              key={i}
-              onClick={() => {
-                haptic(4)
-                onToggle(p.key)
-              }}
               style={{
-                display: 'flex',
+                display: 'grid',
+                gridTemplateColumns: '50px 1fr 54px',
                 alignItems: 'center',
-                gap: 12,
-                padding: '10px 0',
-                borderBottom: i < PARTY_KEYS.length - 1 ? `1px solid ${T.cardBorder || 'rgba(0,0,0,0.06)'}` : 'none',
-                opacity: hidden[p.key] ? 0.35 : 1,
-                cursor: 'pointer',
-                transition: 'opacity 0.2s',
-                WebkitTapHighlightColor: 'transparent',
+                gap: 10,
               }}
             >
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: p.color, flexShrink: 0 }} />
-              <div style={{ flex: 1, fontSize: 14, fontWeight: 700, color: T.th }}>{p.key}</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: p.color }}>
-                {current}
-                <span style={{ fontSize: 12 }}>%</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: p.color }}>{p.abbr}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: p.color, lineHeight: 1, marginTop: 2 }}>
+                  {p.current}%
+                </div>
               </div>
-              <div
-                style={{
-                  width: 38,
-                  textAlign: 'right',
-                  fontSize: 13,
-                  fontWeight: 800,
-                  color: isNew ? T.pr : delta > 0 ? '#02A95B' : delta < 0 ? '#C8102E' : T.tl,
-                }}
-              >
-                {isNew ? 'NEW' : delta > 0 ? `+${delta}` : `${delta}`}
+
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.th }}>{p.key}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: labelColor, marginTop: 4 }}>
+                  {label}
+                  {p.delta != null ? ` · ${p.delta > 0 ? '+' : ''}${p.delta}pt` : ''}
+                </div>
+              </div>
+
+              <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, textAlign: 'right' }}>
+                {hiddenNow ? 'Hidden' : 'Visible'}
               </div>
             </div>
-          )
-        })}
-      </div>
-
-      <div style={{ fontSize: 12, color: T.tl, padding: '8px 2px', lineHeight: 1.5 }}>
-        Apr 2025 – Mar 2026 · Tap any dot for details · Tap party name to hide · Restore Britain: prompted polls only
-      </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -313,6 +596,8 @@ export default function TrendsScreen({ T, trends = [], milestones = [] }) {
 
   const toggle = (key) => setHidden((h) => ({ ...h, [key]: !h[key] }))
 
+  const totalPoints = useMemo(() => trends?.length || 0, [trends])
+
   return (
     <div
       style={{
@@ -326,37 +611,96 @@ export default function TrendsScreen({ T, trends = [], milestones = [] }) {
       <div style={{ padding: '18px 18px 0', flexShrink: 0 }}>
         <div
           style={{
-            fontSize: 24,
+            fontSize: 28,
+            fontWeight: 800,
+            letterSpacing: -1,
+            color: T.th,
+            lineHeight: 1,
+            textAlign: 'center',
+          }}
+        >
+          Politiscope
+        </div>
+
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: T.tl,
+            marginTop: 4,
+            textAlign: 'center',
+            lineHeight: 1.5,
+          }}
+        >
+          The full picture of British politics
+        </div>
+
+        <div
+          style={{
+            fontSize: 22,
             fontWeight: 800,
             letterSpacing: -0.8,
             color: T.th,
             lineHeight: 1,
+            textAlign: 'center',
+            marginTop: 12,
           }}
         >
           Trends
         </div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>
-          National polling movement · timeline
+
+        <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4, textAlign: 'center' }}>
+          National polling movement · race shape · timeline
         </div>
       </div>
 
       <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
 
       <ScrollArea>
-        {tab === 'chart' && (
-          <div
-            style={{
-              borderRadius: 14,
-              padding: '14px',
-              background: T.c0,
-              border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-            }}
-          >
-            <InteractiveTrendChart trends={trends} hidden={hidden} onToggle={toggle} T={T} />
-          </div>
-        )}
+        {tab === 'chart' ? (
+          <>
+            <TrendHero T={T} trends={trends} />
+            <RaceShapeCard T={T} trends={trends} />
 
-        {tab === 'milestones' && (
+            <div
+              style={{
+                borderRadius: 14,
+                padding: '14px',
+                background: T.c0,
+                border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                marginBottom: 12,
+              }}
+            >
+              <SectionLabel T={T}>Trend chart</SectionLabel>
+              <InteractiveTrendChart trends={trends} hidden={hidden} onToggle={toggle} T={T} />
+            </div>
+
+            <div
+              style={{
+                borderRadius: 14,
+                padding: '14px',
+                background: T.c0,
+                border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+              }}
+            >
+              <SectionLabel T={T}>Party movers</SectionLabel>
+              <MovementCards trends={trends} hidden={hidden} onToggle={toggle} T={T} />
+              <div
+                style={{
+                  fontSize: 12,
+                  color: T.tl,
+                  paddingTop: 10,
+                  lineHeight: 1.5,
+                  textAlign: 'center',
+                }}
+              >
+                {totalPoints} polling points in view · tap any party row to hide or show it on the chart
+              </div>
+            </div>
+          </>
+        ) : null}
+
+        {tab === 'milestones' ? (
           <>
             <div
               style={{
@@ -374,7 +718,7 @@ export default function TrendsScreen({ T, trends = [], milestones = [] }) {
               <MilestoneCard key={i} T={T} m={m} />
             ))}
           </>
-        )}
+        ) : null}
 
         <div style={{ height: 40 }} />
       </ScrollArea>
