@@ -24,6 +24,7 @@ function SectionLabel({ children, T }) {
         color: T.tl,
         marginBottom: 8,
         marginTop: 6,
+        textAlign: 'center',
       }}
     >
       {children}
@@ -271,11 +272,12 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
             letterSpacing: -0.8,
             color: T.th,
             lineHeight: 1,
+            textAlign: 'center',
           }}
         >
           Compare
         </div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4, textAlign: 'center' }}>
           Side-by-side party comparison
         </div>
       </div>
@@ -453,11 +455,11 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
             </div>
             <div
               style={{
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 500,
                 color: T.tl,
-                lineHeight: 1.6,
-                maxWidth: 260,
+                lineHeight: 1.7,
+                maxWidth: 280,
                 margin: '0 auto',
               }}
             >
@@ -485,6 +487,7 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
                   textTransform: 'uppercase',
                   color: T.tl,
                   marginBottom: 8,
+                  textAlign: 'center',
                 }}
               >
                 Poll gap
@@ -568,7 +571,7 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
                         key={i}
                         style={{
                           borderRadius: 12,
-                          padding: '11px 12px',
+                          padding: '12px 12px',
                           background: T.c0 || '#fff',
                           border: `1px solid ${party?.color || T.cardBorder || 'rgba(0,0,0,0.07)'}28`,
                           textAlign: 'center',
@@ -588,7 +591,7 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
                               {leader.net >= 0 ? '+' : ''}
                               {leader.net}
                             </div>
-                            <div style={{ fontSize: 13, color: T.tl, marginTop: 2 }}>Net approval</div>
+                            <div style={{ fontSize: 13, color: T.tl, marginTop: 3 }}>Net approval</div>
                           </>
                         ) : (
                           <div style={{ fontSize: 13, color: T.tl }}>No leader data</div>
@@ -606,7 +609,7 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
               if (!textA && !textB) return null
 
               return (
-                <div key={topic} style={{ marginBottom: 10 }}>
+                <div key={topic} style={{ marginBottom: 12 }}>
                   <SectionLabel T={T}>{topic} · preview</SectionLabel>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     {[{ text: textA, party: partyA }, { text: textB, party: partyB }].map(({ text, party }, i) => (
@@ -614,7 +617,7 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
                         key={i}
                         style={{
                           borderRadius: 12,
-                          padding: '11px 12px',
+                          padding: '12px 12px',
                           background: T.c0 || '#fff',
                           border: `1px solid ${party?.color || T.cardBorder || 'rgba(0,0,0,0.07)'}20`,
                         }}
@@ -626,21 +629,23 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
                             color: party?.color,
                             textTransform: 'uppercase',
                             letterSpacing: '0.08em',
-                            marginBottom: 5,
+                            marginBottom: 6,
+                            textAlign: 'center',
                           }}
                         >
                           {party?.abbr}
                         </div>
                         <div
                           style={{
-                            fontSize: 13,
+                            fontSize: 14,
                             fontWeight: 500,
                             color: T.tl,
-                            lineHeight: 1.55,
+                            lineHeight: 1.7,
                             display: '-webkit-box',
-                            WebkitLineClamp: 4,
+                            WebkitLineClamp: 5,
                             WebkitBoxOrient: 'vertical',
                             overflow: 'hidden',
+                            textAlign: 'center',
                           }}
                         >
                           {text || 'No data'}
@@ -666,7 +671,7 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
                       key={i}
                       style={{
                         borderRadius: 12,
-                        padding: '12px 12px',
+                        padding: '14px 13px',
                         background: T.c0 || '#fff',
                         border: `1px solid ${party?.color || T.cardBorder || 'rgba(0,0,0,0.07)'}28`,
                       }}
@@ -678,12 +683,21 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
                           color: party?.color,
                           textTransform: 'uppercase',
                           letterSpacing: '0.08em',
-                          marginBottom: 6,
+                          marginBottom: 8,
+                          textAlign: 'center',
                         }}
                       >
                         {party?.name}
                       </div>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, lineHeight: 1.6 }}>
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 500,
+                          color: T.tl,
+                          lineHeight: 1.75,
+                          textAlign: 'center',
+                        }}
+                      >
                         {leader?.[tab] || 'No position data available'}
                       </div>
                     </div>
@@ -710,15 +724,15 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
                             key={j}
                             style={{
                               borderRadius: 10,
-                              padding: '10px 10px',
+                              padding: '12px 11px',
                               background: pledge ? `${party?.color}0c` : T.c1 || 'rgba(0,0,0,0.03)',
                               border: `1px solid ${party?.color || T.cardBorder || 'rgba(0,0,0,0.07)'}${pledge ? '28' : '10'}`,
-                              minHeight: 50,
+                              minHeight: 58,
                             }}
                           >
                             {pledge && (
                               <>
-                                <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                                <div style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
                                   <div
                                     style={{
                                       width: 5,
@@ -726,10 +740,17 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
                                       borderRadius: '50%',
                                       background: party?.color,
                                       flexShrink: 0,
-                                      marginTop: 5,
+                                      marginTop: 7,
                                     }}
                                   />
-                                  <div style={{ fontSize: 13, fontWeight: 500, color: T.tm, lineHeight: 1.55 }}>
+                                  <div
+                                    style={{
+                                      fontSize: 14,
+                                      fontWeight: 500,
+                                      color: T.tm,
+                                      lineHeight: 1.7,
+                                    }}
+                                  >
                                     {pledge.pledge}
                                   </div>
                                 </div>
@@ -738,8 +759,8 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
                                     fontSize: 12,
                                     fontWeight: 700,
                                     color: T.tl,
-                                    marginTop: 4,
-                                    paddingLeft: 11,
+                                    marginTop: 6,
+                                    paddingLeft: 12,
                                   }}
                                 >
                                   {pledge.source}
