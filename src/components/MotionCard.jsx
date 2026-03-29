@@ -81,27 +81,21 @@ export function ExpandedCard({ layoutId, T, children, onClose }) {
           onDragEnd={handleDragEnd}
           style={{
             flexShrink: 0,
-            minHeight: 68,
-            padding: '10px 56px 8px',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-            cursor: 'grab',
-            touchAction: 'none',
-            userSelect: 'none',
-            WebkitUserSelect: 'none',
-            position: 'relative',
-            zIndex: 5,
+            minHeight: 42,
+            padding: '6px 56px 4px',
+            borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.14)'}`,
+            boxShadow: '0 1px 0 rgba(0,0,0,0.03)',
+            background: T.sf,
           }}
         >
           <div
             style={{
-              width: 40,
-              height: 5,
+              width: 52,
+              height: 6,
               borderRadius: 999,
               background: T.tl,
-              opacity: 0.28,
-              marginTop: 2,
+              opacity: 0.22,
+              marginTop: 0,
             }}
           />
         </motion.div>
@@ -113,7 +107,7 @@ export function ExpandedCard({ layoutId, T, children, onClose }) {
           }}
           style={{
             position: 'absolute',
-            top: 10,
+            top: 8,
             right: 16,
             zIndex: 10,
             width: 36,
