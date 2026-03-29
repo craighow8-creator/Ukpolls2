@@ -338,6 +338,12 @@ export default function HomeScreen({
   const leaderWeeklyChange = Number(leader.change || 0)
   const secondWeeklyChange = Number(second.change || 0)
 
+  const electionSummary = recBE[0]
+    ? `${recBE[0].winner?.split(' ')[0] || 'Latest result'} · ${recBE[0].gainLoss || 'recent by-election'}`
+    : upBE[0]
+      ? `By-election next up · ${upBE[0].name}`
+      : 'Councils · devolved elections · by-elections'
+
   return (
     <div style={{ position: 'relative', minHeight: '100%', background: T.sf }}>
       <div
@@ -647,37 +653,17 @@ export default function HomeScreen({
                 ))}
               </div>
 
+              <Divider T={T} />
+
+              <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.6, textAlign: 'center' }}>
+                {electionSummary}
+              </div>
+
               <Cta T={T}>Explore elections →</Cta>
             </div>
           </LargeCard>
 
           <SmallPair>
-            <SmallCard T={T} onClick={() => nav('byelections')}>
-              <div style={pS}>
-                <Lbl T={T}>By-elections</Lbl>
-                {recBE[0] ? (
-                  <>
-                    <Stat color={recBE[0].winnerColor || T.pr} T={T} size={22}>
-                      {recBE[0].winner?.split(' ')[0]}
-                    </Stat>
-                    <Sub T={T}>
-                      {recBE[0].gainLoss} · {recBE[0].name?.split(' ').slice(0, 2).join(' ')}
-                    </Sub>
-                  </>
-                ) : upBE[0] ? (
-                  <>
-                    <Stat color={T.pr} T={T} size={16}>
-                      Next up
-                    </Stat>
-                    <Sub T={T}>{upBE[0].name}</Sub>
-                  </>
-                ) : (
-                  <Sub T={T}>See all results</Sub>
-                )}
-                <Cta T={T}>Open by-elections →</Cta>
-              </div>
-            </SmallCard>
-
             <SmallCard T={T} onClick={() => nav('demographics')}>
               <div style={pS}>
                 <Lbl T={T}>Demographics</Lbl>
@@ -688,60 +674,18 @@ export default function HomeScreen({
                 <Cta T={T}>Age breakdown →</Cta>
               </div>
             </SmallCard>
+
+            <SmallCard T={T} onClick={() => nav('trends')}>
+              <div style={pS}>
+                <Lbl T={T}>Trends</Lbl>
+                <Stat color={leader.color} T={T}>
+                  {leader.abbr}
+                </Stat>
+                <Sub T={T}>12-month movement and rolling averages</Sub>
+                <Cta T={T}>Open trends →</Cta>
+              </div>
+            </SmallCard>
           </SmallPair>
-
-          <LargeCard T={T} onClick={() => nav('trends')}>
-            <div style={pL}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <Lbl T={T}>12-Month Trend</Lbl>
-                <Chip color={T.pr}>Rolling avg</Chip>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-                {main.slice(0, 5).map((p, i) => {
-                  const d12 = tr12(p.name)
-                  const delta = trendDelta(p.name)
-                  return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: p.color, width: 30, flexShrink: 0 }}>
-                        {p.abbr}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <SparkLine data={d12} color={p.color} width={isMobile ? 108 : 160} height={30} filled />
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 16,
-                          fontWeight: 800,
-                          color: p.color,
-                          width: 38,
-                          textAlign: 'right',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {p.pct}%
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 700,
-                          width: 36,
-                          textAlign: 'right',
-                          flexShrink: 0,
-                          color: delta === null ? T.tl : delta > 0 ? '#02A95B' : '#E4003B',
-                        }}
-                      >
-                        {delta === null ? '—' : delta > 0 ? `+${delta}` : `${delta}`}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-
-              <Divider T={T} />
-              <Cta T={T}>View interactive 12-month chart →</Cta>
-            </div>
-          </LargeCard>
 
           <SmallPair>
             <SmallCard T={T} onClick={() => nav('betting')}>

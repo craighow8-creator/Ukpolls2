@@ -11,6 +11,8 @@ import { useDarkMode } from './utils/darkMode'
 import MenuSheet from './components/MenuSheet'
 import HomeScreen from './screens/HomeScreen'
 import PollsScreen from './screens/PollsScreen'
+import PollDetailScreen from './screens/PollDetailScreen'
+import PollsterScreen from './screens/PollsterScreen'
 import PartiesScreen from './screens/PartiesScreen'
 import PartyScreen from './screens/PartyScreen'
 import LeadersScreen from './screens/LeadersScreen'
@@ -34,19 +36,18 @@ import { getData } from './data/store.js'
 export default function App() {
   const { dark, toggle: toggleDark } = useDarkMode()
 
-  const [appData,    setAppData]    = useState(null)
-  const [dataReady,  setDataReady]  = useState(false)
-  const [themeKey,   setThemeKey]   = useState('reform')
-  const [expanded,   setExpanded]   = useState(null)
-  const [navStack,   setNavStack]   = useState([])
-  const [toast,      setToast]      = useState('')
-  const [shareOpen,  setShareOpen]  = useState(false)
-  const [shareText,  setShareText]  = useState('')
-  const [aboutOpen,  setAboutOpen]  = useState(false)
-  const [menuOpen,   setMenuOpen]   = useState(false)
+  const [appData, setAppData] = useState(null)
+  const [dataReady, setDataReady] = useState(false)
+  const [themeKey, setThemeKey] = useState('reform')
+  const [expanded, setExpanded] = useState(null)
+  const [navStack, setNavStack] = useState([])
+  const [toast, setToast] = useState('')
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareText, setShareText] = useState('')
+  const [aboutOpen, setAboutOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const toastRef = useRef()
 
-  // ── Load app data ──────────────────────────────────────────
   useEffect(() => {
     let cancelled = false
     async function load() {
@@ -58,37 +59,36 @@ export default function App() {
         if (top) setThemeKey(partyTheme(top.name))
       } catch (e) {
         console.error('App data load failed', e)
-        // dataReady still becomes true via finally — app shows with empty data
       } finally {
         if (!cancelled) setDataReady(true)
       }
     }
     load()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  // ── Derived data ───────────────────────────────────────────
-  const META       = appData?.meta        || {}
-  const PARTIES    = appData?.parties     || []
-  const TRENDS     = appData?.trends      || []
-  const POLLS      = appData?.polls       || []
-  const LEADERS    = appData?.leaders     || []
-  const DEMO       = appData?.demographics || {}
-  const MIGRATION  = appData?.migration   || {}
-  const BY_ELEC    = appData?.byElections || { upcoming: [], recent: [] }
-  const ELECTIONS  = appData?.elections   || {}
-  const BETTING    = appData?.betting     || { odds: [] }
-  const MILESTONES = appData?.milestones  || []
+  const META = appData?.meta || {}
+  const PARTIES = appData?.parties || []
+  const TRENDS = appData?.trends || []
+  const POLLS = appData?.polls || []
+  const LEADERS = appData?.leaders || []
+  const DEMO = appData?.demographics || {}
+  const MIGRATION = appData?.migration || {}
+  const BY_ELEC = appData?.byElections || { upcoming: [], recent: [] }
+  const ELECTIONS = appData?.elections || {}
+  const BETTING = appData?.betting || { odds: [] }
+  const MILESTONES = appData?.milestones || []
 
-  // FIX: was referencing undefined 'parties' — must use PARTIES
-  const PARTIES_WITH_LEADERS = PARTIES.map(p => ({
+  const PARTIES_WITH_LEADERS = PARTIES.map((p) => ({
     ...p,
-    _leader: (LEADERS || []).find(
-      l => (l.party || '').toLowerCase() === (p.name || '').toLowerCase()
-    ) || null,
+    _leader:
+      (LEADERS || []).find(
+        (l) => (l.party || '').toLowerCase() === (p.name || '').toLowerCase()
+      ) || null,
   }))
 
-  // ── Navigation ─────────────────────────────────────────────
   const closeExpanded = useCallback(() => {
     setExpanded(null)
     setNavStack([])
@@ -96,32 +96,37 @@ export default function App() {
     if (top) setThemeKey(partyTheme(top.name))
   }, [PARTIES])
 
-  const nav = useCallback((screen, params = {}) => {
-    const layoutId = params.layoutId || screen
-    if (screen === 'party' && params.idx !== undefined)
-      setThemeKey(partyTheme(PARTIES[params.idx]?.name))
-    else if (screen === 'leader' && params.lIdx !== undefined)
-      setThemeKey(partyTheme(LEADERS[params.lIdx]?.party))
-    if (screen === 'home') {
-      setExpanded(null); setNavStack([])
-      const top = [...PARTIES].sort((a, b) => b.pct - a.pct)[0]
-      if (top) setThemeKey(partyTheme(top.name))
-      return
-    }
-    if (expanded) { setNavStack(s => [...s, { screen, params }]); return }
-    setExpanded({ screen, params, layoutId })
-    setNavStack([])
-  }, [expanded, PARTIES, LEADERS])
+  const nav = useCallback(
+    (screen, params = {}) => {
+      const layoutId = params.layoutId || screen
+      if (screen === 'party' && params.idx !== undefined) setThemeKey(partyTheme(PARTIES[params.idx]?.name))
+      else if (screen === 'leader' && params.lIdx !== undefined) setThemeKey(partyTheme(LEADERS[params.lIdx]?.party))
+      if (screen === 'home') {
+        setExpanded(null)
+        setNavStack([])
+        const top = [...PARTIES].sort((a, b) => b.pct - a.pct)[0]
+        if (top) setThemeKey(partyTheme(top.name))
+        return
+      }
+      if (expanded) {
+        setNavStack((s) => [...s, { screen, params }])
+        return
+      }
+      setExpanded({ screen, params, layoutId })
+      setNavStack([])
+    },
+    [expanded, PARTIES, LEADERS]
+  )
 
   const goBack = useCallback(() => {
-    if (navStack.length > 0) setNavStack(s => s.slice(0, -1))
+    if (navStack.length > 0) setNavStack((s) => s.slice(0, -1))
     else setExpanded(null)
   }, [navStack])
 
   useEffect(() => {
     const onPop = () => {
       if (expanded) {
-        if (navStack.length > 0) setNavStack(s => s.slice(0, -1))
+        if (navStack.length > 0) setNavStack((s) => s.slice(0, -1))
         else closeExpanded()
       }
     }
@@ -133,7 +138,6 @@ export default function App() {
     if (expanded) window.history.pushState({ expanded: true }, '')
   }, [expanded])
 
-  // ── Derived theme + helpers ────────────────────────────────
   const T = getTheme(themeKey === 'reform' ? 'Reform UK' : themeKey, dark)
   const currentNav = navStack.length > 0 ? navStack[navStack.length - 1] : expanded
 
@@ -145,48 +149,66 @@ export default function App() {
 
   const genShareText = () => {
     const sorted = [...PARTIES].sort((a, b) => b.pct - a.pct)
-    const snap = sorted.filter(p => p.name !== 'Other').map(p => `${p.abbr} ${p.pct}%`).join(' · ')
+    const snap = sorted
+      .filter((p) => p.name !== 'Other')
+      .map((p) => `${p.abbr} ${p.pct}%`)
+      .join(' · ')
     const days = Math.max(0, Math.ceil((new Date('2026-05-07') - new Date()) / 86400000))
     return `UK polls (${META.fetchDate || ''}):\n${snap}\n\n${days} days to local elections\n\n${META.appUrl || ''}`
   }
 
-  // FIX: show splash while loading instead of blank null
   if (!dataReady) {
     return (
-      <div style={{
-        position: 'fixed', inset: 0, background: 'linear-gradient(175deg, #e8f8fc 0%, #cdf0f7 40%, #a8e4f0 100%)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'Outfit', sans-serif",
-      }}>
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'linear-gradient(175deg, #e8f8fc 0%, #cdf0f7 40%, #a8e4f0 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: "'Outfit', sans-serif",
+        }}
+      >
         <svg width="72" height="72" viewBox="0 0 80 80" style={{ marginBottom: 20 }}>
           <defs>
             <radialGradient id="sg" cx="32%" cy="26%" r="72%">
-              <stop offset="0%" stopColor="#0d4a5c"/>
-              <stop offset="100%" stopColor="#020c12"/>
+              <stop offset="0%" stopColor="#0d4a5c" />
+              <stop offset="100%" stopColor="#020c12" />
             </radialGradient>
-            <clipPath id="sc"><circle cx="40" cy="40" r="38"/></clipPath>
+            <clipPath id="sc">
+              <circle cx="40" cy="40" r="38" />
+            </clipPath>
           </defs>
-          <circle cx="40" cy="40" r="38" fill="url(#sg)"/>
+          <circle cx="40" cy="40" r="38" fill="url(#sg)" />
           <g clipPath="url(#sc)">
-            <line x1="2" y1="2" x2="78" y2="78" stroke="white" strokeWidth="14"/>
-            <line x1="78" y1="2" x2="2" y2="78" stroke="white" strokeWidth="14"/>
-            <line x1="2" y1="2" x2="78" y2="78" stroke="#C8102E" strokeWidth="8"/>
-            <line x1="78" y1="2" x2="2" y2="78" stroke="#C8102E" strokeWidth="8"/>
-            <line x1="2" y1="40" x2="78" y2="40" stroke="white" strokeWidth="5"/>
-            <line x1="2" y1="40" x2="78" y2="40" stroke="#C8102E" strokeWidth="3"/>
-            <line x1="40" y1="2" x2="40" y2="78" stroke="white" strokeWidth="5"/>
-            <line x1="40" y1="2" x2="40" y2="78" stroke="#C8102E" strokeWidth="3"/>
+            <line x1="2" y1="2" x2="78" y2="78" stroke="white" strokeWidth="14" />
+            <line x1="78" y1="2" x2="2" y2="78" stroke="white" strokeWidth="14" />
+            <line x1="2" y1="2" x2="78" y2="78" stroke="#C8102E" strokeWidth="8" />
+            <line x1="78" y1="2" x2="2" y2="78" stroke="#C8102E" strokeWidth="8" />
+            <line x1="2" y1="40" x2="78" y2="40" stroke="white" strokeWidth="5" />
+            <line x1="2" y1="40" x2="78" y2="40" stroke="#C8102E" strokeWidth="3" />
+            <line x1="40" y1="2" x2="40" y2="78" stroke="white" strokeWidth="5" />
+            <line x1="40" y1="2" x2="40" y2="78" stroke="#C8102E" strokeWidth="3" />
           </g>
-          <circle cx="40" cy="40" r="38" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1"/>
+          <circle cx="40" cy="40" r="38" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
         </svg>
         <div style={{ fontSize: 26, fontWeight: 800, color: '#041C24', letterSpacing: -0.5 }}>Politiscope</div>
         <div style={{ fontSize: 13, fontWeight: 500, color: 'rgba(4,28,36,0.5)', marginTop: 6 }}>Loading…</div>
         <div style={{ display: 'flex', gap: 6, marginTop: 28 }}>
           {[0, 0.2, 0.4].map((d, i) => (
-            <div key={i} style={{
-              width: 6, height: 6, borderRadius: '50%', background: 'rgba(4,28,36,0.25)',
-              animation: 'dp 1.4s ease-in-out infinite', animationDelay: `${d}s`,
-            }}/>
+            <div
+              key={i}
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: 'rgba(4,28,36,0.25)',
+                animation: 'dp 1.4s ease-in-out infinite',
+                animationDelay: `${d}s`,
+              }}
+            />
           ))}
         </div>
         <style>{`@keyframes dp{0%,80%,100%{opacity:.3}40%{opacity:1}}`}</style>
@@ -195,7 +217,9 @@ export default function App() {
   }
 
   const common = {
-    T, nav, goBack,
+    T,
+    nav,
+    goBack,
     goHome: closeExpanded,
     closeSheet: closeExpanded,
     parties: PARTIES_WITH_LEADERS,
@@ -205,26 +229,50 @@ export default function App() {
 
   const renderScreen = (s, p = {}) => {
     switch (s) {
-      case 'polls':        return <PollsScreen         {...common} polls={POLLS}/>
-      case 'parties':      return <PartiesScreen        {...common} polls={POLLS} leaders={LEADERS} trends={TRENDS}/>
-      case 'party':        return <PartyScreen          {...common} idx={p.idx??0} from={p.from||'polls'} leaders={LEADERS} trends={TRENDS} polls={POLLS}/>
-      case 'leaders':      return <LeadersScreen        {...common} leaders={LEADERS}/>
-      case 'leader':       return <LeaderScreen         {...common} lIdx={p.lIdx??0} leaders={LEADERS}/>
-      case 'trends':       return <TrendsScreen         {...common} trends={TRENDS} milestones={MILESTONES}/>
-      case 'demographics': return <DemographicsScreen   {...common} demographics={DEMO}/>
-      case 'migration':    return <MigrationScreen      {...common} migration={MIGRATION}/>
-      case 'elections':    return <ElectionsScreen      {...common} elections={ELECTIONS}/>
-      case 'council':      return <CouncilScreen        {...common} name={p.name}/>
-      case 'betting':      return <BettingScreen        {...common} betting={BETTING}/>
-      case 'news':         return <NewsScreen           {...common}/>
-      case 'vote':         return <VoteScreen           {...common} parties={PARTIES}/>
-      case 'compare':      return <CompareScreen        {...common} leaders={LEADERS}/>
-      case 'swingcalc':    return <SwingCalcScreen      {...common}/>
-      case 'parliament':   return <ParliamentScreen     {...common}/>
-      case 'quotematch':   return <QuoteMatchScreen     {...common}/>
-      case 'seatbuilder':  return <SeatBuilderScreen    {...common} parties={PARTIES_WITH_LEADERS}/>
-      case 'pollpredictor':return <PollPredictorScreen  {...common}/>
-      default:             return null
+      case 'polls':
+        return <PollsScreen {...common} polls={POLLS} />
+      case 'pollDetail':
+        return <PollDetailScreen {...common} poll={p.poll} />
+      case 'pollster':
+        return <PollsterScreen {...common} pollster={p.pollster} polls={POLLS} />
+      case 'parties':
+        return <PartiesScreen {...common} polls={POLLS} leaders={LEADERS} trends={TRENDS} />
+      case 'party':
+        return <PartyScreen {...common} idx={p.idx ?? 0} from={p.from || 'polls'} leaders={LEADERS} trends={TRENDS} polls={POLLS} />
+      case 'leaders':
+        return <LeadersScreen {...common} leaders={LEADERS} />
+      case 'leader':
+        return <LeaderScreen {...common} lIdx={p.lIdx ?? 0} leaders={LEADERS} />
+      case 'trends':
+        return <TrendsScreen {...common} trends={TRENDS} milestones={MILESTONES} />
+      case 'demographics':
+        return <DemographicsScreen {...common} demographics={DEMO} />
+      case 'migration':
+        return <MigrationScreen {...common} migration={MIGRATION} />
+      case 'elections':
+        return <ElectionsScreen {...common} elections={ELECTIONS} byElections={BY_ELEC} />
+      case 'council':
+        return <CouncilScreen {...common} name={p.name} />
+      case 'betting':
+        return <BettingScreen {...common} betting={BETTING} />
+      case 'news':
+        return <NewsScreen {...common} />
+      case 'vote':
+        return <VoteScreen {...common} parties={PARTIES} />
+      case 'compare':
+        return <CompareScreen {...common} leaders={LEADERS} />
+      case 'swingcalc':
+        return <SwingCalcScreen {...common} />
+      case 'parliament':
+        return <ParliamentScreen {...common} />
+      case 'quotematch':
+        return <QuoteMatchScreen {...common} />
+      case 'seatbuilder':
+        return <SeatBuilderScreen {...common} parties={PARTIES_WITH_LEADERS} />
+      case 'pollpredictor':
+        return <PollPredictorScreen {...common} />
+      default:
+        return null
     }
   }
 
@@ -266,12 +314,18 @@ export default function App() {
       `}</style>
 
       <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
-        <AtmoBg T={T}/>
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 1,
-          overflowY: 'auto', overflowX: 'hidden',
-          WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none',
-        }}>
+        <AtmoBg T={T} />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'none',
+          }}
+        >
           <HomeScreen
             {...common}
             trends={TRENDS}
@@ -285,22 +339,30 @@ export default function App() {
 
       <AnimatePresence mode="wait">
         {expanded && currentNav && (
-         <ExpandedCard key={expanded.layoutId} layoutId={expanded.layoutId} T={T} onClose={closeExpanded}>
+          <ExpandedCard key={expanded.layoutId} layoutId={expanded.layoutId} T={T} onClose={closeExpanded}>
             {renderScreen(currentNav.screen, currentNav.params || {})}
           </ExpandedCard>
         )}
       </AnimatePresence>
 
-      <Toast msg={toast} T={T}/>
-      <ShareModal open={shareOpen} onClose={() => setShareOpen(false)} T={T} text={shareText} appUrl={META.appUrl}/>
-      <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} T={T} dark={dark} onToggleDark={toggleDark}/>
+      <Toast msg={toast} T={T} />
+      <ShareModal open={shareOpen} onClose={() => setShareOpen(false)} T={T} text={shareText} appUrl={META.appUrl} />
+      <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} T={T} dark={dark} onToggleDark={toggleDark} />
       <MenuSheet
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
-        T={T} dark={dark}
+        T={T}
+        dark={dark}
         onToggleDark={toggleDark}
-        onAbout={() => { setMenuOpen(false); setTimeout(() => setAboutOpen(true), 180) }}
-        onShare={() => { setMenuOpen(false); setShareText(genShareText()); setTimeout(() => setShareOpen(true), 180) }}
+        onAbout={() => {
+          setMenuOpen(false)
+          setTimeout(() => setAboutOpen(true), 180)
+        }}
+        onShare={() => {
+          setMenuOpen(false)
+          setShareText(genShareText())
+          setTimeout(() => setShareOpen(true), 180)
+        }}
       />
     </>
   )

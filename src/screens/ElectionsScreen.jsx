@@ -8,6 +8,7 @@ const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration:
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
+  { key: 'byelections', label: 'By-elections' },
   { key: 'councils', label: 'Councils' },
   { key: 'regions', label: 'Regions' },
   { key: 'scotland', label: 'Scotland' },
@@ -67,6 +68,7 @@ function SectionLabel({ children, T }) {
         color: T.tl,
         marginBottom: 8,
         marginTop: 6,
+        textAlign: 'center',
       }}
     >
       {children}
@@ -130,7 +132,7 @@ function DevolvedPollGrid({ T, polls }) {
   )
 }
 
-export default function ElectionsScreen({ T, nav, meta }) {
+export default function ElectionsScreen({ T, nav, meta, byElections = { upcoming: [], recent: [] } }) {
   const [tab, setTab] = useState('overview')
   const [search, setSearch] = useState('')
 
@@ -139,6 +141,8 @@ export default function ElectionsScreen({ T, nav, meta }) {
   const days = daysTo(nextDate)
   const councils = LOCAL_ELECTIONS?.councils || []
   const regions = LOCAL_REGIONS || []
+  const upcomingByElections = (byElections?.upcoming || []).filter((b) => b.status !== 'skip')
+  const recentByElections = byElections?.recent || []
 
   const allSearchableCouncils = useMemo(() => {
     const flat = [...councils]
@@ -190,11 +194,12 @@ export default function ElectionsScreen({ T, nav, meta }) {
             letterSpacing: -0.8,
             color: T.th,
             lineHeight: 1,
+            textAlign: 'center',
           }}
         >
           Elections
         </div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4, textAlign: 'center' }}>
           {new Date(nextDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} · {nextLabel}
         </div>
       </div>
@@ -234,7 +239,7 @@ export default function ElectionsScreen({ T, nav, meta }) {
         </div>
 
         {meta?.fetchDate && (
-          <div style={{ fontSize: 12, fontWeight: 600, color: T.tl, opacity: 0.65, marginBottom: 4 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: T.tl, opacity: 0.65, marginBottom: 4, textAlign: 'center' }}>
             Last updated {meta.fetchDate} · Electoral Commission
           </div>
         )}
@@ -332,6 +337,125 @@ export default function ElectionsScreen({ T, nav, meta }) {
                   <ControlBadge control={c.control} T={T} />
                 </motion.div>
               ))}
+          </>
+        )}
+
+        {tab === 'byelections' && (
+          <>
+            <SectionLabel T={T}>Upcoming by-elections</SectionLabel>
+
+            {upcomingByElections.length > 0 ? (
+              upcomingByElections.map((b, i) => (
+                <div
+                  key={i}
+                  style={{
+                    borderRadius: 14,
+                    padding: '13px 14px',
+                    marginBottom: 8,
+                    background: T.c0 || '#fff',
+                    border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{b.name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: T.pr, marginTop: 3 }}>
+                        {b.date || 'Date TBC'}
+                      </div>
+                    </div>
+                    {b.defending && <ControlBadge control={b.defending} T={T} />}
+                  </div>
+
+                  {b.note && (
+                    <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.65, marginTop: 8 }}>
+                      {b.note}
+                    </div>
+                  )}
+
+                  {(b.majority || b.turnout) && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                      {b.majority && <Chip color={T.pr}>Majority {b.majority}</Chip>}
+                      {b.turnout && <Chip color={T.pr}>Turnout {b.turnout}</Chip>}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div
+                style={{
+                  borderRadius: 14,
+                  padding: '14px',
+                  marginBottom: 10,
+                  background: T.c0 || '#fff',
+                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
+                  textAlign: 'center',
+                  fontSize: 14,
+                  color: T.tl,
+                }}
+              >
+                No upcoming by-elections loaded yet.
+              </div>
+            )}
+
+            <SectionLabel T={T}>Recent results</SectionLabel>
+
+            {recentByElections.length > 0 ? (
+              recentByElections.map((b, i) => (
+                <div
+                  key={i}
+                  style={{
+                    borderRadius: 14,
+                    padding: '13px 14px',
+                    marginBottom: 8,
+                    background: T.c0 || '#fff',
+                    border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{b.name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, marginTop: 3 }}>
+                        {b.date || 'Recent result'}
+                      </div>
+                    </div>
+                    {b.winner && (
+                      <div style={{ fontSize: 13, fontWeight: 800, color: b.winnerColor || T.pr }}>
+                        {b.winner}
+                      </div>
+                    )}
+                  </div>
+
+                  {(b.gainLoss || b.majority || b.turnout) && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                      {b.gainLoss && <Chip color={b.winnerColor || T.pr}>{b.gainLoss}</Chip>}
+                      {b.majority && <Chip color={T.pr}>Majority {b.majority}</Chip>}
+                      {b.turnout && <Chip color={T.pr}>Turnout {b.turnout}</Chip>}
+                    </div>
+                  )}
+
+                  {b.note && (
+                    <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.65, marginTop: 8 }}>
+                      {b.note}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div
+                style={{
+                  borderRadius: 14,
+                  padding: '14px',
+                  marginBottom: 10,
+                  background: T.c0 || '#fff',
+                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
+                  textAlign: 'center',
+                  fontSize: 14,
+                  color: T.tl,
+                }}
+              >
+                No recent by-election results loaded yet.
+              </div>
+            )}
           </>
         )}
 
