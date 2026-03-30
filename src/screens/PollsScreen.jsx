@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ScrollArea, StickyPills, haptic } from '../components/ui'
+import { StickyPills, haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
 
 const TABS = [
@@ -55,6 +55,7 @@ function displaySubMeta(poll) {
     cleanText(poll?.method),
     cleanText(poll?.mode),
   ].filter(Boolean)
+
   return parts.join(' · ')
 }
 
@@ -93,6 +94,7 @@ function pollSortScore(poll) {
 
 function groupPollsByPollster(polls) {
   const map = new Map()
+
   for (const poll of polls || []) {
     const name = cleanText(poll?.pollster)
     if (!name) continue
@@ -930,19 +932,9 @@ function MethodologyCard({ T, title, body }) {
   )
 }
 
-function StickyHeader({ T, tab, setTab, latestLivePoll, meta }) {
+function ScrollAwayHeader({ T, latestLivePoll }) {
   return (
-    <div
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 8,
-        background: T.sf,
-        padding: '14px 16px 10px',
-        borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
-        boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
-      }}
-    >
+    <div style={{ padding: '8px 16px 10px' }}>
       <div
         style={{
           fontSize: 30,
@@ -960,36 +952,51 @@ function StickyHeader({ T, tab, setTab, latestLivePoll, meta }) {
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 8,
+          gap: 10,
           flexWrap: 'wrap',
           width: '100%',
-          marginTop: 4,
+          marginTop: 6,
         }}
       >
         <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
           Polling journey · latest race · pollsters · trends
         </div>
-        <InfoButton id="poll_average" T={T} size={18} />
+        <InfoButton id="poll_average" T={T} size={20} />
       </div>
 
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 600,
-          color: T.tl,
-          marginTop: 4,
-          opacity: 0.8,
-          textAlign: 'center',
-          lineHeight: 1.5,
-        }}
-      >
-        {meta?.fetchDate ? `Updated ${meta.fetchDate}` : 'Polling data view'}
-        {latestLivePoll ? ` · latest live import ${latestLivePoll.pollster} ${displayDate(latestLivePoll)}` : ''}
-      </div>
+      {latestLivePoll ? (
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: T.tl,
+            marginTop: 6,
+            opacity: 0.85,
+            textAlign: 'center',
+            lineHeight: 1.5,
+          }}
+        >
+          Latest live poll in feed: {latestLivePoll.pollster} · {displayDate(latestLivePoll)}
+        </div>
+      ) : null}
+    </div>
+  )
+}
 
-      <div style={{ marginTop: 10 }}>
-        <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
-      </div>
+function StickyPillsBar({ T, tab, setTab }) {
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 8,
+        background: T.sf,
+        padding: '8px 16px 10px',
+        borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
+        boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
+      }}
+    >
+      <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
     </div>
   )
 }
@@ -1030,7 +1037,8 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
         background: T.sf,
       }}
     >
-      <StickyHeader T={T} tab={tab} setTab={setTab} latestLivePoll={latestLivePoll} meta={meta} />
+      <ScrollAwayHeader T={T} latestLivePoll={latestLivePoll} />
+      <StickyPillsBar T={T} tab={tab} setTab={setTab} />
 
       <div style={{ padding: '12px 16px 40px' }}>
         {tab === 'snapshot' ? (

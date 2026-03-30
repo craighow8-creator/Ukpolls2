@@ -14,8 +14,6 @@ function BrandHeader({ T, onClose }) {
       style={{
         flexShrink: 0,
         background: T.sf,
-        borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.14)'}`,
-        boxShadow: '0 1px 0 rgba(0,0,0,0.03)',
         padding: '8px 14px 10px',
       }}
     >
