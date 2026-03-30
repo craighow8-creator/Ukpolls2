@@ -37,6 +37,20 @@ function cleanText(value) {
   return String(value).replace(/Â·/g, '·').replace(/\s+/g, ' ').trim()
 }
 
+function formatUkDate(value) {
+  const text = cleanText(value)
+  if (!text) return ''
+
+  const d = new Date(text)
+  if (Number.isNaN(d.getTime())) return text
+
+  const day = String(d.getDate()).padStart(2, '0')
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const year = d.getFullYear()
+
+  return `${day}-${month}-${year}`
+}
+
 function safeNumber(value) {
   if (value == null || value === '') return null
   const raw = String(value).replace(/%/g, '').replace(/,/g, '').trim()
@@ -46,7 +60,7 @@ function safeNumber(value) {
 }
 
 function displayDate(poll) {
-  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.date) || 'Date unavailable'
+  return formatUkDate(poll?.publishedAt) || formatUkDate(poll?.fieldworkEnd) || formatUkDate(poll?.date) || 'Date unavailable'
 }
 
 function displaySubMeta(poll) {

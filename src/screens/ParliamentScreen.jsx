@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ScrollArea, StickyPills, haptic } from '../components/ui'
+import { StickyPills, haptic } from '../components/ui'
+import { InfoButton } from '../components/InfoGlyph'
 import { API_BASE } from '../constants'
 
 const TABS = [
@@ -119,6 +120,115 @@ const VOTING_SYSTEM = [
     body: 'Multi-level Regression and Poststratification (MRP) uses national polling data plus demographic and past-election data to model how each constituency might vote. Electoral Calculus currently projects Reform UK 335 seats — a majority. These projections are more accurate than uniform national swing models but still carry wide uncertainty ranges 3 years before an election.',
   },
 ]
+
+function Badge({ children, color, subtle = false }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 12,
+        fontWeight: 800,
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
+        color,
+        background: subtle ? `${color}12` : `${color}1F`,
+        border: `1px solid ${color}2B`,
+        borderRadius: 999,
+        padding: '4px 9px',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
+function SectionLabel({ children, T }) {
+  return (
+    <div
+      style={{
+        fontSize: 13,
+        fontWeight: 800,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: T.tl,
+        marginBottom: 10,
+        textAlign: 'center',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function ScrollAwayHeader({ T }) {
+  return (
+    <div style={{ padding: '8px 16px 10px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 8,
+          flexWrap: 'wrap',
+          marginBottom: 10,
+        }}
+      >
+        <Badge color={T.pr}>Commons</Badge>
+        <Badge color={T.tl} subtle>Lords · live proceedings</Badge>
+      </div>
+
+      <div
+        style={{
+          fontSize: 30,
+          fontWeight: 800,
+          letterSpacing: -1,
+          color: T.th,
+          textAlign: 'center',
+          lineHeight: 1,
+        }}
+      >
+        Parliament
+      </div>
+
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
+          flexWrap: 'wrap',
+          width: '100%',
+          marginTop: 6,
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
+          Commons · Lords · voting system · live proceedings
+        </div>
+        <InfoButton id="parliament_overview" T={T} size={20} />
+      </div>
+    </div>
+  )
+}
+
+function StickyPillsBar({ T, tab, setTab }) {
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 8,
+        background: T.sf,
+        padding: '8px 16px 10px',
+        borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
+        boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
+      }}
+    >
+      <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
+    </div>
+  )
+}
 
 function ExplainerCard({ T, item }) {
   const [open, setOpen] = useState(false)
@@ -288,15 +398,15 @@ function VideoCard({ T, video }) {
         }}
       >
         <span>{video.isLive ? 'Source: live stream' : 'Source: latest upload'}</span>
-        {video.publishedAt && (
+        {video.publishedAt ? (
           <span>{new Date(video.publishedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}</span>
-        )}
+        ) : null}
       </div>
     </div>
   )
 }
 
-export default function ParliamentScreen({ T, nav }) {
+export default function ParliamentScreen({ T }) {
   const [tab, setTab] = useState('howworks')
   const [video, setVideo] = useState(null)
   const [videoError, setVideoError] = useState('')
@@ -346,58 +456,35 @@ export default function ParliamentScreen({ T, nav }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
+        minHeight: '100%',
         background: T.sf,
       }}
     >
-      <div style={{ padding: '18px 18px 0', flexShrink: 0 }}>
-        <div
-          style={{
-            fontSize: 24,
-            fontWeight: 800,
-            letterSpacing: -0.8,
-            color: T.th,
-            lineHeight: 1,
-          }}
-        >
-          Parliament
-        </div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>
-          Commons · Lords · voting system · live proceedings
-        </div>
-      </div>
+      <ScrollAwayHeader T={T} />
+      <StickyPillsBar T={T} tab={tab} setTab={setTab} />
 
-      <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
-
-      <ScrollArea>
-        {tab === 'howworks' && (
+      <div style={{ padding: '12px 16px 40px' }}>
+        {tab === 'howworks' ? (
           <>
-            <div style={{ fontSize: 14, fontWeight: 500, color: T.tl, marginBottom: 14, lineHeight: 1.6 }}>
-              How the UK Parliament works — tap any section to expand.
-            </div>
+            <SectionLabel T={T}>How Parliament works</SectionLabel>
             {HOW_WORKS.map((item, i) => (
               <ExplainerCard key={i} T={T} item={item} />
             ))}
           </>
-        )}
+        ) : null}
 
-        {tab === 'voting' && (
+        {tab === 'voting' ? (
           <>
-            <div style={{ fontSize: 14, fontWeight: 500, color: T.tl, marginBottom: 14, lineHeight: 1.6 }}>
-              The UK voting system, how seats are won, and what the alternatives are.
-            </div>
+            <SectionLabel T={T}>Voting system</SectionLabel>
             {VOTING_SYSTEM.map((item, i) => (
               <ExplainerCard key={i} T={T} item={item} />
             ))}
           </>
-        )}
+        ) : null}
 
-        {tab === 'keydates' && (
+        {tab === 'keydates' ? (
           <>
-            <div style={{ fontSize: 14, fontWeight: 500, color: T.tl, marginBottom: 14, lineHeight: 1.6 }}>
-              Upcoming dates that matter in UK politics.
-            </div>
+            <SectionLabel T={T}>Political calendar</SectionLabel>
 
             {KEY_DATES.map((d, i) => {
               const days = daysFrom(d.date)
@@ -436,26 +523,27 @@ export default function ParliamentScreen({ T, nav }) {
                       }}
                     >
                       <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{d.label}</div>
-                      {days && (
+                      {days ? (
                         <div style={{ fontSize: 14, fontWeight: 800, color: d.color, flexShrink: 0 }}>
                           {days}d
                         </div>
-                      )}
+                      ) : null}
                     </div>
 
                     <div style={{ fontSize: 13, fontWeight: 700, color: d.color, marginBottom: 5 }}>{d.date}</div>
-
                     <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.6 }}>{d.desc}</div>
                   </div>
                 </div>
               )
             })}
           </>
-        )}
+        ) : null}
 
-        {tab === 'live' && (
+        {tab === 'live' ? (
           <>
-            {videoLoading && (
+            <SectionLabel T={T}>Parliament live</SectionLabel>
+
+            {videoLoading ? (
               <div
                 style={{
                   borderRadius: 14,
@@ -470,11 +558,11 @@ export default function ParliamentScreen({ T, nav }) {
               >
                 Loading latest Parliament video…
               </div>
-            )}
+            ) : null}
 
-            {!videoLoading && video && <VideoCard T={T} video={video} />}
+            {!videoLoading && video ? <VideoCard T={T} video={video} /> : null}
 
-            {!videoLoading && videoError && (
+            {!videoLoading && videoError ? (
               <div
                 style={{
                   borderRadius: 14,
@@ -491,7 +579,7 @@ export default function ParliamentScreen({ T, nav }) {
                   {videoError}
                 </div>
               </div>
-            )}
+            ) : null}
 
             <LiveLinkCard
               T={T}
@@ -549,10 +637,8 @@ export default function ParliamentScreen({ T, nav }) {
               ))}
             </div>
           </>
-        )}
-
-        <div style={{ height: 40 }} />
-      </ScrollArea>
+        ) : null}
+      </div>
     </div>
   )
 }

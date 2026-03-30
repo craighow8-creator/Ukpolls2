@@ -1,9 +1,6 @@
-// ─────────────────────────────────────────────────────────────────
-// NewsScreen.jsx
-// ─────────────────────────────────────────────────────────────────
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ScrollArea, StickyPills, haptic } from '../components/ui'
+import { StickyPills, haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
@@ -30,6 +27,115 @@ const FALLBACK_NEWS = [
   { title: 'New MRP poll: Reform projected 335 seats if election held now', source: 'Electoral Calculus', time: '3d ago', category: 'polls', url: '#', color: '#12B7D4' },
 ]
 
+function Badge({ children, color, subtle = false }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 12,
+        fontWeight: 800,
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
+        color,
+        background: subtle ? `${color}12` : `${color}1F`,
+        border: `1px solid ${color}2B`,
+        borderRadius: 999,
+        padding: '4px 9px',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
+function SectionLabel({ children, T }) {
+  return (
+    <div
+      style={{
+        fontSize: 13,
+        fontWeight: 800,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: T.tl,
+        marginBottom: 10,
+        textAlign: 'center',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function ScrollAwayHeader({ T, count }) {
+  return (
+    <div style={{ padding: '8px 16px 10px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 8,
+          flexWrap: 'wrap',
+          marginBottom: 10,
+        }}
+      >
+        <Badge color={T.pr}>{count} stories</Badge>
+        <Badge color={T.tl} subtle>Recency first</Badge>
+      </div>
+
+      <div
+        style={{
+          fontSize: 30,
+          fontWeight: 800,
+          letterSpacing: -1,
+          color: T.th,
+          textAlign: 'center',
+          lineHeight: 1,
+        }}
+      >
+        News
+      </div>
+
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
+          flexWrap: 'wrap',
+          width: '100%',
+          marginTop: 6,
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
+          Politics feed · grouped by topic
+        </div>
+        <InfoButton id="news_feed" T={T} size={20} />
+      </div>
+    </div>
+  )
+}
+
+function StickyPillsBar({ T, tab, setTab }) {
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 8,
+        background: T.sf,
+        padding: '8px 16px 10px',
+        borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
+        boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
+      }}
+    >
+      <StickyPills pills={NEWS_TABS} active={tab} onSelect={setTab} T={T} />
+    </div>
+  )
+}
+
 function NewsCard({ T, item, big }) {
   const tappable = item.url && item.url !== '#'
 
@@ -39,7 +145,7 @@ function NewsCard({ T, item, big }) {
       onClick={() => {
         if (!tappable) return
         haptic(6)
-        window.open(item.url, '_blank')
+        window.open(item.url, '_blank', 'noopener,noreferrer')
       }}
       style={{
         borderRadius: big ? 16 : 14,
@@ -52,7 +158,7 @@ function NewsCard({ T, item, big }) {
         position: 'relative',
       }}
     >
-      {big && (
+      {big ? (
         <div
           style={{
             height: 3,
@@ -63,7 +169,7 @@ function NewsCard({ T, item, big }) {
             right: 0,
           }}
         />
-      )}
+      ) : null}
 
       <div style={{ paddingTop: big ? 8 : 0 }}>
         <div
@@ -77,14 +183,15 @@ function NewsCard({ T, item, big }) {
         >
           <span
             style={{
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: 800,
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
               color: item.color || T.pr,
               background: `${item.color || T.pr}1e`,
-              borderRadius: 4,
-              padding: '2px 6px',
+              border: `1px solid ${(item.color || T.pr)}2B`,
+              borderRadius: 999,
+              padding: '3px 8px',
             }}
           >
             {item.category}
@@ -95,11 +202,11 @@ function NewsCard({ T, item, big }) {
 
         <div
           style={{
-            fontSize: big ? 15 : 14,
+            fontSize: big ? 16 : 14,
             fontWeight: 700,
             color: T.th,
             lineHeight: 1.45,
-            marginBottom: 5,
+            marginBottom: 6,
           }}
         >
           {item.title}
@@ -114,75 +221,59 @@ function NewsCard({ T, item, big }) {
   )
 }
 
-export function NewsScreen({ T, nav }) {
+export function NewsScreen({ T }) {
   const [tab, setTab] = useState('all')
 
   const news = FALLBACK_NEWS
-  const filtered = tab === 'all' ? news : news.filter((n) => n.category === tab)
+
+  const filtered = useMemo(() => {
+    return tab === 'all' ? news : news.filter((n) => n.category === tab)
+  }, [tab, news])
+
+  const heroItem = filtered[0] || null
+  const rest = filtered.slice(1)
 
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
+        minHeight: '100%',
         background: T.sf,
       }}
     >
-      <div style={{ padding: '18px 18px 0', flexShrink: 0 }}>
-        <div
-          style={{
-            fontSize: 24,
-            fontWeight: 800,
-            letterSpacing: -0.8,
-            color: T.th,
-            lineHeight: 1,
-          }}
-        >
-          News
-        </div>
+      <ScrollAwayHeader T={T} count={filtered.length} />
+      <StickyPillsBar T={T} tab={tab} setTab={setTab} />
 
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            flexWrap: 'wrap',
-            marginTop: 4,
-          }}
-        >
-          <div style={{ fontSize: 13, fontWeight: 500, color: T.tl }}>
-            Ranked by coverage · recency first
-          </div>
+      <div style={{ padding: '12px 16px 40px' }}>
+        {heroItem ? (
+          <>
+            <SectionLabel T={T}>Top story</SectionLabel>
+            <NewsCard T={T} item={heroItem} big />
+          </>
+        ) : null}
 
-          <InfoButton id="news_feed" T={T} size={18} />
-        </div>
-      </div>
-
-      <StickyPills pills={NEWS_TABS} active={tab} onSelect={setTab} T={T} />
-
-      <ScrollArea>
-        {filtered[0] && <NewsCard T={T} item={filtered[0]} big />}
-
-        {filtered.slice(1).map((item, i) => (
-          <NewsCard key={i} T={T} item={item} big={false} />
-        ))}
+        {rest.length > 0 ? (
+          <>
+            <SectionLabel T={T}>Latest feed</SectionLabel>
+            {rest.map((item, i) => (
+              <NewsCard key={`${item.title}-${i}`} T={T} item={item} big={false} />
+            ))}
+          </>
+        ) : null}
 
         <div
           style={{
             textAlign: 'center',
-            padding: '10px 0 16px',
+            padding: '10px 0 0',
             fontSize: 13,
             fontWeight: 500,
             color: T.tl,
           }}
         >
-          News is curated · use AI Briefing for live analysis
+          News feed is curated for layout while live sourcing is still being wired.
         </div>
-
-        <div style={{ height: 40 }} />
-      </ScrollArea>
+      </div>
     </div>
   )
 }

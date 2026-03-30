@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { ScrollArea, StickyPills, haptic } from '../components/ui'
+import { StickyPills, haptic } from '../components/ui'
+import { InfoButton } from '../components/InfoGlyph'
 import { LOCAL_ELECTIONS, LOCAL_REGIONS } from '../data/elections'
 import { daysTo } from '../utils/helpers'
 
@@ -8,11 +9,11 @@ const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration:
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
+  { key: 'general', label: 'General' },
+  { key: 'locals', label: 'Locals' },
+  { key: 'devolved', label: 'Devolved' },
+  { key: 'mayors', label: 'Mayors' },
   { key: 'byelections', label: 'By-elections' },
-  { key: 'councils', label: 'Councils' },
-  { key: 'regions', label: 'Regions' },
-  { key: 'scotland', label: 'Scotland' },
-  { key: 'wales', label: 'Wales' },
 ]
 
 const CONTROL_COLORS = {
@@ -34,20 +35,67 @@ const DIFF_COLORS = {
   safe: '#02A95B',
 }
 
+const GENERAL_2024 = [
+  { party: 'Labour', seats: 412, vote: 33.7, color: '#E4003B' },
+  { party: 'Conservative', seats: 121, vote: 23.7, color: '#0087DC' },
+  { party: 'Liberal Democrat', seats: 72, vote: 12.2, color: '#FAA61A' },
+  { party: 'Reform UK', seats: 5, vote: 14.3, color: '#12B7D4' },
+  { party: 'Green', seats: 4, vote: 6.8, color: '#02A95B' },
+  { party: 'SNP', seats: 9, vote: 2.5, color: '#C4922A' },
+  { party: 'Plaid Cymru', seats: 4, vote: 0.7, color: '#3F8428' },
+]
+
+const MAYORAL_CONTESTS = [
+  {
+    name: 'Greater Lincolnshire',
+    status: 'New mayoralty',
+    note: 'A new office means no incumbent record to lean on. Early organisation and candidate recognition will matter more than usual.',
+  },
+  {
+    name: 'Hull & East Yorkshire',
+    status: 'New mayoralty',
+    note: 'Another first-time contest. This is the kind of race where local profile can cut across national party brands.',
+  },
+  {
+    name: 'West of England',
+    status: 'Open test',
+    note: 'Urban, mixed and politically fragmented. A strong local ground campaign could matter as much as the national mood.',
+  },
+  {
+    name: 'Cambridgeshire & Peterborough',
+    status: 'Competitive',
+    note: 'A broad coalition-style electorate makes this one worth watching for tactical voting behaviour and turnout.',
+  },
+]
+
+function cleanText(value) {
+  if (value == null) return ''
+  return String(value).replace(/\s+/g, ' ').trim()
+}
+
+function formatDate(value) {
+  if (!value) return 'Date TBC'
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return cleanText(value)
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 function Chip({ children, color }) {
   return (
     <span
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        fontSize: 13,
+        justifyContent: 'center',
+        fontSize: 12,
         fontWeight: 800,
-        letterSpacing: '0.06em',
+        letterSpacing: '0.05em',
         textTransform: 'uppercase',
         color,
         background: `${color}1e`,
-        borderRadius: 4,
-        padding: '2px 7px',
+        border: `1px solid ${color}2B`,
+        borderRadius: 999,
+        padding: '4px 9px',
         flexShrink: 0,
         whiteSpace: 'nowrap',
       }}
@@ -57,21 +105,45 @@ function Chip({ children, color }) {
   )
 }
 
-function SectionLabel({ children, T }) {
+function SectionLabel({ children, T, action }) {
   return (
     <div
       style={{
-        fontSize: 13,
-        fontWeight: 800,
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        color: T.tl,
-        marginBottom: 8,
-        marginTop: 6,
-        textAlign: 'center',
+        display: 'flex',
+        justifyContent: action ? 'space-between' : 'center',
+        alignItems: 'center',
+        marginBottom: 10,
+        gap: 10,
       }}
     >
-      {children}
+      {action ? <div style={{ width: 80 }} /> : null}
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: T.tl,
+          textAlign: 'center',
+        }}
+      >
+        {children}
+      </div>
+      {action ? (
+        <div
+          style={{
+            width: 80,
+            fontSize: 12,
+            fontWeight: 700,
+            color: T.pr,
+            textAlign: 'right',
+            cursor: 'pointer',
+          }}
+          onClick={action.onClick}
+        >
+          {action.label}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -83,7 +155,7 @@ function ControlBadge({ control, T }) {
       style={{
         fontSize: 13,
         fontWeight: 800,
-        padding: '2px 8px',
+        padding: '3px 8px',
         borderRadius: 999,
         background: `${c}1e`,
         color: c,
@@ -98,6 +170,150 @@ function ControlBadge({ control, T }) {
 function DiffDot({ d }) {
   const c = DIFF_COLORS[d] || '#888'
   return <div style={{ width: 8, height: 8, borderRadius: '50%', background: c, flexShrink: 0 }} />
+}
+
+function StatCard({ T, label, value, color, sub }) {
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        padding: '12px 12px',
+        textAlign: 'center',
+        background: T.c0,
+        border: `1px solid ${color}28`,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 800,
+          color: T.tl,
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ fontSize: 24, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+      {sub ? (
+        <div style={{ fontSize: 12, fontWeight: 600, color: T.tl, marginTop: 4, lineHeight: 1.4 }}>
+          {sub}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function SurfaceCard({ T, children, borderColor, style = {} }) {
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        padding: '14px',
+        background: T.c0,
+        border: `1px solid ${borderColor || T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function ScrollAwayHeader({ T, nextDate, nextLabel }) {
+  return (
+    <div style={{ padding: '8px 16px 10px' }}>
+      <div
+        style={{
+          fontSize: 30,
+          fontWeight: 800,
+          letterSpacing: -1,
+          color: T.th,
+          textAlign: 'center',
+          lineHeight: 1,
+        }}
+      >
+        Elections
+      </div>
+
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
+          flexWrap: 'wrap',
+          width: '100%',
+          marginTop: 6,
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
+          {nextLabel} · {formatDate(nextDate)}
+        </div>
+        <InfoButton id="elections_overview" T={T} size={20} />
+      </div>
+    </div>
+  )
+}
+
+function StickyPillsBar({ T, tab, setTab }) {
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 8,
+        background: T.sf,
+        padding: '8px 16px 10px',
+        borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
+        boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
+      }}
+    >
+      <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
+    </div>
+  )
+}
+
+function GeneralResultBars({ T }) {
+  const maxSeats = Math.max(...GENERAL_2024.map((x) => x.seats))
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {GENERAL_2024.map((row) => (
+        <div
+          key={row.party}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '76px 1fr 88px',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 800, color: row.color }}>{row.party.split(' ')[0].toUpperCase()}</div>
+          <div
+            style={{
+              height: 8,
+              borderRadius: 999,
+              background: T.c1 || 'rgba(0,0,0,0.06)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                width: `${(row.seats / maxSeats) * 100}%`,
+                height: '100%',
+                background: row.color,
+                borderRadius: 999,
+              }}
+            />
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: row.color, textAlign: 'right' }}>
+            {row.seats} seats
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 function DevolvedPollGrid({ T, polls }) {
@@ -137,8 +353,12 @@ export default function ElectionsScreen({ T, nav, meta, byElections = { upcoming
   const [search, setSearch] = useState('')
 
   const nextDate = meta?.nextElectionDate || '2026-05-07'
-  const nextLabel = meta?.nextElectionLabel || 'Local & Devolved Elections'
+  const nextLabel = meta?.nextElectionLabel || 'Local and devolved elections'
   const days = daysTo(nextDate)
+
+  const nextGeneralDate = meta?.nextGeneralElectionDate || ''
+  const generalDays = nextGeneralDate ? daysTo(nextGeneralDate) : null
+
   const councils = LOCAL_ELECTIONS?.councils || []
   const regions = LOCAL_REGIONS || []
   const upcomingByElections = (byElections?.upcoming || []).filter((b) => b.status !== 'skip')
@@ -158,18 +378,21 @@ export default function ElectionsScreen({ T, nav, meta, byElections = { upcoming
     return flat
   }, [councils, regions])
 
-  const filtered = useMemo(() => {
+  const filteredCouncils = useMemo(() => {
     if (!search.trim()) return councils
     const q = search.toLowerCase()
     return allSearchableCouncils.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
-        c.region?.toLowerCase().includes(q) ||
-        c.control?.toLowerCase().includes(q) ||
-        (c.verdict || '').toLowerCase().includes(q) ||
-        (c.note || '').toLowerCase().includes(q),
+        cleanText(c.region).toLowerCase().includes(q) ||
+        cleanText(c.control).toLowerCase().includes(q) ||
+        cleanText(c.verdict).toLowerCase().includes(q) ||
+        cleanText(c.note).toLowerCase().includes(q),
     )
   }, [allSearchableCouncils, councils, search])
+
+  const veryContested = councils.filter((c) => c.difficulty === 'very hard')
+  const hardToCall = councils.filter((c) => c.difficulty === 'hard')
 
   const openCouncil = (name) => {
     haptic(6)
@@ -181,286 +404,293 @@ export default function ElectionsScreen({ T, nav, meta, byElections = { upcoming
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
+        minHeight: '100%',
         background: T.sf,
       }}
     >
-      <div style={{ padding: '18px 18px 0', flexShrink: 0 }}>
-        <div
-          style={{
-            fontSize: 24,
-            fontWeight: 800,
-            letterSpacing: -0.8,
-            color: T.th,
-            lineHeight: 1,
-            textAlign: 'center',
-          }}
-        >
-          Elections
-        </div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4, textAlign: 'center' }}>
-          {new Date(nextDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} · {nextLabel}
-        </div>
-      </div>
+      <ScrollAwayHeader T={T} nextDate={nextDate} nextLabel={nextLabel} />
+      <StickyPillsBar T={T} tab={tab} setTab={setTab} />
 
-      <div style={{ padding: '10px 18px 0', flexShrink: 0 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            marginBottom: 10,
-            gap: 12,
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: 36,
-                fontWeight: 800,
-                letterSpacing: '-0.03em',
-                lineHeight: 1,
-                color: T.pr,
-              }}
-            >
-              {days}
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: T.tl }}>days away</div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            {['136 English councils', 'Scottish Parliament', 'Senedd', 'Mayoral'].map((s, i) => (
-              <Chip key={i} color={T.pr || '#12B7D4'}>
-                {s}
-              </Chip>
-            ))}
-          </div>
-        </div>
-
-        {meta?.fetchDate && (
-          <div style={{ fontSize: 12, fontWeight: 600, color: T.tl, opacity: 0.65, marginBottom: 4, textAlign: 'center' }}>
-            Last updated {meta.fetchDate} · Electoral Commission
-          </div>
-        )}
-      </div>
-
-      <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
-
-      <ScrollArea>
-        {tab === 'overview' && (
+      <div style={{ padding: '12px 16px 40px' }}>
+        {tab === 'overview' ? (
           <>
+            <SurfaceCard T={T} borderColor={`${T.pr || '#12B7D4'}28`} style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>Next major vote</SectionLabel>
+
+              <div
+                style={{
+                  fontSize: 26,
+                  fontWeight: 800,
+                  color: T.th,
+                  textAlign: 'center',
+                  lineHeight: 1.1,
+                }}
+              >
+                {days} days to polling day
+              </div>
+
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: T.pr || '#12B7D4',
+                  textAlign: 'center',
+                  marginTop: 8,
+                }}
+              >
+                {formatDate(nextDate)}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: T.tl,
+                  textAlign: 'center',
+                  lineHeight: 1.6,
+                  marginTop: 8,
+                }}
+              >
+                {nextLabel}. This is the main election event currently in focus across the Elections journey.
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                <Chip color={T.pr || '#12B7D4'}>Locals</Chip>
+                <Chip color={T.pr || '#12B7D4'}>Devolved</Chip>
+                <Chip color={T.pr || '#12B7D4'}>Mayors</Chip>
+              </div>
+            </SurfaceCard>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 12 }}>
-              {[
-                { label: 'Total councils', value: '136', color: T.pr || '#12B7D4' },
-                { label: 'Total seats', value: '1,641+', color: T.pr || '#12B7D4' },
-                { label: 'Very contested', value: councils.filter((c) => c.difficulty === 'very hard').length, color: '#E4003B' },
-                { label: 'Hard to call', value: councils.filter((c) => c.difficulty === 'hard').length, color: '#F97316' },
-              ].map((s, i) => (
-                <div
-                  key={i}
-                  style={{
-                    borderRadius: 12,
-                    padding: '11px 12px',
-                    textAlign: 'center',
-                    background: T.c0 || '#fff',
-                    border: `1px solid ${s.color}28`,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: T.tl,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                      marginBottom: 4,
-                    }}
-                  >
-                    {s.label}
-                  </div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
-                </div>
-              ))}
+              <StatCard T={T} label="Councils voting" value="136" color={T.pr || '#12B7D4'} />
+              <StatCard T={T} label="Seats up" value="1,641+" color={T.pr || '#12B7D4'} />
+              <StatCard T={T} label="Very contested" value={veryContested.length} color="#E4003B" />
+              <StatCard T={T} label="Hard to call" value={hardToCall.length} color="#F97316" />
             </div>
+
+            <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>Election map</SectionLabel>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <Chip color={T.pr || '#12B7D4'}>General</Chip>
+                <Chip color={T.pr || '#12B7D4'}>Locals</Chip>
+                <Chip color={T.pr || '#12B7D4'}>Scotland</Chip>
+                <Chip color={T.pr || '#12B7D4'}>Wales</Chip>
+                <Chip color={T.pr || '#12B7D4'}>Mayors</Chip>
+              </div>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: T.tl,
+                  textAlign: 'center',
+                  lineHeight: 1.6,
+                  marginTop: 10,
+                }}
+              >
+                Overview should answer what matters next. Deeper tabs break out the national, local, devolved, mayoral and by-election stories separately.
+              </div>
+            </SurfaceCard>
 
             <SectionLabel T={T}>Key contests to watch</SectionLabel>
 
-            {councils
-              .filter((c) => c.difficulty === 'very hard')
-              .slice(0, 6)
-              .map((c, i) => (
-                <motion.div
-                  key={i}
-                  {...TAP}
-                  onClick={() => openCouncil(c.name)}
-                  style={{
-                    borderRadius: 14,
-                    padding: '12px 14px',
-                    marginBottom: 8,
-                    background: T.c0 || '#fff',
-                    border: `1px solid ${(CONTROL_COLORS[c.control] || '#888')}28`,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 10,
-                  }}
-                >
-                  <DiffDot d={c.difficulty} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: T.th, marginBottom: 2 }}>{c.name}</div>
-                    <div style={{ fontSize: 13, color: T.tl, marginBottom: 5 }}>
-                      {c.region} · {c.seats} seats
+            {veryContested.slice(0, 6).map((c, i) => (
+              <motion.div
+                key={i}
+                {...TAP}
+                onClick={() => openCouncil(c.name)}
+                style={{
+                  borderRadius: 14,
+                  padding: '12px 14px',
+                  marginBottom: 8,
+                  background: T.c0,
+                  border: `1px solid ${(CONTROL_COLORS[c.control] || '#888')}28`,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                }}
+              >
+                <DiffDot d={c.difficulty} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: T.th, marginBottom: 2 }}>{c.name}</div>
+                  <div style={{ fontSize: 13, color: T.tl, marginBottom: 5 }}>
+                    {c.region} · {c.seats} seats
+                  </div>
+
+                  {c.watchFor ? (
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: T.th,
+                        lineHeight: 1.4,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {c.watchFor}
                     </div>
-                    {c.watchFor && (
-                      <div
+                  ) : null}
+
+                  {c.verdict ? (
+                    <div style={{ fontSize: 13, fontWeight: 700, color: DIFF_COLORS[c.difficulty] || T.tl, marginTop: 4 }}>
+                      {c.verdict}
+                    </div>
+                  ) : null}
+                </div>
+
+                <ControlBadge control={c.control} T={T} />
+              </motion.div>
+            ))}
+          </>
+        ) : null}
+
+        {tab === 'general' ? (
+          <>
+            <SurfaceCard T={T} borderColor={`${T.pr || '#12B7D4'}28`} style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>General election frame</SectionLabel>
+
+              <div
+                style={{
+                  fontSize: 24,
+                  fontWeight: 800,
+                  color: T.th,
+                  textAlign: 'center',
+                  lineHeight: 1.1,
+                }}
+              >
+                Next UK general election
+              </div>
+
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: T.tl,
+                  textAlign: 'center',
+                  lineHeight: 1.6,
+                  marginTop: 8,
+                }}
+              >
+                {nextGeneralDate
+                  ? `${generalDays} days until the currently stored next general election date · ${formatDate(nextGeneralDate)}`
+                  : 'Date not locked yet. Use this space for countdown, context and national electoral framing.'}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+                <Chip color={T.pr || '#12B7D4'}>650 seats</Chip>
+                <Chip color={T.pr || '#12B7D4'}>326 for majority</Chip>
+                <Chip color={T.pr || '#12B7D4'}>National result</Chip>
+              </div>
+            </SurfaceCard>
+
+            <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>Last general election result</SectionLabel>
+              <GeneralResultBars T={T} />
+            </SurfaceCard>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 12 }}>
+              <StatCard T={T} label="Majority line" value="326" color={T.pr || '#12B7D4'} />
+              <StatCard T={T} label="Total seats" value="650" color={T.pr || '#12B7D4'} />
+              <StatCard T={T} label="Labour seats" value="412" color="#E4003B" />
+              <StatCard T={T} label="Conservative seats" value="121" color="#0087DC" />
+            </div>
+
+            <SurfaceCard T={T}>
+              <SectionLabel T={T}>What this tab is for</SectionLabel>
+              <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.7, textAlign: 'center' }}>
+                This is the permanent national election home: countdown, last result, majority arithmetic, seat context and future forecast hooks. It is more important than giving by-elections front-rank billing.
+              </div>
+            </SurfaceCard>
+          </>
+        ) : null}
+
+        {tab === 'locals' ? (
+          <>
+            <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>Local elections overview</SectionLabel>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                <StatCard T={T} label="Councils" value="136" color={T.pr || '#12B7D4'} />
+                <StatCard T={T} label="Seats" value="1,641+" color={T.pr || '#12B7D4'} />
+                <StatCard T={T} label="Very hard" value={veryContested.length} color="#E4003B" />
+                <StatCard T={T} label="Hard" value={hardToCall.length} color="#F97316" />
+              </div>
+            </SurfaceCard>
+
+            <SectionLabel T={T}>Regional picture</SectionLabel>
+
+            {regions.map((r, i) => (
+              <SurfaceCard key={i} T={T} borderColor={`${r.accentColor || T.pr}28`} style={{ marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <div style={{ fontSize: 20 }}>{r.emoji}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{r.name}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
+                      {r.councils} councils · {r.seats} seats
+                    </div>
+                  </div>
+                  <Chip color={DIFF_COLORS[r.difficulty] || '#888'}>{r.difficulty}</Chip>
+                </div>
+
+                <div style={{ fontSize: 13, fontWeight: 500, color: T.th, lineHeight: 1.65, marginBottom: 8 }}>
+                  {r.story}
+                </div>
+
+                {r.watchFor ? (
+                  <div
+                    style={{
+                      padding: '8px 10px',
+                      background: T.c1 || 'rgba(0,0,0,0.04)',
+                      borderRadius: 8,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 800,
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        color: T.tl,
+                        marginBottom: 3,
+                      }}
+                    >
+                      Watch for
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.th }}>{r.watchFor}</div>
+                  </div>
+                ) : null}
+
+                {r.councils_list?.length > 0 ? (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {r.councils_list.map((cl, j) => (
+                      <motion.div
+                        key={j}
+                        {...TAP}
+                        onClick={() => openCouncil(cl.name)}
                         style={{
                           fontSize: 13,
-                          fontWeight: 500,
-                          color: T.tm,
-                          lineHeight: 1.4,
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
+                          fontWeight: 700,
+                          padding: '3px 9px',
+                          borderRadius: 999,
+                          background: T.c1 || 'rgba(0,0,0,0.05)',
+                          color: T.th,
+                          cursor: 'pointer',
+                          border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
                         }}
                       >
-                        {c.watchFor}
-                      </div>
-                    )}
-                    {c.verdict && (
-                      <div style={{ fontSize: 13, fontWeight: 700, color: DIFF_COLORS[c.difficulty] || T.tl, marginTop: 4 }}>
-                        {c.verdict}
-                      </div>
-                    )}
+                        {cl.name}
+                      </motion.div>
+                    ))}
                   </div>
-                  <ControlBadge control={c.control} T={T} />
-                </motion.div>
-              ))}
-          </>
-        )}
+                ) : null}
+              </SurfaceCard>
+            ))}
 
-        {tab === 'byelections' && (
-          <>
-            <SectionLabel T={T}>Upcoming by-elections</SectionLabel>
+            <SectionLabel T={T}>Council directory</SectionLabel>
 
-            {upcomingByElections.length > 0 ? (
-              upcomingByElections.map((b, i) => (
-                <div
-                  key={i}
-                  style={{
-                    borderRadius: 14,
-                    padding: '13px 14px',
-                    marginBottom: 8,
-                    background: T.c0 || '#fff',
-                    border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{b.name}</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: T.pr, marginTop: 3 }}>
-                        {b.date || 'Date TBC'}
-                      </div>
-                    </div>
-                    {b.defending && <ControlBadge control={b.defending} T={T} />}
-                  </div>
-
-                  {b.note && (
-                    <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.65, marginTop: 8 }}>
-                      {b.note}
-                    </div>
-                  )}
-
-                  {(b.majority || b.turnout) && (
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-                      {b.majority && <Chip color={T.pr}>Majority {b.majority}</Chip>}
-                      {b.turnout && <Chip color={T.pr}>Turnout {b.turnout}</Chip>}
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div
-                style={{
-                  borderRadius: 14,
-                  padding: '14px',
-                  marginBottom: 10,
-                  background: T.c0 || '#fff',
-                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
-                  textAlign: 'center',
-                  fontSize: 14,
-                  color: T.tl,
-                }}
-              >
-                No upcoming by-elections loaded yet.
-              </div>
-            )}
-
-            <SectionLabel T={T}>Recent results</SectionLabel>
-
-            {recentByElections.length > 0 ? (
-              recentByElections.map((b, i) => (
-                <div
-                  key={i}
-                  style={{
-                    borderRadius: 14,
-                    padding: '13px 14px',
-                    marginBottom: 8,
-                    background: T.c0 || '#fff',
-                    border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{b.name}</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, marginTop: 3 }}>
-                        {b.date || 'Recent result'}
-                      </div>
-                    </div>
-                    {b.winner && (
-                      <div style={{ fontSize: 13, fontWeight: 800, color: b.winnerColor || T.pr }}>
-                        {b.winner}
-                      </div>
-                    )}
-                  </div>
-
-                  {(b.gainLoss || b.majority || b.turnout) && (
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-                      {b.gainLoss && <Chip color={b.winnerColor || T.pr}>{b.gainLoss}</Chip>}
-                      {b.majority && <Chip color={T.pr}>Majority {b.majority}</Chip>}
-                      {b.turnout && <Chip color={T.pr}>Turnout {b.turnout}</Chip>}
-                    </div>
-                  )}
-
-                  {b.note && (
-                    <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.65, marginTop: 8 }}>
-                      {b.note}
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div
-                style={{
-                  borderRadius: 14,
-                  padding: '14px',
-                  marginBottom: 10,
-                  background: T.c0 || '#fff',
-                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
-                  textAlign: 'center',
-                  fontSize: 14,
-                  color: T.tl,
-                }}
-              >
-                No recent by-election results loaded yet.
-              </div>
-            )}
-          </>
-        )}
-
-        {tab === 'councils' && (
-          <>
             <div style={{ position: 'relative', marginBottom: 10 }}>
               <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.tl} strokeWidth="2" strokeLinecap="round">
@@ -477,7 +707,7 @@ export default function ElectionsScreen({ T, nav, meta, byElections = { upcoming
                 style={{
                   width: '100%',
                   padding: '13px 14px 13px 38px',
-                  background: T.c0 || '#fff',
+                  background: T.c0,
                   border: `1.5px solid ${search ? T.pr : T.cardBorder || 'rgba(0,0,0,0.1)'}`,
                   borderRadius: 12,
                   fontSize: 15,
@@ -491,10 +721,10 @@ export default function ElectionsScreen({ T, nav, meta, byElections = { upcoming
             </div>
 
             <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginBottom: 8 }}>
-              {filtered.length} of {councils.length} councils {search ? '· filtered search' : '· tap for full profile'}
+              {filteredCouncils.length} of {councils.length} councils {search ? '· filtered search' : '· tap for full profile'}
             </div>
 
-            {filtered.map((c, i) => (
+            {filteredCouncils.map((c, i) => (
               <motion.div
                 key={i}
                 {...TAP}
@@ -503,7 +733,7 @@ export default function ElectionsScreen({ T, nav, meta, byElections = { upcoming
                   borderRadius: 12,
                   padding: '10px 12px',
                   marginBottom: 6,
-                  background: T.c0 || '#fff',
+                  background: T.c0,
                   border: `1px solid ${(CONTROL_COLORS[c.control] || '#888')}18`,
                   cursor: 'pointer',
                   display: 'flex',
@@ -517,7 +747,7 @@ export default function ElectionsScreen({ T, nav, meta, byElections = { upcoming
                   <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
                     {c.region} · {c.type} · {c.seats} seats
                   </div>
-                  {c.watchFor && (
+                  {c.watchFor ? (
                     <div
                       style={{
                         fontSize: 13,
@@ -531,124 +761,29 @@ export default function ElectionsScreen({ T, nav, meta, byElections = { upcoming
                     >
                       {c.watchFor}
                     </div>
-                  )}
+                  ) : null}
                 </div>
 
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <ControlBadge control={c.control} T={T} />
-                  {c.verdict && (
+                  {c.verdict ? (
                     <div style={{ fontSize: 13, fontWeight: 700, color: DIFF_COLORS[c.difficulty] || T.tl, marginTop: 3 }}>
                       {c.verdict}
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </motion.div>
             ))}
           </>
-        )}
+        ) : null}
 
-        {tab === 'regions' &&
-          regions.map((r, i) => (
-            <div
-              key={i}
-              style={{
-                borderRadius: 14,
-                padding: '13px 14px',
-                marginBottom: 10,
-                background: T.c0 || '#fff',
-                border: `1px solid ${(r.accentColor || T.pr)}28`,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <div style={{ fontSize: 20 }}>{r.emoji}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{r.name}</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
-                    {r.councils} councils · {r.seats} seats
-                  </div>
-                </div>
-                <Chip color={DIFF_COLORS[r.difficulty] || '#888'}>{r.difficulty}</Chip>
-              </div>
-
-              <div style={{ fontSize: 13, fontWeight: 500, color: T.tm, lineHeight: 1.65, marginBottom: 8 }}>{r.story}</div>
-
-              {r.watchFor && (
-                <div
-                  style={{
-                    padding: '8px 10px',
-                    background: T.c1 || 'rgba(0,0,0,0.04)',
-                    borderRadius: 8,
-                    marginBottom: 8,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 800,
-                      letterSpacing: '0.10em',
-                      textTransform: 'uppercase',
-                      color: T.tl,
-                      marginBottom: 3,
-                    }}
-                  >
-                    Watch for
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: T.tm }}>{r.watchFor}</div>
-                </div>
-              )}
-
-              {r.councils_list?.length > 0 && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {r.councils_list.map((cl, j) => (
-                    <motion.div
-                      key={j}
-                      {...TAP}
-                      onClick={() => openCouncil(cl.name)}
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 700,
-                        padding: '3px 9px',
-                        borderRadius: 999,
-                        background: T.c1 || 'rgba(0,0,0,0.05)',
-                        color: T.th,
-                        cursor: 'pointer',
-                        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
-                      }}
-                    >
-                      {cl.name}
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-
-        {tab === 'scotland' && (
+        {tab === 'devolved' ? (
           <>
-            <div
-              style={{
-                borderRadius: 14,
-                padding: '13px 14px',
-                marginBottom: 10,
-                background: T.c0 || '#fff',
-                border: '1px solid #C4922A28',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 800,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#C4922A',
-                  marginBottom: 10,
-                }}
-              >
-                🏴 Scottish Parliament · 7 May 2026
-              </div>
+            <SurfaceCard T={T} borderColor="#C4922A28" style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>Scotland</SectionLabel>
 
-              <div style={{ fontSize: 13, fontWeight: 500, color: T.tm, lineHeight: 1.65, marginBottom: 10 }}>
-                First major test for Reform UK in Scotland. Post-Yousaf SNP leadership election. Labour hoping to capitalise on SNP weakness.
+              <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.65 }}>
+                First major Scottish Parliament test of the post-2024 political mood. SNP, Labour, Conservatives, Greens and any Reform breakthrough all matter here.
               </div>
 
               <DevolvedPollGrid
@@ -662,62 +797,13 @@ export default function ElectionsScreen({ T, nav, meta, byElections = { upcoming
                   { party: 'Reform', pct: 5, color: '#12B7D4', trend: '▲ New' },
                 ]}
               />
-            </div>
+            </SurfaceCard>
 
-            <SectionLabel T={T}>Key Holyrood battlegrounds</SectionLabel>
+            <SurfaceCard T={T} borderColor="#3F842828" style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>Wales</SectionLabel>
 
-            {[
-              { seat: 'Edinburgh Central', holding: 'SNP', challenger: 'Labour', note: 'Angus Robertson personal vote vs Labour revival' },
-              { seat: 'Glasgow Southside', holding: 'SNP', challenger: 'Labour', note: "Humza Yousaf's former seat — symbolic Labour target" },
-              { seat: 'Lothian Region', holding: 'Con', challenger: 'Reform', note: 'Can Reform break through via regional list?' },
-              { seat: 'West Scotland', holding: 'SNP', challenger: 'Con/Lab', note: 'Three-way marginal on regional list' },
-            ].map((s, i) => (
-              <div
-                key={i}
-                style={{
-                  borderRadius: 12,
-                  padding: '10px 12px',
-                  marginBottom: 6,
-                  background: T.c0 || '#fff',
-                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
-                }}
-              >
-                <div style={{ fontSize: 14, fontWeight: 800, color: T.th, marginBottom: 2 }}>{s.seat}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginBottom: 3 }}>
-                  {s.holding} → {s.challenger}
-                </div>
-                <div style={{ fontSize: 13, color: T.tl }}>{s.note}</div>
-              </div>
-            ))}
-          </>
-        )}
-
-        {tab === 'wales' && (
-          <>
-            <div
-              style={{
-                borderRadius: 14,
-                padding: '13px 14px',
-                marginBottom: 10,
-                background: T.c0 || '#fff',
-                border: '1px solid #3F842828',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 800,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#3F8428',
-                  marginBottom: 10,
-                }}
-              >
-                🏴 Senedd · 7 May 2026
-              </div>
-
-              <div style={{ fontSize: 13, fontWeight: 500, color: T.tm, lineHeight: 1.65, marginBottom: 10 }}>
-                Expanded 96-seat Senedd uses a new proportional system for the first time. Labour dominance under serious threat from Reform UK in valleys communities.
+              <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.65 }}>
+                The expanded Senedd and new proportional system make Wales one of the most interesting electoral laboratories in the cycle.
               </div>
 
               <DevolvedPollGrid
@@ -731,38 +817,134 @@ export default function ElectionsScreen({ T, nav, meta, byElections = { upcoming
                   { party: 'Lib Dem', pct: 5, color: '#FAA61A', trend: '→ Stable' },
                 ]}
               />
-            </div>
+            </SurfaceCard>
 
-            <SectionLabel T={T}>Key Senedd contests</SectionLabel>
+            <SectionLabel T={T}>Key devolved battlegrounds</SectionLabel>
 
             {[
-              { seat: 'Rhondda', holding: 'Lab', challenger: 'Reform', note: "Reform's strongest Welsh target — heavy Leave vote" },
-              { seat: 'Cardiff Central', holding: 'LD', challenger: 'Lab/Green', note: 'Three-way marginal in university city' },
-              { seat: 'Ynys Môn (Anglesey)', holding: 'PC', challenger: 'Lab', note: 'Plaid heartland under Labour pressure' },
-              { seat: 'Brecon & Radnor', holding: 'LD', challenger: 'Con/Reform', note: 'Traditional Blue territory, LD defending' },
-            ].map((s, i) => (
-              <div
-                key={i}
-                style={{
-                  borderRadius: 12,
-                  padding: '10px 12px',
-                  marginBottom: 6,
-                  background: T.c0 || '#fff',
-                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
-                }}
-              >
-                <div style={{ fontSize: 14, fontWeight: 800, color: T.th, marginBottom: 2 }}>{s.seat}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginBottom: 3 }}>
-                  {s.holding} → {s.challenger}
-                </div>
-                <div style={{ fontSize: 13, color: T.tl }}>{s.note}</div>
-              </div>
+              { title: 'Edinburgh Central', note: 'Symbolic Labour target if the SNP vote softens in the capital.' },
+              { title: 'Glasgow Southside', note: 'A seat with leadership symbolism and wider national meaning.' },
+              { title: 'Rhondda', note: 'A strong test of whether Reform can translate discontent into Welsh breakthroughs.' },
+              { title: 'Cardiff Central', note: 'A more fragmented, urban seat where tactical behaviour matters.' },
+            ].map((item, i) => (
+              <SurfaceCard key={i} T={T} style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: T.th, marginBottom: 4 }}>{item.title}</div>
+                <div style={{ fontSize: 13, color: T.tl, lineHeight: 1.6 }}>{item.note}</div>
+              </SurfaceCard>
             ))}
           </>
-        )}
+        ) : null}
 
-        <div style={{ height: 40 }} />
-      </ScrollArea>
+        {tab === 'mayors' ? (
+          <>
+            <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>Mayoral contests</SectionLabel>
+              <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.7, textAlign: 'center' }}>
+                Mayoral races are worth separating because they often reward candidate quality, local profile and turnout dynamics more than simple national polling.
+              </div>
+            </SurfaceCard>
+
+            {MAYORAL_CONTESTS.map((m, i) => (
+              <SurfaceCard key={i} T={T} borderColor={`${T.pr || '#12B7D4'}28`} style={{ marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{m.name}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.pr || '#12B7D4', marginTop: 3 }}>{m.status}</div>
+                  </div>
+                  <Chip color={T.pr || '#12B7D4'}>Mayoral</Chip>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.65, marginTop: 8 }}>
+                  {m.note}
+                </div>
+              </SurfaceCard>
+            ))}
+          </>
+        ) : null}
+
+        {tab === 'byelections' ? (
+          <>
+            <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>By-elections</SectionLabel>
+              <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.7, textAlign: 'center' }}>
+                Important, but secondary. They matter as signals and local shocks, not as the main structure of the Elections journey.
+              </div>
+            </SurfaceCard>
+
+            <SectionLabel T={T}>Upcoming by-elections</SectionLabel>
+
+            {upcomingByElections.length > 0 ? (
+              upcomingByElections.map((b, i) => (
+                <SurfaceCard key={i} T={T} style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{b.name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.pr || '#12B7D4', marginTop: 3 }}>
+                        {b.date || 'Date TBC'}
+                      </div>
+                    </div>
+                    {b.defending ? <ControlBadge control={b.defending} T={T} /> : null}
+                  </div>
+
+                  {b.note ? (
+                    <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.65, marginTop: 8 }}>
+                      {b.note}
+                    </div>
+                  ) : null}
+
+                  {(b.majority || b.turnout) ? (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                      {b.majority ? <Chip color={T.pr || '#12B7D4'}>Majority {b.majority}</Chip> : null}
+                      {b.turnout ? <Chip color={T.pr || '#12B7D4'}>Turnout {b.turnout}</Chip> : null}
+                    </div>
+                  ) : null}
+                </SurfaceCard>
+              ))
+            ) : (
+              <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
+                <div style={{ fontSize: 14, color: T.tl }}>No upcoming by-elections loaded yet.</div>
+              </SurfaceCard>
+            )}
+
+            <SectionLabel T={T}>Recent results</SectionLabel>
+
+            {recentByElections.length > 0 ? (
+              recentByElections.map((b, i) => (
+                <SurfaceCard key={i} T={T} style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{b.name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, marginTop: 3 }}>
+                        {b.date || 'Recent result'}
+                      </div>
+                    </div>
+                    {b.winner ? (
+                      <div style={{ fontSize: 13, fontWeight: 800, color: b.winnerColor || T.pr }}>{b.winner}</div>
+                    ) : null}
+                  </div>
+
+                  {(b.gainLoss || b.majority || b.turnout) ? (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                      {b.gainLoss ? <Chip color={b.winnerColor || T.pr}>{b.gainLoss}</Chip> : null}
+                      {b.majority ? <Chip color={T.pr || '#12B7D4'}>Majority {b.majority}</Chip> : null}
+                      {b.turnout ? <Chip color={T.pr || '#12B7D4'}>Turnout {b.turnout}</Chip> : null}
+                    </div>
+                  ) : null}
+
+                  {b.note ? (
+                    <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.65, marginTop: 8 }}>
+                      {b.note}
+                    </div>
+                  ) : null}
+                </SurfaceCard>
+              ))
+            ) : (
+              <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
+                <div style={{ fontSize: 14, color: T.tl }}>No recent by-election results loaded yet.</div>
+              </SurfaceCard>
+            )}
+          </>
+        ) : null}
+      </div>
     </div>
   )
 }
