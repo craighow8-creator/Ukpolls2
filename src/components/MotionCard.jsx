@@ -1,21 +1,13 @@
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
-import { useRef } from 'react'
 import { haptic } from './ui'
 import { useSwipeNav } from '../utils/swipe'
-
-export const CARD_SIZES = {
-  small: { cols: 1, rows: 1, minH: 150 },
-  wide: { cols: 2, rows: 1, minH: 160 },
-  hero: { cols: 2, rows: 2, minH: 340 },
-  banner: { cols: 2, rows: 1, minH: 80 },
-  tall: { cols: 1, rows: 2, minH: 340 },
-}
+import { CARD_SIZES } from './cardSizes'
 
 const SPRING_OPEN = { type: 'spring', stiffness: 350, damping: 32 }
 const SPRING_DISMISS = { type: 'spring', stiffness: 400, damping: 36 }
 
 function BrandHeader({ T, onClose }) {
-  const logoSrc = `${import.meta.env.BASE_URL}icon-192.png`
+  const logoSrc = `${import.meta.env.BASE_URL}icons/icon-192.png`
 
   return (
     <div
@@ -36,8 +28,8 @@ function BrandHeader({ T, onClose }) {
       >
         <div
           style={{
-            width: 52,
-            height: 6,
+            width: 64,
+            height: 8,
             borderRadius: 999,
             background: T.tl,
             opacity: 0.22,
@@ -51,7 +43,7 @@ function BrandHeader({ T, onClose }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 12,
-          minHeight: 44,
+          minHeight: 52,
         }}
       >
         <div
@@ -67,8 +59,8 @@ function BrandHeader({ T, onClose }) {
             src={logoSrc}
             alt="Politiscope"
             style={{
-              width: 34,
-              height: 34,
+              width: 42,
+              height: 42,
               borderRadius: 999,
               flexShrink: 0,
               objectFit: 'cover',
@@ -118,8 +110,8 @@ function BrandHeader({ T, onClose }) {
             onClose()
           }}
           style={{
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             borderRadius: '50%',
             background: T.c1,
             border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
@@ -133,8 +125,8 @@ function BrandHeader({ T, onClose }) {
           }}
         >
           <svg
-            width="14"
-            height="14"
+            width="15"
+            height="15"
             viewBox="0 0 24 24"
             fill="none"
             stroke={T.tm}
@@ -153,7 +145,6 @@ function BrandHeader({ T, onClose }) {
 export function ExpandedCard({ layoutId, T, children, onClose }) {
   const y = useMotionValue(0)
   const bgOpacity = useTransform(y, [0, 180], [1, 0])
-  const closeTimer = useRef(null)
 
   const handleDragEnd = (_, info) => {
     if (info.velocity.y > 450 || info.offset.y > 140) {
@@ -245,6 +236,7 @@ export function ExpandedCard({ layoutId, T, children, onClose }) {
 
 export function BentoCard({ id, size = 'small', T, color, children, onClick, style = {} }) {
   const sz = CARD_SIZES[size] || CARD_SIZES.small
+
   return (
     <motion.div
       layoutId={id}

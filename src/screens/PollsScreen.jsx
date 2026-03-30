@@ -34,14 +34,7 @@ const PARTY_NAMES = {
 
 function cleanText(value) {
   if (value == null) return ''
-  return String(value)
-    .replace(/Â·/g, '·')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function norm(value) {
-  return cleanText(value).toLowerCase()
+  return String(value).replace(/Â·/g, '·').replace(/\s+/g, ' ').trim()
 }
 
 function safeNumber(value) {
@@ -53,12 +46,7 @@ function safeNumber(value) {
 }
 
 function displayDate(poll) {
-  return (
-    cleanText(poll?.publishedAt) ||
-    cleanText(poll?.fieldworkEnd) ||
-    cleanText(poll?.date) ||
-    'Date unavailable'
-  )
+  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.date) || 'Date unavailable'
 }
 
 function displaySubMeta(poll) {
@@ -67,7 +55,6 @@ function displaySubMeta(poll) {
     cleanText(poll?.method),
     cleanText(poll?.mode),
   ].filter(Boolean)
-
   return parts.join(' · ')
 }
 
@@ -89,14 +76,7 @@ function getPollResults(poll) {
         pct,
         color: PARTY_COLORS[key],
         name: PARTY_NAMES[key],
-        short:
-          key === 'ld'
-            ? 'LD'
-            : key === 'snp'
-              ? 'SNP'
-              : key === 'rb'
-                ? 'RB'
-                : key.toUpperCase(),
+        short: key === 'ld' ? 'LD' : key === 'snp' ? 'SNP' : key === 'rb' ? 'RB' : key.toUpperCase(),
       }
     })
     .filter(Boolean)
@@ -104,25 +84,15 @@ function getPollResults(poll) {
 }
 
 function buildSeries(polls, partyKey) {
-  return polls
-    .map((poll) => safeNumber(poll?.[partyKey]))
-    .filter((v) => v != null)
-    .slice(-12)
+  return polls.map((poll) => safeNumber(poll?.[partyKey])).filter((v) => v != null).slice(-12)
 }
 
 function pollSortScore(poll) {
-  return (
-    cleanText(poll?.publishedAt) ||
-    cleanText(poll?.fieldworkEnd) ||
-    cleanText(poll?.fieldworkStart) ||
-    cleanText(poll?.date) ||
-    ''
-  )
+  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
 }
 
 function groupPollsByPollster(polls) {
   const map = new Map()
-
   for (const poll of polls || []) {
     const name = cleanText(poll?.pollster)
     if (!name) continue
@@ -136,10 +106,7 @@ function groupPollsByPollster(polls) {
       polls: [...list].sort((a, b) => pollSortScore(b).localeCompare(pollSortScore(a))),
       latestPoll: [...list].sort((a, b) => pollSortScore(b).localeCompare(pollSortScore(a)))[0],
     }))
-    .sort((a, b) => {
-      if (b.polls.length !== a.polls.length) return b.polls.length - a.polls.length
-      return a.name.localeCompare(b.name)
-    })
+    .sort((a, b) => (b.polls.length !== a.polls.length ? b.polls.length - a.polls.length : a.name.localeCompare(b.name)))
 }
 
 function SectionLabel({ children, T, action }) {
@@ -233,46 +200,12 @@ function MiniBar({ value, max, color, T, height = 8 }) {
   )
 }
 
-function SparkLine({ data = [], color = '#888', width = 132, height = 34, filled = false }) {
-  const vals = (data || []).filter((v) => v != null && !isNaN(v))
-  if (vals.length < 2) return null
-
-  const min = Math.min(...vals)
-  const max = Math.max(...vals)
-  const range = max - min || 1
-
-  const pts = vals.map((v, i) => {
-    const x = (i / (vals.length - 1)) * width
-    const y = height - 3 - ((v - min) / range) * (height - 6)
-    return [+x.toFixed(1), +y.toFixed(1)]
-  })
-
-  const line = pts.map((p) => p.join(',')).join(' ')
-  const fill = filled ? `${pts[0][0]},${height} ${line} ${pts[pts.length - 1][0]},${height}` : null
-
-  return (
-    <svg width={width} height={height} style={{ overflow: 'visible', display: 'block', flexShrink: 0 }}>
-      {filled ? <polygon points={fill} fill={color} fillOpacity="0.14" /> : null}
-      <polyline
-        points={line}
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r="2.5" fill={color} />
-    </svg>
-  )
-}
-
 function HeroSnapshot({ T, parties, latestLivePoll, nav }) {
   const main = (parties || []).filter((p) => p.name !== 'Other').sort((a, b) => (b.pct || 0) - (a.pct || 0))
   const topFive = main.slice(0, 5)
   const leader = main[0]
   const runnerUp = main[1]
-  const gap =
-    leader && runnerUp ? +((safeNumber(leader.pct) || 0) - (safeNumber(runnerUp.pct) || 0)).toFixed(1) : null
+  const gap = leader && runnerUp ? +((safeNumber(leader.pct) || 0) - (safeNumber(runnerUp.pct) || 0)).toFixed(1) : null
 
   if (!leader) return null
 
@@ -329,20 +262,7 @@ function HeroSnapshot({ T, parties, latestLivePoll, nav }) {
         >
           Latest live poll: {cleanText(latestLivePoll.pollster)} · {displayDate(latestLivePoll)}
         </div>
-      ) : (
-        <div
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: T.tl,
-            textAlign: 'center',
-            marginTop: 6,
-            lineHeight: 1.5,
-          }}
-        >
-          Snapshot built from current polling view
-        </div>
-      )}
+      ) : null}
 
       <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {topFive.map((party, index) => (
@@ -355,27 +275,9 @@ function HeroSnapshot({ T, parties, latestLivePoll, nav }) {
               gap: 8,
             }}
           >
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 800,
-                color: party.color,
-                textAlign: 'left',
-              }}
-            >
-              {party.abbr}
-            </div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: party.color, textAlign: 'left' }}>{party.abbr}</div>
             <MiniBar value={party.pct} max={leader.pct || 1} color={party.color} T={T} height={9} />
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 800,
-                color: party.color,
-                textAlign: 'right',
-              }}
-            >
-              {party.pct}%
-            </div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: party.color, textAlign: 'right' }}>{party.pct}%</div>
           </div>
         ))}
       </div>
@@ -402,7 +304,7 @@ function HeroSnapshot({ T, parties, latestLivePoll, nav }) {
   )
 }
 
-function PollCard({ T, poll, nav, compact = false }) {
+function PollCard({ T, poll, nav }) {
   const results = getPollResults(poll)
   const leader = results[0]
   const max = leader?.pct || 30
@@ -419,7 +321,7 @@ function PollCard({ T, poll, nav, compact = false }) {
       }}
       style={{
         borderRadius: 16,
-        padding: compact ? '14px 14px' : '16px 16px',
+        padding: '16px',
         marginBottom: 10,
         background: T.c0,
         border: `1px solid ${live ? (leader?.color || T.pr) + '33' : T.cardBorder || 'rgba(0,0,0,0.08)'}`,
@@ -502,29 +404,9 @@ function PollCard({ T, poll, nav, compact = false }) {
               gap: 8,
             }}
           >
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 800,
-                color: r.color,
-                textAlign: 'left',
-              }}
-            >
-              {r.short}
-            </div>
-
+            <div style={{ fontSize: 13, fontWeight: 800, color: r.color, textAlign: 'left' }}>{r.short}</div>
             <MiniBar value={r.pct} max={max} color={r.color} T={T} />
-
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 800,
-                color: r.color,
-                textAlign: 'right',
-              }}
-            >
-              {r.pct}%
-            </div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: r.color, textAlign: 'right' }}>{r.pct}%</div>
           </div>
         ))}
       </div>
@@ -607,27 +489,11 @@ function PollsterCard({ T, group, nav }) {
 
       {latest ? (
         <>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: T.tl,
-              marginTop: 10,
-              textAlign: 'center',
-            }}
-          >
+          <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, marginTop: 10, textAlign: 'center' }}>
             Latest: {displayDate(latest)}
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 10,
-              flexWrap: 'wrap',
-              marginTop: 8,
-            }}
-          >
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', marginTop: 8 }}>
             {latestResults.map((r) => (
               <div key={r.key} style={{ fontSize: 13, fontWeight: 800, color: r.color }}>
                 {r.short} {r.pct}%
@@ -637,15 +503,7 @@ function PollsterCard({ T, group, nav }) {
         </>
       ) : null}
 
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: T.tl,
-          marginTop: 10,
-          textAlign: 'center',
-        }}
-      >
+      <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, marginTop: 10, textAlign: 'center' }}>
         Open pollster profile →
       </div>
     </div>
@@ -680,26 +538,13 @@ function buildTrendStory(polls, parties) {
     return { ...p, delta, series }
   })
 
-  const rising = [...movers]
-    .filter((p) => p.delta != null)
-    .sort((a, b) => (b.delta || 0) - (a.delta || 0))[0]
+  const rising = [...movers].filter((p) => p.delta != null).sort((a, b) => (b.delta || 0) - (a.delta || 0))[0]
+  const falling = [...movers].filter((p) => p.delta != null).sort((a, b) => (a.delta || 0) - (b.delta || 0))[0]
+  const gap = leader && second ? +((leader.current || 0) - (second.current || 0)).toFixed(1) : null
 
-  const falling = [...movers]
-    .filter((p) => p.delta != null)
-    .sort((a, b) => (a.delta || 0) - (b.delta || 0))[0]
-
-  const gap =
-    leader && second ? +((leader.current || 0) - (second.current || 0)).toFixed(1) : null
-
-  let subhead = leader && second ? `${leader.name} lead by ${gap}pt.` : 'Polling movement view.'
-
-  if (rising && (rising.delta || 0) > 0.4) {
-    subhead += ` ${rising.name} are up ${rising.delta}pt over the visible period.`
-  }
-
-  if (falling && (falling.delta || 0) < -0.4) {
-    subhead += ` ${falling.name} are down ${Math.abs(falling.delta)}pt.`
-  }
+  let subhead = leader ? `${leader.name} lead${gap === 1 ? 's' : ''}${gap != null ? ` by ${gap}pt.` : '.'}` : 'Polling movement view.'
+  if (rising && (rising.delta || 0) > 0.4) subhead += ` ${rising.name} are up ${rising.delta}pt.`
+  if (falling && (falling.delta || 0) < -0.4) subhead += ` ${falling.name} are down ${Math.abs(falling.delta)}pt.`
 
   return {
     leader,
@@ -726,40 +571,10 @@ function TrendHero({ T, polls, parties }) {
         border: `1px solid ${(story.leader?.color || T.pr)}30`,
       }}
     >
-      <div
-        style={{
-          fontSize: 28,
-          fontWeight: 800,
-          letterSpacing: -1,
-          color: T.th,
-          lineHeight: 1,
-          textAlign: 'center',
-        }}
-      >
-        Politiscope
-      </div>
-
-      <div
-        style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: T.tl,
-          marginTop: 4,
-          textAlign: 'center',
-          lineHeight: 1.5,
-        }}
-      >
-        The full picture of British politics
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 14, marginBottom: 12 }}>
-        <Badge color={story.leader?.color || T.pr}>Trend Hero</Badge>
-        {story.rising && (story.rising.delta || 0) > 0.4 ? (
-          <Badge color="#02A95B" subtle>Rising: {story.rising.abbr}</Badge>
-        ) : null}
-        {story.falling && (story.falling.delta || 0) < -0.4 ? (
-          <Badge color="#C8102E" subtle>Falling: {story.falling.abbr}</Badge>
-        ) : null}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        <Badge color={story.leader?.color || T.pr}>Trend hero</Badge>
+        {story.rising && (story.rising.delta || 0) > 0.4 ? <Badge color="#02A95B" subtle>Rising: {story.rising.abbr}</Badge> : null}
+        {story.falling && (story.falling.delta || 0) < -0.4 ? <Badge color="#C8102E" subtle>Falling: {story.falling.abbr}</Badge> : null}
       </div>
 
       <div
@@ -789,21 +604,9 @@ function TrendHero({ T, polls, parties }) {
       </div>
 
       {story.leader && story.second ? (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 8,
-            flexWrap: 'wrap',
-            marginTop: 12,
-          }}
-        >
-          <Badge color={story.leader.color}>
-            {story.leader.abbr} {story.leader.current}%
-          </Badge>
-          <Badge color={story.second.color} subtle>
-            {story.second.abbr} {story.second.current}%
-          </Badge>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+          <Badge color={story.leader.color}>{story.leader.abbr} {story.leader.current}%</Badge>
+          <Badge color={story.second.color} subtle>{story.second.abbr} {story.second.current}%</Badge>
         </div>
       ) : null}
     </div>
@@ -817,12 +620,7 @@ function RaceShapeCard({ T, polls, parties }) {
 
   const leaderSeries = buildSeries(polls, leader.key)
   const secondSeries = buildSeries(polls, second.key)
-
-  const firstGap =
-    leaderSeries.length && secondSeries.length
-      ? +((leaderSeries[0] || 0) - (secondSeries[0] || 0)).toFixed(1)
-      : null
-
+  const firstGap = leaderSeries.length && secondSeries.length ? +((leaderSeries[0] || 0) - (secondSeries[0] || 0)).toFixed(1) : null
   const gapDelta = firstGap != null ? +(gap - firstGap).toFixed(1) : null
 
   let label = 'Stable race'
@@ -850,40 +648,15 @@ function RaceShapeCard({ T, polls, parties }) {
     >
       <SectionLabel T={T}>Race shape</SectionLabel>
 
-      <div
-        style={{
-          fontSize: 22,
-          fontWeight: 800,
-          color: T.th,
-          textAlign: 'center',
-          lineHeight: 1.1,
-        }}
-      >
+      <div style={{ fontSize: 22, fontWeight: 800, color: T.th, textAlign: 'center', lineHeight: 1.1 }}>
         {gap}pt gap
       </div>
 
-      <div
-        style={{
-          fontSize: 13,
-          fontWeight: 700,
-          color,
-          textAlign: 'center',
-          marginTop: 8,
-        }}
-      >
+      <div style={{ fontSize: 13, fontWeight: 700, color, textAlign: 'center', marginTop: 8 }}>
         {label}
       </div>
 
-      <div
-        style={{
-          fontSize: 13,
-          fontWeight: 500,
-          color: T.tl,
-          textAlign: 'center',
-          lineHeight: 1.6,
-          marginTop: 6,
-        }}
-      >
+      <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginTop: 6 }}>
         {leader.name} vs {second.name}
         {gapDelta != null ? ` · change of ${gapDelta > 0 ? '+' : ''}${gapDelta}pt across the visible range` : ''}
       </div>
@@ -891,7 +664,7 @@ function RaceShapeCard({ T, polls, parties }) {
   )
 }
 
-function InteractiveTrendChart({ polls, parties, hidden, onToggle, T }) {
+function InteractiveTrendChart({ polls, parties, hidden, T }) {
   const [tooltip, setTooltip] = useState(null)
 
   const series = PARTY_KEYS.map((key) => {
@@ -899,7 +672,6 @@ function InteractiveTrendChart({ polls, parties, hidden, onToggle, T }) {
     return {
       key,
       label: PARTY_NAMES[key],
-      abbr: party?.abbr || key.toUpperCase(),
       color: PARTY_COLORS[key],
       values: buildSeries(polls, key),
     }
@@ -907,10 +679,11 @@ function InteractiveTrendChart({ polls, parties, hidden, onToggle, T }) {
 
   if (series.length < 2) return null
 
-  const length = Math.max(...series.map((s) => s.values.length))
-  const points = Array.from({ length }, (_, index) => index)
+  const filtered = series.filter((s) => !hidden[s.key])
+  if (filtered.length < 1) return null
 
-  const allVals = series.flatMap((s) => s.values)
+  const length = Math.max(...filtered.map((s) => s.values.length))
+  const allVals = filtered.flatMap((s) => s.values)
   const minV = Math.max(0, Math.min(...allVals) - 3)
   const maxV = Math.min(100, Math.max(...allVals) + 4)
 
@@ -955,30 +728,14 @@ function InteractiveTrendChart({ polls, parties, hidden, onToggle, T }) {
               <line key={v} x1={0} y1={yPos(v)} x2={W} y2={yPos(v)} stroke={gridColor} strokeWidth={0.8} />
             ))}
 
-            {points.map((_, i) => (
-              <text
-                key={i}
-                x={xPos(i)}
-                y={H - 8}
-                textAnchor="middle"
-                fontSize={10}
-                fill={textColor}
-                fontFamily="Outfit,sans-serif"
-              >
+            {Array.from({ length }).map((_, i) => (
+              <text key={i} x={xPos(i)} y={H - 8} textAnchor="middle" fontSize={10} fill={textColor} fontFamily="Outfit,sans-serif">
                 {i + 1}
               </text>
             ))}
 
-            {series.map((s) => {
-              if (hidden[s.key]) return null
-
-              const pts = s.values.map((v, i) => ({
-                x: xPos(i),
-                y: yPos(v),
-                v,
-                i,
-              }))
-
+            {filtered.map((s) => {
+              const pts = s.values.map((v, i) => ({ x: xPos(i), y: yPos(v), v, i }))
               const pathD = pts
                 .map((pt, idx) => {
                   if (idx === 0) return `M${pt.x},${pt.y.toFixed(1)}`
@@ -987,20 +744,12 @@ function InteractiveTrendChart({ polls, parties, hidden, onToggle, T }) {
                   return `C${cpx},${prev.y.toFixed(1)} ${cpx},${pt.y.toFixed(1)} ${pt.x},${pt.y.toFixed(1)}`
                 })
                 .join(' ')
-
               const last = pts[pts.length - 1]
 
               return (
                 <g key={s.key}>
                   <path d={`${pathD} L${last.x},${H - PB} L${pts[0].x},${H - PB} Z`} fill={s.color} opacity={0.09} />
-                  <path
-                    d={pathD}
-                    fill="none"
-                    stroke={s.color}
-                    strokeWidth={2.5}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                  <path d={pathD} fill="none" stroke={s.color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
 
                   {pts.map((pt, idx) => (
                     <g key={idx}>
@@ -1063,8 +812,8 @@ function InteractiveTrendChart({ polls, parties, hidden, onToggle, T }) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            {series
-              .filter((s) => !hidden[s.key] && s.values[tooltip] != null)
+            {filtered
+              .filter((s) => s.values[tooltip] != null)
               .sort((a, b) => (b.values[tooltip] || 0) - (a.values[tooltip] || 0))
               .map((s) => (
                 <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1181,6 +930,70 @@ function MethodologyCard({ T, title, body }) {
   )
 }
 
+function StickyHeader({ T, tab, setTab, latestLivePoll, meta }) {
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 8,
+        background: T.sf,
+        padding: '14px 16px 10px',
+        borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
+        boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
+      }}
+    >
+      <div
+        style={{
+          fontSize: 30,
+          fontWeight: 800,
+          letterSpacing: -1,
+          color: T.th,
+          textAlign: 'center',
+        }}
+      >
+        Polls
+      </div>
+
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          flexWrap: 'wrap',
+          width: '100%',
+          marginTop: 4,
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
+          Polling journey · latest race · pollsters · trends
+        </div>
+        <InfoButton id="poll_average" T={T} size={18} />
+      </div>
+
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 600,
+          color: T.tl,
+          marginTop: 4,
+          opacity: 0.8,
+          textAlign: 'center',
+          lineHeight: 1.5,
+        }}
+      >
+        {meta?.fetchDate ? `Updated ${meta.fetchDate}` : 'Polling data view'}
+        {latestLivePoll ? ` · latest live import ${latestLivePoll.pollster} ${displayDate(latestLivePoll)}` : ''}
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
+      </div>
+    </div>
+  )
+}
+
 export default function PollsScreen({ T, parties, polls, meta, nav }) {
   const [tab, setTab] = useState('snapshot')
   const [trendHidden, setTrendHidden] = useState({})
@@ -1202,8 +1015,7 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
   const pollsterGroups = useMemo(() => groupPollsByPollster(allPolls), [allPolls])
 
   const topTwo = mainParties.slice(0, 2)
-  const gap =
-    topTwo.length === 2 ? +((safeNumber(topTwo[0].pct) || 0) - (safeNumber(topTwo[1].pct) || 0)).toFixed(1) : null
+  const gap = topTwo.length === 2 ? +((safeNumber(topTwo[0].pct) || 0) - (safeNumber(topTwo[1].pct) || 0)).toFixed(1) : null
 
   const toggleTrendParty = (key) => {
     setTrendHidden((h) => ({ ...h, [key]: !h[key] }))
@@ -1214,64 +1026,13 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
+        minHeight: '100%',
         background: T.sf,
       }}
     >
-      <div style={{ padding: '20px 20px 0', flexShrink: 0 }}>
-        {tab === 'trends' ? null : (
-          <>
-            <div
-              style={{
-                fontSize: 30,
-                fontWeight: 800,
-                letterSpacing: -1,
-                color: T.th,
-                textAlign: 'center',
-              }}
-            >
-              Polls
-            </div>
+      <StickyHeader T={T} tab={tab} setTab={setTab} latestLivePoll={latestLivePoll} meta={meta} />
 
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                flexWrap: 'wrap',
-                width: '100%',
-                marginTop: 4,
-              }}
-            >
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
-                Polling journey · latest race · pollsters · trends
-              </div>
-              <InfoButton id="poll_average" T={T} size={18} />
-            </div>
-
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: T.tl,
-                marginTop: 4,
-                opacity: 0.8,
-                textAlign: 'center',
-                lineHeight: 1.5,
-              }}
-            >
-              {meta?.fetchDate ? `Updated ${meta.fetchDate}` : 'Polling data view'}
-              {latestLivePoll ? ` · latest live import ${latestLivePoll.pollster} ${displayDate(latestLivePoll)}` : ''}
-            </div>
-          </>
-        )}
-      </div>
-
-      <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
-
-      <ScrollArea>
+      <div style={{ padding: '12px 16px 40px' }}>
         {tab === 'snapshot' ? (
           <>
             <HeroSnapshot T={T} parties={mainParties} latestLivePoll={latestLivePoll} nav={nav} />
@@ -1288,27 +1049,11 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
               >
                 <SectionLabel T={T}>Race state</SectionLabel>
 
-                <div
-                  style={{
-                    fontSize: 23,
-                    fontWeight: 800,
-                    color: T.th,
-                    textAlign: 'center',
-                    lineHeight: 1.15,
-                  }}
-                >
+                <div style={{ fontSize: 23, fontWeight: 800, color: T.th, textAlign: 'center', lineHeight: 1.15 }}>
                   {topTwo[0].name} lead by {gap}pt
                 </div>
 
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: 8,
-                    flexWrap: 'wrap',
-                    marginTop: 10,
-                  }}
-                >
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
                   <Badge color={topTwo[0].color}>{topTwo[0].abbr} {topTwo[0].pct}%</Badge>
                   <Badge color={topTwo[1].color} subtle>{topTwo[1].abbr} {topTwo[1].pct}%</Badge>
                 </div>
@@ -1367,9 +1112,7 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
             >
               <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <Badge color={T.pr}>{importedPolls.length ? 'Live-first ordering' : 'Archive view'}</Badge>
-                <Badge color={T.tl} subtle>
-                  {latestPolls.length} shown
-                </Badge>
+                <Badge color={T.tl} subtle>{latestPolls.length} shown</Badge>
               </div>
               <div
                 style={{
@@ -1412,13 +1155,7 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
               }}
             >
               <SectionLabel T={T}>Trend chart</SectionLabel>
-              <InteractiveTrendChart
-                polls={allPolls}
-                parties={mainParties}
-                hidden={trendHidden}
-                onToggle={toggleTrendParty}
-                T={T}
-              />
+              <InteractiveTrendChart polls={allPolls} parties={mainParties} hidden={trendHidden} T={T} />
             </div>
 
             <div
@@ -1430,13 +1167,7 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
               }}
             >
               <SectionLabel T={T}>Party movers</SectionLabel>
-              <MovementCards
-                polls={allPolls}
-                parties={mainParties}
-                hidden={trendHidden}
-                onToggle={toggleTrendParty}
-                T={T}
-              />
+              <MovementCards polls={allPolls} parties={mainParties} hidden={trendHidden} onToggle={toggleTrendParty} T={T} />
               <div
                 style={{
                   fontSize: 12,
@@ -1514,9 +1245,7 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
             />
           </>
         ) : null}
-
-        <div style={{ height: 40 }} />
-      </ScrollArea>
+      </div>
     </div>
   )
 }
