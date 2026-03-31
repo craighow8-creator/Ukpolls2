@@ -32,6 +32,16 @@ const PARTY_NAMES = {
   snp: 'SNP',
 }
 
+const PARTY_SHORT = {
+  ref: 'REF',
+  lab: 'LAB',
+  con: 'CON',
+  grn: 'GRN',
+  ld: 'LD',
+  rb: 'RB',
+  snp: 'SNP',
+}
+
 const RELEASE_POLLSTERS = new Set([
   'yougov',
   'more in common',
@@ -82,8 +92,19 @@ function safeNumber(value) {
   return Number.isFinite(n) ? n : null
 }
 
+function formatUkDate(value) {
+  const d = parseDateish(value)
+  if (!d) return cleanText(value)
+
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const year = d.getUTCFullYear()
+  return `${day}-${month}-${year}`
+}
+
 function displayDate(poll) {
-  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.date) || 'Date unavailable'
+  const raw = cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.date)
+  return raw ? formatUkDate(raw) : 'Date unavailable'
 }
 
 function displaySubMeta(poll) {
@@ -161,7 +182,7 @@ function getPollResults(poll) {
         pct,
         color: PARTY_COLORS[key],
         name: PARTY_NAMES[key],
-        short: key === 'ld' ? 'LD' : key === 'snp' ? 'SNP' : key === 'rb' ? 'RB' : key.toUpperCase(),
+        short: PARTY_SHORT[key] || key.toUpperCase(),
       }
     })
     .filter(Boolean)
@@ -613,16 +634,9 @@ function getTrendValuesFromParties(parties, polls) {
     .sort((a, b) => b.current - a.current)
 }
 
-function getTrendLabel(delta) {
-  if (delta == null) return { text: 'Flat', color: null }
-  if (delta > 0.4) return { text: 'Rising', color: '#02A95B' }
-  if (delta < -0.4) return { text: 'Slipping', color: '#C8102E' }
-  return { text: 'Stable', color: null }
-}
-
 function formatDelta(delta) {
-  if (delta == null) return ''
-  return `${delta > 0 ? '+' : ''}${delta}pt`
+  if (delta == null) return '0.0'
+  return `${delta > 0 ? '+' : ''}${delta}`
 }
 
 function ordinalWord(n) {
@@ -646,82 +660,99 @@ function buildTrendTakeaway({ parties, polls, focusedKey, hidden }) {
     }
   }
 
-  if (focusedKey) {
-    const focused = values.find((p) => p.key === focusedKey && !hidden?.[p.key])
-    if (!focused) {
+  const leader = visible[0]
+  const challenger = visible[1]
+  const gap = leader && challenger ? +((leader.current || 0) - (challenger.current || 0)).toFixed(1) : null
+
+  let headline = leader
+    ? `${leader.name} lead the race on ${leader.current}%`
+    : 'Trend picture remains active'
+
+  if (leader && challenger && gap != null) {
+    if (Math.abs(gap) < 0.5) {
+      headline = `${leader.name} and ${challenger.name} are effectively level`
+    } else {
+      headline = `${leader.name} lead ${challenger.name} by ${gap}pt`
+    }
+  }
+
+  const focused = focusedKey ? visible.find((p) => p.key === focusedKey) : null
+
+  if (focused) {
+    const rank = visible.findIndex((p) => p.key === focused.key) + 1
+    const rankText = rank ? ordinalWord(rank) : null
+    const absDelta = Math.abs(focused.delta || 0)
+
+    let focusedClause = `${focused.name} are ${rankText} on ${focused.current}%`
+
+    if (focused.delta != null && absDelta > 0.4) {
+      focusedClause += `, ${focused.delta > 0 ? 'up' : 'down'} ${absDelta.toFixed(1)}pt`
+    } else {
+      focusedClause += ' and broadly flat'
+    }
+
+    if (challenger && focused.key !== leader.key && focused.key !== challenger.key) {
       return {
-        headline: 'Trend focus cleared',
-        subhead: 'All visible lines are back in the wider trend picture.',
+        headline,
+        subhead: `${leader.name} remain ahead, while ${focusedClause} in the current visible picture.`,
       }
     }
 
-    const rank = values.findIndex((p) => p.key === focused.key) + 1
-    const rankText = rank ? ordinalWord(rank) : null
-    const label = getTrendLabel(focused.delta)
-
-    let headline = `${focused.name} sit ${rankText} on ${focused.current}%`
-    let subhead = `${focused.name} look ${label.text.toLowerCase()} in the recent trend picture.`
-
-    if (focused.delta != null && Math.abs(focused.delta) > 0.4) {
-      subhead = `${focused.name} are ${formatDelta(focused.delta)} across the recent trend window.`
+    return {
+      headline,
+      subhead: `${focusedClause} in the current visible picture.`,
     }
-
-    if (focused.delta != null && Math.abs(focused.delta) <= 0.4) {
-      subhead = `${focused.name} are broadly flat across the recent trend window.`
-    }
-
-    return { headline, subhead }
   }
 
-  const leader = visible[0]
-  const second = visible[1]
-  const moversUp = [...visible].filter((p) => p.delta != null).sort((a, b) => (b.delta || 0) - (a.delta || 0))
-  const moversDown = [...visible].filter((p) => p.delta != null).sort((a, b) => (a.delta || 0) - (b.delta || 0))
-  const rising = moversUp[0]
-  const falling = moversDown[0]
-  const gap = leader && second ? +((leader.current || 0) - (second.current || 0)).toFixed(1) : null
+  const rising = [...visible]
+    .filter((p) => p.delta != null)
+    .sort((a, b) => (b.delta || 0) - (a.delta || 0))
+    .find((p) => (p.delta || 0) > 0.4)
 
-  let headline = leader
-    ? `${leader.name} still lead on ${leader.current}%`
-    : 'Trend picture remains active'
+  const falling = [...visible]
+    .filter((p) => p.delta != null)
+    .sort((a, b) => (a.delta || 0) - (b.delta || 0))
+    .find((p) => (p.delta || 0) < -0.4)
 
-  let parts = []
+  const supporting = []
 
-  if (leader && second && gap != null) {
-    parts.push(`${leader.name} are ${gap}pt ahead of ${second.name}.`)
+  if (leader && challenger) {
+    supporting.push(`${leader.name} remain ahead of ${challenger.name}.`)
   }
 
-  if (rising && rising.delta != null && rising.delta > 0.4) {
-    parts.push(`${rising.name} are the clearest risers.`)
+  if (rising && rising.key !== leader.key && rising.key !== challenger?.key) {
+    supporting.push(`${rising.name} are the clearest risers.`)
+  } else if (rising) {
+    supporting.push(`${rising.name} are still edging higher.`)
   }
 
   if (
     falling &&
-    falling.delta != null &&
-    falling.delta < -0.4 &&
-    (!rising || falling.key !== rising.key)
+    falling.key !== leader.key &&
+    falling.key !== challenger?.key &&
+    (!rising || falling.key !== rising.key) &&
+    supporting.length < 2
   ) {
-    parts.push(`${falling.name} have softened most.`)
+    supporting.push(`${falling.name} have softened most.`)
   }
 
-  if (!parts.length) {
-    parts.push('Recent movement remains fairly contained across the visible trend window.')
+  if (!supporting.length) {
+    supporting.push('Recent movement remains fairly contained across the visible trend window.')
   }
 
   return {
     headline,
-    subhead: parts.join(' '),
+    subhead: supporting.slice(0, 2).join(' '),
   }
 }
 
 function CompactMovers({ movers, hidden, focused, onPress, T }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {movers.map((p) => {
         const hiddenNow = !!hidden[p.key]
         const focusedNow = focused === p.key && !hiddenNow
-        const activeNow = !hiddenNow
-        const label = getTrendLabel(p.delta)
+        const dimmed = !hiddenNow && focused && focused !== p.key
 
         return (
           <div
@@ -731,61 +762,158 @@ function CompactMovers({ movers, hidden, focused, onPress, T }) {
               onPress(p.key)
             }}
             style={{
-              borderRadius: 16,
-              padding: '11px 13px',
-              background: activeNow ? `${p.color}1F` : `${p.color}0D`,
+              position: 'relative',
+              borderRadius: 14,
+              padding: '10px 12px 10px 16px',
+              background: focusedNow ? (T.c1 || 'rgba(0,0,0,0.04)') : (T.c0 || '#fff'),
               display: 'grid',
               gridTemplateColumns: '1fr auto',
               gap: 10,
               alignItems: 'start',
               cursor: 'pointer',
-              opacity: hiddenNow ? 0.3 : 1,
+              opacity: hiddenNow ? 0.28 : dimmed ? 0.5 : 1,
               transform: focusedNow ? 'translateY(-1px)' : 'none',
-              transition: 'opacity 0.2s ease, transform 0.2s ease, background 0.2s ease',
+              boxShadow: focusedNow ? '0 4px 14px rgba(0,0,0,0.05)' : 'none',
+              transition: 'opacity 0.2s ease, transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease',
             }}
           >
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: 9,
+                bottom: 9,
+                width: 4,
+                borderRadius: 999,
+                background: p.color,
+              }}
+            />
+
             <div style={{ minWidth: 0 }}>
               <div
                 style={{
                   fontSize: 14,
                   fontWeight: 800,
-                  color: p.color,
+                  color: T.th,
                   lineHeight: 1.2,
                   textAlign: 'left',
                 }}
               >
                 {p.name}
               </div>
-
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: label.color || T.tl,
-                  marginTop: 5,
-                  lineHeight: 1.25,
-                  textAlign: 'left',
-                }}
-              >
-                {label.text}{p.delta != null ? ` · ${formatDelta(p.delta)}` : ''}
-              </div>
             </div>
 
-            <div
-              style={{
-                fontSize: 22,
-                fontWeight: 800,
-                color: p.color,
-                lineHeight: 1,
-                textAlign: 'right',
-                paddingTop: 1,
-              }}
-            >
-              {p.current}%
+            <div style={{ textAlign: 'right', minWidth: 56 }}>
+              <div
+                style={{
+                  fontSize: 20,
+                  fontWeight: 800,
+                  color: p.color,
+                  lineHeight: 1,
+                }}
+              >
+                {p.current}%
+              </div>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: T.tl,
+                  marginTop: 5,
+                  lineHeight: 1.15,
+                }}
+              >
+                {formatDelta(p.delta)}
+              </div>
             </div>
           </div>
         )
       })}
+    </div>
+  )
+}
+
+function TrendSelectionStrip({ activeDate, rows, T }) {
+  return (
+    <div
+      style={{
+        marginTop: 10,
+        position: 'relative',
+        borderRadius: 14,
+        padding: '10px 12px',
+        background: T.c1 || 'rgba(0,0,0,0.03)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          minWidth: 0,
+        }}
+      >
+        <div
+          style={{
+            flexShrink: 0,
+            fontSize: 13,
+            fontWeight: 800,
+            color: T.th,
+            textAlign: 'left',
+          }}
+        >
+          {activeDate}
+        </div>
+
+        <div
+          style={{
+            minWidth: 0,
+            flex: 1,
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            whiteSpace: 'nowrap',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, paddingRight: 14 }}>
+            {rows.map((row) => (
+              <div
+                key={row.key}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '5px 9px',
+                  borderRadius: 999,
+                  background: `${row.color}14`,
+                  color: row.color,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span>{row.short}</span>
+                <span>{row.selectedValue}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: 26,
+          pointerEvents: 'none',
+          borderRadius: '0 14px 14px 0',
+          background: `linear-gradient(270deg, ${T.c1 || 'rgba(255,255,255,0.98)'} 0%, ${T.c1 || 'rgba(255,255,255,0.98)'} 40%, transparent 100%)`,
+        }}
+      />
     </div>
   )
 }
@@ -827,7 +955,7 @@ function PremiumTrendChart({
       return {
         key,
         label: PARTY_NAMES[key],
-        short: key === 'ld' ? 'LD' : key === 'snp' ? 'SNP' : key === 'rb' ? 'RB' : key.toUpperCase(),
+        short: PARTY_SHORT[key] || key.toUpperCase(),
         color: PARTY_COLORS[key],
         points,
         latest: points[points.length - 1]?.value ?? null,
@@ -872,7 +1000,7 @@ function PremiumTrendChart({
   const gridVals = []
   for (let v = minV; v <= maxV; v += 5) gridVals.push(v)
 
-  const tooltipRows = visibleSeries
+  const selectedRows = visibleSeries
     .map((s) => {
       const point = s.points.find((p) => p.i === selected)
       return point ? { ...s, selectedValue: point.value } : null
@@ -880,7 +1008,9 @@ function PremiumTrendChart({
     .filter(Boolean)
     .sort((a, b) => b.selectedValue - a.selectedValue)
 
-  const activeDate = trendPolls[selected] ? displayDate(trendPolls[selected]) : displayDate(trendPolls[trendPolls.length - 1])
+  const activeDate = trendPolls[selected]
+    ? displayDate(trendPolls[selected])
+    : displayDate(trendPolls[trendPolls.length - 1])
 
   return (
     <>
@@ -963,8 +1093,8 @@ function PremiumTrendChart({
               })
               .join(' ')
 
-            const selectedSeries = hoveredKey ? hoveredKey === s.key : focused ? focused === s.key : false
-            const dim = hoveredKey ? hoveredKey !== s.key : false
+            const selectedSeries = activeFocus ? activeFocus === s.key : false
+            const dim = activeFocus ? activeFocus !== s.key : false
 
             return (
               <g key={s.key}>
@@ -1029,28 +1159,7 @@ function PremiumTrendChart({
         </svg>
       </div>
 
-      <div
-        style={{
-          marginTop: 12,
-          borderRadius: 14,
-          padding: '12px 14px',
-          background: T.sf,
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 800, color: T.th, marginBottom: 8, textAlign: 'center' }}>
-          {activeDate}
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {tooltipRows.map((row) => (
-            <div key={row.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 9, height: 9, borderRadius: '50%', background: row.color, flexShrink: 0 }} />
-              <div style={{ fontSize: 13, fontWeight: 700, color: T.tm, flex: 1 }}>{row.label}</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: row.color }}>{row.selectedValue}%</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <TrendSelectionStrip activeDate={activeDate} rows={selectedRows} T={T} />
     </>
   )
 }
@@ -1078,24 +1187,24 @@ function CombinedTrendCard({
 
   const handleMoverPress = (key) => {
     const currentlyHidden = !!hidden[key]
-    const currentlyVisibleCount = movers.filter((m) => !hidden[m.key]).length
+    const currentlyFocused = focused === key
+    const visibleCount = movers.filter((m) => !hidden[m.key]).length
 
-    if (!currentlyHidden && currentlyVisibleCount <= 1) {
+    if (currentlyHidden) {
+      setHidden((prev) => ({ ...prev, [key]: false }))
+      setFocused(key)
       return
     }
 
-    setHidden((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }))
-
-    if (!currentlyHidden && focused === key) {
-      setFocused(null)
-    }
-
-    if (currentlyHidden && focused == null) {
+    if (!currentlyFocused) {
+      setFocused(key)
       return
     }
+
+    if (visibleCount <= 1) return
+
+    setHidden((prev) => ({ ...prev, [key]: true }))
+    setFocused(null)
   }
 
   const resetToAll = () => {
@@ -1112,14 +1221,14 @@ function CombinedTrendCard({
         marginBottom: 12,
       }}
     >
-      <div style={{ padding: '16px 16px 12px' }}>
+      <div style={{ padding: '16px 16px 10px' }}>
         <div
           style={{
             fontSize: 18,
             fontWeight: 800,
             color: T.th,
             textAlign: 'left',
-            lineHeight: 1.2,
+            lineHeight: 1.22,
             minHeight: 22,
             transition: 'opacity 0.18s ease',
           }}
