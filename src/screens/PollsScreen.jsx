@@ -42,6 +42,7 @@ const PARTY_SHORT = {
   snp: 'SNP',
 }
 
+
 const RELEASE_POLLSTERS = new Set([
   'yougov',
   'more in common',
@@ -49,11 +50,6 @@ const RELEASE_POLLSTERS = new Set([
   'opinium',
   'ipsos',
 ])
-
-function cleanText(value) {
-  if (value == null) return ''
-  return String(value).replace(/Â·/g, '·').replace(/\s+/g, ' ').trim()
-}
 
 function normalisePollster(value) {
   return cleanText(value).toLowerCase()
@@ -76,57 +72,12 @@ function parseDateish(value) {
 
   if (/^\d{1,2}\s+[A-Za-z]{3,9}(\s*[-–]\s*\d{1,2}\s+[A-Za-z]{3,9})?$/.test(text)) {
     const chunk = text.split(/[-–]/)[0].trim()
-    const d = new Date(`${chunk} ${new Date().getFullYear()}`)
+    const d = new Date(`${chunk} 2026`)
     return Number.isNaN(d.getTime()) ? null : d
   }
 
   const d = new Date(text)
   return Number.isNaN(d.getTime()) ? null : d
-}
-
-function safeNumber(value) {
-  if (value == null || value === '') return null
-  const raw = String(value).replace(/%/g, '').replace(/,/g, '').trim()
-  if (!raw) return null
-  const n = Number(raw)
-  return Number.isFinite(n) ? n : null
-}
-
-function formatUkDate(value) {
-  const d = parseDateish(value)
-  if (!d) return cleanText(value)
-
-  const day = String(d.getUTCDate()).padStart(2, '0')
-  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
-  const year = d.getUTCFullYear()
-  return `${day}-${month}-${year}`
-}
-
-function displayDate(poll) {
-  const raw = cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.date)
-  return raw ? formatUkDate(raw) : 'Date unavailable'
-}
-
-function displaySubMeta(poll) {
-  const parts = [
-    poll?.sample ? `Sample ${poll.sample}` : null,
-    cleanText(poll?.method),
-    cleanText(poll?.mode),
-  ].filter(Boolean)
-
-  return parts.join(' · ')
-}
-
-function hasLiveSource(poll) {
-  return !!cleanText(poll?.sourceUrl)
-}
-
-function isImportedPoll(poll) {
-  return hasLiveSource(poll)
-}
-
-function pollSortScore(poll) {
-  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
 }
 
 function keepLatestPollPerPollster(polls) {
@@ -172,6 +123,48 @@ function formatMonthLabel(value) {
   return d.toLocaleDateString('en-GB', { month: 'short' })
 }
 
+function formatRangeLabel(polls) {
+  if (!polls?.length) return ''
+  const first = displayDate(polls[0])
+  const last = displayDate(polls[polls.length - 1])
+  return `${first} – ${last}`
+}
+
+function cleanText(value) {
+  if (value == null) return ''
+  return String(value).replace(/Â·/g, '·').replace(/\s+/g, ' ').trim()
+}
+
+function safeNumber(value) {
+  if (value == null || value === '') return null
+  const raw = String(value).replace(/%/g, '').replace(/,/g, '').trim()
+  if (!raw) return null
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : null
+}
+
+function displayDate(poll) {
+  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.date) || 'Date unavailable'
+}
+
+function displaySubMeta(poll) {
+  const parts = [
+    poll?.sample ? `Sample ${poll.sample}` : null,
+    cleanText(poll?.method),
+    cleanText(poll?.mode),
+  ].filter(Boolean)
+
+  return parts.join(' · ')
+}
+
+function hasLiveSource(poll) {
+  return !!cleanText(poll?.sourceUrl)
+}
+
+function isImportedPoll(poll) {
+  return hasLiveSource(poll)
+}
+
 function getPollResults(poll) {
   return PARTY_KEYS
     .map((key) => {
@@ -182,7 +175,7 @@ function getPollResults(poll) {
         pct,
         color: PARTY_COLORS[key],
         name: PARTY_NAMES[key],
-        short: PARTY_SHORT[key] || key.toUpperCase(),
+        short: key === 'ld' ? 'LD' : key === 'snp' ? 'SNP' : key === 'rb' ? 'RB' : key.toUpperCase(),
       }
     })
     .filter(Boolean)
@@ -191,6 +184,10 @@ function getPollResults(poll) {
 
 function buildSeries(polls, partyKey) {
   return polls.map((poll) => safeNumber(poll?.[partyKey])).filter((v) => v != null).slice(-12)
+}
+
+function pollSortScore(poll) {
+  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
 }
 
 function groupPollsByPollster(polls) {
@@ -613,13 +610,14 @@ function PollsterCard({ T, group, nav }) {
   )
 }
 
+
 function getTrendValuesFromParties(parties, polls) {
   return (parties || [])
     .filter((p) => p.name !== 'Other')
     .map((p) => {
       const key = PARTY_KEYS.find((k) => PARTY_NAMES[k] === p.name || p.abbr?.toLowerCase() === k)
       const series = key ? buildSeries(polls, key) : []
-      const delta = series.length >= 2 ? +(series[series.length - 1] - series[0]).toFixed(1) : null
+      const delta = series.length >= 2 ? +(series[series.length - 1] - series[0]).toFixed(1) : 0
       return {
         key,
         name: p.name,
@@ -635,8 +633,8 @@ function getTrendValuesFromParties(parties, polls) {
 }
 
 function formatDelta(delta) {
-  if (delta == null) return '0.0'
-  return `${delta > 0 ? '+' : ''}${delta}`
+  const value = typeof delta === 'number' ? delta : 0
+  return `${value > 0 ? '+' : ''}${value.toFixed(1)}`
 }
 
 function ordinalWord(n) {
@@ -656,7 +654,7 @@ function buildTrendTakeaway({ parties, polls, focusedKey, hidden }) {
   if (!visible.length) {
     return {
       headline: 'No visible trend lines',
-      subhead: 'Bring a party back into view to rebuild the trend picture.',
+      subhead: 'Bring a party back into view to rebuild the race picture.',
     }
   }
 
@@ -664,85 +662,59 @@ function buildTrendTakeaway({ parties, polls, focusedKey, hidden }) {
   const challenger = visible[1]
   const gap = leader && challenger ? +((leader.current || 0) - (challenger.current || 0)).toFixed(1) : null
 
-  let headline = leader
-    ? `${leader.name} lead the race on ${leader.current}%`
-    : 'Trend picture remains active'
-
+  let headline = leader ? `${leader.name} lead the race on ${leader.current}%` : 'Trend picture remains active'
   if (leader && challenger && gap != null) {
-    if (Math.abs(gap) < 0.5) {
-      headline = `${leader.name} and ${challenger.name} are effectively level`
-    } else {
-      headline = `${leader.name} lead ${challenger.name} by ${gap}pt`
-    }
+    headline = Math.abs(gap) < 0.5
+      ? `${leader.name} and ${challenger.name} are effectively level`
+      : `${leader.name} lead ${challenger.name} by ${gap}pt`
   }
 
   const focused = focusedKey ? visible.find((p) => p.key === focusedKey) : null
-
   if (focused) {
     const rank = visible.findIndex((p) => p.key === focused.key) + 1
     const rankText = rank ? ordinalWord(rank) : null
     const absDelta = Math.abs(focused.delta || 0)
+    const movement = absDelta > 0.4
+      ? `${focused.delta > 0 ? 'up' : 'down'} ${absDelta.toFixed(1)}pt`
+      : 'broadly flat'
 
-    let focusedClause = `${focused.name} are ${rankText} on ${focused.current}%`
-
-    if (focused.delta != null && absDelta > 0.4) {
-      focusedClause += `, ${focused.delta > 0 ? 'up' : 'down'} ${absDelta.toFixed(1)}pt`
-    } else {
-      focusedClause += ' and broadly flat'
-    }
-
-    if (challenger && focused.key !== leader.key && focused.key !== challenger.key) {
+    if (focused.key !== leader.key && focused.key !== challenger?.key && leader && challenger) {
       return {
         headline,
-        subhead: `${leader.name} remain ahead, while ${focusedClause} in the current visible picture.`,
+        subhead: `${leader.name} remain ahead of ${challenger.name}, while ${focused.name} sit ${rankText} on ${focused.current}% and are ${movement}.`,
       }
     }
 
     return {
       headline,
-      subhead: `${focusedClause} in the current visible picture.`,
+      subhead: `${focused.name} sit ${rankText} on ${focused.current}% and are ${movement}.`,
     }
   }
 
-  const rising = [...visible]
-    .filter((p) => p.delta != null)
-    .sort((a, b) => (b.delta || 0) - (a.delta || 0))
-    .find((p) => (p.delta || 0) > 0.4)
+  const rising = [...visible].sort((a, b) => (b.delta || 0) - (a.delta || 0)).find((p) => (p.delta || 0) > 0.4)
+  const falling = [...visible].sort((a, b) => (a.delta || 0) - (b.delta || 0)).find((p) => (p.delta || 0) < -0.4)
 
-  const falling = [...visible]
-    .filter((p) => p.delta != null)
-    .sort((a, b) => (a.delta || 0) - (b.delta || 0))
-    .find((p) => (p.delta || 0) < -0.4)
-
-  const supporting = []
-
-  if (leader && challenger) {
-    supporting.push(`${leader.name} remain ahead of ${challenger.name}.`)
+  const parts = []
+  if (leader && challenger) parts.push(`${leader.name} remain ahead of ${challenger.name}.`)
+  if (rising) {
+    parts.push(rising.key === leader.key || rising.key === challenger?.key
+      ? `${rising.name} are still edging higher.`
+      : `${rising.name} are the clearest risers.`)
   }
-
-  if (rising && rising.key !== leader.key && rising.key !== challenger?.key) {
-    supporting.push(`${rising.name} are the clearest risers.`)
-  } else if (rising) {
-    supporting.push(`${rising.name} are still edging higher.`)
-  }
-
   if (
     falling &&
     falling.key !== leader.key &&
     falling.key !== challenger?.key &&
-    (!rising || falling.key !== rising.key) &&
-    supporting.length < 2
+    (!rising || rising.key !== falling.key) &&
+    parts.length < 2
   ) {
-    supporting.push(`${falling.name} have softened most.`)
+    parts.push(`${falling.name} have softened most.`)
   }
-
-  if (!supporting.length) {
-    supporting.push('Recent movement remains fairly contained across the visible trend window.')
-  }
+  if (!parts.length) parts.push('Recent movement remains fairly contained across the visible trend window.')
 
   return {
     headline,
-    subhead: supporting.slice(0, 2).join(' '),
+    subhead: parts.slice(0, 2).join(' '),
   }
 }
 
@@ -764,7 +736,7 @@ function CompactMovers({ movers, hidden, focused, onPress, T }) {
             style={{
               position: 'relative',
               borderRadius: 14,
-              padding: '10px 12px 10px 16px',
+              padding: '9px 12px 9px 16px',
               background: focusedNow ? (T.c1 || 'rgba(0,0,0,0.04)') : (T.c0 || '#fff'),
               display: 'grid',
               gridTemplateColumns: '1fr auto',
@@ -781,8 +753,8 @@ function CompactMovers({ movers, hidden, focused, onPress, T }) {
               style={{
                 position: 'absolute',
                 left: 0,
-                top: 9,
-                bottom: 9,
+                top: 8,
+                bottom: 8,
                 width: 4,
                 borderRadius: 999,
                 background: p.color,
@@ -819,7 +791,7 @@ function CompactMovers({ movers, hidden, focused, onPress, T }) {
                   fontSize: 11,
                   fontWeight: 700,
                   color: T.tl,
-                  marginTop: 5,
+                  marginTop: 4,
                   lineHeight: 1.15,
                 }}
               >
@@ -840,7 +812,7 @@ function TrendSelectionStrip({ activeDate, rows, T }) {
         marginTop: 10,
         position: 'relative',
         borderRadius: 14,
-        padding: '10px 12px',
+        padding: '8px 10px',
         background: T.c1 || 'rgba(0,0,0,0.03)',
       }}
     >
@@ -876,7 +848,7 @@ function TrendSelectionStrip({ activeDate, rows, T }) {
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, paddingRight: 14 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, paddingRight: 16 }}>
             {rows.map((row) => (
               <div
                 key={row.key}
@@ -911,11 +883,33 @@ function TrendSelectionStrip({ activeDate, rows, T }) {
           width: 26,
           pointerEvents: 'none',
           borderRadius: '0 14px 14px 0',
-          background: `linear-gradient(270deg, ${T.c1 || 'rgba(255,255,255,0.98)'} 0%, ${T.c1 || 'rgba(255,255,255,0.98)'} 40%, transparent 100%)`,
+          background: `linear-gradient(270deg, ${T.c1 || 'rgba(255,255,255,0.98)'} 0%, ${T.c1 || 'rgba(255,255,255,0.98)'} 45%, transparent 100%)`,
         }}
       />
     </div>
   )
+}
+
+
+function nudgeFloatingLabels(items, minGap = 18, minTop = 14, maxTop = 322) {
+  const adjusted = items.map((item) => ({ ...item }))
+
+  for (let i = 1; i < adjusted.length; i += 1) {
+    if (adjusted[i].top - adjusted[i - 1].top < minGap) {
+      adjusted[i].top = adjusted[i - 1].top + minGap
+    }
+  }
+
+  for (let i = adjusted.length - 2; i >= 0; i -= 1) {
+    if (adjusted[i + 1].top - adjusted[i].top < minGap) {
+      adjusted[i].top = adjusted[i + 1].top - minGap
+    }
+  }
+
+  return adjusted.map((item) => ({
+    ...item,
+    top: Math.max(minTop, Math.min(maxTop, item.top)),
+  }))
 }
 
 function PremiumTrendChart({
@@ -974,15 +968,14 @@ function PremiumTrendChart({
 
   const pointCount = trendPolls.length
   const COL = 84
-  const LEFT = 22
-  const RIGHT = 72
+  const LEFT_RAIL = 44
   const TOP = 20
   const BOTTOM = 38
   const H = 340
   const INNER_H = H - TOP - BOTTOM
-  const W = Math.max(520, LEFT + RIGHT + Math.max(pointCount - 1, 1) * COL)
+  const plotWidth = Math.max(520, Math.max(pointCount - 1, 1) * COL + 80)
 
-  const xPos = (i) => LEFT + i * COL
+  const xPos = (i) => 12 + i * COL
   const yPos = (value) => TOP + INNER_H - ((value - minV) / yRange) * INNER_H
 
   const selected = selectedIndex == null ? pointCount - 1 : selectedIndex
@@ -1003,168 +996,212 @@ function PremiumTrendChart({
   const selectedRows = visibleSeries
     .map((s) => {
       const point = s.points.find((p) => p.i === selected)
-      return point ? { ...s, selectedValue: point.value } : null
+      if (!point) return null
+      return {
+        ...s,
+        selectedValue: point.value,
+        top: yPos(point.value),
+      }
     })
     .filter(Boolean)
-    .sort((a, b) => b.selectedValue - a.selectedValue)
 
   const activeDate = trendPolls[selected]
     ? displayDate(trendPolls[selected])
     : displayDate(trendPolls[trendPolls.length - 1])
 
+  const selectedLineX = xPos(selected)
+  const visiblePlotWidth = Math.max(plotWidth, 1)
+  const stackWidth = 74
+  const wantsLeftSide = selectedLineX > visiblePlotWidth - 110
+  const stackLeft = wantsLeftSide
+    ? Math.max(8, selectedLineX - stackWidth - 12)
+    : Math.min(visiblePlotWidth - stackWidth - 6, selectedLineX + 10)
+
+  const floatingRows = nudgeFloatingLabels(
+    orderedKeys
+      .map((key) => selectedRows.find((row) => row.key === key))
+      .filter(Boolean),
+    18,
+    TOP + 2,
+    H - BOTTOM - 8,
+  )
+
   return (
-    <>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `${LEFT_RAIL}px minmax(0, 1fr)`,
+        columnGap: 0,
+        alignItems: 'start',
+      }}
+    >
       <div
         style={{
+          height: H,
+          background: T.c1 || 'rgba(0,0,0,0.025)',
           position: 'relative',
-          overflowX: 'auto',
-          overflowY: 'hidden',
-          WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'thin',
-          paddingBottom: 8,
+          boxShadow: 'inset -8px 0 10px -10px rgba(0,0,0,0.18)',
+          zIndex: 2,
         }}
       >
-        <div
-          style={{
-            position: 'sticky',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 18,
-            pointerEvents: 'none',
-            background: `linear-gradient(90deg, ${T.c0} 0%, ${T.c0}cc 50%, transparent 100%)`,
-            zIndex: 2,
-          }}
-        />
-        <div
-          style={{
-            position: 'sticky',
-            float: 'right',
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: 24,
-            pointerEvents: 'none',
-            background: `linear-gradient(270deg, ${T.c0} 0%, ${T.c0}cc 45%, transparent 100%)`,
-            zIndex: 2,
-          }}
-        />
-
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          width={W}
-          height={H}
-          style={{ display: 'block', overflow: 'visible' }}
-          onClick={() => {
-            resetToAll()
-          }}
-        >
+        <svg width={LEFT_RAIL} height={H} viewBox={`0 0 ${LEFT_RAIL} ${H}`} style={{ display: 'block' }}>
           {gridVals.map((v) => (
-            <g key={v}>
-              <line x1={LEFT} y1={yPos(v)} x2={W - RIGHT + 12} y2={yPos(v)} stroke="rgba(0,0,0,0.07)" strokeWidth="1" />
-              <text x={LEFT - 8} y={yPos(v) + 4} textAnchor="end" fontSize="11" fill={T.tl}>{v}</text>
-            </g>
-          ))}
-
-          {months.map((m) => (
-            <text key={m.i} x={xPos(m.i)} y={H - 10} textAnchor="middle" fontSize="11" fill={T.tl} fontWeight="700">
-              {m.label}
+            <text
+              key={v}
+              x={LEFT_RAIL - 8}
+              y={yPos(v) + 4}
+              textAnchor="end"
+              fontSize="10.5"
+              fontWeight="700"
+              fill={T.tl}
+              opacity="0.82"
+            >
+              {v}
             </text>
           ))}
-
-          <line
-            x1={xPos(selected)}
-            y1={TOP}
-            x2={xPos(selected)}
-            y2={H - BOTTOM}
-            stroke="rgba(0,0,0,0.18)"
-            strokeWidth="1"
-            strokeDasharray="4 4"
-          />
-
-          {visibleSeries.map((s) => {
-            const pts = s.points.map((p) => ({ ...p, x: xPos(p.i), y: yPos(p.value) }))
-            const pathD = pts
-              .map((pt, idx) => {
-                if (idx === 0) return `M${pt.x},${pt.y}`
-                const prev = pts[idx - 1]
-                const cpx = (prev.x + pt.x) / 2
-                return `C${cpx},${prev.y} ${cpx},${pt.y} ${pt.x},${pt.y}`
-              })
-              .join(' ')
-
-            const selectedSeries = activeFocus ? activeFocus === s.key : false
-            const dim = activeFocus ? activeFocus !== s.key : false
-
-            return (
-              <g key={s.key}>
-                <path
-                  d={pathD}
-                  fill="none"
-                  stroke={s.color}
-                  strokeWidth={selectedSeries ? 4 : 3}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  opacity={dim ? 0.18 : 1}
-                  style={{ transition: 'opacity 0.2s ease, stroke-width 0.2s ease' }}
-                />
-
-                {pts.map((pt, idx) => {
-                  const selectedPoint = idx === pts.length - 1 || pt.i === selected
-                  return (
-                    <g key={idx}>
-                      <circle
-                        cx={pt.x}
-                        cy={pt.y}
-                        r={selectedPoint ? 5 : 3.5}
-                        fill={selectedPoint ? s.color : T.c0}
-                        stroke={s.color}
-                        strokeWidth={2}
-                        opacity={dim ? 0.18 : 1}
-                      />
-                      <circle
-                        cx={pt.x}
-                        cy={pt.y}
-                        r={18}
-                        fill="transparent"
-                        onMouseEnter={() => setHoveredKey(s.key)}
-                        onMouseLeave={() => setHoveredKey(null)}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          haptic(4)
-                          setFocused(s.key)
-                          setSelectedIndex(pt.i)
-                        }}
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </g>
-                  )
-                })}
-
-                {pts[pts.length - 1] ? (
-                  <text
-                    x={W - RIGHT + 18}
-                    y={pts[pts.length - 1].y + 4}
-                    fontSize="12"
-                    fontWeight="800"
-                    fill={s.color}
-                    opacity={dim ? 0.35 : 1}
-                  >
-                    {s.short} {s.latest}%
-                  </text>
-                ) : null}
-              </g>
-            )
-          })}
         </svg>
       </div>
 
-      <TrendSelectionStrip activeDate={activeDate} rows={selectedRows} T={T} />
-    </>
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            position: 'relative',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'thin',
+            paddingBottom: 8,
+          }}
+        >
+          <svg
+            viewBox={`0 0 ${plotWidth} ${H}`}
+            width={plotWidth}
+            height={H}
+            style={{ display: 'block', overflow: 'visible' }}
+            onClick={() => {
+              resetToAll()
+            }}
+          >
+            {gridVals.map((v) => (
+              <line
+                key={v}
+                x1={0}
+                y1={yPos(v)}
+                x2={plotWidth}
+                y2={yPos(v)}
+                stroke="rgba(0,0,0,0.07)"
+                strokeWidth="1"
+              />
+            ))}
+
+            {months.map((m) => (
+              <text key={m.i} x={xPos(m.i)} y={H - 10} textAnchor="middle" fontSize="11" fill={T.tl} fontWeight="700">
+                {m.label}
+              </text>
+            ))}
+
+            <line
+              x1={selectedLineX}
+              y1={TOP}
+              x2={selectedLineX}
+              y2={H - BOTTOM}
+              stroke="rgba(0,0,0,0.18)"
+              strokeWidth="1"
+              strokeDasharray="4 4"
+            />
+
+            {visibleSeries.map((s) => {
+              const pts = s.points.map((p) => ({ ...p, x: xPos(p.i), y: yPos(p.value) }))
+              const pathD = pts
+                .map((pt, idx) => {
+                  if (idx === 0) return `M${pt.x},${pt.y}`
+                  const prev = pts[idx - 1]
+                  const cpx = (prev.x + pt.x) / 2
+                  return `C${cpx},${prev.y} ${cpx},${pt.y} ${pt.x},${pt.y}`
+                })
+                .join(' ')
+
+              const selectedSeries = activeFocus ? activeFocus === s.key : false
+              const dim = activeFocus ? activeFocus !== s.key : false
+
+              return (
+                <g key={s.key}>
+                  <path
+                    d={pathD}
+                    fill="none"
+                    stroke={s.color}
+                    strokeWidth={selectedSeries ? 4 : 3}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity={dim ? 0.18 : 1}
+                    style={{ transition: 'opacity 0.2s ease, stroke-width 0.2s ease' }}
+                  />
+
+                  {pts.map((pt, idx) => {
+                    const selectedPoint = idx === pts.length - 1 || pt.i === selected
+                    return (
+                      <g key={idx}>
+                        <circle
+                          cx={pt.x}
+                          cy={pt.y}
+                          r={selectedPoint ? 5 : 3.5}
+                          fill={selectedPoint ? s.color : T.c0}
+                          stroke={s.color}
+                          strokeWidth={2}
+                          opacity={dim ? 0.18 : 1}
+                        />
+                        <circle
+                          cx={pt.x}
+                          cy={pt.y}
+                          r={18}
+                          fill="transparent"
+                          onMouseEnter={() => setHoveredKey(s.key)}
+                          onMouseLeave={() => setHoveredKey(null)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            haptic(4)
+                            setFocused(s.key)
+                            setSelectedIndex(pt.i)
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </g>
+                    )
+                  })}
+                </g>
+              )
+            })}
+
+            {floatingRows.map((row) => {
+              const focusedNow = focused === row.key
+              const dim = activeFocus && activeFocus !== row.key
+              return (
+                <text
+                  key={row.key}
+                  x={stackLeft}
+                  y={row.top + 4}
+                  fontSize="12"
+                  fontWeight={focusedNow ? 800 : 700}
+                  fill={row.color}
+                  opacity={dim ? 0.32 : focusedNow ? 1 : 0.82}
+                  textAnchor="start"
+                  style={{ transition: 'opacity 0.2s ease, font-weight 0.2s ease' }}
+                >
+                  {row.short} {row.selectedValue}%
+                </text>
+              )
+            })}
+          </svg>
+        </div>
+
+        <TrendSelectionStrip activeDate={activeDate} rows={selectedRows} T={T} />
+      </div>
+    </div>
   )
 }
 
-function CombinedTrendCard({
+function CombinedTrendCard(
+{
   T,
   polls,
   parties,
@@ -1221,15 +1258,14 @@ function CombinedTrendCard({
         marginBottom: 12,
       }}
     >
-      <div style={{ padding: '16px 16px 10px' }}>
+      <div style={{ padding: '14px 16px 10px' }}>
         <div
           style={{
-            fontSize: 18,
+            fontSize: 17,
             fontWeight: 800,
             color: T.th,
             textAlign: 'left',
-            lineHeight: 1.22,
-            minHeight: 22,
+            lineHeight: 1.2,
             transition: 'opacity 0.18s ease',
           }}
         >
@@ -1242,16 +1278,15 @@ function CombinedTrendCard({
             fontWeight: 600,
             color: T.tl,
             textAlign: 'left',
-            lineHeight: 1.55,
-            marginTop: 7,
-            minHeight: 38,
+            lineHeight: 1.5,
+            marginTop: 5,
             transition: 'opacity 0.18s ease',
           }}
         >
           {story.subhead}
         </div>
 
-        <div style={{ marginTop: 14 }}>
+        <div style={{ marginTop: 12 }}>
           <PremiumTrendChart
             polls={trendPolls}
             hidden={hidden}
@@ -1282,6 +1317,7 @@ function CombinedTrendCard({
     </div>
   )
 }
+
 
 function MethodologyCard({ T, title, body }) {
   return (
@@ -1399,8 +1435,6 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
 
   const topTwo = mainParties.slice(0, 2)
   const gap = topTwo.length === 2 ? +((safeNumber(topTwo[0].pct) || 0) - (safeNumber(topTwo[1].pct) || 0)).toFixed(1) : null
-
-  void meta
 
   return (
     <div
