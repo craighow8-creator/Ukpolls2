@@ -32,23 +32,46 @@ const PARTY_NAMES = {
   snp: 'SNP',
 }
 
+const RELEASE_POLLSTERS = new Set([
+  'yougov',
+  'more in common',
+  'techne',
+  'opinium',
+  'ipsos',
+])
+
 function cleanText(value) {
   if (value == null) return ''
   return String(value).replace(/Â·/g, '·').replace(/\s+/g, ' ').trim()
 }
 
-function formatUkDate(value) {
+function normalisePollster(value) {
+  return cleanText(value).toLowerCase()
+}
+
+function parseDateish(value) {
   const text = cleanText(value)
-  if (!text) return ''
+  if (!text) return null
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+    const d = new Date(text)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(text)) {
+    const [dd, mm, yyyy] = text.split('-').map(Number)
+    const d = new Date(Date.UTC(yyyy, mm - 1, dd))
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+
+  if (/^\d{1,2}\s+[A-Za-z]{3,9}(\s*[-–]\s*\d{1,2}\s+[A-Za-z]{3,9})?$/.test(text)) {
+    const chunk = text.split(/[-–]/)[0].trim()
+    const d = new Date(`${chunk} ${new Date().getFullYear()}`)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
 
   const d = new Date(text)
-  if (Number.isNaN(d.getTime())) return text
-
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const year = d.getFullYear()
-
-  return `${day}-${month}-${year}`
+  return Number.isNaN(d.getTime()) ? null : d
 }
 
 function safeNumber(value) {
@@ -60,7 +83,7 @@ function safeNumber(value) {
 }
 
 function displayDate(poll) {
-  return formatUkDate(poll?.publishedAt) || formatUkDate(poll?.fieldworkEnd) || formatUkDate(poll?.date) || 'Date unavailable'
+  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.date) || 'Date unavailable'
 }
 
 function displaySubMeta(poll) {
@@ -79,6 +102,60 @@ function hasLiveSource(poll) {
 
 function isImportedPoll(poll) {
   return hasLiveSource(poll)
+}
+
+function pollSortScore(poll) {
+  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
+}
+
+function keepLatestPollPerPollster(polls) {
+  const latest = new Map()
+
+  for (const poll of polls || []) {
+    const name = cleanText(poll?.pollster)
+    if (!name) continue
+    const current = latest.get(name)
+    if (!current || pollSortScore(poll) > pollSortScore(current)) {
+      latest.set(name, poll)
+    }
+  }
+
+  return [...latest.values()].sort((a, b) => pollSortScore(b).localeCompare(pollSortScore(a)))
+}
+
+function getVisibleTrendPolls(polls, months = 3) {
+  const sorted = [...(polls || [])].sort((a, b) => {
+    const ad = parseDateish(displayDate(a))
+    const bd = parseDateish(displayDate(b))
+    return (ad?.getTime() || 0) - (bd?.getTime() || 0)
+  })
+
+  const latest = sorted[sorted.length - 1]
+  const latestDate = parseDateish(displayDate(latest))
+  if (!latestDate) return sorted
+
+  const start = new Date(latestDate)
+  start.setUTCMonth(start.getUTCMonth() - months)
+
+  const filtered = sorted.filter((poll) => {
+    const d = parseDateish(displayDate(poll))
+    return d ? d >= start : true
+  })
+
+  return filtered.length ? filtered : sorted
+}
+
+function formatMonthLabel(value) {
+  const d = parseDateish(value)
+  if (!d) return cleanText(value)
+  return d.toLocaleDateString('en-GB', { month: 'short' })
+}
+
+function formatRangeLabel(polls) {
+  if (!polls?.length) return ''
+  const first = displayDate(polls[0])
+  const last = displayDate(polls[polls.length - 1])
+  return `${first} – ${last}`
 }
 
 function getPollResults(poll) {
@@ -100,10 +177,6 @@ function getPollResults(poll) {
 
 function buildSeries(polls, partyKey) {
   return polls.map((poll) => safeNumber(poll?.[partyKey])).filter((v) => v != null).slice(-12)
-}
-
-function pollSortScore(poll) {
-  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
 }
 
 function groupPollsByPollster(polls) {
@@ -574,290 +647,9 @@ function buildTrendStory(polls, parties) {
   }
 }
 
-function TrendHero({ T, polls, parties }) {
-  const story = buildTrendStory(polls, parties)
-
+function CompactMovers({ movers, hidden, onToggle, T }) {
   return (
-    <div
-      style={{
-        borderRadius: 18,
-        padding: '18px 18px 16px',
-        marginBottom: 12,
-        background: T.c0,
-        border: `1px solid ${(story.leader?.color || T.pr)}30`,
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-        <Badge color={story.leader?.color || T.pr}>Trend hero</Badge>
-        {story.rising && (story.rising.delta || 0) > 0.4 ? <Badge color="#02A95B" subtle>Rising: {story.rising.abbr}</Badge> : null}
-        {story.falling && (story.falling.delta || 0) < -0.4 ? <Badge color="#C8102E" subtle>Falling: {story.falling.abbr}</Badge> : null}
-      </div>
-
-      <div
-        style={{
-          fontSize: 24,
-          fontWeight: 800,
-          letterSpacing: '-0.03em',
-          color: T.th,
-          textAlign: 'center',
-          lineHeight: 1.1,
-        }}
-      >
-        {story.headline}
-      </div>
-
-      <div
-        style={{
-          fontSize: 14,
-          fontWeight: 600,
-          color: T.tl,
-          textAlign: 'center',
-          lineHeight: 1.6,
-          marginTop: 10,
-        }}
-      >
-        {story.subhead}
-      </div>
-
-      {story.leader && story.second ? (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-          <Badge color={story.leader.color}>{story.leader.abbr} {story.leader.current}%</Badge>
-          <Badge color={story.second.color} subtle>{story.second.abbr} {story.second.current}%</Badge>
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-function RaceShapeCard({ T, polls, parties }) {
-  const story = buildTrendStory(polls, parties)
-  const { leader, second, gap } = story
-  if (!leader || !second) return null
-
-  const leaderSeries = buildSeries(polls, leader.key)
-  const secondSeries = buildSeries(polls, second.key)
-  const firstGap = leaderSeries.length && secondSeries.length ? +((leaderSeries[0] || 0) - (secondSeries[0] || 0)).toFixed(1) : null
-  const gapDelta = firstGap != null ? +(gap - firstGap).toFixed(1) : null
-
-  let label = 'Stable race'
-  let color = T.tl
-
-  if (gapDelta != null) {
-    if (gapDelta > 0.4) {
-      label = 'Lead widening'
-      color = '#02A95B'
-    } else if (gapDelta < -0.4) {
-      label = 'Race tightening'
-      color = '#C8102E'
-    }
-  }
-
-  return (
-    <div
-      style={{
-        borderRadius: 14,
-        padding: '14px 16px',
-        marginBottom: 12,
-        background: T.c0,
-        border: `1px solid ${color}26`,
-      }}
-    >
-      <SectionLabel T={T}>Race shape</SectionLabel>
-
-      <div style={{ fontSize: 22, fontWeight: 800, color: T.th, textAlign: 'center', lineHeight: 1.1 }}>
-        {gap}pt gap
-      </div>
-
-      <div style={{ fontSize: 13, fontWeight: 700, color, textAlign: 'center', marginTop: 8 }}>
-        {label}
-      </div>
-
-      <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginTop: 6 }}>
-        {leader.name} vs {second.name}
-        {gapDelta != null ? ` · change of ${gapDelta > 0 ? '+' : ''}${gapDelta}pt across the visible range` : ''}
-      </div>
-    </div>
-  )
-}
-
-function InteractiveTrendChart({ polls, parties, hidden, T }) {
-  const [tooltip, setTooltip] = useState(null)
-
-  const series = PARTY_KEYS.map((key) => {
-    const party = (parties || []).find((p) => PARTY_NAMES[key] === p.name || p.abbr?.toLowerCase() === key)
-    return {
-      key,
-      label: PARTY_NAMES[key],
-      color: PARTY_COLORS[key],
-      values: buildSeries(polls, key),
-    }
-  }).filter((item) => item.values.length >= 2)
-
-  if (series.length < 2) return null
-
-  const filtered = series.filter((s) => !hidden[s.key])
-  if (filtered.length < 1) return null
-
-  const length = Math.max(...filtered.map((s) => s.values.length))
-  const allVals = filtered.flatMap((s) => s.values)
-  const minV = Math.max(0, Math.min(...allVals) - 3)
-  const maxV = Math.min(100, Math.max(...allVals) + 4)
-
-  const COL = 42
-  const PT = 10
-  const PB = 26
-  const H = 210
-  const CH = H - PT - PB
-  const W = COL * Math.max(length - 1, 1) + 24
-
-  const xPos = (i) => i * COL + 12
-  const yPos = (v) => PT + CH - ((v - minV) / Math.max(maxV - minV, 1)) * CH
-
-  const gridVals = []
-  for (let v = Math.ceil(minV / 5) * 5; v <= maxV; v += 5) gridVals.push(v)
-
-  const isDark = T.th === '#ffffff'
-  const gridColor = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
-  const textColor = isDark ? 'rgba(255,255,255,0.45)' : '#999'
-
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-        <svg width={28} height={H} style={{ flexShrink: 0, overflow: 'visible' }}>
-          {gridVals.map((v) => (
-            <text key={v} x={26} y={yPos(v) + 4} textAnchor="end" fontSize={10} fill={textColor} fontFamily="Outfit,sans-serif">
-              {v}
-            </text>
-          ))}
-        </svg>
-
-        <div
-          style={{
-            overflowX: 'auto',
-            flex: 1,
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch',
-          }}
-        >
-          <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} style={{ display: 'block', overflow: 'visible' }}>
-            {gridVals.map((v) => (
-              <line key={v} x1={0} y1={yPos(v)} x2={W} y2={yPos(v)} stroke={gridColor} strokeWidth={0.8} />
-            ))}
-
-            {Array.from({ length }).map((_, i) => (
-              <text key={i} x={xPos(i)} y={H - 8} textAnchor="middle" fontSize={10} fill={textColor} fontFamily="Outfit,sans-serif">
-                {i + 1}
-              </text>
-            ))}
-
-            {filtered.map((s) => {
-              const pts = s.values.map((v, i) => ({ x: xPos(i), y: yPos(v), v, i }))
-              const pathD = pts
-                .map((pt, idx) => {
-                  if (idx === 0) return `M${pt.x},${pt.y.toFixed(1)}`
-                  const prev = pts[idx - 1]
-                  const cpx = (prev.x + pt.x) / 2
-                  return `C${cpx},${prev.y.toFixed(1)} ${cpx},${pt.y.toFixed(1)} ${pt.x},${pt.y.toFixed(1)}`
-                })
-                .join(' ')
-              const last = pts[pts.length - 1]
-
-              return (
-                <g key={s.key}>
-                  <path d={`${pathD} L${last.x},${H - PB} L${pts[0].x},${H - PB} Z`} fill={s.color} opacity={0.09} />
-                  <path d={pathD} fill="none" stroke={s.color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-
-                  {pts.map((pt, idx) => (
-                    <g key={idx}>
-                      <circle
-                        cx={pt.x}
-                        cy={pt.y}
-                        r={idx === pts.length - 1 ? 5 : 3.5}
-                        fill={idx === pts.length - 1 ? s.color : 'transparent'}
-                        stroke={s.color}
-                        strokeWidth={2}
-                      />
-                      <circle
-                        cx={pt.x}
-                        cy={pt.y}
-                        r={16}
-                        fill="transparent"
-                        onClick={() => {
-                          haptic(4)
-                          setTooltip((t) => (t === pt.i ? null : pt.i))
-                        }}
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </g>
-                  ))}
-
-                  <text x={last.x + 6} y={last.y + 4} fontSize={10} fontWeight={800} fill={s.color}>
-                    {last.v}%
-                  </text>
-                </g>
-              )
-            })}
-
-            {tooltip !== null ? (
-              <line
-                x1={xPos(tooltip)}
-                y1={PT}
-                x2={xPos(tooltip)}
-                y2={H - PB}
-                stroke={isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'}
-                strokeWidth={1}
-                strokeDasharray="4,3"
-              />
-            ) : null}
-          </svg>
-        </div>
-      </div>
-
-      {tooltip !== null ? (
-        <div
-          style={{
-            borderRadius: 12,
-            padding: '10px 14px',
-            background: T.c1 || 'rgba(0,0,0,0.05)',
-            margin: '6px 0 10px',
-            border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
-          }}
-        >
-          <div style={{ fontSize: 13, fontWeight: 800, color: T.th, marginBottom: 8, textAlign: 'center' }}>
-            Poll point {tooltip + 1}
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            {filtered
-              .filter((s) => s.values[tooltip] != null)
-              .sort((a, b) => (b.values[tooltip] || 0) - (a.values[tooltip] || 0))
-              .map((s) => (
-                <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: T.tm, flex: 1 }}>
-                    {s.label.split(' ')[0]}
-                  </span>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: s.color }}>
-                    {s.values[tooltip]}%
-                  </span>
-                </div>
-              ))}
-          </div>
-        </div>
-      ) : null}
-
-      <div style={{ fontSize: 12, color: T.tl, padding: '8px 2px 0', lineHeight: 1.5, textAlign: 'center' }}>
-        Tap any dot for details · Tap a party row below to hide it
-      </div>
-    </div>
-  )
-}
-
-function MovementCards({ polls, parties, hidden, onToggle, T }) {
-  const movers = buildTrendStory(polls, parties).movers
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
       {movers.map((p) => {
         const hiddenNow = !!hidden[p.key]
         let label = 'Flat'
@@ -881,46 +673,337 @@ function MovementCards({ polls, parties, hidden, onToggle, T }) {
               onToggle(p.key)
             }}
             style={{
-              borderRadius: 14,
-              padding: '12px 14px',
-              background: T.c0,
+              borderRadius: 12,
+              padding: '10px 12px',
               border: `1px solid ${p.color}24`,
-              opacity: hiddenNow ? 0.4 : 1,
+              background: T.sf,
+              display: 'grid',
+              gridTemplateColumns: '56px 1fr auto',
+              gap: 10,
+              alignItems: 'center',
               cursor: 'pointer',
-              transition: 'opacity 0.2s',
-              WebkitTapHighlightColor: 'transparent',
+              opacity: hiddenNow ? 0.42 : 1,
+              transition: 'opacity 0.2s ease',
             }}
           >
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '50px 1fr 54px',
-                alignItems: 'center',
-                gap: 10,
-              }}
-            >
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: p.color }}>{p.abbr}</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: p.color, lineHeight: 1, marginTop: 2 }}>
-                  {p.current}%
-                </div>
-              </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: p.color }}>{p.abbr}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: p.color, lineHeight: 1 }}>{p.current}%</div>
+            </div>
 
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: T.th }}>{p.name}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: labelColor, marginTop: 4 }}>
-                  {label}
-                  {p.delta != null ? ` · ${p.delta > 0 ? '+' : ''}${p.delta}pt` : ''}
-                </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.th }}>{p.name}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: labelColor, marginTop: 3 }}>
+                {label}{p.delta != null ? ` · ${p.delta > 0 ? '+' : ''}${p.delta}pt` : ''}
               </div>
+            </div>
 
-              <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, textAlign: 'right' }}>
-                {hiddenNow ? 'Hidden' : 'Visible'}
-              </div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, textAlign: 'right' }}>
+              {hiddenNow ? 'Hidden' : 'Shown'}
             </div>
           </div>
         )
       })}
+    </div>
+  )
+}
+
+function PremiumTrendChart({ polls, hidden, focused, setFocused, selectedIndex, setSelectedIndex, T }) {
+  const trendPolls = getVisibleTrendPolls(polls, 3)
+
+  const baseKeys = ['ref', 'lab', 'con', 'grn', 'ld']
+  const optionalKeys = []
+  if (trendPolls.some((poll) => safeNumber(poll?.rb) != null)) optionalKeys.push('rb')
+  if (trendPolls.some((poll) => safeNumber(poll?.snp) != null)) optionalKeys.push('snp')
+
+  const orderedKeys = [...baseKeys, ...optionalKeys]
+
+  const series = orderedKeys
+    .map((key) => {
+      const points = trendPolls
+        .map((poll, i) => {
+          const value = safeNumber(poll?.[key])
+          return value == null ? null : {
+            i,
+            value,
+            date: displayDate(poll),
+            poll,
+          }
+        })
+        .filter(Boolean)
+
+      return {
+        key,
+        label: PARTY_NAMES[key],
+        short: key === 'ld' ? 'LD' : key === 'snp' ? 'SNP' : key === 'rb' ? 'RB' : key.toUpperCase(),
+        color: PARTY_COLORS[key],
+        points,
+        latest: points[points.length - 1]?.value ?? null,
+      }
+    })
+    .filter((item) => item.points.length >= 2)
+
+  const visibleSeries = series.filter((item) => !hidden[item.key])
+  if (!visibleSeries.length) return null
+
+  const allVals = visibleSeries.flatMap((s) => s.points.map((p) => p.value))
+  const minV = Math.max(0, Math.floor((Math.min(...allVals) - 2) / 5) * 5)
+  const maxV = Math.min(100, Math.ceil((Math.max(...allVals) + 2) / 5) * 5)
+  const yRange = Math.max(maxV - minV, 5)
+
+  const pointCount = trendPolls.length
+  const COL = 84
+  const LEFT = 22
+  const RIGHT = 72
+  const TOP = 20
+  const BOTTOM = 38
+  const H = 340
+  const INNER_H = H - TOP - BOTTOM
+  const W = Math.max(520, LEFT + RIGHT + Math.max(pointCount - 1, 1) * COL)
+
+  const xPos = (i) => LEFT + i * COL
+  const yPos = (value) => TOP + INNER_H - ((value - minV) / yRange) * INNER_H
+
+  const selected = selectedIndex == null ? pointCount - 1 : selectedIndex
+
+  const months = []
+  let lastMonth = ''
+  trendPolls.forEach((poll, i) => {
+    const label = formatMonthLabel(displayDate(poll))
+    if (label !== lastMonth) {
+      months.push({ i, label })
+      lastMonth = label
+    }
+  })
+
+  const gridVals = []
+  for (let v = minV; v <= maxV; v += 5) gridVals.push(v)
+
+  const tooltipRows = visibleSeries
+    .map((s) => {
+      const point = s.points.find((p) => p.i === selected)
+      return point ? { ...s, selectedValue: point.value } : null
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.selectedValue - a.selectedValue)
+
+  const activeDate = trendPolls[selected] ? displayDate(trendPolls[selected]) : displayDate(trendPolls[trendPolls.length - 1])
+
+  return (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+        <Badge color={T.pr}>Last 3 months</Badge>
+        <Badge color={T.tl} subtle>{formatRangeLabel(trendPolls)}</Badge>
+      </div>
+
+      <div
+        style={{
+          position: 'relative',
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'thin',
+          paddingBottom: 8,
+        }}
+      >
+        <div
+          style={{
+            position: 'sticky',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 18,
+            pointerEvents: 'none',
+            background: `linear-gradient(90deg, ${T.c0} 0%, ${T.c0}cc 50%, transparent 100%)`,
+            zIndex: 2,
+          }}
+        />
+        <div
+          style={{
+            position: 'sticky',
+            float: 'right',
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: 24,
+            pointerEvents: 'none',
+            background: `linear-gradient(270deg, ${T.c0} 0%, ${T.c0}cc 45%, transparent 100%)`,
+            zIndex: 2,
+          }}
+        />
+
+        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} style={{ display: 'block', overflow: 'visible' }}>
+          {gridVals.map((v) => (
+            <g key={v}>
+              <line x1={LEFT} y1={yPos(v)} x2={W - RIGHT + 12} y2={yPos(v)} stroke="rgba(0,0,0,0.07)" strokeWidth="1" />
+              <text x={LEFT - 8} y={yPos(v) + 4} textAnchor="end" fontSize="11" fill={T.tl}>{v}</text>
+            </g>
+          ))}
+
+          {months.map((m) => (
+            <text key={m.i} x={xPos(m.i)} y={H - 10} textAnchor="middle" fontSize="11" fill={T.tl} fontWeight="700">
+              {m.label}
+            </text>
+          ))}
+
+          <line
+            x1={xPos(selected)}
+            y1={TOP}
+            x2={xPos(selected)}
+            y2={H - BOTTOM}
+            stroke="rgba(0,0,0,0.18)"
+            strokeWidth="1"
+            strokeDasharray="4 4"
+          />
+
+          {visibleSeries.map((s) => {
+            const pts = s.points.map((p) => ({ ...p, x: xPos(p.i), y: yPos(p.value) }))
+            const pathD = pts
+              .map((pt, idx) => {
+                if (idx === 0) return `M${pt.x},${pt.y}`
+                const prev = pts[idx - 1]
+                const cpx = (prev.x + pt.x) / 2
+                return `C${cpx},${prev.y} ${cpx},${pt.y} ${pt.x},${pt.y}`
+              })
+              .join(' ')
+
+            const selectedSeries = focused ? focused === s.key : false
+            const dim = focused && focused !== s.key
+
+            return (
+              <g key={s.key}>
+                <path
+                  d={pathD}
+                  fill="none"
+                  stroke={s.color}
+                  strokeWidth={selectedSeries ? 4 : 3}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity={dim ? 0.18 : 1}
+                  style={{ transition: 'opacity 0.2s ease, stroke-width 0.2s ease' }}
+                />
+
+                {pts.map((pt, idx) => {
+                  const selectedPoint = idx === pts.length - 1 || pt.i === selected
+                  return (
+                    <g key={idx}>
+                      <circle
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={selectedPoint ? 5 : 3.5}
+                        fill={selectedPoint ? s.color : T.c0}
+                        stroke={s.color}
+                        strokeWidth={2}
+                        opacity={dim ? 0.18 : 1}
+                      />
+                      <circle
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={18}
+                        fill="transparent"
+                        onMouseEnter={() => setFocused(s.key)}
+                        onMouseLeave={() => setFocused(null)}
+                        onClick={() => {
+                          haptic(4)
+                          setFocused(s.key)
+                          setSelectedIndex(pt.i)
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </g>
+                  )
+                })}
+
+                {pts[pts.length - 1] ? (
+                  <text
+                    x={W - RIGHT + 18}
+                    y={pts[pts.length - 1].y + 4}
+                    fontSize="12"
+                    fontWeight="800"
+                    fill={s.color}
+                    opacity={dim ? 0.35 : 1}
+                  >
+                    {s.short} {s.latest}%
+                  </text>
+                ) : null}
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+
+      <div
+        style={{
+          marginTop: 12,
+          borderRadius: 14,
+          padding: '12px 14px',
+          background: T.sf,
+          border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 800, color: T.th, marginBottom: 8, textAlign: 'center' }}>
+          {activeDate}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {tooltipRows.map((row) => (
+            <div key={row.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 9, height: 9, borderRadius: '50%', background: row.color, flexShrink: 0 }} />
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.tm, flex: 1 }}>{row.label}</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: row.color }}>{row.selectedValue}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+function CombinedTrendCard({ T, polls, parties, hidden, onToggle, focused, setFocused, selectedIndex, setSelectedIndex }) {
+  const trendPolls = getVisibleTrendPolls(polls, 3)
+  const story = buildTrendStory(trendPolls, parties)
+  const visibleMovers = story.movers.filter((m) => ['ref', 'lab', 'con', 'grn', 'ld', 'rb', 'snp'].includes(m.key))
+
+  return (
+    <div
+      style={{
+        borderRadius: 18,
+        padding: '16px',
+        background: T.c0,
+        border: `1px solid ${(story.leader?.color || T.pr)}24`,
+        marginBottom: 12,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        <Badge color={story.leader?.color || T.pr}>Trend picture</Badge>
+        {story.rising && (story.rising.delta || 0) > 0.4 ? <Badge color="#02A95B" subtle>Rising: {story.rising.abbr}</Badge> : null}
+        {story.falling && (story.falling.delta || 0) < -0.4 ? <Badge color="#C8102E" subtle>Falling: {story.falling.abbr}</Badge> : null}
+      </div>
+
+      <div style={{ fontSize: 24, fontWeight: 800, color: T.th, textAlign: 'center', lineHeight: 1.1 }}>
+        {story.headline}
+      </div>
+
+      <div style={{ fontSize: 14, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginTop: 10 }}>
+        {story.subhead}
+      </div>
+
+      <div style={{ marginTop: 14 }}>
+        <PremiumTrendChart
+          polls={trendPolls}
+          hidden={hidden}
+          focused={focused}
+          setFocused={setFocused}
+          selectedIndex={selectedIndex}
+          setSelectedIndex={setSelectedIndex}
+          T={T}
+        />
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <SectionLabel T={T}>Party movers</SectionLabel>
+        <CompactMovers movers={visibleMovers} hidden={hidden} onToggle={onToggle} T={T} />
+      </div>
     </div>
   )
 }
@@ -1018,15 +1101,19 @@ function StickyPillsBar({ T, tab, setTab }) {
 export default function PollsScreen({ T, parties, polls, meta, nav }) {
   const [tab, setTab] = useState('snapshot')
   const [trendHidden, setTrendHidden] = useState({})
+  const [trendFocused, setTrendFocused] = useState(null)
+  const [trendSelectedIndex, setTrendSelectedIndex] = useState(null)
 
   const allPolls = useMemo(() => {
     const raw = Array.isArray(polls) ? polls : []
-    return [...raw].sort((a, b) => pollSortScore(b).localeCompare(pollSortScore(a)))
+    return [...raw]
+      .filter((poll) => RELEASE_POLLSTERS.has(normalisePollster(poll?.pollster)))
+      .sort((a, b) => pollSortScore(b).localeCompare(pollSortScore(a)))
   }, [polls])
 
   const importedPolls = useMemo(() => allPolls.filter((poll) => isImportedPoll(poll)), [allPolls])
-  const latestPolls = useMemo(() => (importedPolls.length ? importedPolls : allPolls).slice(0, 12), [allPolls, importedPolls])
-  const latestLivePoll = importedPolls[0] || null
+  const latestPolls = useMemo(() => keepLatestPollPerPollster(importedPolls.length ? importedPolls : allPolls), [allPolls, importedPolls])
+  const latestLivePoll = latestPolls[0] || importedPolls[0] || null
 
   const mainParties = useMemo(
     () => (Array.isArray(parties) ? parties : []).filter((p) => p.name !== 'Other').sort((a, b) => (b.pct || 0) - (a.pct || 0)),
@@ -1041,6 +1128,8 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
   const toggleTrendParty = (key) => {
     setTrendHidden((h) => ({ ...h, [key]: !h[key] }))
   }
+
+  void meta
 
   return (
     <div
@@ -1163,46 +1252,17 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
         ) : null}
 
         {tab === 'trends' ? (
-          <>
-            <TrendHero T={T} polls={allPolls} parties={mainParties} />
-            <RaceShapeCard T={T} polls={allPolls} parties={mainParties} />
-
-            <div
-              style={{
-                borderRadius: 14,
-                padding: '14px',
-                background: T.c0,
-                border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-                marginBottom: 12,
-              }}
-            >
-              <SectionLabel T={T}>Trend chart</SectionLabel>
-              <InteractiveTrendChart polls={allPolls} parties={mainParties} hidden={trendHidden} T={T} />
-            </div>
-
-            <div
-              style={{
-                borderRadius: 14,
-                padding: '14px',
-                background: T.c0,
-                border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-              }}
-            >
-              <SectionLabel T={T}>Party movers</SectionLabel>
-              <MovementCards polls={allPolls} parties={mainParties} hidden={trendHidden} onToggle={toggleTrendParty} T={T} />
-              <div
-                style={{
-                  fontSize: 12,
-                  color: T.tl,
-                  paddingTop: 10,
-                  lineHeight: 1.5,
-                  textAlign: 'center',
-                }}
-              >
-                {allPolls.length} stored polls in view · tap any party row to hide or show it on the chart
-              </div>
-            </div>
-          </>
+          <CombinedTrendCard
+            T={T}
+            polls={allPolls}
+            parties={mainParties}
+            hidden={trendHidden}
+            onToggle={toggleTrendParty}
+            focused={trendFocused}
+            setFocused={setTrendFocused}
+            selectedIndex={trendSelectedIndex}
+            setSelectedIndex={setTrendSelectedIndex}
+          />
         ) : null}
 
         {tab === 'pollsters' ? (
@@ -1263,7 +1323,7 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
             <MethodologyCard
               T={T}
               title="Trends are directional"
-              body="Trend views smooth noise and help show movement, but they are not predictions. They should be read as direction of travel, not certainty."
+              body="Trend views help show movement across the visible recent range. They are for direction of travel, not certainty or prediction."
             />
           </>
         ) : null}

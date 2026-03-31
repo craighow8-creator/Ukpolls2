@@ -13,7 +13,7 @@ export default {
     }
 
     const jsonResponse = (data, init = {}) =>
-      new Response(JSON.stringify(data, null, 2), {
+      new Response(JSON.stringify(data), {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
@@ -21,6 +21,7 @@ export default {
         },
         status: init.status || 200,
       })
+
 
     const BPC_MEMBERS = new Set([
       'ipsos',
@@ -47,6 +48,14 @@ export default {
       'techne',
       'whitestone insight',
       'yonder consulting',
+    ])
+
+    const RELEASE_POLLSTERS = new Set([
+      'yougov',
+      'more in common',
+      'techne',
+      'opinium',
+      'ipsos',
     ])
 
     function norm(value) {
@@ -130,9 +139,7 @@ export default {
         lab: safeNumber(row.lab ?? row.labour),
         con: safeNumber(row.con ?? row.conservative),
         grn: safeNumber(row.grn ?? row.green),
-        ld: safeNumber(
-          row.ld ?? row.libdem ?? row.lib_dem ?? row.liberal_democrats
-        ),
+        ld: safeNumber(row.ld ?? row.libdem ?? row.lib_dem ?? row.liberal_democrats),
         rb: safeNumber(row.rb ?? row.restore_britain),
         snp: safeNumber(row.snp),
       }
@@ -159,12 +166,32 @@ export default {
       return sortPollsNewestFirst([...map.values()])
     }
 
+    function keepOnlyReleasePollsters(polls) {
+      return (polls || []).filter((poll) => RELEASE_POLLSTERS.has(norm(poll?.pollster)))
+    }
+
+    function keepLatestPollPerPollster(polls) {
+      const latestByPollster = new Map()
+
+      for (const poll of polls || []) {
+        if (!poll?.pollster) continue
+
+        const current = latestByPollster.get(poll.pollster)
+        const pollScore = poll.publishedAt || poll.fieldworkEnd || poll.fieldworkStart || ''
+        const currentScore = current?.publishedAt || current?.fieldworkEnd || current?.fieldworkStart || ''
+
+        if (!current || pollScore > currentScore) {
+          latestByPollster.set(poll.pollster, poll)
+        }
+      }
+
+      return sortPollsNewestFirst([...latestByPollster.values()])
+    }
+
     async function tableExists(tableName) {
       const res = await env.DB.prepare(
         "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
-      )
-        .bind(tableName)
-        .first()
+      ).bind(tableName).first()
       return !!res
     }
 
@@ -183,13 +210,21 @@ export default {
 
       const row = await env.DB.prepare(
         'SELECT section, data, updated_at FROM content WHERE section = ? LIMIT 1'
-      )
-        .bind(section)
-        .first()
+      ).bind(section).first()
 
       if (!row) return null
 
-      try {
+      async function loadNormalizedPolls() {
+      const pollsData = await loadContentSection('pollsData')
+      const raw = Array.isArray(pollsData) ? pollsData : []
+      const normalized = raw
+        .map((row, idx) => normalizePollRecord(row, idx))
+        .filter(Boolean)
+
+      return sortPollsNewestFirst(normalized)
+    }
+
+    try {
         return row.data ? JSON.parse(row.data) : null
       } catch {
         return null
@@ -199,7 +234,7 @@ export default {
     async function saveContentSection(section, payload) {
       const hasContent = await tableExists('content')
       if (!hasContent) {
-        throw new Error('Missing D1 table: content')
+        throw new Error(`Missing D1 table: content`)
       }
 
       await env.DB.prepare(
@@ -208,14 +243,18 @@ export default {
          ON CONFLICT(section) DO UPDATE SET
            data = excluded.data,
            updated_at = excluded.updated_at`
-      )
-        .bind(section, JSON.stringify(payload ?? null), new Date().toISOString())
-        .run()
+      ).bind(
+        section,
+        JSON.stringify(payload ?? null),
+        new Date().toISOString()
+      ).run()
     }
 
-    async function ytFetch(urlValue, apiKey) {
-      const res = await fetch(urlValue, {
-        headers: { Accept: 'application/json' },
+    async function ytFetch(url, apiKey) {
+      const res = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+        },
       })
 
       if (!res.ok) {
@@ -234,7 +273,6 @@ export default {
       const data = await ytFetch(endpoint, apiKey)
       const item = data?.items?.[0]
       if (!item?.id) throw new Error('Could not resolve UK Parliament YouTube channel')
-
       return {
         channelId: item.id,
         uploadsPlaylistId: item?.contentDetails?.relatedPlaylists?.uploads || null,
@@ -354,10 +392,7 @@ export default {
         const polls = Array.isArray(body?.polls) ? body.polls : null
 
         if (!polls) {
-          return jsonResponse(
-            { error: 'Missing polls array' },
-            { status: 400 }
-          )
+          return jsonResponse({ error: 'Missing polls array' }, { status: 400 })
         }
 
         const existingPolls = await loadContentSection('pollsData')
@@ -373,7 +408,10 @@ export default {
       }
 
       if (request.method === 'GET' && url.pathname === '/api/polls/latest') {
-        const polls = await loadNormalizedPolls()
+        const polls = keepLatestPollPerPollster(
+          keepOnlyReleasePollsters(await loadNormalizedPolls())
+        )
+
         return jsonResponse({
           count: polls.length,
           polls,
@@ -381,7 +419,7 @@ export default {
       }
 
       if (request.method === 'GET' && url.pathname === '/api/pollsters') {
-        const polls = await loadNormalizedPolls()
+        const polls = keepOnlyReleasePollsters(await loadNormalizedPolls())
         const groups = new Map()
 
         for (const poll of polls) {
@@ -402,10 +440,7 @@ export default {
           if (
             !g.latestPoll ||
             (poll.publishedAt || poll.fieldworkEnd || poll.fieldworkStart || '') >
-              (g.latestPoll.publishedAt ||
-                g.latestPoll.fieldworkEnd ||
-                g.latestPoll.fieldworkStart ||
-                '')
+              (g.latestPoll.publishedAt || g.latestPoll.fieldworkEnd || g.latestPoll.fieldworkStart || '')
           ) {
             g.latestPoll = poll
           }
@@ -475,9 +510,7 @@ export default {
           for (const [key, value] of entries) {
             await env.DB.prepare(
               'INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)'
-            )
-              .bind(key, String(value ?? ''))
-              .run()
+            ).bind(key, String(value ?? '')).run()
           }
 
           return new Response('ok', { headers: corsHeaders })
@@ -489,16 +522,14 @@ export default {
           for (const row of payload || []) {
             await env.DB.prepare(
               'INSERT INTO polls (id, name, pct, change, seats, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-            )
-              .bind(
-                row.id ?? null,
-                row.name ?? '',
-                row.pct ?? 0,
-                row.change ?? 0,
-                row.seats ?? 0,
-                row.updated_at ?? new Date().toISOString()
-              )
-              .run()
+            ).bind(
+              row.id ?? null,
+              row.name ?? '',
+              row.pct ?? 0,
+              row.change ?? 0,
+              row.seats ?? 0,
+              row.updated_at ?? new Date().toISOString()
+            ).run()
           }
 
           return new Response('ok', { headers: corsHeaders })
@@ -510,16 +541,14 @@ export default {
           for (const row of payload || []) {
             await env.DB.prepare(
               'INSERT INTO leaders (id, name, net, role, bio, party) VALUES (?, ?, ?, ?, ?, ?)'
-            )
-              .bind(
-                row.id ?? null,
-                row.name ?? '',
-                row.net ?? 0,
-                row.role ?? '',
-                row.bio ?? '',
-                row.party ?? ''
-              )
-              .run()
+            ).bind(
+              row.id ?? null,
+              row.name ?? '',
+              row.net ?? 0,
+              row.role ?? '',
+              row.bio ?? '',
+              row.party ?? ''
+            ).run()
           }
 
           return new Response('ok', { headers: corsHeaders })
@@ -531,14 +560,12 @@ export default {
           for (const row of payload || []) {
             await env.DB.prepare(
               'INSERT INTO elections (id, name, date, data) VALUES (?, ?, ?, ?)'
-            )
-              .bind(
-                row.id ?? null,
-                row.name ?? '',
-                row.date ?? '',
-                JSON.stringify(row.data ?? null)
-              )
-              .run()
+            ).bind(
+              row.id ?? null,
+              row.name ?? '',
+              row.date ?? '',
+              JSON.stringify(row.data ?? null)
+            ).run()
           }
 
           return new Response('ok', { headers: corsHeaders })
@@ -578,43 +605,35 @@ export default {
         for (const p of body.parties || []) {
           await env.DB.prepare(
             'INSERT INTO polls (id, name, pct, change, seats, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-          )
-            .bind(
-              p.id ?? null,
-              p.name ?? '',
-              p.pct ?? 0,
-              p.change ?? 0,
-              p.seats ?? 0,
-              new Date().toISOString()
-            )
-            .run()
+          ).bind(
+            p.id ?? null,
+            p.name ?? '',
+            p.pct ?? 0,
+            p.change ?? 0,
+            p.seats ?? 0,
+            new Date().toISOString()
+          ).run()
         }
 
         for (const leader of body.leaders || []) {
           await env.DB.prepare(
             'INSERT INTO leaders (id, name, net, role, bio, party) VALUES (?, ?, ?, ?, ?, ?)'
-          )
-            .bind(
-              leader.id ?? null,
-              leader.name ?? '',
-              leader.net ?? 0,
-              leader.role ?? '',
-              leader.bio ?? '',
-              leader.party ?? ''
-            )
-            .run()
+          ).bind(
+            leader.id ?? null,
+            leader.name ?? '',
+            leader.net ?? 0,
+            leader.role ?? '',
+            leader.bio ?? '',
+            leader.party ?? ''
+          ).run()
         }
 
         await env.DB.prepare(
           'INSERT INTO elections (id, name, date, data) VALUES (?, ?, ?, ?)'
-        )
-          .bind(1, 'main', '', JSON.stringify(body.elections ?? {}))
-          .run()
+        ).bind(1, 'main', '', JSON.stringify(body.elections ?? {})).run()
 
         for (const [key, value] of Object.entries(body.meta || {})) {
-          await env.DB.prepare('INSERT INTO meta (key, value) VALUES (?, ?)')
-            .bind(key, String(value ?? ''))
-            .run()
+          await env.DB.prepare('INSERT INTO meta (key, value) VALUES (?, ?)').bind(key, String(value ?? '')).run()
         }
 
         if (await tableExists('content')) {
@@ -636,9 +655,7 @@ export default {
                ON CONFLICT(section) DO UPDATE SET
                  data = excluded.data,
                  updated_at = excluded.updated_at`
-            )
-              .bind(section, JSON.stringify(data), new Date().toISOString())
-              .run()
+            ).bind(section, JSON.stringify(data), new Date().toISOString()).run()
           }
         }
 

@@ -1,9 +1,8 @@
+import fetchYouGovPoll from './sources/yougov.mjs'
 import fetchMoreInCommonPoll from './sources/moreincommon.mjs'
 import fetchTechnePoll from './sources/techne.mjs'
 import fetchOpiniumPoll from './sources/opinium.mjs'
 import fetchIpsosPoll from './sources/ipsos.mjs'
-import fetchFindOutNowPoll from './sources/findoutnow.mjs'
-import fetchSurvationPoll from './sources/survation.mjs'
 
 const API_BASE = 'https://politiscope-api.craighow8.workers.dev'
 
@@ -32,6 +31,9 @@ async function importPolls(polls) {
 async function main() {
   const polls = []
 
+  console.log('Fetching YouGov...')
+  polls.push(await fetchYouGovPoll())
+
   console.log('Fetching More in Common...')
   polls.push(await fetchMoreInCommonPoll())
 
@@ -43,12 +45,6 @@ async function main() {
 
   console.log('Fetching Ipsos...')
   polls.push(await fetchIpsosPoll())
-
-  console.log('Fetching Find Out Now...')
-  polls.push(await fetchFindOutNowPoll())
-
-  console.log('Fetching Survation...')
-  polls.push(await fetchSurvationPoll())
 
   console.log('Fetched polls:')
   console.log(JSON.stringify(polls, null, 2))
