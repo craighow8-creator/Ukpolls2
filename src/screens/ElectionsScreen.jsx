@@ -683,7 +683,12 @@ export default function ElectionsScreen({
   }, [allSearchableCouncils, councils, search])
 
   const launchCouncils = useMemo(
-    () => councils.filter((c) => cleanText(c.electionStatus) === 'scheduled-2026'),
+    () =>
+      councils.filter((c) => {
+        const status = cleanText(c.electionStatus)
+        if (!status) return true
+        return status === 'scheduled-2026' || /2026|scheduled/i.test(status)
+      }),
     [councils],
   )
 
@@ -695,6 +700,7 @@ export default function ElectionsScreen({
           !!cleanText(c.difficulty) &&
           !!cleanText(c.watchFor)
         const isMajorCouncil =
+          /county/i.test(cleanText(c.type)) ||
           /metropolitan/i.test(cleanText(c.type)) ||
           /london borough/i.test(cleanText(c.type)) ||
           /unitary/i.test(cleanText(c.type))
@@ -706,7 +712,7 @@ export default function ElectionsScreen({
   const trackedLaunchSeatsUp = useMemo(
     () =>
       trackedLaunchCouncils.reduce((sum, c) => {
-        const seatsUp = Number(c.seatsUp || 0) || 0
+        const seatsUp = Number(c.seatsUp ?? c.seats ?? 0) || 0
         return sum + seatsUp
       }, 0),
     [trackedLaunchCouncils],
