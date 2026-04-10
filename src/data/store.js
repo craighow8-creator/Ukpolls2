@@ -1,21 +1,44 @@
 import { API_BASE } from '../constants'
 import DEFAULTS from './data.js'
+import { POLICY_RECORDS } from './policy/policyRecords.js'
+import { POLICY_TAXONOMY } from './policy/policyTaxonomy.js'
+import { POLICY_DELIVERY } from './policy/policyDelivery.js'
+import { buildPollContext } from './pollEngine'
+import { comparePollConflictPriority, getConflictDateMs, getUsablePollDate, isDisplaySafePoll } from '../shared/pollValidation.js'
+
+const CACHE_VERSION = 'v3'
 
 const KEYS = {
-  parties: 'PS_parties',
-  trends: 'PS_trends',
-  leaders: 'PS_leaders',
-  meta: 'PS_meta',
-  betting: 'PS_betting',
-  elections: 'PS_elections',
-  byElections: 'PS_byElections',
-  migration: 'PS_migration',
-  milestones: 'PS_milestones',
-  polls: 'PS_polls',
-  demographics: 'PS_demographics',
-  newsItems: 'PS_newsItems',
-  timestamps: 'PS_timestamps',
+  parties: `PS_parties_${CACHE_VERSION}`,
+  trends: `PS_trends_${CACHE_VERSION}`,
+  leaders: `PS_leaders_${CACHE_VERSION}`,
+  meta: `PS_meta_${CACHE_VERSION}`,
+  betting: `PS_betting_${CACHE_VERSION}`,
+  elections: `PS_elections_${CACHE_VERSION}`,
+  byElections: `PS_byElections_${CACHE_VERSION}`,
+  migration: `PS_migration_${CACHE_VERSION}`,
+  milestones: `PS_milestones_${CACHE_VERSION}`,
+  polls: `PS_polls_${CACHE_VERSION}`,
+  ingestStatus: `PS_ingestStatus_${CACHE_VERSION}`,
+  demographics: `PS_demographics_${CACHE_VERSION}`,
+  policyRecords: `PS_policyRecords_${CACHE_VERSION}`,
+  policyTaxonomy: `PS_policyTaxonomy_${CACHE_VERSION}`,
+  policyDelivery: `PS_policyDelivery_${CACHE_VERSION}`,
+  newsItems: `PS_newsItems_${CACHE_VERSION}`,
+  councilRegistry: `PS_councilRegistry_${CACHE_VERSION}`,
+  councilStatus: `PS_councilStatus_${CACHE_VERSION}`,
+  councilEditorial: `PS_councilEditorial_${CACHE_VERSION}`,
+  timestamps: `PS_timestamps_${CACHE_VERSION}`,
+  pollsData: `PS_polls_${CACHE_VERSION}`,
+  deletedPollIds: `PS_deletedPollIds_${CACHE_VERSION}`,
 }
+
+// legacy keys that may still contain poisoned trend/poll cache rows
+const LEGACY_KEYS = [
+  'PS_parties', 'PS_trends', 'PS_leaders', 'PS_meta', 'PS_betting', 'PS_elections',
+  'PS_byElections', 'PS_migration', 'PS_milestones', 'PS_polls', 'PS_demographics',
+  'PS_newsItems', 'PS_policyRecords', 'PS_policyTaxonomy', 'PS_policyDelivery', 'PS_councilRegistry', 'PS_councilStatus', 'PS_councilEditorial', 'PS_timestamps',
+]
 
 const SECTION_MAP = {
   parties: 'polls',
@@ -28,9 +51,18 @@ const SECTION_MAP = {
   migration: 'migration',
   milestones: 'milestones',
   pollsData: 'pollsData',
+  ingestStatus: 'ingestStatus',
   demographics: 'demographics',
+  policyRecords: 'policyRecords',
+  policyTaxonomy: 'policyTaxonomy',
+  policyDelivery: 'policyDelivery',
   newsItems: 'newsItems',
+  councilRegistry: 'councilRegistry',
+  councilStatus: 'councilStatus',
+  councilEditorial: 'councilEditorial',
 }
+
+const REMOTE_FETCH_TIMEOUT_MS = 8000
 
 function readJson(key, fallback) {
   try {
@@ -44,6 +76,24 @@ function readJson(key, fallback) {
 
 function writeJson(key, value) {
   localStorage.setItem(key, JSON.stringify(value))
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = REMOTE_FETCH_TIMEOUT_MS) {
+  if (typeof AbortController === 'undefined') return fetch(url, options)
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    return await fetch(url, { ...options, signal: controller.signal })
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+function notifyDataUpdated(key) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent('politiscope:data-updated', { detail: { key } }))
 }
 
 function mergeObject(base, incoming) {
@@ -64,17 +114,69 @@ function normaliseName(value) {
   return String(value || '').trim().toLowerCase()
 }
 
+function cleanText(value) {
+  if (value == null) return ''
+  return String(value).replace(/\s+/g, ' ').trim()
+}
+
+function readDeletedPollIds() {
+  return new Set(withFallbackArray(readJson(KEYS.deletedPollIds, []), []).map((id) => cleanText(id)).filter(Boolean))
+}
+
+function writeDeletedPollIds(ids) {
+  writeJson(KEYS.deletedPollIds, [...ids])
+}
+
+function parseIsoDate(value) {
+  const text = cleanText(value)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null
+  const d = new Date(`${text}T00:00:00Z`)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+function daysBetween(a, b) {
+  return Math.round((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function isImpossiblePollDates(poll) {
+  const published = parseIsoDate(poll?.publishedAt)
+  const fieldworkEnd = parseIsoDate(poll?.fieldworkEnd)
+  const date = parseIsoDate(poll?.date)
+
+  if (published && fieldworkEnd) {
+    const diff = daysBetween(fieldworkEnd, published)
+    if (diff > 7) return true
+  }
+
+  if (published && date) {
+    const diff = daysBetween(date, published)
+    if (diff > 7) return true
+  }
+
+  return false
+}
+
 function stampSection(key) {
   const ts = loadTimestamps()
   ts[key] = new Date().toISOString()
   writeJson(KEYS.timestamps, ts)
 }
 
-function cacheSection(key, value) {
+function cacheSection(key, value, options = {}) {
+  const { notify = true } = options
   const storageKey = KEYS[key]
   if (!storageKey) return
   writeJson(storageKey, value)
   stampSection(key)
+  if (notify) notifyDataUpdated(key)
+}
+
+function safeCacheSection(key, value, options) {
+  try {
+    cacheSection(key, value, options)
+  } catch (e) {
+    console.warn(`Store: cacheSection(${key}) failed`, e)
+  }
 }
 
 function getDefaultData() {
@@ -89,18 +191,21 @@ function getDefaultData() {
     migration: withFallbackObject(DEFAULTS.migration, {}),
     milestones: withFallbackArray(DEFAULTS.milestones, []),
     polls: withFallbackArray(DEFAULTS.polls, []),
+    ingestStatus: null,
     demographics: withFallbackObject(DEFAULTS.demographics, {}),
+    policyRecords: POLICY_RECORDS,
+    policyTaxonomy: POLICY_TAXONOMY,
+    policyDelivery: POLICY_DELIVERY,
     newsItems: withFallbackArray(DEFAULTS.newsItems, []),
+    councilRegistry: withFallbackArray(DEFAULTS.councilRegistry, []),
+    councilStatus: withFallbackArray(DEFAULTS.councilStatus, []),
+    councilEditorial: withFallbackArray(DEFAULTS.councilEditorial, []),
   }
 }
 
 function enrichParties(liveParties, defaultParties) {
-  const defaultsByName = new Map(
-    withFallbackArray(defaultParties, []).map((p) => [normaliseName(p.name), p])
-  )
-
+  const defaultsByName = new Map(withFallbackArray(defaultParties, []).map((p) => [normaliseName(p.name), p]))
   const live = withFallbackArray(liveParties, [])
-
   if (!live.length) return withFallbackArray(defaultParties, [])
 
   const merged = live.map((party) => {
@@ -119,32 +224,19 @@ function enrichParties(liveParties, defaultParties) {
   })
 
   const mergedNames = new Set(merged.map((p) => normaliseName(p.name)))
-  const missingDefaults = withFallbackArray(defaultParties, []).filter(
-    (p) => !mergedNames.has(normaliseName(p.name))
-  )
-
+  const missingDefaults = withFallbackArray(defaultParties, []).filter((p) => !mergedNames.has(normaliseName(p.name)))
   return [...merged, ...missingDefaults]
 }
 
 function enrichLeaders(liveLeaders, defaultLeaders) {
-  const defaultsByName = new Map(
-    withFallbackArray(defaultLeaders, []).map((l) => [normaliseName(l.name), l])
-  )
-
+  const defaultsByName = new Map(withFallbackArray(defaultLeaders, []).map((l) => [normaliseName(l.name), l]))
   const live = withFallbackArray(liveLeaders, [])
   if (!live.length) return withFallbackArray(defaultLeaders, [])
-
-  return live.map((leader) => {
-    const base = defaultsByName.get(normaliseName(leader.name)) || {}
-    return { ...base, ...leader }
-  })
+  return live.map((leader) => ({ ...defaultsByName.get(normaliseName(leader.name)), ...leader }))
 }
 
 function attachLeaderRefs(parties, leaders) {
-  const leadersByParty = new Map(
-    withFallbackArray(leaders, []).map((leader) => [normaliseName(leader.party), leader])
-  )
-
+  const leadersByParty = new Map(withFallbackArray(leaders, []).map((leader) => [normaliseName(leader.party), leader]))
   return withFallbackArray(parties, []).map((party) => ({
     ...party,
     _leader: leadersByParty.get(normaliseName(party.name)) || party._leader || null,
@@ -153,11 +245,13 @@ function attachLeaderRefs(parties, leaders) {
 
 function normalisePollArray(value, fallback = []) {
   const arr = withFallbackArray(value, fallback)
+
   return arr
     .filter((p) => p && typeof p === 'object')
     .map((p, idx) => ({
       id: p.id || `${normaliseName(p.pollster || 'poll')}-${idx}`,
       pollster: p.pollster || '',
+      pollsterId: p.pollsterId || null,
       isBpcMember: !!p.isBpcMember,
       fieldworkStart: p.fieldworkStart || null,
       fieldworkEnd: p.fieldworkEnd || null,
@@ -169,6 +263,10 @@ function normalisePollArray(value, fallback = []) {
       commissioner: p.commissioner || null,
       sourceUrl: p.sourceUrl || null,
       source: p.source || null,
+      sourceType: p.sourceType || null,
+      confidence: p.confidence || null,
+      verificationStatus: p.verificationStatus || null,
+      suspect: !!p.suspect,
       ref: p.ref ?? null,
       lab: p.lab ?? null,
       con: p.con ?? null,
@@ -176,29 +274,116 @@ function normalisePollArray(value, fallback = []) {
       ld: p.ld ?? null,
       rb: p.rb ?? null,
       snp: p.snp ?? null,
+      pc: p.pc ?? null,
+      oth: p.oth ?? null,
     }))
+    .filter((p) => !isImpossiblePollDates(p))
+}
+
+function reconcileDeletedPollIds(nextPolls) {
+  const deletedIds = readDeletedPollIds()
+  const previousPolls = normalisePollArray(readJson(KEYS.polls, null), [])
+  const nextIds = new Set(withFallbackArray(nextPolls, []).map((poll) => cleanText(poll?.id)).filter(Boolean))
+
+  previousPolls.forEach((poll) => {
+    const id = cleanText(poll?.id)
+    if (!id) return
+    if (cleanText(poll?.sourceType).toLowerCase() !== 'manual') return
+    if (!nextIds.has(id)) deletedIds.add(id)
+  })
+
+  withFallbackArray(nextPolls, []).forEach((poll) => {
+    const id = cleanText(poll?.id)
+    if (id) deletedIds.delete(id)
+  })
+
+  writeDeletedPollIds(deletedIds)
+}
+
+function filterDeletedPolls(polls) {
+  const deletedIds = readDeletedPollIds()
+  if (!deletedIds.size) return polls
+  return withFallbackArray(polls, []).filter((poll) => !deletedIds.has(cleanText(poll?.id)))
+}
+
+function getPollDateMs(poll) {
+  return getConflictDateMs(poll)
+}
+
+function buildPollMergeKey(poll) {
+  const dateKey = cleanText(poll?.fieldworkEnd || poll?.publishedAt || poll?.date || '')
+  const pollsterKey = cleanText(poll?.pollster).toLowerCase()
+  const sampleKey = poll?.sample == null ? '' : String(poll.sample)
+  return [pollsterKey, dateKey, sampleKey].join('|')
+}
+
+function mergePollHistory(...sources) {
+  const merged = new Map()
+
+  sources.forEach((source) => {
+    withFallbackArray(source, []).forEach((poll) => {
+      if (!poll || typeof poll !== 'object') return
+      if (poll?.suspect) return
+      if (cleanText(poll?.verificationStatus).toLowerCase() === 'rejected') return
+      if (isImpossiblePollDates(poll)) return
+
+      const key = buildPollMergeKey(poll)
+      const ts = getPollDateMs(poll)
+      const existing = merged.get(key)
+
+      if (!existing) {
+        merged.set(key, { poll, ts })
+        return
+      }
+
+      if (comparePollConflictPriority(poll, existing.poll) < 0) {
+        merged.set(key, { poll, ts })
+      }
+    })
+  })
+
+  return [...merged.values()]
+    .sort((a, b) => b.ts - a.ts)
+    .map((entry) => entry.poll)
 }
 
 function getLocalOverrides(defaults) {
   const localLeaders = enrichLeaders(readJson(KEYS.leaders, null), defaults.leaders)
-  const localParties = attachLeaderRefs(
-    enrichParties(readJson(KEYS.parties, null), defaults.parties),
-    localLeaders
-  )
+  const localParties = attachLeaderRefs(enrichParties(readJson(KEYS.parties, null), defaults.parties), localLeaders)
+  const localTrends = withFallbackArray(readJson(KEYS.trends, null), defaults.trends)
+  const cachedPolls = normalisePollArray(readJson(KEYS.polls, null), [])
+  const safeCachedPolls = cachedPolls.filter(isDisplaySafePoll)
+  const localPolls = safeCachedPolls.length || cachedPolls.length
+    ? safeCachedPolls
+    : withFallbackArray(defaults.polls, [])
+  const pollContext = buildPollContext({
+    polls: localPolls,
+    fallbackParties: localParties,
+    fallbackTrends: localTrends,
+  })
 
   return {
     meta: mergeObject(defaults.meta, readJson(KEYS.meta, null)),
     parties: localParties,
-    trends: withFallbackArray(readJson(KEYS.trends, null), defaults.trends),
+    trends: pollContext?.trendSeries || localTrends,
     leaders: localLeaders,
     betting: mergeObject(defaults.betting, readJson(KEYS.betting, null)),
     elections: mergeObject(defaults.elections, readJson(KEYS.elections, null)),
     byElections: mergeObject(defaults.byElections, readJson(KEYS.byElections, null)),
     migration: mergeObject(defaults.migration, readJson(KEYS.migration, null)),
     milestones: withFallbackArray(readJson(KEYS.milestones, null), defaults.milestones),
-    polls: normalisePollArray(readJson(KEYS.polls, null), defaults.polls),
+    polls: localPolls,
+    pollsData: localPolls,
+    ingestStatus: withFallbackObject(readJson(KEYS.ingestStatus, null), defaults.ingestStatus),
+    pollContext,
     demographics: mergeObject(defaults.demographics, readJson(KEYS.demographics, null)),
+    policyRecords: withFallbackArray(readJson(KEYS.policyRecords, null), defaults.policyRecords),
+    policyTaxonomy: mergeObject(defaults.policyTaxonomy, readJson(KEYS.policyTaxonomy, null)),
+    policyDelivery: withFallbackArray(readJson(KEYS.policyDelivery, null), defaults.policyDelivery),
     newsItems: withFallbackArray(readJson(KEYS.newsItems, null), defaults.newsItems),
+    councilRegistry: withFallbackArray(readJson(KEYS.councilRegistry, null), defaults.councilRegistry),
+    councilStatus: withFallbackArray(readJson(KEYS.councilStatus, null), defaults.councilStatus),
+    councilEditorial: withFallbackArray(readJson(KEYS.councilEditorial, null), defaults.councilEditorial),
   }
 }
 
@@ -209,10 +394,7 @@ function normaliseRemote(remote, defaults) {
       : withFallbackObject(remote?.elections, {})
 
   const leaders = enrichLeaders(remote?.leaders, defaults.leaders)
-  const parties = attachLeaderRefs(
-    enrichParties(remote?.polls, defaults.parties),
-    leaders
-  )
+  const parties = attachLeaderRefs(enrichParties(remote?.polls, defaults.parties), leaders)
 
   return {
     meta: mergeObject(defaults.meta, withFallbackObject(remote?.meta, {})),
@@ -225,13 +407,20 @@ function normaliseRemote(remote, defaults) {
     migration: mergeObject(defaults.migration, withFallbackObject(remote?.migration, {})),
     milestones: withFallbackArray(remote?.milestones, defaults.milestones),
     polls: normalisePollArray(remote?.pollsData || remote?.pollsArchive || remote?.polls_history, defaults.polls),
+    ingestStatus: withFallbackObject(remote?.ingestStatus, defaults.ingestStatus),
     demographics: mergeObject(defaults.demographics, withFallbackObject(remote?.demographics, {})),
+    policyRecords: withFallbackArray(remote?.policyRecords, defaults.policyRecords),
+    policyTaxonomy: mergeObject(defaults.policyTaxonomy, withFallbackObject(remote?.policyTaxonomy, {})),
+    policyDelivery: withFallbackArray(remote?.policyDelivery, defaults.policyDelivery),
     newsItems: withFallbackArray(remote?.newsItems || remote?.news, defaults.newsItems),
+    councilRegistry: withFallbackArray(remote?.councilRegistry, defaults.councilRegistry),
+    councilStatus: withFallbackArray(remote?.councilStatus, defaults.councilStatus),
+    councilEditorial: withFallbackArray(remote?.councilEditorial, defaults.councilEditorial),
   }
 }
 
 async function fetchLatestPolls() {
-  const res = await fetch(`${API_BASE}/api/polls/latest`, { cache: 'no-store' })
+  const res = await fetchWithTimeout(`${API_BASE}/api/polls/latest`, { cache: 'no-store' })
   if (!res.ok) {
     const text = await res.text()
     throw new Error(`Live polls failed: ${res.status} ${text}`)
@@ -270,6 +459,27 @@ export function formatTs(isoString) {
 
 export function clearAll() {
   Object.values(KEYS).forEach((k) => localStorage.removeItem(k))
+  LEGACY_KEYS.forEach((k) => localStorage.removeItem(k))
+}
+
+export function installDevResetHelpers() {
+  if (typeof window === 'undefined') return
+
+  window.__PS_RESET = async function __PS_RESET() {
+    clearAll()
+
+    if ('caches' in window) {
+      const keys = await caches.keys()
+      await Promise.all(keys.filter((key) => key.startsWith('politiscope-')).map((key) => caches.delete(key)))
+    }
+
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(regs.map((reg) => reg.unregister().catch(() => false)))
+    }
+
+    window.location.reload()
+  }
 }
 
 async function postSection(section, payload) {
@@ -289,21 +499,17 @@ async function postSection(section, payload) {
 
 function buildPayloadForKey(key, value) {
   if (key === 'elections') {
-    return [
-      {
-        id: 1,
-        name: 'main',
-        date: '',
-        data: value,
-      },
-    ]
+    return [{ id: 1, name: 'main', date: '', data: value }]
   }
-
   return value
 }
 
 export async function saveSection(key, value) {
   const section = SECTION_MAP[key]
+
+  if (key === 'pollsData') {
+    reconcileDeletedPollIds(value)
+  }
 
   if (!section) {
     console.warn(`Store: saveSection(${key}) is not mapped; caching locally only`)
@@ -327,13 +533,17 @@ export async function saveSection(key, value) {
 export async function getData() {
   const defaults = getDefaultData()
   const local = getLocalOverrides(defaults)
+  installDevResetHelpers()
+
+  let remote
+  let livePolls = []
 
   try {
-    const [remoteRes, livePolls] = await Promise.all([
-      fetch(`${API_BASE}/api/data`, { cache: 'no-store' }),
+    const [remoteRes, latest] = await Promise.all([
+      fetchWithTimeout(`${API_BASE}/api/data`, { cache: 'no-store' }),
       fetchLatestPolls().catch((e) => {
         console.warn('Store: live polls fetch failed, falling back', e)
-        return null
+        return []
       }),
     ])
 
@@ -342,41 +552,67 @@ export async function getData() {
       throw new Error(`Load failed: ${remoteRes.status} ${text}`)
     }
 
-    const remote = await remoteRes.json()
-    const normalised = normaliseRemote(remote, defaults)
-
-    const finalLeaders = enrichLeaders(readJson(KEYS.leaders, null), normalised.leaders)
-    const finalParties = attachLeaderRefs(
-      enrichParties(readJson(KEYS.parties, null), normalised.parties),
-      finalLeaders
-    )
-
-    const mergedPolls =
-      livePolls && livePolls.length
-        ? livePolls
-        : normalisePollArray(readJson(KEYS.polls, null), normalised.polls)
-
-    if (livePolls && livePolls.length) {
-      cacheSection('polls', livePolls)
-    }
-
-    return {
-      meta: mergeObject(normalised.meta, readJson(KEYS.meta, null)),
-      parties: finalParties,
-      trends: withFallbackArray(readJson(KEYS.trends, null), normalised.trends),
-      leaders: finalLeaders,
-      betting: mergeObject(normalised.betting, readJson(KEYS.betting, null)),
-      elections: mergeObject(normalised.elections, readJson(KEYS.elections, null)),
-      byElections: mergeObject(normalised.byElections, readJson(KEYS.byElections, null)),
-      migration: mergeObject(normalised.migration, readJson(KEYS.migration, null)),
-      milestones: withFallbackArray(readJson(KEYS.milestones, null), normalised.milestones),
-      polls: mergedPolls,
-      demographics: mergeObject(normalised.demographics, readJson(KEYS.demographics, null)),
-      newsItems: withFallbackArray(readJson(KEYS.newsItems, null), normalised.newsItems),
-    }
+    remote = await remoteRes.json()
+    livePolls = normalisePollArray(latest, []).filter(isDisplaySafePoll)
   } catch (e) {
     console.warn('Store: remote load failed, using local/default fallback', e)
     return local
+  }
+
+  const normalised = normaliseRemote(remote, defaults)
+
+  const finalLeaders = enrichLeaders(readJson(KEYS.leaders, null), normalised.leaders)
+  const finalParties = attachLeaderRefs(enrichParties(readJson(KEYS.parties, null), normalised.parties), finalLeaders)
+
+  const remotePollHistory = normalisePollArray(normalised.polls, []).filter(isDisplaySafePoll)
+  const localCachedPolls = normalisePollArray(readJson(KEYS.polls, null), []).filter(isDisplaySafePoll)
+  const mergedPolls = filterDeletedPolls(mergePollHistory(livePolls, remotePollHistory, localCachedPolls))
+
+  if (mergedPolls.length) safeCacheSection('polls', mergedPolls, { notify: false })
+
+  let pollContext
+  try {
+    pollContext = buildPollContext({
+      polls: mergedPolls,
+      fallbackParties: finalParties,
+      fallbackTrends: normalised.trends,
+    })
+  } catch (e) {
+    console.warn('Store: buildPollContext failed, using raw poll fallback', e)
+    pollContext = {
+      allPollsSorted: mergedPolls,
+      latestPollsByPollster: [],
+      pollAverage: finalParties,
+      partyPollSnapshot: finalParties,
+      trendSeries: withFallbackArray(normalised.trends, []),
+    }
+  }
+
+  const finalTrends = pollContext?.trendSeries || withFallbackArray(normalised.trends, [])
+  if (finalTrends.length) safeCacheSection('trends', finalTrends, { notify: false })
+
+  return {
+    meta: mergeObject(normalised.meta, readJson(KEYS.meta, null)),
+    parties: finalParties,
+    trends: finalTrends,
+    leaders: finalLeaders,
+    betting: mergeObject(normalised.betting, readJson(KEYS.betting, null)),
+    elections: mergeObject(normalised.elections, readJson(KEYS.elections, null)),
+    byElections: mergeObject(normalised.byElections, readJson(KEYS.byElections, null)),
+    migration: mergeObject(normalised.migration, readJson(KEYS.migration, null)),
+    milestones: withFallbackArray(readJson(KEYS.milestones, null), normalised.milestones),
+    polls: mergedPolls,
+    pollsData: mergedPolls,
+    ingestStatus: mergeObject(normalised.ingestStatus, readJson(KEYS.ingestStatus, null)),
+    pollContext,
+    demographics: mergeObject(normalised.demographics, readJson(KEYS.demographics, null)),
+    policyRecords: withFallbackArray(readJson(KEYS.policyRecords, null), normalised.policyRecords),
+    policyTaxonomy: mergeObject(normalised.policyTaxonomy, readJson(KEYS.policyTaxonomy, null)),
+    policyDelivery: withFallbackArray(readJson(KEYS.policyDelivery, null), normalised.policyDelivery),
+    newsItems: withFallbackArray(readJson(KEYS.newsItems, null), normalised.newsItems),
+    councilRegistry: withFallbackArray(normalised.councilRegistry, readJson(KEYS.councilRegistry, null)),
+    councilStatus: withFallbackArray(normalised.councilStatus, readJson(KEYS.councilStatus, null)),
+    councilEditorial: withFallbackArray(normalised.councilEditorial, readJson(KEYS.councilEditorial, null)),
   }
 }
 

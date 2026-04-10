@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { WORKER, APP_TOKEN, R } from '../constants'
 
 export default function NewsFeed({ T }) {
@@ -39,3 +39,6 @@ export default function NewsFeed({ T }) {
     </div>
   )
 }
+
+
+

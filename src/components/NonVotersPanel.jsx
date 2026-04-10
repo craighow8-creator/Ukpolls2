@@ -1,3 +1,4 @@
+import React from 'react'
 import { R } from '../constants'
 import { Hdr, STitle, ScrollArea, GlassBlock } from './ui'
 
@@ -27,3 +28,5 @@ export default function NonVotersPanel({ T, nonVoters }) {
     </div>
   )
 }
+
+

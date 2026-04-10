@@ -1,3 +1,4 @@
+import React from 'react'
 import { R, APP_VERSION, APP_UPDATED } from '../constants'
 
 export default function AboutModal({ open, onClose, T, dark, onToggleDark }) {
@@ -209,3 +210,4 @@ export default function AboutModal({ open, onClose, T, dark, onToggleDark }) {
     </div>
   )
 }
+

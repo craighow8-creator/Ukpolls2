@@ -1,7 +1,12 @@
-import { motion } from 'framer-motion'
+import React from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { haptic } from '../components/ui'
-import { daysTo, impliedProb } from '../utils/helpers'
+import { impliedProb } from '../utils/helpers'
 import { useResponsive } from '../utils/responsive'
+import BriefingPanel from '../components/BriefingPanel'
+import { buildSmartSummary } from '../utils/intelligence'
+import { buildDisplayTrendRows } from '../components/charts/SharedTrendChart'
+import { buildHomeElectionsBriefing } from '../utils/homeElectionsBriefing'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
@@ -40,7 +45,7 @@ function MiniBar({ value, max, color, height = 8, T }) {
   )
 }
 
-function Chip({ children, color }) {
+function Chip({ children, color, style }) {
   return (
     <span
       style={{
@@ -56,6 +61,7 @@ function Chip({ children, color }) {
         padding: '2px 7px',
         flexShrink: 0,
         whiteSpace: 'nowrap',
+        ...style,
       }}
     >
       {children}
@@ -69,7 +75,7 @@ const Divider = ({ T }) => (
 
 const G = 14
 
-function LargeCard({ T, onClick, children }) {
+function LargeCard({ T, onClick, children, style }) {
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
   const bg = isDark ? '#0d1a24' : '#ffffff'
   const borderCol = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
@@ -91,6 +97,7 @@ function LargeCard({ T, onClick, children }) {
         position: 'relative',
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',
+        ...style,
       }}
     >
       {children}
@@ -274,12 +281,16 @@ export default function HomeScreen({
   migration = {},
   betting = {},
   meta = {},
+  pollContext = {},
 }) {
   const { isMobile } = useResponsive()
   const safe = Array.isArray(parties) ? parties : []
   const safeTr = Array.isArray(trends) ? trends : []
+  const engineSnapshot = Array.isArray(pollContext?.partyPollSnapshot) ? pollContext.partyPollSnapshot : []
+  const displayTrends = buildDisplayTrendRows(safeTr, pollContext)
+  const intelligenceSource = engineSnapshot.length ? engineSnapshot : safe
 
-  if (!safe.length) {
+  if (!intelligenceSource.length) {
     return (
       <div
         style={{
@@ -295,32 +306,66 @@ export default function HomeScreen({
     )
   }
 
-  const sorted = [...safe].sort((a, b) => b.pct - a.pct)
+  const sorted = [...intelligenceSource].sort((a, b) => (b.pct || 0) - (a.pct || 0))
   const leader = sorted[0] || {}
   const second = sorted[1] || {}
   const third = sorted[2] || {}
   const gap = +((leader.pct || 0) - (second.pct || 0)).toFixed(1)
-  const days7May = daysTo('2026-05-07')
-  const main = safe.filter((p) => p.name !== 'Other').sort((a, b) => b.pct - a.pct)
+  const main = intelligenceSource.filter((p) => p.name !== 'Other').sort((a, b) => (b.pct || 0) - (a.pct || 0))
+  const allLeaders = safe.map((p) => p._leader).filter(Boolean)
 
-  const tr12 = (name) => safeTr.map((t) => t[name]).filter((v) => v != null && !isNaN(v)).slice(-12)
+  const smartSummary = buildSmartSummary({
+    parties: main.map((p) => ({ ...p, pct: p.pct })),
+    leaders: allLeaders,
+    trends: displayTrends,
+    pollContext,
+  })
+
+  const tr12 = (name) => displayTrends.map((t) => t[name]).filter((v) => v != null && !isNaN(v)).slice(-12)
 
   const trendDelta = (name) => {
     const d = tr12(name)
     return d.length < 2 ? null : +(d[d.length - 1] - d[0]).toFixed(1)
   }
 
+  const recentDeltaFor = (party) =>
+    typeof party?.recentDelta === 'number'
+      ? party.recentDelta
+      : typeof party?.trendDelta === 'number'
+        ? party.trendDelta
+        : trendDelta(party?.name)
+
+  const confidenceFor = (party) =>
+    party?.confidenceLabel || 'No clear break yet'
+
   const topBet = betting?.odds?.[0]
-  const allLeaders = safe.map((p) => p._leader).filter(Boolean)
   const sortedLeaders = [...allLeaders].sort((a, b) => (b.net ?? -999) - (a.net ?? -999))
   const topLeader = sortedLeaders[0] || null
   const upBE = (byElections?.upcoming || []).filter((b) => b.status !== 'skip')
   const recBE = byElections?.recent || []
+  const electionsBriefing = React.useMemo(
+    () => buildHomeElectionsBriefing({ meta, byElections }),
+    [meta, byElections],
+  )
+  const [electionSignalIndex, setElectionSignalIndex] = React.useState(0)
+
+  React.useEffect(() => {
+    setElectionSignalIndex(0)
+  }, [electionsBriefing.signals.length, electionsBriefing.label, electionsBriefing.dateLabel])
+
+  React.useEffect(() => {
+    if ((electionsBriefing.signals || []).length <= 1) return undefined
+    const timer = window.setInterval(() => {
+      setElectionSignalIndex((current) => (current + 1) % electionsBriefing.signals.length)
+    }, 4200)
+    return () => window.clearInterval(timer)
+  }, [electionsBriefing.signals])
 
   const alertParty = (() => {
-    if (safeTr.length < 2) return null
-    const f = safeTr[0]
-    const l = safeTr[safeTr.length - 1]
+    const trendSource = displayTrends
+    if (trendSource.length < 2) return null
+    const f = trendSource[0]
+    const l = trendSource[trendSource.length - 1]
     let worst = null
     let drop = 0
     main.forEach((p) => {
@@ -337,12 +382,105 @@ export default function HomeScreen({
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
   const leaderWeeklyChange = Number(leader.change || 0)
   const secondWeeklyChange = Number(second.change || 0)
+  const activeElectionSignal =
+    electionsBriefing.signals[electionSignalIndex] || electionsBriefing.signals[0] || null
+  const electionsHeadline = electionsBriefing.headline || 'The next political test is approaching'
 
-  const electionSummary = recBE[0]
-    ? `${recBE[0].winner?.split(' ')[0] || 'Latest result'} · ${recBE[0].gainLoss || 'recent by-election'}`
-    : upBE[0]
-      ? `By-election next up · ${upBE[0].name}`
-      : 'Councils · devolved elections · by-elections'
+  const risingParty = [...main]
+    .map((p) => ({ ...p, _recentDelta: recentDeltaFor(p) }))
+    .filter((p) => p._recentDelta != null && p._recentDelta > 0)
+    .sort((a, b) => b._recentDelta - a._recentDelta)[0] || null
+
+  const fallingParty = [...main]
+    .map((p) => ({ ...p, _recentDelta: recentDeltaFor(p) }))
+    .filter((p) => p._recentDelta != null && p._recentDelta < 0)
+    .sort((a, b) => a._recentDelta - b._recentDelta)[0] || null
+
+  const raceTitle = smartSummary?.headline || (gap <= 2
+      ? `${leader.abbr} leads a tight race`
+      : gap <= 5
+        ? `${leader.abbr} holds a modest lead`
+        : `${leader.abbr} leads the current snapshot`)
+
+  const raceBody = smartSummary?.subhead || (gap <= 2
+      ? `${leader.name} is ${gap}pt ahead of ${second.name} in the current picture, so the order is still live.`
+      : gap <= 5
+        ? `${leader.name} is ${gap}pt ahead of ${second.name} in the latest reading, but that is still a catchable margin.`
+        : `${leader.name} is ${gap}pt ahead of ${second.name} in the latest reading. ${confidenceFor(leader)}.`)
+
+  const movementItem = risingParty
+    ? {
+        key: 'momentum',
+        kicker: 'Pressure point',
+        title: `${risingParty.name} are carrying the clearest upward pressure`,
+        body: `${risingParty.abbr} is up ${Math.abs(risingParty._recentDelta)}pt in the visible trend window${fallingParty ? ` while ${fallingParty.abbr} is down ${Math.abs(fallingParty._recentDelta)}pt.` : '.'} ${confidenceFor(risingParty)}.`,
+        accent: risingParty.color,
+      }
+    : fallingParty
+      ? {
+          key: 'pressure',
+          kicker: 'Pressure point',
+          title: `${fallingParty.name} are facing the sharpest recent drift`,
+          body: `${fallingParty.abbr} is down ${Math.abs(fallingParty._recentDelta)}pt in the visible trend window. ${confidenceFor(fallingParty)}.`,
+          accent: fallingParty.color,
+        }
+      : {
+          key: 'movement',
+          kicker: 'Pressure point',
+          title: 'The trend signal is still thin',
+          body: 'The app needs more visible poll history before it can make a stronger momentum call here.',
+          accent: T.pr,
+        }
+
+  const qualitativeGap =
+    gap <= 2 ? 'neck and neck' : gap <= 5 ? 'still competitive' : 'clearer than it was'
+
+  const topLineItem = {
+    key: 'top-line',
+    kicker: 'Top line',
+    title:
+      gap <= 2
+        ? `${leader.name} and ${second.name} are still in a tight race`
+        : gap <= 5
+          ? `${leader.name} are ahead, but the race is still live`
+          : `${leader.name} have opened a clearer lead`,
+    body:
+      gap <= 2
+        ? `${leader.name} remain only narrowly ahead of ${second.name}, so the national picture is still open and sensitive to fresh polling.`
+        : gap <= 5
+          ? `${leader.name} have moved into first place and look more settled there, but ${second.name} are still close enough to keep the race competitive.`
+          : `${leader.name} now look ${qualitativeGap}, with ${second.name} chasing and the rest of the field trying to change the shape of the contest.`,
+    accent: leader.color,
+  }
+
+  const pressureItem = risingParty
+    ? {
+        key: 'pressure-point',
+        kicker: 'Pressure point',
+        title: `${risingParty.name} are shaping the direction of travel`,
+        body:
+          fallingParty
+            ? `${risingParty.name} are the clearest riser in the visible trend picture, while ${fallingParty.name} are under the most pressure. The main question now is whether that movement settles into a lasting shift.`
+            : `${risingParty.name} are the clearest riser in the visible trend picture. The main question now is whether that movement settles into a lasting shift.`,
+        accent: risingParty.color,
+      }
+    : fallingParty
+      ? {
+          key: 'pressure-point',
+          kicker: 'Pressure point',
+          title: `${fallingParty.name} are under the most pressure`,
+          body: `${fallingParty.name} are the weakest mover in the visible trend picture. The main question now is whether that slide stabilises or turns into a firmer decline.`,
+          accent: fallingParty.color,
+        }
+      : {
+          key: 'pressure-point',
+          kicker: 'Pressure point',
+          title: 'The picture is stable, not settled',
+          body: 'The visible trend picture is not yet producing one dominant mover, which usually means the next round of polling matters more than any single reading.',
+          accent: T.pr,
+        }
+
+  const briefingItems = [topLineItem, pressureItem].filter(Boolean)
 
   return (
     <div style={{ position: 'relative', minHeight: '100%', background: T.sf }}>
@@ -421,7 +559,7 @@ export default function HomeScreen({
         >
           <LargeCard T={T} onClick={() => nav('polls')}>
             <div style={pL}>
-              <Lbl T={T}>UK Polling Snapshot</Lbl>
+              <Lbl T={T}>State of Play</Lbl>
 
               <div
                 style={{
@@ -571,7 +709,111 @@ export default function HomeScreen({
                   ))}
               </div>
 
-              <Cta T={T}>View full polling →</Cta>
+              <Cta T={T}>Open the full race →</Cta>
+            </div>
+          </LargeCard>
+
+          <div style={{ gridColumn: 'span 2' }}>
+            <BriefingPanel
+              T={T}
+              title="Top line briefing"
+              subtitle="The national political picture in plain English, with the main pressure points surfaced first."
+              items={briefingItems}
+            />
+          </div>
+
+          <LargeCard
+            T={T}
+            onClick={() => nav('elections')}
+            style={{
+              minHeight: isMobile ? 320 : 360,
+            }}
+          >
+            <div
+              style={{
+                ...pL,
+                minHeight: '100%',
+                justifyContent: 'space-between',
+                padding: isMobile ? '22px 20px 20px' : '26px 22px 22px',
+              }}
+            >
+              <Lbl T={T}>
+                {electionsBriefing.label}
+                {electionsBriefing.dateLabel ? ` · ${electionsBriefing.dateLabel}` : ''}
+              </Lbl>
+
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 12, marginBottom: 12 }}>
+                <BigStat color={T.th} T={T} size={isMobile ? 76 : 84}>
+                  {electionsBriefing.countdown.value}
+                </BigStat>
+                <div style={{ paddingBottom: 8, textAlign: 'left' }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: T.th }}>{electionsBriefing.countdown.unitPrimary}</div>
+                  <div style={{ fontSize: 15, fontWeight: 500, color: T.tm }}>{electionsBriefing.countdown.unitSecondary}</div>
+                </div>
+              </div>
+
+              <div style={{ height: 8, borderRadius: 999, background: T.c1, overflow: 'hidden', marginBottom: 16 }}>
+                <motion.div
+                  animate={{ width: `${electionsBriefing.countdown.progressPct}%` }}
+                  transition={{ duration: 0.45, ease: 'easeOut' }}
+                  style={{
+                    height: '100%',
+                    background: T.th,
+                    borderRadius: 999,
+                  }}
+                />
+              </div>
+
+              <div
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: T.th,
+                  lineHeight: 1.35,
+                  textAlign: 'center',
+                  marginBottom: 6,
+                }}
+              >
+                {electionsHeadline}
+              </div>
+
+              <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.55, textAlign: 'center', marginBottom: 14 }}>
+                {electionsBriefing.summary}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 7, marginBottom: 14 }}>
+                {electionsBriefing.chips.map((chip) => (
+                  <Chip
+                    key={chip.id}
+                    color={chip.color}
+                    style={{
+                      background: `${chip.color}24`,
+                      border: `1px solid ${chip.color}2e`,
+                      borderRadius: 999,
+                      padding: '4px 9px',
+                    }}
+                  >
+                    {chip.label}
+                  </Chip>
+                ))}
+              </div>
+
+              <div style={{ minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={activeElectionSignal?.id || 'empty'}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.26, ease: 'easeOut' }}
+                    style={{ fontSize: 15, fontWeight: 600, color: T.th, lineHeight: 1.45, textAlign: 'center' }}
+                  >
+                    {activeElectionSignal?.text || 'Election signals update as the tracker changes.'}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              <Cta T={T}>Explore elections →</Cta>
             </div>
           </LargeCard>
 
@@ -582,7 +824,7 @@ export default function HomeScreen({
                 <Stat color={leader.color} T={T}>
                   {leader.pct}%
                 </Stat>
-                <Sub T={T}>{leader.abbr} leading UK polls</Sub>
+                <Sub T={T}>{leader.abbr} currently setting the pace</Sub>
                 {(leader.change || 0) !== 0 && (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginTop: 8 }}>
                     <span
@@ -613,56 +855,6 @@ export default function HomeScreen({
             </SmallCard>
           </SmallPair>
 
-          <LargeCard T={T} onClick={() => nav('elections')}>
-            <div style={pL}>
-              <Lbl T={T}>May Elections · 7 May 2026</Lbl>
-
-              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 12, marginBottom: 10 }}>
-                <BigStat color={T.th} T={T} size={72}>
-                  {days7May}
-                </BigStat>
-                <div style={{ paddingBottom: 6, textAlign: 'left' }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: T.th }}>days</div>
-                  <div style={{ fontSize: 15, fontWeight: 500, color: T.tm }}>remaining</div>
-                </div>
-              </div>
-
-              <div style={{ height: 8, borderRadius: 999, background: T.c1, overflow: 'hidden', marginBottom: 14 }}>
-                <div
-                  style={{
-                    width: `${Math.max(3, Math.min(100, 100 - Math.round((days7May / 365) * 100)))}%`,
-                    height: '100%',
-                    background: T.th,
-                    borderRadius: 999,
-                  }}
-                />
-              </div>
-
-              <Divider T={T} />
-
-              <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 6 }}>
-                {[
-                  { label: '136 Councils', color: T.pr },
-                  { label: 'Scottish Parliament', color: '#005EB8' },
-                  { label: 'Senedd', color: '#C8102E' },
-                  { label: 'Mayoral', color: '#FAA61A' },
-                ].map((c, i) => (
-                  <Chip key={i} color={c.color}>
-                    {c.label}
-                  </Chip>
-                ))}
-              </div>
-
-              <Divider T={T} />
-
-              <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.6, textAlign: 'center' }}>
-                {electionSummary}
-              </div>
-
-              <Cta T={T}>Explore elections →</Cta>
-            </div>
-          </LargeCard>
-
           <SmallPair>
             <SmallCard T={T} onClick={() => nav('demographics')}>
               <div style={pS}>
@@ -681,7 +873,7 @@ export default function HomeScreen({
                 <Stat color={leader.color} T={T}>
                   {leader.abbr}
                 </Stat>
-                <Sub T={T}>12-month movement and rolling averages</Sub>
+                <Sub T={T}>Pressure, momentum and direction of travel</Sub>
                 <Cta T={T}>Open trends →</Cta>
               </div>
             </SmallCard>
@@ -694,7 +886,7 @@ export default function HomeScreen({
                 <Stat color={topBet?.color || T.pr} T={T}>
                   {topBet?.odds || '6/4'}
                 </Stat>
-                <Sub T={T}>{(topBet?.name || 'Reform').split(' ')[0]} to win next election</Sub>
+                <Sub T={T}>{(topBet?.name || 'Reform').split(' ')[0]} priced as current market favourite</Sub>
                 {winProb != null && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
                     <MiniBar value={winProb} max={100} color={topBet?.color || T.pr} height={5} T={T} />
@@ -781,7 +973,7 @@ export default function HomeScreen({
                   +{gap}pt
                 </Stat>
                 <Sub T={T}>
-                  {leader.abbr} lead over {second.abbr}
+                  {leader.abbr} ahead of {second.abbr}
                 </Sub>
                 <div style={{ fontSize: 13, color: T.tl, marginTop: 5, textAlign: 'center' }}>
                   {third?.abbr ? `${third.abbr} at ${third.pct}%` : ''}

@@ -4,14 +4,46 @@ import App from './App'
 
 function Root() {
   React.useEffect(() => {
-    if (!('serviceWorker' in navigator)) return
+    const isDev = typeof import.meta !== 'undefined' && !!import.meta.env?.DEV
+
+    if (!('serviceWorker' in navigator)) return undefined
 
     let refreshing = false
+    const swUrl = `${import.meta.env.BASE_URL}sw.js`
 
     const onControllerChange = () => {
       if (refreshing) return
       refreshing = true
       window.location.reload()
+    }
+
+    const unregisterAllServiceWorkers = async () => {
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(regs.map((reg) => reg.unregister().catch(() => false)))
+      } catch (err) {
+        console.warn('Failed to unregister service workers:', err)
+      }
+    }
+
+    const clearPolitiscopeCaches = async () => {
+      if (!('caches' in window)) return
+      try {
+        const keys = await caches.keys()
+        await Promise.all(
+          keys
+            .filter((key) => key.startsWith('politiscope-'))
+            .map((key) => caches.delete(key).catch(() => false)),
+        )
+      } catch (err) {
+        console.warn('Failed to clear caches:', err)
+      }
+    }
+
+    if (isDev) {
+      unregisterAllServiceWorkers()
+      clearPolitiscopeCaches()
+      return undefined
     }
 
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange)
@@ -21,19 +53,14 @@ function Root() {
         const regs = await navigator.serviceWorker.getRegistrations()
         for (const reg of regs) {
           const sw = reg.active || reg.waiting || reg.installing
-          if (sw && !sw.scriptURL.includes('/Ukpolls2/sw.js')) {
+          if (sw && !sw.scriptURL.includes(swUrl)) {
             await reg.unregister()
           }
         }
 
-        const keys = await caches.keys()
-        for (const key of keys) {
-          if (key.startsWith('politiscope-') && !key.includes('v19')) {
-            await caches.delete(key)
-          }
-        }
+        await clearPolitiscopeCaches()
 
-        const registration = await navigator.serviceWorker.register('/Ukpolls2/sw.js')
+        const registration = await navigator.serviceWorker.register(swUrl)
 
         if (registration.waiting) {
           registration.waiting.postMessage({ type: 'SKIP_WAITING' })
@@ -83,5 +110,5 @@ function Root() {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Root />
-  </React.StrictMode>
+  </React.StrictMode>,
 )

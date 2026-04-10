@@ -1,3 +1,5 @@
+import { buildElectionsIntelligencePayload, buildMayorsIntelligencePayload, buildDevolvedIntelligencePayload } from './src/data/electionsIntelligence.js'
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url)
@@ -21,6 +23,99 @@ export default {
         },
         status: init.status || 200,
       })
+
+    function decodeHtmlEntities(value) {
+      return String(value || '')
+        .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&#x27;/g, "'")
+        .replace(/&nbsp;/g, ' ')
+        .trim()
+    }
+
+    function stripTags(value) {
+      return decodeHtmlEntities(String(value || '').replace(/<[^>]*>/g, ' '))
+        .replace(/\s+/g, ' ')
+        .trim()
+    }
+
+    function getTagValue(block, tag) {
+      const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'i')
+      const m = block.match(re)
+      return m ? m[1] : ''
+    }
+
+    function parseRssItems(xml, sourceName) {
+      const source = String(xml || '')
+      const itemMatches = source.match(/<item\b[\s\S]*?<\/item>/gi) || []
+      const entryMatches = source.match(/<entry\b[\s\S]*?<\/entry>/gi) || []
+
+      if (itemMatches.length) {
+        return itemMatches.map((item) => {
+          const title = stripTags(getTagValue(item, 'title'))
+          const url = stripTags(getTagValue(item, 'link'))
+          const description = stripTags(getTagValue(item, 'description') || getTagValue(item, 'summary'))
+          const publishedAt = stripTags(getTagValue(item, 'pubDate') || getTagValue(item, 'published') || getTagValue(item, 'updated'))
+          if (!title || !url) return null
+          const parsedTime = publishedAt ? new Date(publishedAt).getTime() : NaN
+          return {
+            title,
+            source: sourceName,
+            publishedAt: !Number.isNaN(parsedTime) ? new Date(parsedTime).toISOString() : new Date().toISOString(),
+            url,
+            description,
+            tag: inferNewsTag(title),
+          }
+        }).filter(Boolean)
+      }
+
+      return entryMatches.map((entry) => {
+        const title = stripTags(getTagValue(entry, 'title'))
+        const description = stripTags(getTagValue(entry, 'summary') || getTagValue(entry, 'content'))
+        const publishedAt = stripTags(getTagValue(entry, 'published') || getTagValue(entry, 'updated'))
+        let url = ''
+        const linkMatch = entry.match(/<link[^>]+href=["']([^"']+)["']/i)
+        if (linkMatch && linkMatch[1]) {
+          url = stripTags(linkMatch[1])
+        } else {
+          url = stripTags(getTagValue(entry, 'link'))
+        }
+        if (!title || !url) return null
+        const parsedTime = publishedAt ? new Date(publishedAt).getTime() : NaN
+        return {
+          title,
+          source: sourceName,
+          publishedAt: !Number.isNaN(parsedTime) ? new Date(parsedTime).toISOString() : new Date().toISOString(),
+          url,
+          description,
+          tag: inferNewsTag(title),
+        }
+      }).filter(Boolean)
+    }
+
+    async function fetchText(url, timeoutMs = 10000) {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), timeoutMs)
+      try {
+        const res = await fetch(url, {
+          headers: {
+            Accept: 'application/rss+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.8',
+            'User-Agent': 'Politiscope/1.0 (+https://politiscope.app)',
+          },
+          signal: controller.signal,
+        })
+        if (!res.ok) return null
+        return await res.text()
+      } catch {
+        return null
+      } finally {
+        clearTimeout(timeout)
+      }
+    }
 
 
     const BPC_MEMBERS = new Set([
@@ -53,9 +148,10 @@ export default {
     const RELEASE_POLLSTERS = new Set([
       'yougov',
       'more in common',
-      'techne',
       'opinium',
       'ipsos',
+      'find out now',
+      'focaldata',
     ])
 
     function norm(value) {
@@ -72,6 +168,25 @@ export default {
       if (!raw) return null
       const n = Number(raw)
       return Number.isFinite(n) ? n : null
+    }
+
+
+    function sanitizeIsoDate(value) {
+      if (!value) return null
+      const text = String(value).trim()
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return text
+
+      const ts = Date.parse(`${text}T00:00:00Z`)
+      if (Number.isNaN(ts)) return text
+
+      const now = Date.now()
+      const fortyFiveDaysMs = 45 * 24 * 60 * 60 * 1000
+
+      if (ts <= now + fortyFiveDaysMs) return text
+
+      const d = new Date(ts)
+      d.setUTCFullYear(d.getUTCFullYear() - 1)
+      return d.toISOString().slice(0, 10)
     }
 
     function formatDateRange(start, end, fallback) {
@@ -98,27 +213,30 @@ export default {
 
       if (!pollster) return null
 
-      const fieldworkStart =
+      const fieldworkStart = sanitizeIsoDate(
         row.fieldworkStart ||
         row.startDate ||
         row.fieldwork_from ||
         row.from ||
         null
+      )
 
-      const fieldworkEnd =
+      const fieldworkEnd = sanitizeIsoDate(
         row.fieldworkEnd ||
         row.endDate ||
         row.fieldwork_to ||
         row.to ||
         null
+      )
 
-      const publishedAt =
+      const publishedAt = sanitizeIsoDate(
         row.publishedAt ||
         row.publishDate ||
         row.published ||
         row.releaseDate ||
         row.datePublished ||
         null
+      )
 
       return {
         id: row.id || makePollId(pollster, publishedAt, fieldworkEnd, idx),
@@ -204,6 +322,7 @@ export default {
       return metaObj
     }
 
+
     async function loadContentSection(section) {
       const hasContent = await tableExists('content')
       if (!hasContent) return null
@@ -214,7 +333,120 @@ export default {
 
       if (!row) return null
 
-      async function loadNormalizedPolls() {
+      try {
+        return row.data ? JSON.parse(row.data) : null
+      } catch {
+        return null
+      }
+    }
+
+    async function loadContentSectionRow(section) {
+      const hasContent = await tableExists('content')
+      if (!hasContent) return null
+
+      const row = await env.DB.prepare(
+        'SELECT section, data, updated_at FROM content WHERE section = ? LIMIT 1'
+      ).bind(section).first()
+
+      if (!row) return null
+
+      try {
+        return {
+          section: row.section,
+          updated_at: row.updated_at || null,
+          data: row.data ? JSON.parse(row.data) : null,
+        }
+      } catch {
+        return {
+          section: row.section,
+          updated_at: row.updated_at || null,
+          data: null,
+        }
+      }
+    }
+
+    // Loads mayor enrichments from D1 (stored via POST /api/elections/mayors-enrich).
+    // Returns the stored object when present, or null to signal that
+    // buildMayorsIntelligencePayload should fall back to DEFAULT_MAYOR_ENRICHMENTS.
+    async function loadMayorEnrichments() {
+      const data = await loadContentSection('mayorEnrichments')
+      if (data && typeof data === 'object' && !Array.isArray(data)) return data
+      return null
+    }
+
+    // Loads structured external-style mayor source input from D1 (stored via
+    // POST /api/elections/mayors-external-source). Returns null to signal the
+    // shaper should fall back to DEFAULT_MAYOR_EXTERNAL_SOURCE in the bundle.
+    async function loadMayorExternalSource() {
+      const data = await loadContentSection('mayorExternalSource')
+      if (data && typeof data === 'object' && !Array.isArray(data)) return data
+      return null
+    }
+
+    // Loads devolved enrichments from D1 (stored via POST /api/elections/devolved-enrich).
+    // Returns the stored object when present, or null so the shaper falls back
+    // to DEFAULT_DEVOLVED_ENRICHMENTS from the bundle.
+    async function loadDevolvedEnrichments() {
+      const data = await loadContentSection('devolvedEnrichments')
+      if (data && typeof data === 'object' && !Array.isArray(data)) return data
+      return null
+    }
+
+    async function loadElectionsIntelligence() {
+      const stored = await loadContentSectionRow('electionsIntelligence')
+      if (stored?.data && typeof stored.data === 'object') {
+        return stored.data
+      }
+
+      // This payload is currently shaped from maintained Elections source data.
+      // A future live ingestion step can save an electionsIntelligence content
+      // section and keep the same frontend contract.
+      const mayorEnrichments = await loadMayorEnrichments()
+      const mayorExternalSource = await loadMayorExternalSource()
+      const devolvedEnrichments = await loadDevolvedEnrichments()
+      return buildElectionsIntelligencePayload({
+        updatedAt: stored?.updated_at || new Date().toISOString(),
+        mayorsSourceCount: 1,
+        devolvedSourceCount: 1,
+        ...(mayorExternalSource !== null ? { mayorsExternalSource: mayorExternalSource } : {}),
+        ...(mayorEnrichments !== null ? { mayorsEnrichments: mayorEnrichments } : {}),
+        ...(devolvedEnrichments !== null ? { devolvedEnrichments } : {}),
+      })
+    }
+
+    function normalizeMigrationPayload(data, updatedAt = null) {
+      if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        return null
+      }
+
+      // migrationData is the forward-compatible backend contract for the
+      // Migration screen. It is intentionally small and frontend-ready:
+      // headline totals, nationality rows, visa rows, and freshness metadata.
+      // Future ONS/Home Office ingestion should write this section directly.
+      return {
+        ...data,
+        netTotal: safeNumber(data.netTotal),
+        netPrev: safeNumber(data.netPrev),
+        netPrev2: safeNumber(data.netPrev2),
+        byNationality: Array.isArray(data.byNationality) ? data.byNationality : [],
+        byVisa: Array.isArray(data.byVisa) ? data.byVisa : [],
+        updatedAt: data.updatedAt || updatedAt || null,
+      }
+    }
+
+    async function loadMigrationData() {
+      const primary = await loadContentSectionRow('migrationData')
+      const primaryPayload = normalizeMigrationPayload(primary?.data, primary?.updated_at)
+      if (primaryPayload) return primaryPayload
+
+      // Legacy fallback: older deployments saved this section as "migration".
+      // Keep reading it so /api/data remains backward compatible while newer
+      // ingestion moves to migrationData.
+      const legacy = await loadContentSectionRow('migration')
+      return normalizeMigrationPayload(legacy?.data, legacy?.updated_at)
+    }
+
+    async function loadNormalizedPolls() {
       const pollsData = await loadContentSection('pollsData')
       const raw = Array.isArray(pollsData) ? pollsData : []
       const normalized = raw
@@ -224,11 +456,911 @@ export default {
       return sortPollsNewestFirst(normalized)
     }
 
-    try {
-        return row.data ? JSON.parse(row.data) : null
+    function slugifyCouncilName(value) {
+      return String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/&/g, ' and ')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    }
+
+    function normalizeCouncilRegistryRecord(row = {}) {
+      const name = titleCase(row.name || row.council || '')
+      if (!name) return null
+
+      return {
+        slug: row.slug || slugifyCouncilName(name),
+        name,
+        type: row.type || '',
+        region: row.region || '',
+        governanceModel: row.governanceModel || '',
+        officialWebsite: row.officialWebsite || row.website || '',
+        officialElectionsUrl: row.officialElectionsUrl || '',
+        officialCompositionUrl: row.officialCompositionUrl || '',
+        notes: row.notes || '',
+      }
+    }
+
+    function normalizeCouncilStatusRecord(row = {}) {
+      const name = titleCase(row.name || row.council || '')
+      const slug = row.slug || slugifyCouncilName(name)
+      if (!slug) return null
+
+      return {
+        slug,
+        name,
+        electionStatus: row.electionStatus || '',
+        electionMessage: row.electionMessage || '',
+        nextElectionYear: safeNumber(row.nextElectionYear),
+        cycle: row.cycle || '',
+        seatsTotal: safeNumber(row.seatsTotal ?? row.seats),
+        seatsUp: safeNumber(row.seatsUp),
+        control: row.control || '',
+        leader: row.leader || '',
+        mayor: row.mayor || '',
+        governanceModel: row.governanceModel || '',
+        verificationStatus: row.verificationStatus || 'unverified',
+        verificationSourceType: row.verificationSourceType || '',
+        lastVerifiedAt: row.lastVerifiedAt || new Date().toISOString(),
+        sourceUrls: Array.isArray(row.sourceUrls) ? row.sourceUrls : [],
+      }
+    }
+
+    function normalizeCouncilEditorialRecord(row = {}) {
+      const name = titleCase(row.name || row.council || '')
+      const slug = row.slug || slugifyCouncilName(name)
+      if (!slug) return null
+
+      return {
+        slug,
+        name,
+        verdict: row.verdict || '',
+        difficulty: row.difficulty || '',
+        watchFor: row.watchFor || '',
+        targetParty: row.targetParty || '',
+        whatCountsAsShock: row.whatCountsAsShock || '',
+        keyIssue: row.keyIssue || '',
+        prediction: row.prediction || '',
+        updatedAt: row.updatedAt || new Date().toISOString(),
+      }
+    }
+
+    async function loadCouncilRegistry() {
+      const data = await loadContentSection('councilRegistry')
+      return Array.isArray(data) ? data.map(normalizeCouncilRegistryRecord).filter(Boolean) : []
+    }
+
+    async function loadCouncilStatus() {
+      const data = await loadContentSection('councilStatus')
+      return Array.isArray(data) ? data.map(normalizeCouncilStatusRecord).filter(Boolean) : []
+    }
+
+    async function loadCouncilEditorial() {
+      const data = await loadContentSection('councilEditorial')
+      return Array.isArray(data) ? data.map(normalizeCouncilEditorialRecord).filter(Boolean) : []
+    }
+
+    function mergeCouncilLayers(registry = [], status = [], editorial = []) {
+      const out = new Map()
+
+      for (const item of registry) {
+        if (!item?.slug) continue
+        out.set(item.slug, { ...item })
+      }
+
+      for (const item of status) {
+        if (!item?.slug) continue
+        out.set(item.slug, { ...(out.get(item.slug) || {}), ...item })
+      }
+
+      for (const item of editorial) {
+        if (!item?.slug) continue
+        out.set(item.slug, { ...(out.get(item.slug) || {}), ...item })
+      }
+
+      return [...out.values()].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
+    }
+
+    async function loadMergedCouncilData() {
+      const [registry, status, editorial] = await Promise.all([
+        loadCouncilRegistry(),
+        loadCouncilStatus(),
+        loadCouncilEditorial(),
+      ])
+
+      return {
+        registry,
+        status,
+        editorial,
+        councils: mergeCouncilLayers(registry, status, editorial),
+      }
+    }
+
+
+    const APPROVED_NEWS_DOMAINS = new Set([
+      'bbc.co.uk',
+      'theguardian.com',
+      'news.sky.com',
+      'ft.com',
+      'gbnews.com',
+      'dailymail.co.uk',
+      'express.co.uk',
+      'telegraph.co.uk',
+    ])
+
+    const UK_POLITICS_ACTOR_TERMS = [
+      'keir starmer',
+      'kemi badenoch',
+      'nigel farage',
+      'ed davey',
+      'carla denyer',
+      'adrian ramsay',
+      'john swinney',
+      'angela rayner',
+      'rachel reeves',
+      'yvette cooper',
+      'shabana mahmood',
+      'wes streeting',
+      'bridget phillipson',
+      'pat mcFadden',
+      'james cleverly',
+      'suella braverman',
+      'robert jenrick',
+      'labour',
+      'labour party',
+      'conservative',
+      'conservatives',
+      'conservative party',
+      'tories',
+      'reform uk',
+      'reform',
+      'liberal democrats',
+      'lib dem',
+      'lib dems',
+      'green party',
+      'green party of england and wales',
+      'snp',
+      'scottish national party',
+      'plaid cymru',
+      'minister',
+      'ministers',
+      'cabinet',
+      'shadow cabinet',
+      'shadow minister',
+      'shadow chancellor',
+      'shadow home secretary',
+      'mp ',
+      ' mp',
+      'mps',
+      'prime minister',
+      'deputy prime minister',
+      'chancellor',
+      'home secretary',
+      'foreign secretary',
+      'health secretary',
+      'education secretary',
+      'justice secretary',
+    ]
+
+    const UK_POLITICS_INSTITUTION_TERMS = [
+      'westminster',
+      'parliament',
+      'house of commons',
+      'house of lords',
+      'pmqs',
+      "prime minister's questions",
+      'general election',
+      'local election',
+      'by-election',
+      'byelection',
+      'mayoral election',
+      'council tax',
+      'budget',
+      'autumn statement',
+      'spring statement',
+      'policy',
+      'policies',
+      'manifesto',
+      'nhs',
+      'immigration',
+      'housing',
+      'welfare',
+      'net zero',
+      'north sea',
+      'energy bills',
+      'tax',
+      'taxes',
+      'benefits',
+      'public spending',
+    ]
+
+    const EXCLUDED_NEWS_URL_PARTS = [
+      '/news/live/',
+      '/sounds/',
+      '/programmes/',
+      '/iplayer/',
+      '/sport/',
+      '/newsround/',
+      '/weather/',
+      '/travel/',
+      '/culture/',
+      '/food/',
+      '/life/',
+      '/business/topics/',
+    ]
+
+    const EXCLUDED_NEWS_TERMS = [
+      'vaccines for children in america',
+      'us voting system',
+    ]
+
+    const CIVIC_BUT_NOT_NECESSARILY_POLITICAL_TERMS = [
+      'weather',
+      'travel',
+    ]
+
+    const HUB_POLICY_TERMS = [
+      'tax',
+      'taxes',
+      'inheritance tax',
+      'budget',
+      'economy',
+      'cost of living',
+      'energy bills',
+      'fuel',
+      'petrol',
+      'diesel',
+      'nhs',
+      'doctor',
+      'doctors',
+      'strike',
+      'junior doctors',
+      'housing',
+      'rent',
+      'mortgage',
+      'migration',
+      'immigration',
+      'asylum',
+      'welfare',
+      'benefits',
+      'school',
+      'schools',
+      'crime',
+      'policing',
+      'police',
+      'net zero',
+      'farming',
+      'farmers',
+      'council tax',
+      'public spending',
+    ]
+
+    const SKY_STRONG_POLITICS_TERMS = [
+      'labour',
+      'labour party',
+      'conservative',
+      'conservatives',
+      'conservative party',
+      'tories',
+      'reform uk',
+      'reform',
+      'liberal democrats',
+      'lib dem',
+      'lib dems',
+      'green party',
+      'snp',
+      'plaid cymru',
+      'keir starmer',
+      'kemi badenoch',
+      'nigel farage',
+      'ed davey',
+      'john swinney',
+      'angela rayner',
+      'rachel reeves',
+      'yvette cooper',
+      'wes streeting',
+      'minister',
+      'ministers',
+      'cabinet',
+      'mp ',
+      ' mp',
+      'mps',
+      'prime minister',
+      'chancellor',
+      'home secretary',
+      'westminster',
+      'parliament',
+      'house of commons',
+      'pmqs',
+      "prime minister's questions",
+      'general election',
+      'local election',
+      'by-election',
+      'mayoral election',
+      'budget',
+      'tax',
+      'taxes',
+      'nhs',
+      'immigration',
+      'housing',
+      'welfare',
+      'energy bills',
+    ]
+
+    const BBC_STRONG_POLITICS_TERMS = [
+      'labour',
+      'labour party',
+      'conservative',
+      'conservatives',
+      'conservative party',
+      'tories',
+      'reform uk',
+      'reform',
+      'liberal democrats',
+      'lib dem',
+      'lib dems',
+      'green party',
+      'green party of england and wales',
+      'snp',
+      'scottish national party',
+      'plaid cymru',
+      'keir starmer',
+      'kemi badenoch',
+      'nigel farage',
+      'ed davey',
+      'carla denyer',
+      'adrian ramsay',
+      'john swinney',
+      'angela rayner',
+      'rachel reeves',
+      'yvette cooper',
+      'wes streeting',
+      'minister',
+      'ministers',
+      'cabinet',
+      'shadow cabinet',
+      'shadow minister',
+      'mp ',
+      ' mp',
+      'mps',
+      'prime minister',
+      'deputy prime minister',
+      'chancellor',
+      'home secretary',
+      'westminster',
+      'parliament',
+      'house of commons',
+      'house of lords',
+      'pmqs',
+      "prime minister's questions",
+      'general election',
+      'local election',
+      'by-election',
+      'byelection',
+      'mayoral election',
+    ]
+
+    function inferNewsTag(title = '') {
+      const t = String(title || '').toLowerCase()
+
+      if (t.includes('poll') || t.includes('polling') || t.includes('mrp')) return 'Polling'
+
+      if (
+        t.includes('election') ||
+        t.includes('elections') ||
+        t.includes('by-election') ||
+        t.includes('byelection') ||
+        t.includes('local election') ||
+        t.includes('general election') ||
+        t.includes('mayor')
+      ) return 'Elections'
+
+      if (
+        t.includes('labour') ||
+        t.includes('conservative') ||
+        t.includes('reform') ||
+        t.includes('liberal democrats') ||
+        t.includes('lib dem') ||
+        t.includes('green party') ||
+        t.includes('snp') ||
+        t.includes('plaid') ||
+        t.includes('farage') ||
+        t.includes('starmer') ||
+        t.includes('badenoch') ||
+        t.includes('minister') ||
+        t.includes('cabinet') ||
+        t.includes('mp')
+      ) return 'Party'
+
+      if (
+        t.includes('policy') ||
+        t.includes('budget') ||
+        t.includes('tax') ||
+        t.includes('immigration') ||
+        t.includes('nhs') ||
+        t.includes('welfare') ||
+        t.includes('housing') ||
+        t.includes('energy') ||
+        t.includes('net zero') ||
+        t.includes('benefit')
+      ) return 'Policy'
+
+      return ''
+    }
+
+    function getHostname(rawUrl) {
+      try {
+        return new URL(rawUrl).hostname.replace(/^www\./, '').toLowerCase()
       } catch {
+        return ''
+      }
+    }
+
+    function isApprovedNewsDomain(hostname) {
+      return APPROVED_NEWS_DOMAINS.has(hostname)
+    }
+
+    function textMatchesAny(text, terms) {
+      const t = String(text || '').toLowerCase()
+      return terms.some((term) => t.includes(term))
+    }
+
+    function countMatches(text, terms) {
+      const t = String(text || '').toLowerCase()
+      return terms.reduce((sum, term) => sum + (t.includes(term) ? 1 : 0), 0)
+    }
+
+    function hasPoliticsSignal(text) {
+      const combined = String(text || '').toLowerCase()
+      const actorMatches = countMatches(combined, UK_POLITICS_ACTOR_TERMS)
+      const institutionMatches = countMatches(combined, UK_POLITICS_INSTITUTION_TERMS)
+      const hubPolicyMatches = countMatches(combined, HUB_POLICY_TERMS)
+      return actorMatches > 0 || institutionMatches > 0 || hubPolicyMatches > 0
+    }
+
+    function isAllowedNewsPath(url) {
+      const lowerUrl = String(url || '').toLowerCase()
+      return !EXCLUDED_NEWS_URL_PARTS.some((part) => lowerUrl.includes(part))
+    }
+
+    function scoreNewsArticle(article) {
+      if (!article || typeof article !== 'object') return null
+
+      const title = titleCase(article.title || '')
+      const description = titleCase(article.description || '')
+      const url = String(article.url || '')
+      const hostname = getHostname(url)
+
+      if (!title || !url || !hostname) return null
+      if (!isApprovedNewsDomain(hostname)) return null
+
+      const lowerUrl = url.toLowerCase()
+      if (EXCLUDED_NEWS_URL_PARTS.some((part) => lowerUrl.includes(part))) return null
+
+      const combined = `${title} ${description}`.toLowerCase()
+
+      if (textMatchesAny(combined, EXCLUDED_NEWS_TERMS)) return null
+
+      const actorMatches = countMatches(combined, UK_POLITICS_ACTOR_TERMS)
+      const institutionMatches = countMatches(combined, UK_POLITICS_INSTITUTION_TERMS)
+      const hubPolicyMatches = countMatches(combined, HUB_POLICY_TERMS)
+
+      let score = 0
+      score += actorMatches * 3
+      score += institutionMatches * 2
+
+      if (hostname === 'bbc.co.uk' && textMatchesAny(combined, BBC_STRONG_POLITICS_TERMS)) {
+        score += 2
+      }
+      if (hostname === 'theguardian.com' && lowerUrl.includes('/politics/')) score += 2
+      if (
+        hostname === 'theguardian.com' &&
+        lowerUrl.includes('/uk-news/') &&
+        (actorMatches > 0 || institutionMatches > 0 || hubPolicyMatches > 0)
+      ) {
+        score += 1
+      }
+
+      if (combined.includes('labour party')) score += 1
+      if (combined.includes('conservative party')) score += 1
+      if (combined.includes('reform uk')) score += 1
+      if (combined.includes('liberal democrats')) score += 1
+      if (combined.includes('green party')) score += 1
+      if (combined.includes('scottish national party')) score += 1
+
+      if (combined.includes('celebrity')) score -= 2
+      if (combined.includes('showbiz')) score -= 2
+      if (combined.includes('tv star')) score -= 1
+      if (combined.includes('death plans')) score -= 3
+      if (textMatchesAny(combined, CIVIC_BUT_NOT_NECESSARILY_POLITICAL_TERMS)) score -= 2
+
+      if (actorMatches === 0 && institutionMatches === 0) return null
+
+      if (
+        hostname === 'bbc.co.uk' &&
+        !textMatchesAny(combined, BBC_STRONG_POLITICS_TERMS) &&
+        score < 5
+      ) {
         return null
       }
+
+      if (score < 3) return null
+
+      return {
+        title,
+        source: titleCase(article?.source?.name || article.source || ''),
+        publishedAt: article.publishedAt || null,
+        url,
+        tag: inferNewsTag(title),
+        score,
+      }
+    }
+
+    function normalizeNewsItem(article) {
+      const scored = scoreNewsArticle(article)
+      if (!scored) return null
+
+      if (!scored.title || !scored.source || !scored.publishedAt || !scored.url) return null
+
+      return {
+        title: scored.title,
+        source: scored.source,
+        publishedAt: scored.publishedAt,
+        url: scored.url,
+        tag: scored.tag,
+        score: scored.score,
+      }
+    }
+
+    function dedupeNewsItems(items) {
+      const seen = new Set()
+      const out = []
+
+      for (const item of items || []) {
+        const key = String(item.url || item.title || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, ' ')
+          .trim()
+          .split(' ')
+          .slice(0, 10)
+          .join(' ')
+
+        if (!key || seen.has(key)) continue
+        seen.add(key)
+        out.push(item)
+      }
+
+      return out
+    }
+
+    function capNewsItemsBySource(items, maxPerSource = 2, maxItems = 10) {
+      const counts = new Map()
+      const out = []
+
+      for (const item of items || []) {
+        const source = String(item.source || '').toLowerCase()
+        const current = counts.get(source) || 0
+        if (current >= maxPerSource) continue
+
+        counts.set(source, current + 1)
+        out.push(item)
+
+        if (out.length >= maxItems) break
+      }
+
+      return out
+    }
+    function isOpinionLikeTitle(title) {
+      const t = String(title || '').toLowerCase()
+      return (
+        t.includes('opinion') ||
+        t.includes('editorial') ||
+        t.includes('comment') ||
+        t.includes('analysis:') ||
+        t.includes('somehow always makes')
+      )
+    }
+
+    function isExplainerLikeTitle(title) {
+      const t = String(title || '').toLowerCase().trim()
+      return (
+        t.startsWith('how ') ||
+        t.startsWith('why ') ||
+        t.startsWith('what ') ||
+        t.startsWith('who ') ||
+        t.startsWith('a simple guide') ||
+        t.includes('explained')
+      )
+    }
+
+    function hasHardPoliticsSignal(text) {
+      const t = String(text || '').toLowerCase()
+      return (
+        t.includes('prime minister') ||
+        t.includes('chancellor') ||
+        t.includes('home secretary') ||
+        t.includes('cabinet') ||
+        t.includes('minister') ||
+        t.includes('labour') ||
+        t.includes('conservative') ||
+        t.includes('reform uk') ||
+        t.includes('liberal democrats') ||
+        t.includes('green party') ||
+        t.includes('snp') ||
+        t.includes('plaid cymru') ||
+        t.includes('westminster') ||
+        t.includes('parliament') ||
+        t.includes('pmqs') ||
+        t.includes('election') ||
+        t.includes('by-election') ||
+        t.includes('budget') ||
+        t.includes('tax') ||
+        t.includes('energy bills') ||
+        t.includes('nhs') ||
+        t.includes('immigration') ||
+        t.includes('housing') ||
+        t.includes('welfare') ||
+        t.includes('manifesto')
+      )
+    }
+
+    function isWeakCivicStory(text) {
+      const t = String(text || '').toLowerCase()
+      return (
+        t.includes('public sexual harassment') ||
+        t.includes('ev charger') ||
+        t.includes('car production') ||
+        t.includes('family voting') ||
+        t.includes('churchill') ||
+        t.includes('who is ')
+      )
+    }
+
+    async function fetchBbcNews() {
+      const feedUrls = [
+        'https://feeds.bbci.co.uk/news/politics/rss.xml',
+        'https://feeds.bbci.co.uk/news/rss.xml',
+      ]
+
+      for (const feedUrl of feedUrls) {
+        const xml = await fetchText(feedUrl)
+        if (!xml) continue
+
+        const blocks = String(xml).split(/<item\b/i).slice(1)
+        if (!blocks.length) continue
+
+        const items = blocks.map((block) => {
+          const item = '<item' + block
+
+          const titleMatch = item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i) || item.match(/<title>([\s\S]*?)<\/title>/i)
+          const linkMatch = item.match(/<link>([\s\S]*?)<\/link>/i)
+          const descMatch = item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/i) || item.match(/<description>([\s\S]*?)<\/description>/i)
+          const pubMatch = item.match(/<pubDate>([\s\S]*?)<\/pubDate>/i)
+
+          const title = stripTags(titleMatch?.[1] || '')
+          const url = stripTags(linkMatch?.[1] || '')
+          const description = stripTags(descMatch?.[1] || '')
+          const publishedAtRaw = stripTags(pubMatch?.[1] || '')
+          const publishedAtTs = publishedAtRaw ? new Date(publishedAtRaw).getTime() : NaN
+
+          if (!title || !url) return null
+          if (!isAllowedNewsPath(url)) return null
+
+          const combined = `${title} ${description}`.toLowerCase()
+          const lowerUrl = url.toLowerCase()
+
+          const looksPolitical =
+            hasPoliticsSignal(combined) ||
+            lowerUrl.includes('/news/politics') ||
+            lowerUrl.includes('/news/uk-politics') ||
+            textMatchesAny(combined, BBC_STRONG_POLITICS_TERMS)
+
+          if (!looksPolitical) return null
+          if (title.toLowerCase().includes('uk politics live')) return null
+          if (title.toLowerCase().includes('as it happened')) return null
+
+          let score = 4
+          if (textMatchesAny(combined, BBC_STRONG_POLITICS_TERMS)) score += 2
+          if (hasPoliticsSignal(combined)) score += 1
+          if (hasHardPoliticsSignal(combined)) score += 2
+          if (lowerUrl.includes('/news/')) score += 1
+          if (isOpinionLikeTitle(title)) score -= 2
+          if (isExplainerLikeTitle(title)) score -= 2
+          if (isWeakCivicStory(combined)) score -= 2
+          if (score < 5) return null
+
+          return {
+            title,
+            source: 'BBC News',
+            publishedAt: !Number.isNaN(publishedAtTs)
+              ? new Date(publishedAtTs).toISOString()
+              : new Date().toISOString(),
+            url,
+            tag: inferNewsTag(title),
+            score,
+          }
+        }).filter(Boolean)
+
+        if (items.length) return items
+      }
+
+      return []
+    }
+
+    async function fetchSkyNews() {
+      const xml = await fetchText('https://feeds.skynews.com/feeds/rss/politics.xml')
+      if (!xml) return []
+
+      return parseRssItems(xml, 'Sky News')
+        .map((item) => {
+          const title = stripTags(item.title || '')
+          const description = stripTags(item.description || '')
+          const url = String(item.url || '')
+          const publishedAt = item.publishedAt || null
+          const lowerUrl = url.toLowerCase()
+          const combined = `${title} ${description}`.toLowerCase()
+
+          if (!title || !url || !publishedAt) return null
+          if (!isAllowedNewsPath(url)) return null
+          if (!hasPoliticsSignal(combined)) return null
+          if (isOpinionLikeTitle(title) && !textMatchesAny(combined, SKY_STRONG_POLITICS_TERMS)) return null
+          if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return null
+          if (isWeakCivicStory(combined) && !hasHardPoliticsSignal(combined)) return null
+
+          let score = 3
+          if (lowerUrl.includes('/politics')) score += 2
+          if (textMatchesAny(combined, SKY_STRONG_POLITICS_TERMS)) score += 2
+          if (hasHardPoliticsSignal(combined)) score += 2
+          if (isExplainerLikeTitle(title)) score -= 2
+          if (isWeakCivicStory(combined)) score -= 2
+          if (score < 4) return null
+
+          return {
+            title,
+            source: 'Sky News',
+            publishedAt,
+            url,
+            tag: inferNewsTag(title),
+            score,
+          }
+        })
+        .filter(Boolean)
+    }
+
+    async function fetchGuardianNews(env) {
+      if (!env.GUARDIAN_API_KEY) return []
+
+      const apiUrl = new URL('https://content.guardianapis.com/search')
+      apiUrl.searchParams.set('api-key', env.GUARDIAN_API_KEY)
+      apiUrl.searchParams.set('section', 'politics')
+      apiUrl.searchParams.set('page-size', '10')
+      apiUrl.searchParams.set('order-by', 'newest')
+      apiUrl.searchParams.set('show-fields', 'headline,trailText,shortUrl')
+      apiUrl.searchParams.set(
+        'from-date',
+        new Date(Date.now() - 96 * 60 * 60 * 1000).toISOString().slice(0, 10)
+      )
+
+      try {
+        const res = await fetch(apiUrl.toString(), {
+          headers: {
+            Accept: 'application/json',
+            'User-Agent': 'Politiscope/1.0 (+https://politiscope.app)',
+          },
+        })
+
+        if (!res.ok) return []
+
+        const data = await res.json()
+        const results = Array.isArray(data?.response?.results) ? data.response.results : []
+
+        return results
+          .map((item) => {
+            const title = titleCase(item.fields?.headline || item.webTitle || '')
+            const description = titleCase(item.fields?.trailText || '')
+            const url = item.webUrl || item.fields?.shortUrl || ''
+            const publishedAt = item.webPublicationDate || null
+            const lowerUrl = String(url || '').toLowerCase()
+            const combined = `${title} ${description}`.toLowerCase()
+
+            if (!title || !url || !publishedAt) return null
+            if (!isAllowedNewsPath(url)) return null
+            if (lowerUrl.includes('/politics/live/')) return null
+            if (title.toLowerCase().includes('uk politics live')) return null
+            if (title.toLowerCase().includes('as it happened')) return null
+            if (!lowerUrl.includes('/politics/') && !lowerUrl.includes('/uk-news/')) return null
+            if (!hasPoliticsSignal(combined) && !lowerUrl.includes('/politics/')) return null
+            if (isOpinionLikeTitle(title) && !combined.includes('starmer') && !combined.includes('farage') && !combined.includes('badenoch')) return null
+            if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return null
+
+            let score = 3
+            if (lowerUrl.includes('/politics/')) score += 2
+            if (lowerUrl.includes('/uk-news/')) score += 1
+            if (hasHardPoliticsSignal(combined)) score += 2
+            if (isOpinionLikeTitle(title)) score -= 1
+            if (isExplainerLikeTitle(title)) score -= 2
+            if (score < 4) return null
+
+            return {
+              title,
+              source: 'The Guardian',
+              publishedAt,
+              url,
+              tag: inferNewsTag(title),
+              score,
+            }
+          })
+          .filter(Boolean)
+      } catch {
+        return []
+      }
+    }
+
+    async function fetchLiveNews(env) {
+      const now = Date.now()
+
+      const bbcItems = await fetchBbcNews()
+      const guardianItems = await fetchGuardianNews(env)
+      const skyItems = await fetchSkyNews()
+
+      const ranked = [...bbcItems, ...guardianItems, ...skyItems]
+        .sort((a, b) => {
+          const aTime = new Date(a.publishedAt || 0).getTime()
+          const bTime = new Date(b.publishedAt || 0).getTime()
+
+          const aAgeHours = Number.isFinite(aTime) ? Math.max(0, (now - aTime) / 3600000) : 999
+          const bAgeHours = Number.isFinite(bTime) ? Math.max(0, (now - bTime) / 3600000) : 999
+
+          const aRank = (a.score || 0) - Math.min(aAgeHours * 0.12, 6)
+          const bRank = (b.score || 0) - Math.min(bAgeHours * 0.12, 6)
+
+          if (bRank !== aRank) return bRank - aRank
+          return String(b.publishedAt || '').localeCompare(String(a.publishedAt || ''))
+        })
+
+      const deduped = dedupeNewsItems(ranked)
+      const balanced = capNewsItemsBySource(deduped, 3, 12)
+
+      return balanced.map(({ score, ...item }) => item)
+    }
+
+    const NEWS_CACHE_SECTION = 'newsItems'
+    const NEWS_CACHE_MAX_AGE_MS = 12 * 60 * 60 * 1000
+
+    function isFreshEnough(iso, maxAgeMs = NEWS_CACHE_MAX_AGE_MS) {
+      if (!iso) return false
+      const ts = new Date(iso).getTime()
+      if (Number.isNaN(ts)) return false
+      return (Date.now() - ts) < maxAgeMs
+    }
+
+    async function getNewsItems() {
+      const hasContent = await tableExists('content')
+
+      if (!hasContent) {
+        return await fetchLiveNews(env)
+      }
+
+      const cached = await loadContentSectionRow(NEWS_CACHE_SECTION)
+
+      if (
+        cached?.data &&
+        Array.isArray(cached.data.items) &&
+        cached.data.items.length > 0 &&
+        isFreshEnough(cached.data.fetchedAt || cached.updated_at)
+      ) {
+        return cached.data.items
+      }
+
+      const items = await fetchLiveNews(env)
+      const payload = {
+        fetchedAt: new Date().toISOString(),
+        items,
+      }
+
+      await saveContentSection(NEWS_CACHE_SECTION, payload)
+      return items
     }
 
     async function saveContentSection(section, payload) {
@@ -332,17 +1464,50 @@ export default {
       }
     }
 
-    async function loadNormalizedPolls() {
-      const pollsData = await loadContentSection('pollsData')
-      const raw = Array.isArray(pollsData) ? pollsData : []
-      const normalized = raw
-        .map((row, idx) => normalizePollRecord(row, idx))
-        .filter(Boolean)
-
-      return sortPollsNewestFirst(normalized)
-    }
-
     try {
+      if (request.method === 'GET' && url.pathname === '/api/news/bbc-debug') {
+        const politicsUrl = 'https://feeds.bbci.co.uk/news/politics/rss.xml'
+        const generalUrl = 'https://feeds.bbci.co.uk/news/rss.xml'
+        const politicsXml = await fetchText(politicsUrl)
+        const generalXml = await fetchText(generalUrl)
+        const politicsItems = politicsXml ? parseRssItems(politicsXml, 'BBC News') : []
+        const generalItems = generalXml ? parseRssItems(generalXml, 'BBC News') : []
+        const politicsBlockCount = politicsXml ? String(politicsXml).split(/<item\b/i).slice(1).length : 0
+        const generalBlockCount = generalXml ? String(generalXml).split(/<item\b/i).slice(1).length : 0
+
+        return jsonResponse({
+          politicsFeedFetched: !!politicsXml,
+          generalFeedFetched: !!generalXml,
+          politicsParsedCount: politicsItems.length,
+          generalParsedCount: generalItems.length,
+          politicsBlockCount,
+          generalBlockCount,
+          politicsSample: politicsItems.slice(0, 3),
+          generalSample: generalItems.slice(0, 3),
+          politicsXmlSnippet: politicsXml ? politicsXml.slice(0, 500) : '',
+          generalXmlSnippet: generalXml ? generalXml.slice(0, 500) : '',
+        })
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/news/bbc') {
+        const items = await fetchBbcNews()
+        return jsonResponse({ items })
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/news/guardian') {
+        const items = await fetchGuardianNews(env)
+        return jsonResponse({ items })
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/news/sky') {
+        const items = await fetchSkyNews()
+        return jsonResponse({ items })
+      }
+      if (request.method === 'GET' && url.pathname === '/api/news') {
+        const items = await getNewsItems()
+        return jsonResponse({ items })
+      }
+
       if (request.method === 'GET' && url.pathname === '/api/parliament-video') {
         if (!env.YOUTUBE_API_KEY) {
           return jsonResponse(
@@ -407,6 +1572,15 @@ export default {
         })
       }
 
+            if (request.method === 'GET' && url.pathname === '/api/polls') {
+        const polls = await loadNormalizedPolls()
+
+        return jsonResponse({
+          count: polls.length,
+          polls,
+        })
+      }
+      
       if (request.method === 'GET' && url.pathname === '/api/polls/latest') {
         const polls = keepLatestPollPerPollster(
           keepOnlyReleasePollsters(await loadNormalizedPolls())
@@ -440,7 +1614,7 @@ export default {
           if (
             !g.latestPoll ||
             (poll.publishedAt || poll.fieldworkEnd || poll.fieldworkStart || '') >
-              (g.latestPoll.publishedAt || g.latestPoll.fieldworkEnd || g.latestPoll.fieldworkStart || '')
+            (g.latestPoll.publishedAt || g.latestPoll.fieldworkEnd || g.latestPoll.fieldworkStart || '')
           ) {
             g.latestPoll = poll
           }
@@ -451,6 +1625,456 @@ export default {
           pollsters: [...groups.values()].sort(
             (a, b) => b.pollCount - a.pollCount || a.name.localeCompare(b.name)
           ),
+        })
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/elections/councils') {
+        const merged = await loadMergedCouncilData()
+        return jsonResponse(merged)
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/elections/byelections') {
+        const byElections = await loadContentSection('byElections')
+        return jsonResponse(
+          byElections && typeof byElections === 'object'
+            ? byElections
+            : { upcoming: [], recent: [], meta: null }
+        )
+      }
+
+      if (request.method === 'GET' && url.pathname === '/api/elections/intelligence') {
+        const electionsIntelligence = await loadElectionsIntelligence()
+        return jsonResponse(electionsIntelligence)
+      }
+
+      if (request.method === 'GET' && url.pathname.startsWith('/api/elections/council/')) {
+        const slug = decodeURIComponent(url.pathname.split('/').pop() || '').trim().toLowerCase()
+        if (!slug) {
+          return jsonResponse({ error: 'Missing council slug' }, { status: 400 })
+        }
+
+        const merged = await loadMergedCouncilData()
+        const council = merged.councils.find((item) => String(item.slug || '').toLowerCase() === slug)
+
+        if (!council) {
+          return jsonResponse({ error: 'Council not found', slug }, { status: 404 })
+        }
+
+        return jsonResponse({ council })
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/elections/import-registry') {
+        const body = await request.json()
+        const rows = Array.isArray(body?.councils) ? body.councils : body
+
+        if (!Array.isArray(rows)) {
+          return jsonResponse({ error: 'Expected an array of council registry rows' }, { status: 400 })
+        }
+
+        const normalized = rows.map(normalizeCouncilRegistryRecord).filter(Boolean)
+        await saveContentSection('councilRegistry', normalized)
+
+        return jsonResponse({
+          ok: true,
+          section: 'councilRegistry',
+          count: normalized.length,
+        })
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/elections/import-editorial') {
+        const body = await request.json()
+        const rows = Array.isArray(body?.councils) ? body.councils : body
+
+        if (!Array.isArray(rows)) {
+          return jsonResponse({ error: 'Expected an array of council editorial rows' }, { status: 400 })
+        }
+
+        const normalized = rows.map(normalizeCouncilEditorialRecord).filter(Boolean)
+        await saveContentSection('councilEditorial', normalized)
+
+        return jsonResponse({
+          ok: true,
+          section: 'councilEditorial',
+          count: normalized.length,
+        })
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/elections/import-status') {
+        const body = await request.json()
+        const rows = Array.isArray(body?.councils) ? body.councils : body
+
+        if (!Array.isArray(rows)) {
+          return jsonResponse({ error: 'Expected an array of council status rows' }, { status: 400 })
+        }
+
+        const normalized = rows.map(normalizeCouncilStatusRecord).filter(Boolean)
+        await saveContentSection('councilStatus', normalized)
+
+        return jsonResponse({
+          ok: true,
+          section: 'councilStatus',
+          count: normalized.length,
+        })
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/elections/import-byelections') {
+        const body = await request.json()
+        const payload =
+          body && typeof body === 'object'
+            ? {
+                upcoming: Array.isArray(body.upcoming) ? body.upcoming : [],
+                recent: Array.isArray(body.recent) ? body.recent : [],
+                meta: body.meta && typeof body.meta === 'object' ? body.meta : null,
+              }
+            : null
+
+        if (!payload) {
+          return jsonResponse(
+            { error: 'Expected a by-elections payload with upcoming, recent, and optional meta fields' },
+            { status: 400 }
+          )
+        }
+
+        await saveContentSection('byElections', payload)
+
+        return jsonResponse({
+          ok: true,
+          section: 'byElections',
+          upcoming: payload.upcoming.length,
+          recent: payload.recent.length,
+          hasMeta: !!payload.meta,
+        })
+      }
+
+      // ─── Mayors enrichment store ──────────────────────────────────────────────
+      // Accepts a { regional: {...}, council: {...} } payload of field-level
+      // overrides and saves it to the mayorEnrichments content section in D1.
+      // Run elections:intelligence:refresh (or mayors-refresh) afterwards to apply.
+      //
+      // Body shape:
+      //   {
+      //     regional: { '<area name>': { <field>: <value>, updatedAt: '...' }, ... },
+      //     council:  { '<area name>': { <field>: <value>, updatedAt: '...' }, ... }
+      //   }
+      //
+      // Only include fields that differ from the maintained source.
+      // See src/data/electionsMayorsEnrichment.js for full schema and examples.
+      if (request.method === 'POST' && url.pathname === '/api/elections/mayors-enrich') {
+        const body = await request.json()
+
+        if (!body || typeof body !== 'object' || Array.isArray(body)) {
+          return jsonResponse(
+            { error: 'Expected { regional: {...}, council: {...} }' },
+            { status: 400 },
+          )
+        }
+
+        const enrichments = {
+          regional: body.regional && typeof body.regional === 'object' && !Array.isArray(body.regional)
+            ? body.regional
+            : {},
+          council: body.council && typeof body.council === 'object' && !Array.isArray(body.council)
+            ? body.council
+            : {},
+        }
+
+        await saveContentSection('mayorEnrichments', enrichments)
+
+        const regionalCount = Object.keys(enrichments.regional).length
+        const councilCount = Object.keys(enrichments.council).length
+
+        return jsonResponse({
+          ok: true,
+          section: 'mayorEnrichments',
+          regionalEnrichments: regionalCount,
+          councilEnrichments: councilCount,
+          totalEnrichments: regionalCount + councilCount,
+          note: 'Mayor enrichments saved. Run elections:intelligence:refresh to apply.',
+        })
+      }
+
+      // ─── Mayors external-source input store ──────────────────────────────────
+      // Accepts a structured external-style source payload and saves it to the
+      // mayorExternalSource content section in D1.
+      //
+      // Body shape:
+      //   {
+      //     meta?: { sourceCount?, sourceType?, coverageNote? },
+      //     regional?: [{ name, holder?, electedDate?, website?, ... }],
+      //     council?:  [{ area, holder?, electedDate?, website?, ... }]
+      //   }
+      //
+      // This is an adapter-ready input layer, not the final Mayors payload.
+      // Run elections:intelligence:refresh afterwards to normalize and apply it.
+      if (request.method === 'POST' && url.pathname === '/api/elections/mayors-external-source') {
+        const body = await request.json()
+
+        if (!body || typeof body !== 'object' || Array.isArray(body)) {
+          return jsonResponse(
+            { error: 'Expected { meta?, regional?: [...], council?: [...] }' },
+            { status: 400 },
+          )
+        }
+
+        const externalSource = {
+          ...(body.meta && typeof body.meta === 'object' && !Array.isArray(body.meta) ? { meta: body.meta } : {}),
+          regional: Array.isArray(body.regional) ? body.regional : [],
+          council: Array.isArray(body.council) ? body.council : [],
+        }
+
+        await saveContentSection('mayorExternalSource', externalSource)
+
+        return jsonResponse({
+          ok: true,
+          section: 'mayorExternalSource',
+          regionalRecords: externalSource.regional.length,
+          councilRecords: externalSource.council.length,
+          totalRecords: externalSource.regional.length + externalSource.council.length,
+          sourceType: externalSource.meta?.sourceType || null,
+          note: 'Mayors external-source input saved. Run elections:intelligence:refresh to apply.',
+        })
+      }
+
+      // ─── Devolved enrichment store ────────────────────────────────────────────
+      // Accepts a { nations: {...} } payload of field-level overrides and saves
+      // it to the devolvedEnrichments content section in D1.
+      // Run elections:intelligence:refresh (or devolved-refresh) afterwards to apply.
+      //
+      // Body shape:
+      //   {
+      //     nations: {
+      //       '<nation key/title>': { <field>: <value>, updatedAt: '...' },
+      //       ...
+      //     }
+      //   }
+      //
+      // Only include fields that differ from the maintained source. Future
+      // semi-live or live inputs can populate this payload without changing the
+      // frontend contract.
+      if (request.method === 'POST' && url.pathname === '/api/elections/devolved-enrich') {
+        const body = await request.json()
+
+        if (!body || typeof body !== 'object' || Array.isArray(body)) {
+          return jsonResponse(
+            { error: 'Expected { nations: {...} }' },
+            { status: 400 },
+          )
+        }
+
+        const enrichments = {
+          nations: body.nations && typeof body.nations === 'object' && !Array.isArray(body.nations)
+            ? body.nations
+            : {},
+        }
+
+        await saveContentSection('devolvedEnrichments', enrichments)
+
+        const nationCount = Object.keys(enrichments.nations).length
+
+        return jsonResponse({
+          ok: true,
+          section: 'devolvedEnrichments',
+          nationEnrichments: nationCount,
+          totalEnrichments: nationCount,
+          note: 'Devolved enrichments saved. Run elections:intelligence:refresh to apply.',
+        })
+      }
+
+      // ─── Unified Elections intelligence refresh ───────────────────────────────
+      // Rebuilds all Elections intelligence sections (Mayors + Devolved) in one
+      // pass and saves the complete payload to the electionsIntelligence content
+      // section. Use this as the default refresh command after source edits.
+      //
+      // Use a section-specific refresh (mayors-refresh / devolved-refresh) when:
+      //   - you only changed one section's source data
+      //   - you want to preserve manually-stored data in the other section
+      //   - a future live-source hook feeds only one section at a time
+      //
+      // Future enrichment: insert per-section live-fetch calls here before the
+      // two buildXxxIntelligencePayload calls and pass the fetched data through
+      // as options, without touching the frontend contract.
+      if (request.method === 'POST' && url.pathname === '/api/elections/intelligence-refresh') {
+        const now = new Date().toISOString()
+
+        // Load any stored mayor enrichments before shaping.
+        // Returns null when nothing is stored — buildMayorsIntelligencePayload
+        // will then fall back to DEFAULT_MAYOR_ENRICHMENTS from the bundle.
+        const mayorEnrichments = await loadMayorEnrichments()
+        const mayorExternalSource = await loadMayorExternalSource()
+        const devolvedEnrichments = await loadDevolvedEnrichments()
+
+        // Re-derive both sections. Mayors gets enrichments; Devolved uses source only for now.
+        const freshMayorsWithDebug = buildMayorsIntelligencePayload({
+          updatedAt: now,
+          sourceCount: 1,
+          includeDebug: true,
+          ...(mayorExternalSource !== null ? { externalSource: mayorExternalSource } : {}),
+          ...(mayorEnrichments !== null ? { enrichments: mayorEnrichments } : {}),
+        })
+        const { _debug: mayorsDebug = null, ...freshMayors } = freshMayorsWithDebug
+        const freshDevolved = buildDevolvedIntelligencePayload({
+          updatedAt: now,
+          sourceCount: 1,
+          ...(devolvedEnrichments !== null ? { enrichments: devolvedEnrichments } : {}),
+        })
+
+        // Save the complete payload — both sections are fresh so no merge needed.
+        await saveContentSection('electionsIntelligence', { mayors: freshMayors, devolved: freshDevolved })
+
+        const ov = freshMayors.overview || {}
+        const devolvedNations = freshDevolved.nations || []
+
+        return jsonResponse({
+          ok: true,
+          sections: ['mayors', 'devolved'],
+          refreshedAt: now,
+          mayors: {
+            totalRegional: ov.totalRegional ?? null,
+            totalCouncil: ov.totalCouncil ?? null,
+            labourRegional: ov.labourRegional ?? null,
+            conservativeRegional: ov.conservativeRegional ?? null,
+            reformRegional: ov.reformRegional ?? null,
+            newRegional: ov.newRegional ?? null,
+            enrichedCount: freshMayors.meta?.enrichedCount ?? 0,
+            externalOverrideCount: freshMayors.meta?.externalOverrideCount ?? 0,
+            externalSourceUsed: freshMayors.meta?.externalSourceUsed ?? false,
+            sourceType: freshMayors.meta?.sourceType ?? null,
+          },
+          debug: mayorsDebug
+            ? {
+                temporary: 'Remove after local verification of mayor enrichment matching.',
+                mayorsEnrichment: mayorsDebug,
+              }
+            : null,
+          devolved: {
+            nationsCount: devolvedNations.length,
+            nations: devolvedNations.map((n) => ({ key: n.key, title: n.title, nextElection: n.nextElection })),
+            enrichedCount: freshDevolved.meta?.enrichedCount ?? 0,
+            sourceType: freshDevolved.meta?.sourceType ?? null,
+          },
+          note: 'All Elections intelligence sections re-derived from maintained source and saved.',
+        })
+      }
+
+      // ─── Mayors refresh ──────────────────────────────────────────────────────
+      // Re-derives the full mayors intelligence payload from the maintained
+      // source arrays and saves it to the electionsIntelligence content section.
+      //
+      // This preserves any existing devolved data in the stored payload — only
+      // the mayors section is replaced.
+      //
+      // Future enrichment: before saving, this handler can fetch live mayor
+      // data and merge it into the source arrays before calling
+      // buildMayorsIntelligencePayload, without touching the frontend contract.
+      if (request.method === 'POST' && url.pathname === '/api/elections/mayors-refresh') {
+        const now = new Date().toISOString()
+
+        // Load whatever is currently stored so we can preserve the devolved section.
+        const existing = await loadElectionsIntelligence()
+
+        // Load stored enrichments; fall back to DEFAULT_MAYOR_ENRICHMENTS when absent.
+        const enrichments = await loadMayorEnrichments()
+        const externalSource = await loadMayorExternalSource()
+
+        // Re-derive mayors from current source data, applying enrichments.
+        const freshMayorsWithDebug = buildMayorsIntelligencePayload({
+          updatedAt: now,
+          sourceCount: 1,
+          includeDebug: true,
+          ...(externalSource !== null ? { externalSource } : {}),
+          ...(enrichments !== null ? { enrichments } : {}),
+        })
+        const { _debug: mayorsDebug = null, ...freshMayors } = freshMayorsWithDebug
+
+        // Merge: only mayors is refreshed — devolved and any other sections are kept.
+        const updated = { ...existing, mayors: freshMayors }
+        await saveContentSection('electionsIntelligence', updated)
+
+        const ov = freshMayors.overview || {}
+        return jsonResponse({
+          ok: true,
+          section: 'mayors',
+          refreshedAt: now,
+          totalRegional: ov.totalRegional ?? null,
+          totalCouncil: ov.totalCouncil ?? null,
+          labourRegional: ov.labourRegional ?? null,
+          conservativeRegional: ov.conservativeRegional ?? null,
+          reformRegional: ov.reformRegional ?? null,
+          newRegional: ov.newRegional ?? null,
+          enrichedCount: freshMayors.meta?.enrichedCount ?? 0,
+          externalOverrideCount: freshMayors.meta?.externalOverrideCount ?? 0,
+          externalSourceUsed: freshMayors.meta?.externalSourceUsed ?? false,
+          sourceType: freshMayors.meta?.sourceType ?? null,
+          debug: mayorsDebug
+            ? {
+                temporary: 'Remove after local verification of mayor enrichment matching.',
+                mayorsEnrichment: mayorsDebug,
+              }
+            : null,
+          note: 'Mayors intelligence re-derived from maintained source and saved to electionsIntelligence.',
+        })
+      }
+
+      // ─── Devolved refresh ─────────────────────────────────────────────────────
+      // Re-derives the devolved intelligence payload (Scotland + Wales) from the
+      // maintained source records in src/data/electionsDevolved.js and saves it
+      // to the electionsIntelligence content section.
+      //
+      // The existing mayors section in the stored payload is preserved — only the
+      // devolved section is replaced.
+      //
+      // Future enrichment: fetch polled or scraped devolved data here and merge it
+      // into the nation source records before calling buildDevolvedIntelligencePayload,
+      // without touching the frontend contract.
+      if (request.method === 'POST' && url.pathname === '/api/elections/devolved-refresh') {
+        const now = new Date().toISOString()
+
+        // Load whatever is currently stored so we can preserve the mayors section.
+        const existing = await loadElectionsIntelligence()
+
+        // Load stored enrichments; fall back to DEFAULT_DEVOLVED_ENRICHMENTS when absent.
+        const enrichments = await loadDevolvedEnrichments()
+
+        // Re-derive devolved from current source data.
+        const freshDevolved = buildDevolvedIntelligencePayload({
+          updatedAt: now,
+          sourceCount: 1,
+          ...(enrichments !== null ? { enrichments } : {}),
+        })
+
+        // Merge: only devolved is refreshed — mayors and any other sections are kept.
+        const updated = { ...existing, devolved: freshDevolved }
+        await saveContentSection('electionsIntelligence', updated)
+
+        const nations = freshDevolved.nations || []
+        return jsonResponse({
+          ok: true,
+          section: 'devolved',
+          refreshedAt: now,
+          nationsCount: nations.length,
+          nations: nations.map((n) => ({ key: n.key, title: n.title, nextElection: n.nextElection })),
+          enrichedCount: freshDevolved.meta?.enrichedCount ?? 0,
+          sourceType: freshDevolved.meta?.sourceType ?? null,
+          note: 'Devolved intelligence re-derived from maintained source and saved to electionsIntelligence.',
+        })
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/elections/refresh-status') {
+        const existing = await loadCouncilStatus()
+        const refreshed = existing.map((row) => ({
+          ...row,
+          lastVerifiedAt: new Date().toISOString(),
+          verificationStatus: row.verificationStatus || 'unverified',
+        }))
+
+        await saveContentSection('councilStatus', refreshed)
+
+        return jsonResponse({
+          ok: true,
+          section: 'councilStatus',
+          count: refreshed.length,
+          refreshedAt: new Date().toISOString(),
+          note: 'This endpoint currently refreshes verification timestamps and is ready for automated council-source fetch logic.',
         })
       }
 
@@ -472,19 +2096,37 @@ export default {
         const trends = await loadContentSection('trends')
         const betting = await loadContentSection('betting')
         const byElections = await loadContentSection('byElections')
-        const migration = await loadContentSection('migration')
+        const migration = await loadMigrationData()
         const milestones = await loadContentSection('milestones')
         const pollsData = await loadContentSection('pollsData')
+        const ingestStatus = await loadContentSection('ingestStatus')
         const demographics = await loadContentSection('demographics')
+        const policyRecords = await loadContentSection('policyRecords')
+        const policyTaxonomy = await loadContentSection('policyTaxonomy')
+        const policyDelivery = await loadContentSection('policyDelivery')
         const newsItems = await loadContentSection('newsItems')
+        const councilRegistry = await loadContentSection('councilRegistry')
+        const councilStatus = await loadContentSection('councilStatus')
+        const councilEditorial = await loadContentSection('councilEditorial')
+        const electionsIntelligence = await loadElectionsIntelligence()
+
+        const parsedElectionRows = (elections.results || []).map((row) => ({
+          ...row,
+          data: row.data ? JSON.parse(row.data) : null,
+        }))
+
+        const electionsPayload =
+          parsedElectionRows.length > 0 && parsedElectionRows[0]?.data && typeof parsedElectionRows[0].data === 'object'
+            ? parsedElectionRows[0].data
+            : {}
 
         return jsonResponse({
           polls: polls.results || [],
           leaders: leaders.results || [],
-          elections: (elections.results || []).map((row) => ({
-            ...row,
-            data: row.data ? JSON.parse(row.data) : null,
-          })),
+          elections: {
+            ...electionsPayload,
+            intelligence: electionsIntelligence,
+          },
           meta: metaObj,
           trends: trends || [],
           betting: betting || null,
@@ -492,8 +2134,16 @@ export default {
           migration: migration || null,
           milestones: milestones || [],
           pollsData: pollsData || [],
+          ingestStatus: ingestStatus || null,
           demographics: demographics || null,
+          policyRecords: Array.isArray(policyRecords) ? policyRecords : null,
+          policyTaxonomy: policyTaxonomy || null,
+          policyDelivery: Array.isArray(policyDelivery) ? policyDelivery : null,
           newsItems: newsItems || [],
+          councilRegistry: councilRegistry || [],
+          councilStatus: councilStatus || [],
+          councilEditorial: councilEditorial || [],
+          electionsIntelligence,
         })
       }
 
@@ -576,11 +2226,20 @@ export default {
             'trends',
             'betting',
             'byElections',
+            'electionsIntelligence',
+            'migrationData',
             'migration',
             'milestones',
             'pollsData',
+            'ingestStatus',
             'demographics',
+            'policyRecords',
+            'policyTaxonomy',
+            'policyDelivery',
             'newsItems',
+            'councilRegistry',
+            'councilStatus',
+            'councilEditorial',
           ].includes(section)
         ) {
           await saveContentSection(section, payload)
@@ -641,11 +2300,20 @@ export default {
             trends: body.trends || [],
             betting: body.betting || null,
             byElections: body.byElections || null,
+            electionsIntelligence: body.electionsIntelligence || null,
+            migrationData: body.migrationData || body.migration || null,
             migration: body.migration || null,
             milestones: body.milestones || [],
             pollsData: body.polls || [],
+            ingestStatus: body.ingestStatus || null,
             demographics: body.demographics || null,
+            policyRecords: body.policyRecords || null,
+            policyTaxonomy: body.policyTaxonomy || null,
+            policyDelivery: body.policyDelivery || null,
             newsItems: body.newsItems || [],
+            councilRegistry: body.councilRegistry || [],
+            councilStatus: body.councilStatus || [],
+            councilEditorial: body.councilEditorial || [],
           }
 
           for (const [section, data] of Object.entries(contentSections)) {

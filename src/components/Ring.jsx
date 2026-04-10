@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { EZ } from '../constants'
 
 export default function Ring({ value, size = 128 }) {
@@ -35,3 +35,6 @@ export default function Ring({ value, size = 128 }) {
     </div>
   )
 }
+
+
+

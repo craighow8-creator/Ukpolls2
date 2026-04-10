@@ -1,18 +1,17 @@
-import { useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { haptic, StickyPills } from '../components/ui'
+import { haptic } from '../components/ui'
 import { PortraitAvatar } from '../utils/portraits'
-import { InfoButton } from '../components/InfoGlyph'
 
 const TAP = {
   whileTap: { opacity: 0.76, scale: 0.992 },
   transition: { duration: 0.08 },
 }
 
-const TABS = [
-  { key: 'ranked', label: 'Ranked' },
-  { key: 'cards', label: 'Cards' },
-]
+function shortLeaderRef(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean)
+  return parts.length ? parts[parts.length - 1] : 'Leader'
+}
 
 function NetBadge({ net, large = false }) {
   const positive = net >= 0
@@ -21,9 +20,9 @@ function NetBadge({ net, large = false }) {
   return (
     <div
       style={{
-        fontSize: large ? 44 : 22,
+        fontSize: large ? 46 : 24,
         fontWeight: 800,
-        letterSpacing: '-0.02em',
+        letterSpacing: '-0.03em',
         color,
         lineHeight: 1,
       }}
@@ -46,10 +45,10 @@ function Badge({ children, color, subtle = false }) {
         letterSpacing: '0.05em',
         textTransform: 'uppercase',
         color,
-        background: subtle ? `${color}12` : `${color}1F`,
-        border: `1px solid ${color}2B`,
+        background: subtle ? `${color}10` : `${color}18`,
+        border: `1px solid ${color}24`,
         borderRadius: 999,
-        padding: '4px 9px',
+        padding: '5px 10px',
         whiteSpace: 'nowrap',
       }}
     >
@@ -67,7 +66,7 @@ function SectionLabel({ children, T }) {
         letterSpacing: '0.08em',
         textTransform: 'uppercase',
         color: T.tl,
-        marginBottom: 10,
+        marginBottom: 12,
         textAlign: 'center',
       }}
     >
@@ -76,98 +75,298 @@ function SectionLabel({ children, T }) {
   )
 }
 
-function ScrollAwayHeader({ T, leaderCount, topLeader }) {
-  return (
-    <div style={{ padding: '8px 16px 10px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: 8,
-          flexWrap: 'wrap',
-          marginBottom: 10,
-        }}
-      >
-        <Badge color={T.pr}>{leaderCount} leaders</Badge>
-        {topLeader ? <Badge color={T.tl} subtle>Top net: {topLeader.name}</Badge> : null}
-      </div>
-
-      <div
-        style={{
-          fontSize: 30,
-          fontWeight: 800,
-          letterSpacing: -1,
-          color: T.th,
-          textAlign: 'center',
-          lineHeight: 1,
-        }}
-      >
-        Leaders
-      </div>
-
-      <div
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 10,
-          flexWrap: 'wrap',
-          width: '100%',
-          marginTop: 6,
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
-          UK leaders · net approval · ranking
-        </div>
-        <InfoButton id="leaders_approval" T={T} size={20} />
-      </div>
-
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 600,
-          color: T.tl,
-          marginTop: 6,
-          opacity: 0.85,
-          textAlign: 'center',
-          lineHeight: 1.5,
-        }}
-      >
-        Ipsos Political Monitor
-      </div>
-    </div>
-  )
-}
-
-function StickyPillsBar({ T, tab, setTab }) {
+function BriefingStat({ label, value, tone, T, surface }) {
+  const color = tone === 'good' ? '#02A95B' : tone === 'bad' ? '#C8102E' : T.pr
   return (
     <div
       style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 8,
-        background: T.sf,
-        padding: '8px 16px 10px',
-        borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
-        boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
+        minWidth: 0,
+        borderRadius: 14,
+        padding: '11px 11px 10px',
+        background: surface,
+        border: `1px solid ${color}18`,
       }}
     >
-      <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: T.tl,
+          textAlign: 'center',
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: 14,
+          fontWeight: 800,
+          color: T.th,
+          textAlign: 'center',
+          lineHeight: 1.25,
+        }}
+      >
+        {value}
+      </div>
     </div>
   )
 }
 
-export default function LeadersScreen({ T, nav, leaders }) {
+function HeroBriefing({ T, summary, isDark }) {
+  const heroSurface = isDark
+    ? 'linear-gradient(180deg, rgba(22,32,45,0.98), rgba(11,19,29,0.98))'
+    : 'linear-gradient(180deg, #ffffff, #f8fafc)'
+  const statSurface = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.72)'
+
+  return (
+    <div
+      style={{
+        borderRadius: 20,
+        padding: '0 18px 18px',
+        marginBottom: 18,
+        background: heroSurface,
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        boxShadow: isDark ? '0 12px 30px rgba(0,0,0,0.24)' : '0 12px 28px rgba(15,23,42,0.07)',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          height: 3,
+          background: `linear-gradient(90deg, ${T.pr}00 0%, ${T.pr || '#12B7D4'} 50%, ${T.pr}00 100%)`,
+          opacity: 0.9,
+        }}
+      />
+
+      <div style={{ padding: '16px 0 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 800,
+              letterSpacing: '0.09em',
+              textTransform: 'uppercase',
+              color: T.tl,
+              opacity: 0.9,
+            }}
+          >
+            Leadership briefing
+          </span>
+        </div>
+
+        <div
+          style={{
+            fontSize: 25,
+            fontWeight: 850,
+            color: T.th,
+            textAlign: 'center',
+            lineHeight: 1.18,
+            letterSpacing: '-0.03em',
+            maxWidth: 620,
+            margin: '0 auto 8px',
+          }}
+        >
+          {summary.headline}
+        </div>
+
+        <div
+          style={{
+            fontSize: 13.5,
+            fontWeight: 600,
+            color: T.tl,
+            textAlign: 'center',
+            lineHeight: 1.58,
+            maxWidth: 720,
+            margin: '0 auto 14px',
+          }}
+        >
+          {summary.body}
+        </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+          gap: 9,
+        }}
+      >
+        <BriefingStat label="Top leader" value={summary.topLabel} tone="good" T={T} surface={statSurface} />
+        <BriefingStat label="Under pressure" value={summary.pressureLabel} tone="bad" T={T} surface={statSurface} />
+        <BriefingStat label="Leader-party gap" value={summary.mismatchLabel} tone="neutral" T={T} surface={statSurface} />
+      </div>
+
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: T.tl,
+            marginTop: 12,
+            opacity: 0.88,
+            textAlign: 'center',
+            lineHeight: 1.5,
+          }}
+        >
+          Approval source: Ipsos Political Monitor
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LeaderSignal({ text, border, T }) {
+  if (!text) return null
+  return (
+    <div
+      style={{
+        marginTop: 11,
+        paddingTop: 10,
+        borderTop: `1px solid ${border}`,
+        fontSize: 12,
+        fontWeight: 700,
+        color: T.tl,
+        lineHeight: 1.5,
+        textAlign: 'center',
+        letterSpacing: '0.01em',
+      }}
+    >
+      {text}
+    </div>
+  )
+}
+
+export default function LeadersScreen({ T, nav, leaders, parties }) {
   const sorted = useMemo(() => [...(leaders || [])].sort((a, b) => b.net - a.net), [leaders])
-  const [activeTab, setActiveTab] = useState('ranked')
 
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
   const card = isDark ? 'rgba(12,20,30,0.97)' : '#ffffff'
   const border = T.cardBorder || 'rgba(0,0,0,0.08)'
 
-  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024
-  const portraitSize = isDesktop ? 82 : 60
-  const portraitRadius = portraitSize / 2
+  const leaderPartyMap = useMemo(() => {
+    const map = {}
+    ;(parties || []).forEach((p) => {
+      map[p.name] = p
+    })
+    return map
+  }, [parties])
+
+  const summary = useMemo(() => {
+    const top = sorted[0]
+    const second = sorted[1]
+    const bottom = sorted[sorted.length - 1]
+
+    if (!top) {
+      return {
+        headline: 'Leader approval data is not available yet.',
+        body: 'Once approval figures are loaded, this screen will highlight who is leading, who is under pressure, and where leadership is helping or hurting party performance.',
+        topLabel: '—',
+        pressureLabel: '—',
+        mismatchLabel: '—',
+      }
+    }
+
+    const mismatchCandidates = sorted
+      .map((leader) => {
+        const party = leaderPartyMap[leader.party]
+        const partyChange = typeof party?.change === 'number' ? party.change : null
+        if (partyChange == null) return null
+        return {
+          leader,
+          party,
+          partyChange,
+          score: Math.abs(leader.net - partyChange * 10),
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score)
+
+    const mismatchEntry = mismatchCandidates[0] || null
+    const mismatch = mismatchEntry?.leader || bottom
+    const mismatchParty = mismatchEntry?.party || leaderPartyMap[mismatch?.party]
+    const mismatchPartyChange = typeof mismatchEntry?.partyChange === 'number' ? mismatchEntry.partyChange : null
+
+    // Derived signals:
+    // - topGap: separation at the top of the approval table
+    // - bottomSeverity: how far underwater the weakest leader is
+    // - mismatchScore: distance between leader standing and party momentum
+    // - spreadAcrossField: whether the table is compressed or stretched
+    // These signals feed a narrative mode chooser so the hero leads with the
+    // most meaningful approval story rather than always defaulting to top vs bottom.
+    const topGap = second ? top.net - second.net : null
+    const third = sorted[2] || null
+    const spreadAcrossField = top.net - bottom.net
+    const bottomSeverity = Math.abs(Math.min(bottom.net, 0))
+    const mismatchScore = mismatchEntry?.score ?? 0
+    const topSeparated = topGap != null && topGap >= 6
+    const topRaceTight = topGap != null && topGap <= 2
+    const pressureSevere = bottom.net <= -25
+    const mismatchSevere = mismatchScore >= 14
+    const fieldCompressed = spreadAcrossField <= 12
+
+    // Narrative priority:
+    // 1. Mismatch if leadership/party disconnect is especially stark
+    // 2. Crisis if one leader is deeply underwater and that dominates the table
+    // 3. Tight top race if the leaders are closely bunched
+    // 4. Dominance if the leader is clearly separated
+    // 5. Fragmented/flat field as the fallback when no single signal dominates
+    let mode = 'fragmented'
+    if (mismatchSevere && mismatch?.name !== top.name && mismatch?.name !== bottom.name) {
+      mode = 'mismatch'
+    } else if (pressureSevere && bottomSeverity >= (topGap ?? 0) + 12) {
+      mode = 'pressure'
+    } else if (topRaceTight) {
+      mode = 'tightTop'
+    } else if (topSeparated) {
+      mode = 'dominance'
+    } else if (fieldCompressed || (third && top.net - third.net <= 5)) {
+      mode = 'fragmented'
+    }
+
+    let headline = `${top.name} leads the approval table`
+    let body = `${top.name} is still the strongest-rated leader, but the wider field remains open.`
+
+    if (mode === 'dominance') {
+      headline = `${top.name} has opened a clear approval lead`
+      body = second
+        ? `${top.name} is ${topGap} points clear of ${second.name}, giving them the cleanest leadership cushion in the field.`
+        : `${top.name} is clearly ahead on leader ratings, with no close challenger in view.`
+    } else if (mode === 'tightTop') {
+      headline = 'The race at the top is tightening'
+      body = second
+        ? `${top.name} and ${second.name} are separated by only ${topGap} points, so the leadership order still looks contestable.`
+        : `${top.name} remains in front, but the approval lead is too narrow to feel settled.`
+    } else if (mode === 'pressure') {
+      headline = `${bottom.name} remains deep underwater`
+      body = `${bottom.name} is carrying the heaviest approval pressure in the table, and that level of weakness is now the defining signal in the field.`
+    } else if (mode === 'mismatch') {
+      headline = `${mismatch.name} is the clearest approval mismatch`
+      body = `${mismatch.name}'s personal standing is the sharpest disconnect with party momentum, making that leadership gap harder to ignore.`
+    } else {
+      headline = 'Leader ratings remain unsettled across the field'
+      body = second && third
+        ? `${top.name} still leads, but the gaps behind are narrow enough that the approval order can still shift quickly.`
+        : `${top.name} remains ahead, but the table is not yet producing one dominant approval story.`
+    }
+
+    return {
+      headline,
+      body,
+      topLabel: `${top.name} ${top.net >= 0 ? '+' : ''}${top.net}`,
+      pressureLabel: `${bottom.name} ${bottom.net >= 0 ? '+' : ''}${bottom.net}`,
+      mismatchLabel:
+        mismatch && mismatchParty
+          ? mismatchPartyChange != null && mismatchPartyChange > 0 && mismatch.net < 0
+            ? `${shortLeaderRef(mismatch.name)} trails ${mismatchParty.name}`
+            : mismatchPartyChange != null && mismatchPartyChange < 0 && mismatch.net >= 0
+              ? `${shortLeaderRef(mismatch.name)} runs ahead of ${mismatchParty.name}`
+              : mismatch.net < 0
+                ? `${shortLeaderRef(mismatch.name)} lags the party`
+                : `${shortLeaderRef(mismatch.name)} is out of sync`
+          : 'No clear split',
+    }
+  }, [sorted, leaderPartyMap])
 
   return (
     <div
@@ -178,221 +377,112 @@ export default function LeadersScreen({ T, nav, leaders }) {
         background: T.sf,
       }}
     >
-      <ScrollAwayHeader T={T} leaderCount={sorted.length} topLeader={sorted[0]} />
-      <StickyPillsBar T={T} tab={activeTab} setTab={setActiveTab} />
+      <div style={{ padding: '12px 16px 0' }}>
+        <HeroBriefing T={T} summary={summary} isDark={isDark} />
+      </div>
 
-      <div style={{ padding: '12px 16px 40px' }}>
-        {activeTab === 'ranked' ? (
-          <>
-            <SectionLabel T={T}>Net approval ranking</SectionLabel>
+      <div style={{ padding: '4px 16px 40px' }}>
+        <SectionLabel T={T}>Approval leaderboard</SectionLabel>
 
-            {sorted.map((l, i) => {
-              const lIdx = leaders.indexOf(l)
-              return (
-                <motion.div
-                  key={i}
-                  {...TAP}
-                  onClick={() => {
-                    haptic(8)
-                    nav('leader', { lIdx })
-                  }}
-                  style={{
-                    borderRadius: 14,
-                    overflow: 'hidden',
-                    marginBottom: 8,
-                    background: card,
-                    border: `1px solid ${l.color}22`,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div style={{ height: 3, background: l.color, flexShrink: 0 }} />
+        {sorted.map((l, i) => {
+          const lIdx = leaders.indexOf(l)
+          const party = leaderPartyMap[l.party]
+          const partyChange = typeof party?.change === 'number' ? party.change : null
+          const signal =
+            partyChange == null
+              ? null
+              : l.net >= 0 && partyChange <= 0
+                ? 'Outperforming party'
+                : l.net < 0 && partyChange > 0
+                  ? 'Dragging party down'
+                  : l.net >= 0 && partyChange > 0
+                    ? 'Aligned with party momentum'
+                    : 'Party and leader under pressure'
 
-                  <div style={{ padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div
-                        style={{
-                          width: 22,
-                          fontSize: 15,
-                          fontWeight: 800,
-                          color: T.tl,
-                          flexShrink: 0,
-                        }}
-                      >
-                        {i + 1}
-                      </div>
+          const rankColor = i === 0 ? l.color : T.tl
 
-                      <PortraitAvatar name={l.name} color={l.color} size={56} radius={28} />
+          return (
+            <motion.div
+              key={i}
+              {...TAP}
+              onClick={() => {
+                haptic(8)
+                nav('leader', { lIdx })
+              }}
+              style={{
+                borderRadius: 18,
+                overflow: 'hidden',
+                marginBottom: 10,
+                background: card,
+                border: `1px solid ${l.color}${i === 0 ? '32' : '22'}`,
+                boxShadow: i === 0
+                  ? (isDark ? '0 10px 24px rgba(0,0,0,0.24)' : '0 10px 24px rgba(15,23,42,0.07)')
+                  : 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <div style={{ height: 3, background: l.color, flexShrink: 0 }} />
 
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: 15,
-                            fontWeight: 800,
-                            color: T.th,
-                            lineHeight: 1.15,
-                            marginBottom: 2,
-                          }}
-                        >
-                          {l.name}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: l.color,
-                          }}
-                        >
-                          {l.party}
-                        </div>
-                      </div>
-
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <NetBadge net={l.net} />
-                        <div style={{ fontSize: 12, fontWeight: 600, color: T.tl, marginTop: 4 }}>
-                          {l.approve}% / {l.disapprove}%
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )
-            })}
-          </>
-        ) : null}
-
-        {activeTab === 'cards' ? (
-          <>
-            <SectionLabel T={T}>Leader cards</SectionLabel>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-              {sorted.map((l, i) => {
-                const lIdx = leaders.indexOf(l)
-
-                return (
-                  <motion.div
-                    key={i}
-                    {...TAP}
-                    onClick={() => {
-                      haptic(8)
-                      nav('leader', { lIdx })
-                    }}
+              <div style={{ padding: '15px 16px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div
                     style={{
-                      borderRadius: 14,
-                      overflow: 'hidden',
-                      gridColumn: i === sorted.length - 1 && sorted.length % 2 !== 0 ? 'span 2' : undefined,
-                      background: card,
-                      border: `1px solid ${l.color}22`,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
+                      width: 28,
+                      fontSize: i === 0 ? 22 : 18,
+                      fontWeight: 900,
+                      color: rankColor,
+                      flexShrink: 0,
+                      textAlign: 'center',
+                      letterSpacing: '-0.03em',
                     }}
                   >
-                    <div style={{ height: 3, background: l.color, flexShrink: 0 }} />
+                    {i + 1}
+                  </div>
 
+                  <PortraitAvatar name={l.name} color={l.color} size={58} radius={29} />
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        padding: '14px 16px 14px',
-                        flex: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
+                        fontSize: 16,
+                        fontWeight: 800,
+                        color: T.th,
+                        lineHeight: 1.15,
+                        marginBottom: 3,
                       }}
                     >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          justifyContent: 'space-between',
-                          marginBottom: 10,
-                          gap: 10,
-                        }}
-                      >
-                        <PortraitAvatar
-                          name={l.name}
-                          color={l.color}
-                          size={portraitSize}
-                          radius={portraitRadius}
-                        />
-                        <NetBadge net={l.net} />
-                      </div>
-
-                      <div
-                        style={{
-                          fontSize: isDesktop ? 16 : 14,
-                          fontWeight: 800,
-                          color: T.th,
-                          lineHeight: 1.2,
-                          marginBottom: 2,
-                          textAlign: 'center',
-                        }}
-                      >
-                        {l.name}
-                      </div>
-
-                      <div
-                        style={{
-                          fontSize: isDesktop ? 14 : 13,
-                          fontWeight: 600,
-                          color: l.color,
-                          marginBottom: 12,
-                          textAlign: 'center',
-                        }}
-                      >
-                        {l.party}
-                      </div>
-
-                      <div
-                        style={{
-                          height: 5,
-                          borderRadius: 999,
-                          overflow: 'hidden',
-                          display: 'flex',
-                          background: border,
-                          marginBottom: 8,
-                        }}
-                      >
-                        <div style={{ width: `${l.approve}%`, height: '100%', background: '#02A95B' }} />
-                        <div style={{ flex: 1 }} />
-                        <div style={{ width: `${l.disapprove}%`, height: '100%', background: '#C8102E' }} />
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center' }}>
-                        <div
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 700,
-                            padding: '2px 7px',
-                            borderRadius: 999,
-                            background: '#D0F5E4',
-                            color: '#02A95B',
-                          }}
-                        >
-                          ✓ {l.approve}%
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 13,
-                            fontWeight: 700,
-                            padding: '2px 7px',
-                            borderRadius: 999,
-                            background: '#FAD5DB',
-                            color: '#C8102E',
-                          }}
-                        >
-                          ✗ {l.disapprove}%
-                        </div>
-                      </div>
+                      {l.name}
                     </div>
-                  </motion.div>
-                )
-              })}
-            </div>
-          </>
-        ) : null}
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: l.color,
+                      }}
+                    >
+                      {l.party}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <NetBadge net={l.net} large={i === 0} />
+                    <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, marginTop: 4 }}>
+                      {l.approve}% / {l.disapprove}%
+                    </div>
+                  </div>
+                </div>
+
+                <LeaderSignal text={signal} border={border} T={T} />
+              </div>
+            </motion.div>
+          )
+        })}
 
         <div
           style={{
-            borderRadius: 12,
-            padding: '12px 14px',
+            borderRadius: 14,
+            padding: '13px 14px',
+            marginTop: 12,
             marginBottom: 10,
             background: card,
             border: `1px solid ${border}`,

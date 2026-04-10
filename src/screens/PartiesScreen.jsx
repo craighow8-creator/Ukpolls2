@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { StickyPills, haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
@@ -55,12 +55,42 @@ function cleanText(value) {
   return String(value).replace(/Â·/g, '·').replace(/\s+/g, ' ').trim()
 }
 
-function safeNumber(value) {
-  if (value == null || value === '') return null
-  const raw = String(value).replace(/%/g, '').replace(/,/g, '').trim()
-  if (!raw) return null
-  const n = Number(raw)
-  return Number.isFinite(n) ? n : null
+function formatPts(value) {
+  if (value == null || Number.isNaN(Number(value))) return '—'
+  const rounded = Math.round(Number(value) * 10) / 10
+  return Number.isInteger(rounded) ? `${rounded}` : rounded.toFixed(1)
+}
+
+function formatSignedPts(value) {
+  const formatted = formatPts(value)
+  if (formatted === '—') return formatted
+  return Number(value) > 0 ? `+${formatted}` : formatted
+}
+
+function limitWords(text, maxWords = 25) {
+  const words = String(text || '').trim().split(/\s+/).filter(Boolean)
+  if (words.length <= maxWords) return text
+  return `${words.slice(0, maxWords).join(' ')}…`
+}
+
+function composeNarrative(clauses) {
+  if (!clauses.length) return ''
+
+  if (clauses.length === 1) {
+    return limitWords(`${clauses[0].text}.`)
+  }
+
+  const [a, b] = clauses
+
+  if (a.parties.length && b.parties.length) {
+    return limitWords(`${a.text}, while ${b.text}.`)
+  }
+
+  if (!b.parties.length) {
+    return limitWords(`${a.text}, with ${b.text}.`)
+  }
+
+  return limitWords(`${a.text}. ${b.text}.`)
 }
 
 function SectionLabel({ children, T, action }) {
@@ -151,55 +181,6 @@ function StatPill({ label, value, color, T }) {
   )
 }
 
-function ScrollAwayHeader({ T, partyCount, leaderName }) {
-  return (
-    <div style={{ padding: '8px 16px 10px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: 8,
-          flexWrap: 'wrap',
-          marginBottom: 10,
-        }}
-      >
-        <Badge color={T.pr}>{partyCount} parties</Badge>
-        {leaderName ? <Badge color={T.tl} subtle>Leading: {leaderName}</Badge> : null}
-      </div>
-
-      <div
-        style={{
-          fontSize: 30,
-          fontWeight: 800,
-          letterSpacing: -1,
-          color: T.th,
-          textAlign: 'center',
-          lineHeight: 1,
-        }}
-      >
-        Parties
-      </div>
-
-      <div
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 10,
-          flexWrap: 'wrap',
-          width: '100%',
-          marginTop: 6,
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
-          Profiles · polling · funding · policies
-        </div>
-        <InfoButton id="parties_overview" T={T} size={20} />
-      </div>
-    </div>
-  )
-}
-
 function StickyPillsBar({ T, activeTab, setActiveTab }) {
   return (
     <div
@@ -208,12 +189,159 @@ function StickyPillsBar({ T, activeTab, setActiveTab }) {
         top: 0,
         zIndex: 8,
         background: T.sf,
-        padding: '8px 16px 10px',
+        padding: '10px 16px 12px',
         borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
         boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
       }}
     >
       <StickyPills pills={TABS} active={activeTab} onSelect={setActiveTab} T={T} />
+    </div>
+  )
+}
+
+function PartyLandscapeBriefing({ T, insight, card, border }) {
+  if (!insight) return null
+
+  const primaryItems = insight.items.slice(0, 2)
+  const secondaryItems = insight.items.slice(2)
+  const badgeStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '2px 7px',
+    borderRadius: 999,
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+  }
+
+  const renderInsightCard = (item, tone = 'primary') => {
+    const isPrimary = tone === 'primary'
+    const dark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
+    return (
+      <div
+        key={item.label}
+        style={{
+          borderRadius: 14,
+          padding: isPrimary ? '11px 11px 10px' : '9px 10px 9px',
+          background: dark
+            ? isPrimary
+              ? 'rgba(255,255,255,0.05)'
+              : 'rgba(255,255,255,0.03)'
+            : isPrimary
+              ? 'rgba(0,0,0,0.035)'
+              : 'rgba(0,0,0,0.02)',
+          border: `1px solid ${isPrimary ? `${item.color}20` : `${item.color}14`}`,
+          minHeight: isPrimary ? 96 : 88,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 800,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            color: T.tl,
+            textAlign: 'center',
+            marginBottom: 5,
+          }}
+        >
+          {item.label}
+        </div>
+        <div
+          style={{
+            fontSize: isPrimary ? 16 : 14,
+            fontWeight: 800,
+            color: T.th,
+            textAlign: 'center',
+            lineHeight: 1.18,
+          }}
+        >
+          {item.value}
+        </div>
+        {item.meta ? (
+          <div
+            style={{
+              fontSize: isPrimary ? 11.5 : 11,
+              fontWeight: 600,
+              color: isPrimary ? item.color : T.tl,
+              textAlign: 'center',
+              marginTop: 4,
+              lineHeight: 1.28,
+              opacity: isPrimary ? 0.95 : 0.82,
+            }}
+          >
+            {item.meta}
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      style={{
+        borderRadius: 18,
+        padding: '13px 14px 11px',
+        marginBottom: 6,
+        background: card,
+        border: `1px solid ${border}`,
+        boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 7 }}>
+        <span style={{ ...badgeStyle, color: T.pr, background: `${T.pr}0d`, border: `1px solid ${T.pr}18` }}>
+          Party landscape briefing
+        </span>
+        <span style={{ ...badgeStyle, color: T.tl, background: 'rgba(127,127,127,0.05)', border: `1px solid ${border}` }}>
+          What matters now
+        </span>
+      </div>
+
+      <div
+        style={{
+          fontSize: 17,
+          fontWeight: 800,
+          color: T.th,
+          lineHeight: 1.18,
+          textAlign: 'center',
+          letterSpacing: '-0.02em',
+          marginBottom: 7,
+          maxWidth: 430,
+          marginInline: 'auto',
+        }}
+      >
+        {insight.headline}
+      </div>
+
+      <div
+        style={{
+          fontSize: 13.5,
+          fontWeight: 500,
+          color: T.th,
+          lineHeight: 1.5,
+          textAlign: 'center',
+          marginBottom: 9,
+          maxWidth: 450,
+          marginInline: 'auto',
+          opacity: 0.92,
+        }}
+      >
+        {insight.body}
+      </div>
+
+      <div style={{ display: 'grid', gap: 7 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+          {primaryItems.map((item) => renderInsightCard(item, 'primary'))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+          {secondaryItems.map((item) => renderInsightCard(item, 'secondary'))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -227,11 +355,223 @@ export default function PartiesScreen({ T, nav, parties, polls, leaders }) {
     [parties],
   )
 
+  const leadersByParty = useMemo(
+    () => Object.fromEntries((leaders || []).map((leader) => [leader.party, leader])),
+    [leaders],
+  )
+
+  const briefingInsight = useMemo(() => {
+    if (!mainParties.length) return null
+
+    const top = mainParties[0]
+    const second = mainParties[1]
+    const third = mainParties[2]
+    const fourth = mainParties[3]
+    const topPct = formatPts(top?.pct || 0)
+    const positiveMovers = mainParties.filter((p) => (p.change || 0) > 0.4)
+    const strongestMover = positiveMovers.length
+      ? [...positiveMovers].sort((a, b) => (b.change || 0) - (a.change || 0))[0]
+      : [...mainParties].sort((a, b) => Math.abs(b.change || 0) - Math.abs(a.change || 0))[0]
+
+    // Derived signals: order, movement, and leader ratings. This stays deliberately
+    // transparent so the briefing remains explainable and can later absorb richer
+    // poll trend inputs without changing the output contract.
+    const partySignals = mainParties.map((p, index) => {
+      const leader = leadersByParty[p.name]
+      const change = Number(p.change || 0)
+      const leaderNet = leader && typeof leader.net === 'number' ? Number(leader.net) : null
+      return {
+        p,
+        leader,
+        index,
+        change,
+        leaderNet,
+        rising: change >= 1,
+        softening: change <= -1,
+        flat: Math.abs(change) <= 0.5,
+        isMinorChallenger: index >= 2,
+        exposureScore: Math.max(0, -change) + Math.max(0, -(leaderNet ?? 0) / 8),
+      }
+    })
+    const underPressure = [...partySignals].sort((a, b) => b.exposureScore - a.exposureScore)[0]
+
+    const leadMargin = second ? +(formatPts((top.pct || 0) - (second.pct || 0))) : null
+    const topThreeSpread = third ? +(formatPts((top.pct || 0) - (third.pct || 0))) : null
+    const secondThirdGap = third && second ? +(formatPts((second.pct || 0) - (third.pct || 0))) : null
+    const thirdFourthGap = fourth && third ? +(formatPts((third.pct || 0) - (fourth.pct || 0))) : null
+    const strongestMoverPts = strongestMover ? formatPts(strongestMover.change || 0) : null
+    const underPressurePts = underPressure?.p ? formatPts(underPressure.p.change || 0) : null
+    const flatParty = partySignals.find((signal) => signal.flat && signal.index >= 2)
+    const smallerPartyRising = partySignals.find((signal) => signal.isMinorChallenger && signal.rising)
+    const secondRising = second ? (second.change || 0) >= 1 : false
+    const leaderSoftening = (top.change || 0) <= -1
+    const leaderPullingAway = leadMargin != null && leadMargin >= 5 && (top.change || 0) >= 0.8
+    const topTight = leadMargin != null && leadMargin <= 2
+    const topTightening = leadMargin != null && leadMargin <= 4 && secondRising
+    const secondThirdBunching = secondThirdGap != null && secondThirdGap <= 2
+    const middleBunching = thirdFourthGap != null && thirdFourthGap <= 2
+
+    // Interpretation rules choose between a small set of political patterns rather than
+    // treating every spread as simply "stable" or "fragmented".
+    let raceLine = `${top.name} still leads`
+    if (topTight) {
+      raceLine = `${top.name} and ${second.name} are tightly matched`
+    } else if (leaderPullingAway) {
+      raceLine = `${top.name} is starting to pull away`
+    } else if (leaderSoftening) {
+      raceLine = `${top.name} still leads, but is softening`
+    } else if (topTightening) {
+      raceLine = `${top.name} still leads, but the gap is tightening`
+    } else if (secondThirdBunching) {
+      raceLine = `${top.name} still leads, but the field is bunching`
+    } else {
+      raceLine = `${top.name} still leads, but the picture is shifting underneath`
+    }
+
+    let momentumLine = strongestMover
+      ? `${strongestMover.name} is the clearest mover`
+      : 'The underlying picture remains fluid'
+    if (smallerPartyRising) {
+      momentumLine = `${smallerPartyRising.p.name} is the clearest upward mover`
+    } else if (strongestMover && strongestMover.change <= -1) {
+      momentumLine = `${strongestMover.name} is moving most, but backwards`
+    } else if (middleBunching) {
+      momentumLine = 'The middle order is tightening again'
+    }
+
+    // Compose the subheading from clauses, while tracking party mentions so the final
+    // read stays concise and avoids repeating or contradicting the same party.
+    const trackMentionedParties = new Set()
+    const clausePool = []
+    const addClause = ({ key, parties = [], text, priority = 0, blocks = [] }) => {
+      if (!text) return
+      clausePool.push({ key, parties, text, priority, blocks })
+    }
+
+    if (underPressure?.p && underPressure.exposureScore >= 1.5) {
+      addClause({
+        key: 'pressure',
+        parties: [underPressure.p.name],
+        text: `${underPressure.p.name} is under pressure`,
+        priority: 4,
+        blocks: ['steady'],
+      })
+    }
+
+    if (secondThirdGap != null && secondThirdGap <= 2) {
+      addClause({
+        key: 'tightening',
+        parties: [second.name, third.name],
+        text: `the gap between ${second.name} and ${third.name} is narrowing`,
+        priority: 3,
+        blocks: ['bunching'],
+      })
+    } else if (topTightening) {
+      addClause({
+        key: 'tightening',
+        parties: [second.name],
+        text: `${second.name} is beginning to narrow the gap`,
+        priority: 3,
+      })
+    }
+
+    if (flatParty) {
+      addClause({
+        key: 'steady',
+        parties: [flatParty.p.name],
+        text: `${flatParty.p.name} remains broadly stable`,
+        priority: 1,
+      })
+    } else if (topThreeSpread != null && topThreeSpread <= 8) {
+      addClause({
+        key: 'fluid',
+        text: 'the order beneath first remains fluid',
+        priority: 1,
+      })
+    }
+
+    const selectedClauses = []
+    const blockedKeys = new Set()
+    for (const clause of clausePool.sort((a, b) => b.priority - a.priority)) {
+      if (blockedKeys.has(clause.key)) continue
+      if (clause.blocks.some((key) => blockedKeys.has(key))) continue
+
+      const sharedParty = clause.parties.find((party) => trackMentionedParties.has(party))
+      if (sharedParty) {
+        const existingIndex = selectedClauses.findIndex((entry) => entry.parties.includes(sharedParty))
+        if (existingIndex >= 0) {
+          const existing = selectedClauses[existingIndex]
+          if (existing.priority >= clause.priority) {
+            continue
+          }
+          selectedClauses.splice(existingIndex, 1)
+        }
+      }
+
+      selectedClauses.push(clause)
+      clause.parties.forEach((party) => trackMentionedParties.add(party))
+      clause.blocks.forEach((key) => blockedKeys.add(key))
+      blockedKeys.add(clause.key)
+      if (selectedClauses.length >= 2) break
+    }
+
+    const body = composeNarrative(selectedClauses.slice(0, 2))
+
+    return {
+      headline: `${raceLine}. ${momentumLine}.`,
+      body,
+      items: [
+        {
+          label: 'Leader of the pack',
+          value: top.name,
+          meta: second && leadMargin != null ? `${topPct}% · ${leadMargin}pt ahead of ${second.name}` : `${topPct}% nationally`,
+          color: top.color || T.pr,
+        },
+        {
+          label: 'Biggest mover',
+          value: strongestMover?.name || 'No clear mover',
+          meta: strongestMover ? `${formatSignedPts(strongestMoverPts)}pt change` : 'Flat week',
+          color: strongestMover?.color || T.pr,
+        },
+        {
+          label: 'Under pressure',
+          value: underPressure?.p?.name || 'No clear target',
+          meta:
+            underPressure?.p
+              ? `${formatSignedPts(underPressurePts)}pt${underPressure.leader && typeof underPressure.leader.net === 'number' ? ` · leader net ${formatSignedPts(underPressure.leader.net)}` : ''}`
+              : 'No standout pressure point',
+          color: underPressure?.p?.color || '#C8102E',
+        },
+        {
+          label: 'Race shape',
+          value: leaderPullingAway
+            ? 'Leader pulling away'
+            : topTight
+              ? 'Tight top two'
+              : secondThirdBunching
+                ? 'Second-place squeeze'
+                : smallerPartyRising
+                  ? 'Smaller-party rise'
+                  : 'Fluid field',
+          meta:
+            topTight && leadMargin != null
+              ? `${top.name} leads ${second.name} by ${formatPts(leadMargin)}pts`
+              : secondThirdGap != null && secondThirdGap <= 2
+                ? `${second.name} and ${third.name} split by ${formatPts(secondThirdGap)}pts`
+                : smallerPartyRising
+                  ? `${smallerPartyRising.p.name} up ${formatSignedPts(smallerPartyRising.change)}pt`
+                  : topThreeSpread != null
+                    ? `Top 3 covered by ${formatPts(topThreeSpread)}pts`
+                    : 'Waiting for more data',
+          color: T.pr,
+        },
+      ],
+    }
+  }, [leadersByParty, mainParties, T.pr])
+
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
   const card = isDark ? 'rgba(12,20,30,0.97)' : '#ffffff'
   const border = T.cardBorder || 'rgba(0,0,0,0.08)'
-
-  const leaderParty = mainParties[0]?.name || null
 
   return (
     <div
@@ -242,7 +582,10 @@ export default function PartiesScreen({ T, nav, parties, polls, leaders }) {
         background: T.sf,
       }}
     >
-      <ScrollAwayHeader T={T} partyCount={mainParties.length} leaderName={leaderParty} />
+      <div style={{ padding: '8px 16px 0' }}>
+        <PartyLandscapeBriefing T={T} insight={briefingInsight} card={card} border={border} />
+      </div>
+
       <StickyPillsBar T={T} activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <div style={{ padding: '12px 16px 40px' }}>
@@ -251,7 +594,7 @@ export default function PartiesScreen({ T, nav, parties, polls, leaders }) {
             <SectionLabel T={T}>Party directory</SectionLabel>
 
             {mainParties.map((p, i) => {
-              const leader = leaders?.find((l) => l.party === p.name)
+              const leader = leadersByParty[p.name]
               const pIdx = (parties || []).indexOf(p)
 
               return (
@@ -517,7 +860,7 @@ export default function PartiesScreen({ T, nav, parties, polls, leaders }) {
             <SectionLabel T={T}>Policy snapshots</SectionLabel>
 
             {mainParties.map((p, i) => {
-              const leader = leaders?.find((l) => l.party === p.name)
+              const leader = leadersByParty[p.name]
               const pIdx = (parties || []).indexOf(p)
               const policyCards = ['immigration', 'economy', 'nhs', 'climate']
                 .map((topic) => ({ topic, text: leader?.[topic] }))

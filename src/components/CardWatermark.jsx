@@ -1,3 +1,4 @@
+import React from 'react'
 const ICONS = {
   poll:         `<path d="M3 3h4v14H3zm7-3h4v17h-4zm7 6h4v11h-4z" stroke-width="1"/>`,
   leader:       `<path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" stroke-width="1"/>`,
@@ -38,3 +39,5 @@ export function CardWatermark({ type='poll', color='#000', size=100 }) {
 }
 
 export default CardWatermark
+
+

@@ -1,6 +1,13 @@
-import { useMemo, useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { StickyPills, haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
+import { getPartyByName } from '../data/partyRegistry'
+import { buildPollSpreadInsights } from '../utils/pollSpread'
+import { buildPollHouseEffectsInsights } from '../utils/pollHouseEffects'
+import { buildPollingIntelligence } from '../utils/pollIntelligence'
+import { formatUKDate } from '../utils/date'
+import SharedTrendChart, { buildDisplayTrendRows } from '../components/charts/SharedTrendChart'
+import { canWinPollConflict, comparePollConflictPriority, sourceTier } from '../shared/pollValidation'
 
 const TABS = [
   { key: 'snapshot', label: 'Snapshot' },
@@ -10,57 +17,38 @@ const TABS = [
   { key: 'methodology', label: 'Methodology' },
 ]
 
-const PARTY_KEYS = ['ref', 'lab', 'con', 'grn', 'ld', 'rb', 'snp']
+const POLL_PARTIES = [
+  { key: 'ref', name: 'Reform UK' },
+  { key: 'lab', name: 'Labour' },
+  { key: 'con', name: 'Conservative' },
+  { key: 'grn', name: 'Green' },
+  { key: 'ld', name: 'Lib Dem' },
+  { key: 'rb', name: 'Restore Britain' },
+  { key: 'snp', name: 'SNP' },
+]
 
-const PARTY_COLORS = {
-  ref: '#12B7D4',
-  lab: '#E4003B',
-  con: '#0087DC',
-  grn: '#02A95B',
-  ld: '#FAA61A',
-  rb: '#1A4A9E',
-  snp: '#C4922A',
-}
+const POLL_PARTY_KEYS = POLL_PARTIES.map((party) => party.key)
 
-const PARTY_NAMES = {
-  ref: 'Reform UK',
-  lab: 'Labour',
-  con: 'Conservative',
-  grn: 'Green',
-  ld: 'Liberal Democrat',
-  rb: 'Restore Britain',
-  snp: 'SNP',
-}
-
-const PARTY_SHORT = {
-  ref: 'REF',
-  lab: 'LAB',
-  con: 'CON',
-  grn: 'GRN',
-  ld: 'LD',
-  rb: 'RB',
-  snp: 'SNP',
+function getPollPartyMeta(key) {
+  const match = POLL_PARTIES.find((party) => party.key === key)
+  const registry = getPartyByName(match?.name || key)
+  return {
+    key,
+    name: registry.name,
+    short: registry.abbr || key.toUpperCase(),
+    color: registry.color,
+  }
 }
 
 
-const RELEASE_POLLSTERS = new Set([
-  'yougov',
-  'more in common',
-  'techne',
-  'opinium',
-  'ipsos',
-])
-
-function normalisePollster(value) {
-  return cleanText(value).toLowerCase()
-}
 
 function parseDateish(value) {
   const text = cleanText(value)
   if (!text) return null
 
-  if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
-    const d = new Date(text)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    const [yyyy, mm, dd] = text.split('-').map(Number)
+    const d = new Date(Date.UTC(yyyy, mm - 1, dd))
     return Number.isNaN(d.getTime()) ? null : d
   }
 
@@ -70,14 +58,7 @@ function parseDateish(value) {
     return Number.isNaN(d.getTime()) ? null : d
   }
 
-  if (/^\d{1,2}\s+[A-Za-z]{3,9}(\s*[-–]\s*\d{1,2}\s+[A-Za-z]{3,9})?$/.test(text)) {
-    const chunk = text.split(/[-–]/)[0].trim()
-    const d = new Date(`${chunk} 2026`)
-    return Number.isNaN(d.getTime()) ? null : d
-  }
-
-  const d = new Date(text)
-  return Number.isNaN(d.getTime()) ? null : d
+  return null
 }
 
 function keepLatestPollPerPollster(polls) {
@@ -86,8 +67,9 @@ function keepLatestPollPerPollster(polls) {
   for (const poll of polls || []) {
     const name = cleanText(poll?.pollster)
     if (!name) continue
+    if (!isWinningPollRow(poll)) continue
     const current = latest.get(name)
-    if (!current || pollSortScore(poll) > pollSortScore(current)) {
+    if (!current || compareLatestPollRows(poll, current) < 0) {
       latest.set(name, poll)
     }
   }
@@ -127,12 +109,38 @@ function formatRangeLabel(polls) {
   if (!polls?.length) return ''
   const first = displayDate(polls[0])
   const last = displayDate(polls[polls.length - 1])
-  return `${first} – ${last}`
+  return `${formatUKDate(first)} – ${formatUKDate(last)}`
 }
 
 function cleanText(value) {
   if (value == null) return ''
   return String(value).replace(/Â·/g, '·').replace(/\s+/g, ' ').trim()
+}
+
+function shortPartyName(value) {
+  const text = cleanText(value)
+  if (text === 'Reform UK') return 'Reform'
+  if (text === 'Conservative') return 'Conservatives'
+  if (text === 'Green') return 'Greens'
+  return text
+}
+
+function formatGap(value) {
+  if (value == null) return '0'
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+function formatPartyList(names = []) {
+  const clean = names.filter(Boolean)
+  if (clean.length <= 1) return clean[0] || ''
+  if (clean.length === 2) return `${clean[0]} and ${clean[1]}`
+  return `${clean[0]}, ${clean[1]} and ${clean[2]}`
+}
+
+function average(values = []) {
+  const usable = values.filter((value) => Number.isFinite(value))
+  if (!usable.length) return null
+  return usable.reduce((sum, value) => sum + value, 0) / usable.length
 }
 
 function safeNumber(value) {
@@ -143,8 +151,200 @@ function safeNumber(value) {
   return Number.isFinite(n) ? n : null
 }
 
+function getTrendValuesForParty(party, trendSeries = []) {
+  const name = cleanText(party?.name)
+  if (!name) return []
+
+  return (Array.isArray(trendSeries) ? trendSeries : [])
+    .map((row) => safeNumber(row?.[name]))
+    .filter((value) => value != null)
+}
+
+function getPartyTrendSignal(party, trendSeries = []) {
+  const explicit =
+    typeof party?.recentDelta === 'number'
+      ? party.recentDelta
+      : typeof party?.trendDelta === 'number'
+        ? party.trendDelta
+        : null
+
+  const values = getTrendValuesForParty(party, trendSeries)
+  const baseline = average(values.slice(-5, -1))
+  const latest = values.length ? values[values.length - 1] : safeNumber(party?.pct)
+  const derived =
+    latest != null && baseline != null
+      ? +(latest - baseline).toFixed(1)
+      : values.length >= 2
+        ? +(values[values.length - 1] - values[values.length - 2]).toFixed(1)
+        : null
+
+  const change = explicit != null ? explicit : derived
+  const effectiveBaseline =
+    baseline != null ? baseline
+      : latest != null && change != null ? +(latest - change).toFixed(1)
+        : null
+
+  let movement = 'stable'
+  if (change != null) {
+    if (change >= 1.5) movement = 'rising'
+    else if (change <= -1.5) movement = 'falling'
+  }
+
+  return {
+    change,
+    movement,
+    baseline: effectiveBaseline,
+    reliable: change != null,
+  }
+}
+
+function buildRaceStateSummary(parties = [], trendSeries = []) {
+  const ranked = [...(Array.isArray(parties) ? parties : [])]
+    .filter((party) => safeNumber(party?.pct) != null)
+    .sort((a, b) => (safeNumber(b?.pct) || 0) - (safeNumber(a?.pct) || 0))
+
+  const leader = ranked[0]
+  const second = ranked[1]
+  const third = ranked[2]
+  if (!leader || !second) return null
+
+  const leadMargin = +((safeNumber(leader?.pct) || 0) - (safeNumber(second?.pct) || 0)).toFixed(1)
+  const secondGap = third ? +((safeNumber(second?.pct) || 0) - (safeNumber(third?.pct) || 0)).toFixed(1) : null
+  const clusteredBehind = ranked
+    .slice(1, 4)
+    .filter((party) => Math.abs((safeNumber(second?.pct) || 0) - (safeNumber(party?.pct) || 0)) <= 3)
+  const fragmented = leadMargin >= 6 && clusteredBehind.length >= 2
+
+  let headline = 'Race is tight at the top'
+  if (fragmented) {
+    headline = `${shortPartyName(leader?.name)} ahead, with a fragmented field behind`
+  } else if (leadMargin >= 8) {
+    headline = `${shortPartyName(leader?.name)} firmly ahead`
+  } else if (leadMargin >= 4) {
+    headline = `${shortPartyName(leader?.name)} ahead, with margins still open`
+  }
+
+  let subline = `${shortPartyName(leader?.name)} lead ${shortPartyName(second?.name)} by ${formatGap(leadMargin)} points.`
+  if (fragmented) {
+    subline = `${formatPartyList(clusteredBehind.map((party) => shortPartyName(party?.name)))} are clustered behind.`
+  } else if (second && third && secondGap != null && secondGap <= 3) {
+    subline = `${shortPartyName(second?.name)} and ${shortPartyName(third?.name)} are separated by ${formatGap(secondGap)} points.`
+  }
+
+  const leaderSignal = getPartyTrendSignal(leader, trendSeries)
+  const secondSignal = getPartyTrendSignal(second, trendSeries)
+  const thirdSignal = third ? getPartyTrendSignal(third, trendSeries) : null
+  const fourth = ranked[3] || null
+  const fourthSignal = fourth ? getPartyTrendSignal(fourth, trendSeries) : null
+  const reliableTrend = leaderSignal.reliable || secondSignal.reliable || thirdSignal?.reliable || fourthSignal?.reliable
+  const previousLeadMargin =
+    leaderSignal.baseline != null && secondSignal.baseline != null
+      ? +(leaderSignal.baseline - secondSignal.baseline).toFixed(1)
+      : null
+  const leadNarrowing = leaderSignal.movement === 'falling' && previousLeadMargin != null && leadMargin < previousLeadMargin
+  const trailingCluster = ranked
+    .slice(1, 4)
+    .filter((party) => Math.abs((safeNumber(second?.pct) || 0) - (safeNumber(party?.pct) || 0)) <= 3)
+  const trailingSignals = trailingCluster.map((party) => ({
+    party,
+    signal: getPartyTrendSignal(party, trendSeries),
+  }))
+  const risingTrailer = trailingSignals.find((entry) => entry.signal.movement === 'rising') || null
+  const tighteningBehind = trailingCluster.length >= 2 && !!risingTrailer
+
+  if (reliableTrend) {
+    if (leadNarrowing) {
+      headline = `${shortPartyName(leader?.name)} ahead, with the lead narrowing`
+      subline = `${shortPartyName(second?.name)} are narrowing the gap.`
+    } else if (secondSignal.movement === 'rising') {
+      headline = leadMargin < 4
+        ? `Race is tight at the top, with ${shortPartyName(second?.name)} rising`
+        : `${shortPartyName(leader?.name)} ahead, with ${shortPartyName(second?.name)} closing`
+      subline = `${shortPartyName(second?.name)} are edging higher in recent polling.`
+    } else if (tighteningBehind) {
+      headline = `${shortPartyName(leader?.name)} ahead, with the field behind tightening`
+      subline = `${formatPartyList(trailingCluster.map((party) => shortPartyName(party?.name)))} are closely grouped.`
+    } else if (leaderSignal.movement === 'stable' && secondSignal.movement === 'stable') {
+      if (leadMargin >= 4) headline = `${shortPartyName(leader?.name)} lead holds steady`
+      subline = 'Little movement across recent polls.'
+    } else if (leaderSignal.movement === 'falling') {
+      subline = `${shortPartyName(leader?.name)} are slightly lower in recent polling.`
+    } else if (secondSignal.movement === 'falling') {
+      subline = `${shortPartyName(second?.name)} are slightly lower in recent polling.`
+    }
+  }
+
+  return { headline, subline }
+}
+
+function findPreviousPollForPollster(poll, polls = []) {
+  const pollster = cleanText(poll?.pollster).toLowerCase()
+  if (!pollster) return null
+
+  return [...(polls || [])]
+    .sort((a, b) => pollSortTime(b) - pollSortTime(a))
+    .find((candidate) => {
+      if (candidate === poll) return false
+      if (cleanText(candidate?.id) && cleanText(candidate?.id) === cleanText(poll?.id)) return false
+      return cleanText(candidate?.pollster).toLowerCase() === pollster
+    }) || null
+}
+
+function getPartyDelta(currentPoll, previousPoll, key) {
+  const current = safeNumber(currentPoll?.[key])
+  const previous = safeNumber(previousPoll?.[key])
+  if (current == null || previous == null) return null
+  return +(current - previous).toFixed(1)
+}
+
+function buildPollTakeaway(poll, polls = [], pollContext = null) {
+  const results = getPollResults(poll)
+  const leader = results[0]
+  const second = results[1]
+  if (!leader) return null
+
+  const previousSamePollster = findPreviousPollForPollster(poll, polls)
+  if (previousSamePollster) {
+    const deltas = POLL_PARTY_KEYS
+      .map((key) => getPartyDelta(poll, previousSamePollster, key))
+      .filter((value) => value != null)
+    const biggestMove = deltas.length ? Math.max(...deltas.map((value) => Math.abs(value))) : 0
+    const secondDelta = second ? getPartyDelta(poll, previousSamePollster, second.key) : null
+    const leaderDelta = getPartyDelta(poll, previousSamePollster, leader.key)
+
+    if (biggestMove < 1.5) {
+      return `Little change from previous ${cleanText(poll?.pollster)} poll`
+    }
+    if (second && secondDelta != null && secondDelta >= 1.5) {
+      return `${second.short} stronger than previous ${cleanText(poll?.pollster)} poll`
+    }
+    if (leaderDelta != null && leaderDelta >= 1.5) {
+      return `Stronger for ${leader.short} than previous ${cleanText(poll?.pollster)} poll`
+    }
+    if (leaderDelta != null && leaderDelta <= -1.5) {
+      return `Softer for ${leader.short} than previous ${cleanText(poll?.pollster)} poll`
+    }
+  }
+
+  const snapshot = Array.isArray(pollContext?.partyPollSnapshot) ? pollContext.partyPollSnapshot : []
+  const snapshotLeader = snapshot.find((party) => cleanText(party?.abbr).toUpperCase() === cleanText(leader?.short).toUpperCase()) || null
+  const snapshotLeaderPct = safeNumber(snapshotLeader?.pct)
+  if (snapshotLeaderPct != null && leader.pct != null) {
+    const diff = +(leader.pct - snapshotLeaderPct).toFixed(1)
+    if (diff >= 2) return `Stronger for ${leader.short} than recent trend`
+    if (diff <= -2) return `Softer for ${leader.short} than recent trend`
+  }
+
+  if (second) {
+    const gap = +((leader.pct || 0) - (second.pct || 0)).toFixed(1)
+    return `${leader.short} leads by ${formatGap(gap)} points`
+  }
+
+  return `${leader.short} remains ahead`
+}
+
 function displayDate(poll) {
-  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.date) || 'Date unavailable'
+  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || 'Date unavailable'
 }
 
 function displaySubMeta(poll) {
@@ -162,20 +362,35 @@ function hasLiveSource(poll) {
 }
 
 function isImportedPoll(poll) {
-  return hasLiveSource(poll)
+  return hasLiveSource(poll) || cleanText(poll?.sourceType) === 'manual'
+}
+
+function getSourceBadge(poll, T) {
+  const tier = sourceTier(poll)
+
+  if (tier === 'manual') return { label: 'Manual', color: T.pr, subtle: false }
+  if (tier === 'direct') return { label: 'Verified Source', color: T.pr, subtle: true }
+  if (hasLiveSource(poll)) return { label: 'Verified Source', color: T.pr, subtle: true }
+  return { label: 'Estimated', color: T.tl, subtle: true }
+}
+
+function getConfidenceBadge(poll, T) {
+  const confidence = cleanText(poll?.confidence).toLowerCase()
+  if (confidence === 'high') return { label: 'High confidence', color: T.ok || T.pr, subtle: true }
+  if (confidence === 'medium') return { label: 'Medium confidence', color: T.warn || T.pr, subtle: true }
+  if (confidence === 'low') return { label: 'Low confidence', color: T.tl, subtle: true }
+  return null
 }
 
 function getPollResults(poll) {
-  return PARTY_KEYS
+  return POLL_PARTY_KEYS
     .map((key) => {
       const pct = safeNumber(poll?.[key])
       if (pct == null) return null
       return {
         key,
         pct,
-        color: PARTY_COLORS[key],
-        name: PARTY_NAMES[key],
-        short: key === 'ld' ? 'LD' : key === 'snp' ? 'SNP' : key === 'rb' ? 'RB' : key.toUpperCase(),
+        ...getPollPartyMeta(key),
       }
     })
     .filter(Boolean)
@@ -183,11 +398,40 @@ function getPollResults(poll) {
 }
 
 function buildSeries(polls, partyKey) {
-  return polls.map((poll) => safeNumber(poll?.[partyKey])).filter((v) => v != null).slice(-12)
+  const namedKey = getPollPartyMeta(partyKey)?.name || partyKey
+  return polls
+    .map((poll) => safeNumber(poll?.[partyKey] ?? poll?.[namedKey]))
+    .filter((v) => v != null)
+    .slice(-12)
 }
 
 function pollSortScore(poll) {
-  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
+  const raw = cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
+  const parsed = parseDateish(raw)
+  if (parsed) return parsed.toISOString().slice(0, 10)
+  return raw
+}
+
+function pollSortTime(poll) {
+  const raw = cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
+  return parseDateish(raw)?.getTime() || 0
+}
+
+function isWinningPollRow(poll) {
+  return canWinPollConflict(poll)
+}
+
+function compareLatestPollRows(a, b) {
+  const priorityDiff = comparePollConflictPriority(a, b)
+  if (priorityDiff !== 0) return priorityDiff
+
+  const dateDiff = pollSortTime(b) - pollSortTime(a)
+  if (dateDiff !== 0) return dateDiff
+
+  const dateTextDiff = pollSortScore(b).localeCompare(pollSortScore(a))
+  if (dateTextDiff !== 0) return dateTextDiff
+
+  return cleanText(a?.id || '').localeCompare(cleanText(b?.id || ''))
 }
 
 function groupPollsByPollster(polls) {
@@ -203,10 +447,43 @@ function groupPollsByPollster(polls) {
   return [...map.entries()]
     .map(([name, list]) => ({
       name,
-      polls: [...list].sort((a, b) => pollSortScore(b).localeCompare(pollSortScore(a))),
-      latestPoll: [...list].sort((a, b) => pollSortScore(b).localeCompare(pollSortScore(a)))[0],
+      polls: [...list].sort(compareLatestPollRows),
+      latestPoll: [...list].filter(isWinningPollRow).sort(compareLatestPollRows)[0] || [...list].sort(compareLatestPollRows)[0],
     }))
-    .sort((a, b) => (b.polls.length !== a.polls.length ? b.polls.length - a.polls.length : a.name.localeCompare(b.name)))
+    .sort((a, b) => {
+      const latestDiff = pollSortTime(b.latestPoll) - pollSortTime(a.latestPoll)
+      if (latestDiff !== 0) return latestDiff
+      const latestTextDiff = pollSortScore(b.latestPoll).localeCompare(pollSortScore(a.latestPoll))
+      if (latestTextDiff !== 0) return latestTextDiff
+      if (b.polls.length !== a.polls.length) return b.polls.length - a.polls.length
+      return a.name.localeCompare(b.name)
+      })
+}
+
+function pollAgeDays(poll, now = new Date()) {
+  const date = parseDateish(displayDate(poll))
+  if (!date) return null
+  const utcNow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  return Math.max(0, Math.round((utcNow.getTime() - date.getTime()) / 86400000))
+}
+
+function getPollsterDescriptor(group) {
+  const latest = group?.latestPoll || null
+  const importedCount = (group?.polls || []).filter((poll) => isImportedPoll(poll)).length
+  const ageDays = pollAgeDays(latest)
+  const avgSample = Math.round(
+    ((group?.polls || [])
+      .map((poll) => safeNumber(poll?.sample))
+      .filter((value) => value && value > 0)
+      .reduce((sum, value, _, arr) => sum + value / arr.length, 0)) || 0,
+  )
+
+  if (ageDays != null && ageDays <= 7 && group.polls.length >= 20) return 'Active recently · regular tracker'
+  if (ageDays != null && ageDays <= 7 && importedCount >= 5) return 'Active recently · direct source'
+  if (avgSample >= 1800) return 'Large samples · less frequent'
+  if (group.polls.length >= 40) return 'Deep archive · regular polling'
+  if (importedCount >= 3) return 'Direct-source polling in archive'
+  return 'Less frequent national polling'
 }
 
 function SectionLabel({ children, T, action }) {
@@ -252,14 +529,14 @@ function SectionLabel({ children, T, action }) {
   )
 }
 
-function Badge({ children, color, subtle = false }) {
+function Badge({ children, color, subtle = false, compact = false }) {
   return (
     <span
       style={{
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 12,
+        fontSize: compact ? 9.5 : 12,
         fontWeight: 800,
         letterSpacing: '0.05em',
         textTransform: 'uppercase',
@@ -267,7 +544,7 @@ function Badge({ children, color, subtle = false }) {
         background: subtle ? `${color}12` : `${color}1F`,
         border: `1px solid ${color}2B`,
         borderRadius: 999,
-        padding: '4px 9px',
+        padding: compact ? '2.5px 6px' : '4px 9px',
         whiteSpace: 'nowrap',
       }}
     >
@@ -321,12 +598,12 @@ function HeroSnapshot({ T, parties, latestLivePoll, nav }) {
     >
       <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
         <Badge color={leader.color || T.pr}>Polling snapshot</Badge>
-        {latestLivePoll ? <Badge color={T.pr} subtle>Latest live poll</Badge> : null}
+        {latestLivePoll ? <Badge color={T.pr} subtle>Latest imported poll</Badge> : null}
       </div>
 
       <div
         style={{
-          fontSize: 30,
+          fontSize: 32,
           fontWeight: 800,
           letterSpacing: '-0.03em',
           color: leader.color || T.th,
@@ -360,7 +637,7 @@ function HeroSnapshot({ T, parties, latestLivePoll, nav }) {
             lineHeight: 1.5,
           }}
         >
-          Latest live poll: {cleanText(latestLivePoll.pollster)} · {displayDate(latestLivePoll)}
+          Latest imported poll: {cleanText(latestLivePoll.pollster)} · {formatUKDate(displayDate(latestLivePoll))}
         </div>
       ) : null}
 
@@ -397,21 +674,24 @@ function HeroSnapshot({ T, parties, latestLivePoll, nav }) {
             cursor: 'pointer',
           }}
         >
-          Open latest live poll →
+          Open latest imported poll →
         </div>
       ) : null}
     </div>
   )
 }
 
-function PollCard({ T, poll, nav }) {
+function PollCard({ T, poll, nav, polls = [], pollContext = null, isFeatured = false }) {
   const results = getPollResults(poll)
   const leader = results[0]
   const max = leader?.pct || 30
   const subMeta = displaySubMeta(poll)
-  const live = isImportedPoll(poll)
+  const imported = isImportedPoll(poll)
+  const sourceBadge = getSourceBadge(poll, T)
+  const confidenceBadge = getConfidenceBadge(poll, T)
   const sourceText = cleanText(poll?.source)
   const sourceUrl = cleanText(poll?.sourceUrl)
+  const takeaway = buildPollTakeaway(poll, polls, pollContext)
 
   return (
     <div
@@ -421,10 +701,10 @@ function PollCard({ T, poll, nav }) {
       }}
       style={{
         borderRadius: 16,
-        padding: '16px',
-        marginBottom: 10,
-        background: T.c0,
-        border: `1px solid ${live ? (leader?.color || T.pr) + '33' : T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        padding: '14px',
+        marginBottom: 8,
+        background: isFeatured ? (T.c1 || 'rgba(0,0,0,0.025)') : T.c0,
+        border: `1px solid ${isFeatured ? (leader?.color || T.pr) + '55' : imported ? (leader?.color || T.pr) + '33' : T.cardBorder || 'rgba(0,0,0,0.08)'}`,
         cursor: 'pointer',
       }}
     >
@@ -467,7 +747,7 @@ function PollCard({ T, poll, nav }) {
               textAlign: 'left',
             }}
           >
-            {displayDate(poll)}
+            {formatUKDate(displayDate(poll))}
           </div>
 
           {subMeta ? (
@@ -485,11 +765,28 @@ function PollCard({ T, poll, nav }) {
               {subMeta}
             </div>
           ) : null}
+
+          {takeaway ? (
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: T.th,
+                marginTop: 6,
+                textAlign: 'left',
+                lineHeight: 1.35,
+              }}
+            >
+              {takeaway}
+            </div>
+          ) : null}
         </div>
 
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {live ? <Badge color={T.pr}>Live import</Badge> : <Badge color={T.tl} subtle>Archive</Badge>}
-          {leader ? <Badge color={leader.color} subtle>{leader.name} leads</Badge> : null}
+        <div style={{ display: 'flex', gap: 4, rowGap: 4, flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '62%' }}>
+          {isFeatured ? <Badge compact color={leader?.color || T.pr}>Latest</Badge> : null}
+          {sourceBadge ? <Badge compact color={sourceBadge.color} subtle={sourceBadge.subtle}>{sourceBadge.label}</Badge> : null}
+          {confidenceBadge ? <Badge compact color={confidenceBadge.color} subtle={confidenceBadge.subtle}>{confidenceBadge.label}</Badge> : null}
+          {leader ? <Badge compact color={leader.color} subtle>{leader.short || leader.name} leads</Badge> : null}
         </div>
       </div>
 
@@ -543,10 +840,36 @@ function PollCard({ T, poll, nav }) {
   )
 }
 
-function PollsterCard({ T, group, nav }) {
+function PollsterCard({ T, group, nav, featured = false, mostActive = false }) {
   const latest = group.latestPoll
   const latestResults = getPollResults(latest).slice(0, 5)
-  const liveCount = group.polls.filter((p) => isImportedPoll(p)).length
+  const importedCount = group.polls.filter((p) => isImportedPoll(p)).length
+  const descriptor = getPollsterDescriptor(group)
+  const latestAge = pollAgeDays(latest)
+
+  function CompactPill({ children, color, subtle = true }) {
+    return (
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 10.5,
+          fontWeight: 800,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          color,
+          background: subtle ? `${color}12` : `${color}20`,
+          border: `1px solid ${color}24`,
+          borderRadius: 999,
+          padding: '4px 8px',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {children}
+      </span>
+    )
+  }
 
   return (
     <div
@@ -556,10 +879,10 @@ function PollsterCard({ T, group, nav }) {
       }}
       style={{
         borderRadius: 14,
-        padding: '14px 16px',
-        marginBottom: 8,
-        background: T.c0,
-        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        padding: '12px 14px',
+        marginBottom: 7,
+        background: featured ? (T.c1 || T.c0) : T.c0,
+        border: `1px solid ${featured ? `${T.pr}32` : (T.cardBorder || 'rgba(0,0,0,0.08)')}`,
         cursor: 'pointer',
       }}
     >
@@ -576,26 +899,40 @@ function PollsterCard({ T, group, nav }) {
           <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{group.name}</div>
           <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, marginTop: 4 }}>
             {group.polls.length} poll{group.polls.length === 1 ? '' : 's'} stored
-            {liveCount ? ` · ${liveCount} live` : ''}
+            {importedCount ? ` · ${importedCount} imported` : ''}
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: T.tl, marginTop: 4 }}>
+            {descriptor}
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <Badge color={latest?.isBpcMember ? T.pr : T.tl} subtle>
+          {featured ? <CompactPill color={T.pr} subtle={false}>Latest</CompactPill> : null}
+          {mostActive ? <CompactPill color={T.pr}>Most active</CompactPill> : null}
+          {latestAge != null && latestAge <= 7 ? <CompactPill color="#02A95B">Active recently</CompactPill> : null}
+          <CompactPill color={latest?.isBpcMember ? T.pr : T.tl}>
             {latest?.isBpcMember ? 'BPC member' : 'Pollster'}
-          </Badge>
+          </CompactPill>
         </div>
       </div>
 
       {latest ? (
         <>
-          <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, marginTop: 10, textAlign: 'center' }}>
-            Latest: {displayDate(latest)}
+          <div style={{ fontSize: 11.5, fontWeight: 700, color: T.tl, marginTop: 8, textAlign: 'center' }}>
+            Latest: {formatUKDate(displayDate(latest))}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', marginTop: 8 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+              gap: 8,
+              marginTop: 7,
+              alignItems: 'center',
+            }}
+          >
             {latestResults.map((r) => (
-              <div key={r.key} style={{ fontSize: 13, fontWeight: 800, color: r.color }}>
+              <div key={r.key} style={{ fontSize: 13.5, fontWeight: 800, color: r.color, textAlign: 'center', whiteSpace: 'nowrap' }}>
                 {r.short} {r.pct}%
               </div>
             ))}
@@ -603,11 +940,229 @@ function PollsterCard({ T, group, nav }) {
         </>
       ) : null}
 
-      <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, marginTop: 10, textAlign: 'center' }}>
+      <div style={{ fontSize: 11.5, fontWeight: 700, color: T.tl, marginTop: 8, textAlign: 'center' }}>
         Open pollster profile →
       </div>
     </div>
   )
+}
+
+function BriefingSection({ T, label, headline, bullets = [], first = false }) {
+  if (!headline) return null
+
+  return (
+    <div
+      style={{
+        padding: '10px 0',
+        borderTop: first ? 'none' : `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+      }}
+    >
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          padding: '4px 9px',
+          borderRadius: 999,
+          background: T.c1 || 'rgba(0,0,0,0.04)',
+          color: T.pr,
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: 0.5,
+          textTransform: 'uppercase',
+        }}
+      >
+        {label}
+      </div>
+
+      <div
+        style={{
+          marginTop: 8,
+          fontSize: 14,
+          fontWeight: 700,
+          color: T.th,
+          lineHeight: 1.45,
+        }}
+      >
+        {headline}
+      </div>
+
+      {bullets.length ? (
+        <div style={{ marginTop: 7, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {bullets.map((bullet) => (
+            <div
+              key={`${label}-${bullet}`}
+              style={{
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: T.tl,
+                lineHeight: 1.45,
+              }}
+            >
+              • {bullet}
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function IntelligenceLine({ T, label, text, subtle = false }) {
+  if (!text) return null
+
+  return (
+    <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '90px minmax(0, 1fr)',
+          gap: 10,
+          alignItems: 'start',
+        paddingTop: 8,
+        borderTop: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: 0.35,
+          textTransform: 'uppercase',
+          color: subtle ? `${T.tl}cc` : `${T.tl}cc`,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: subtle ? 600 : 700,
+          color: subtle ? T.tl : T.th,
+          lineHeight: 1.45,
+        }}
+      >
+        {text}
+      </div>
+    </div>
+  )
+}
+
+function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatters = '' }) {
+  if (!intelligence) return null
+  const fallbackHeadline = topTwo.length >= 1 ? `${topTwo[0].name} lead the current picture` : 'Current polling picture'
+  const fallbackSubline = topTwo.length >= 2 ? `${topTwo[0].name} remain ahead of ${topTwo[1].name}.` : 'Limited recent polling reduces certainty.'
+
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        padding: '12px 14px',
+        marginBottom: 12,
+        background: T.c0,
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+      }}
+    >
+      <SectionLabel T={T}>Polling intelligence</SectionLabel>
+
+      <div
+        style={{
+          fontSize: 18,
+          fontWeight: 800,
+          color: T.th,
+          lineHeight: 1.2,
+          textAlign: 'center',
+        }}
+      >
+        {raceState?.headline || fallbackHeadline}
+      </div>
+
+      {raceState?.subline ? (
+        <div
+          style={{
+            fontSize: 12.5,
+            fontWeight: 600,
+            color: T.tl,
+            lineHeight: 1.5,
+            textAlign: 'center',
+            marginTop: 6,
+            maxWidth: 680,
+            marginLeft: 'auto',
+            marginRight: 'auto',
+          }}
+        >
+          {raceState.subline}
+        </div>
+      ) : (
+        <div
+          style={{
+            fontSize: 12.5,
+            fontWeight: 600,
+            color: T.tl,
+            lineHeight: 1.5,
+            textAlign: 'center',
+            marginTop: 6,
+            maxWidth: 680,
+            marginLeft: 'auto',
+            marginRight: 'auto',
+          }}
+        >
+          {fallbackSubline}
+        </div>
+      )}
+
+      {topTwo.length === 2 ? (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+          <Badge color={topTwo[0].color}>{topTwo[0].abbr} {topTwo[0].pct}%</Badge>
+          <Badge color={topTwo[1].color} subtle>{topTwo[1].abbr} {topTwo[1].pct}%</Badge>
+        </div>
+      ) : null}
+
+      <IntelligenceLine T={T} label="Confidence" text={intelligence.confidenceLine} />
+      <IntelligenceLine T={T} label="What changed" text={intelligence.whatChangedLine} />
+      {intelligence.disagreementNote ? <IntelligenceLine T={T} label="Disagreement" text={intelligence.disagreementNote} subtle /> : null}
+      {whyItMatters ? <IntelligenceLine T={T} label="Why it matters" text={whyItMatters} subtle /> : null}
+    </div>
+  )
+}
+
+function buildWhyThisMattersBullets(parties = [], trendSeries = []) {
+  const ranked = [...(Array.isArray(parties) ? parties : [])]
+    .filter((party) => safeNumber(party?.pct) != null)
+    .sort((a, b) => (safeNumber(b?.pct) || 0) - (safeNumber(a?.pct) || 0))
+
+  const leader = ranked[0]
+  const second = ranked[1]
+  const trailing = ranked.slice(1, 4)
+  const bullets = []
+
+    if (leader && second) {
+      const leadMargin = +((safeNumber(leader?.pct) || 0) - (safeNumber(second?.pct) || 0)).toFixed(1)
+      if (leadMargin > 5) bullets.push('The lead is clearer than the race for second')
+      else if (leadMargin < 4) bullets.push('The contest at the top remains finely balanced')
+    }
+
+  if (trailing.length >= 3) {
+    const trailingValues = trailing.map((party) => safeNumber(party?.pct) || 0)
+    const trailingSpread = Math.max(...trailingValues) - Math.min(...trailingValues)
+      if (trailingSpread <= 3) bullets.push('The contest for second remains more open than the lead')
+    }
+
+  const rising = ranked
+    .map((party) => ({ party, signal: getPartyTrendSignal(party, trendSeries) }))
+    .filter((entry) => entry.signal?.movement === 'rising')
+    .sort((a, b) => (b.signal?.change || 0) - (a.signal?.change || 0))[0]
+    if (rising) bullets.push(`${shortPartyName(rising.party?.name)} look increasingly central to the contest`)
+
+  const stableSignals = ranked
+    .slice(0, 4)
+    .map((party) => getPartyTrendSignal(party, trendSeries))
+    .filter(Boolean)
+  if (stableSignals.length && stableSignals.every((signal) => signal.movement === 'stable')) {
+      bullets.push('The overall picture remains broadly settled')
+    }
+
+    if (!bullets.length) bullets.push('Recent polling still leaves the wider picture uncertain')
+
+  return [...new Set(bullets)].slice(0, 4)
 }
 
 
@@ -615,7 +1170,10 @@ function getTrendValuesFromParties(parties, polls) {
   return (parties || [])
     .filter((p) => p.name !== 'Other')
     .map((p) => {
-      const key = PARTY_KEYS.find((k) => PARTY_NAMES[k] === p.name || p.abbr?.toLowerCase() === k)
+      const key = POLL_PARTIES.find((party) => {
+        const partyMeta = getPollPartyMeta(party.key)
+        return partyMeta.name === getPartyByName(p.name).name || p.abbr === partyMeta.short
+      })?.key
       const series = key ? buildSeries(polls, key) : []
       const delta = series.length >= 2 ? +(series[series.length - 1] - series[0]).toFixed(1) : 0
       return {
@@ -948,9 +1506,9 @@ function PremiumTrendChart({
 
       return {
         key,
-        label: PARTY_NAMES[key],
-        short: PARTY_SHORT[key] || key.toUpperCase(),
-        color: PARTY_COLORS[key],
+        label: getPollPartyMeta(key).name,
+        short: getPollPartyMeta(key).short,
+        color: getPollPartyMeta(key).color,
         points,
         latest: points[points.length - 1]?.value ?? null,
       }
@@ -1200,27 +1758,27 @@ function PremiumTrendChart({
   )
 }
 
-function CombinedTrendCard(
-{
+function CombinedTrendCard({
   T,
   polls,
   parties,
+  pollContext,
+  nav,
   hidden,
   focused,
   setFocused,
   setHidden,
-  selectedIndex,
-  setSelectedIndex,
 }) {
-  const trendPolls = getVisibleTrendPolls(polls, 3)
+  const displayTrends = buildDisplayTrendRows(polls, pollContext)
+  const findPollById = (id) => (polls || []).find((poll) => String(poll?.id || '') === String(id || '')) || null
   const story = buildTrendTakeaway({
     parties,
-    polls: trendPolls,
+    polls: displayTrends,
     focusedKey: focused,
     hidden,
   })
 
-  const movers = getTrendValuesFromParties(parties, trendPolls).filter((m) => PARTY_KEYS.includes(m.key))
+  const movers = getTrendValuesFromParties(parties, displayTrends).filter((m) => POLL_PARTY_KEYS.includes(m.key))
 
   const handleMoverPress = (key) => {
     const currentlyHidden = !!hidden[key]
@@ -1287,15 +1845,13 @@ function CombinedTrendCard(
         </div>
 
         <div style={{ marginTop: 12 }}>
-          <PremiumTrendChart
-            polls={trendPolls}
-            hidden={hidden}
-            focused={focused}
-            setFocused={setFocused}
-            selectedIndex={selectedIndex}
-            setSelectedIndex={setSelectedIndex}
-            resetToAll={resetToAll}
+          <SharedTrendChart
+            trends={displayTrends}
+            rawPolls={pollContext?.allPollsSorted || []}
+            hidden={Object.fromEntries(Object.entries(hidden || {}).map(([key, value]) => [getPollPartyMeta(key)?.name || key, value]))}
             T={T}
+            findPollById={findPollById}
+            onOpenPoll={(poll) => nav('pollDetail', { poll })}
           />
         </div>
       </div>
@@ -1324,30 +1880,51 @@ function MethodologyCard({ T, title, body }) {
     <div
       style={{
         borderRadius: 14,
-        padding: '14px 15px',
-        marginBottom: 8,
+        padding: '11px 13px',
+        marginBottom: 6,
         background: T.c0,
         border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
       }}
     >
-      <div style={{ fontSize: 14, fontWeight: 800, color: T.th, marginBottom: 5, textAlign: 'center' }}>
+      <div style={{ fontSize: 13.5, fontWeight: 800, color: T.th, marginBottom: 4, textAlign: 'center' }}>
         {title}
       </div>
-      <div style={{ fontSize: 14, fontWeight: 500, color: T.tl, lineHeight: 1.65, textAlign: 'center' }}>
+      <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, lineHeight: 1.55, textAlign: 'center' }}>
         {body}
       </div>
     </div>
   )
 }
 
-function ScrollAwayHeader({ T, latestLivePoll }) {
+function MethodologyGroup({ T, title, children }) {
   return (
-    <div style={{ padding: '8px 16px 10px' }}>
+    <div style={{ marginBottom: 12 }}>
       <div
         style={{
-          fontSize: 30,
+          fontSize: 12.5,
           fontWeight: 800,
-          letterSpacing: -1,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: T.tl,
+          marginBottom: 7,
+          textAlign: 'center',
+        }}
+      >
+        {title}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function ScrollAwayHeader({ T, latestLivePoll }) {
+  return (
+    <div style={{ padding: '10px 16px 12px' }}>
+      <div
+        style={{
+          fontSize: 32,
+          fontWeight: 800,
+          letterSpacing: -1.1,
           color: T.th,
           textAlign: 'center',
         }}
@@ -1384,7 +1961,7 @@ function ScrollAwayHeader({ T, latestLivePoll }) {
             lineHeight: 1.5,
           }}
         >
-          Latest live poll in feed: {latestLivePoll.pollster} · {displayDate(latestLivePoll)}
+          Latest imported poll in feed: {latestLivePoll.pollster} · {formatUKDate(displayDate(latestLivePoll))}
         </div>
       ) : null}
     </div>
@@ -1399,7 +1976,7 @@ function StickyPillsBar({ T, tab, setTab }) {
         top: 0,
         zIndex: 8,
         background: T.sf,
-        padding: '8px 16px 10px',
+        padding: '10px 16px 12px',
         borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
         boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
       }}
@@ -1409,17 +1986,14 @@ function StickyPillsBar({ T, tab, setTab }) {
   )
 }
 
-export default function PollsScreen({ T, parties, polls, meta, nav }) {
+export default function PollsScreen({ T, parties, polls, meta, nav, pollContext = {} }) {
   const [tab, setTab] = useState('snapshot')
   const [trendHidden, setTrendHidden] = useState({})
   const [trendFocused, setTrendFocused] = useState(null)
-  const [trendSelectedIndex, setTrendSelectedIndex] = useState(null)
 
   const allPolls = useMemo(() => {
     const raw = Array.isArray(polls) ? polls : []
-    return [...raw]
-      .filter((poll) => RELEASE_POLLSTERS.has(normalisePollster(poll?.pollster)))
-      .sort((a, b) => pollSortScore(b).localeCompare(pollSortScore(a)))
+    return [...raw].sort((a, b) => pollSortScore(b).localeCompare(pollSortScore(a)))
   }, [polls])
 
   const importedPolls = useMemo(() => allPolls.filter((poll) => isImportedPoll(poll)), [allPolls])
@@ -1432,9 +2006,31 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
   )
 
   const pollsterGroups = useMemo(() => groupPollsByPollster(allPolls), [allPolls])
+  const maxPollsterCount = useMemo(
+    () => pollsterGroups.reduce((max, group) => Math.max(max, group?.polls?.length || 0), 0),
+    [pollsterGroups],
+  )
+  const pollSpread = useMemo(() => buildPollSpreadInsights({ polls: allPolls }), [allPolls])
+  const pollHouseEffects = useMemo(() => buildPollHouseEffectsInsights({ polls: allPolls }), [allPolls])
+  const raceState = useMemo(() => buildRaceStateSummary(mainParties, pollContext?.trendSeries || []), [mainParties, pollContext])
+  const whyThisMatters = useMemo(
+    () => buildWhyThisMattersBullets(mainParties, pollContext?.trendSeries || []),
+    [mainParties, pollContext],
+  )
+  const pollingIntelligence = useMemo(
+    () => buildPollingIntelligence({
+      polls: allPolls,
+      parties: mainParties,
+      latestPoll: latestLivePoll || latestPolls[0] || null,
+      pollContext,
+      raceState,
+      spread: pollSpread,
+      houseEffects: pollHouseEffects,
+    }),
+    [allPolls, mainParties, latestLivePoll, latestPolls, pollContext, raceState, pollSpread, pollHouseEffects],
+  )
 
   const topTwo = mainParties.slice(0, 2)
-  const gap = topTwo.length === 2 ? +((safeNumber(topTwo[0].pct) || 0) - (safeNumber(topTwo[1].pct) || 0)).toFixed(1) : null
 
   return (
     <div
@@ -1448,33 +2044,18 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
       <ScrollAwayHeader T={T} latestLivePoll={latestLivePoll} />
       <StickyPillsBar T={T} tab={tab} setTab={setTab} />
 
-      <div style={{ padding: '12px 16px 40px' }}>
-        {tab === 'snapshot' ? (
-          <>
-            <HeroSnapshot T={T} parties={mainParties} latestLivePoll={latestLivePoll} nav={nav} />
+        <div style={{ padding: '12px 16px 40px' }}>
+            {tab === 'snapshot' ? (
+              <>
+                <PollBriefingCard
+                  T={T}
+                  raceState={raceState}
+                  topTwo={topTwo}
+                  intelligence={pollingIntelligence}
+                  whyItMatters={whyThisMatters[0] || ''}
+                />
 
-            {topTwo.length === 2 ? (
-              <div
-                style={{
-                  borderRadius: 14,
-                  padding: '14px 16px',
-                  marginBottom: 12,
-                  background: T.c0,
-                  border: `1px solid ${(topTwo[0].color || T.pr)}22`,
-                }}
-              >
-                <SectionLabel T={T}>Race state</SectionLabel>
-
-                <div style={{ fontSize: 23, fontWeight: 800, color: T.th, textAlign: 'center', lineHeight: 1.15 }}>
-                  {topTwo[0].name} lead by {gap}pt
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-                  <Badge color={topTwo[0].color}>{topTwo[0].abbr} {topTwo[0].pct}%</Badge>
-                  <Badge color={topTwo[1].color} subtle>{topTwo[1].abbr} {topTwo[1].pct}%</Badge>
-                </div>
-              </div>
-            ) : null}
+                <HeroSnapshot T={T} parties={mainParties} latestLivePoll={latestLivePoll} nav={nav} />
 
             {latestPolls[0] ? (
               <>
@@ -1513,40 +2094,48 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
           </>
         ) : null}
 
-        {tab === 'latest' ? (
-          <>
-            <SectionLabel T={T}>Latest polls</SectionLabel>
+          {tab === 'latest' ? (
+            <>
+              <SectionLabel T={T}>Latest polls</SectionLabel>
 
-            <div
-              style={{
-                borderRadius: 14,
-                padding: '12px 14px',
-                marginBottom: 12,
-                background: T.c0,
-                border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <Badge color={T.pr}>{importedPolls.length ? 'Live-first ordering' : 'Archive view'}</Badge>
-                <Badge color={T.tl} subtle>{latestPolls.length} shown</Badge>
-              </div>
               <div
                 style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: T.tl,
-                  lineHeight: 1.55,
-                  textAlign: 'center',
-                  marginTop: 8,
+                  borderRadius: 14,
+                  padding: '8px 12px',
+                  marginBottom: 10,
+                  background: T.c0,
+                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
                 }}
               >
-                Live-imported polls are prioritised when available. Older legacy rows stay visible below until the archive is fully cleaned.
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <Badge color={T.pr}>{importedPolls.length ? 'Imported-first ordering' : 'Archive view'}</Badge>
+                  <Badge color={T.tl} subtle>{latestPolls.length} shown</Badge>
+                </div>
+                <div
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    color: T.tl,
+                    lineHeight: 1.4,
+                    textAlign: 'center',
+                    marginTop: 6,
+                  }}
+                >
+                  Direct-source polls are prioritised when available.
+                </div>
               </div>
-            </div>
 
-            {latestPolls.map((poll) => (
-              <PollCard key={poll.id || `${poll.pollster}-${displayDate(poll)}`} T={T} poll={poll} nav={nav} />
-            ))}
+              {latestPolls.map((poll, index) => (
+                <PollCard
+                  key={poll.id || `${poll.pollster}-${formatUKDate(displayDate(poll))}`}
+                  T={T}
+                  poll={poll}
+                  nav={nav}
+                  polls={allPolls}
+                  pollContext={pollContext}
+                  isFeatured={index === 0}
+                />
+              ))}
 
             {latestPolls.length === 0 ? (
               <div style={{ fontSize: 14, fontWeight: 600, color: T.tl, textAlign: 'center' }}>
@@ -1561,12 +2150,12 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
             T={T}
             polls={allPolls}
             parties={mainParties}
+            pollContext={pollContext}
+            nav={nav}
             hidden={trendHidden}
             focused={trendFocused}
             setFocused={setTrendFocused}
             setHidden={setTrendHidden}
-            selectedIndex={trendSelectedIndex}
-            setSelectedIndex={setTrendSelectedIndex}
           />
         ) : null}
 
@@ -1574,9 +2163,16 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
           <>
             <SectionLabel T={T}>Pollsters</SectionLabel>
 
-            {pollsterGroups.map((group) => (
-              <PollsterCard key={group.name} T={T} group={group} nav={nav} />
-            ))}
+              {pollsterGroups.map((group, index) => (
+                <PollsterCard
+                  key={group.name}
+                  T={T}
+                  group={group}
+                  nav={nav}
+                  featured={index === 0}
+                  mostActive={(group?.polls?.length || 0) === maxPollsterCount && maxPollsterCount > 1}
+                />
+              ))}
 
             <div
               style={{
@@ -1597,41 +2193,47 @@ export default function PollsScreen({ T, parties, polls, meta, nav }) {
           </>
         ) : null}
 
-        {tab === 'methodology' ? (
-          <>
-            <SectionLabel T={T}>How polls are shown</SectionLabel>
+          {tab === 'methodology' ? (
+            <>
+              <SectionLabel T={T}>Methodology</SectionLabel>
 
-            <MethodologyCard
-              T={T}
-              title="Live imports first"
-              body="When a poll has a real source link and imported metadata, it is treated as a live-imported poll and shown ahead of older legacy archive rows."
-            />
+              <MethodologyGroup T={T} title="How we rank polls">
+                <MethodologyCard
+                  T={T}
+                  title="Direct-source polls are prioritised"
+                  body="Polls with a direct source link and verified import metadata are shown ahead of older archive-only rows."
+                />
 
-            <MethodologyCard
-              T={T}
-              title="Fieldwork matters"
-              body="Polling dates can mean different things. Where possible, fieldwork and published dates should both be stored, because a poll released today may reflect interviews done earlier."
-            />
+                <MethodologyCard
+                  T={T}
+                  title="Trend views are directional"
+                  body="Trend charts show the broader direction of travel over time, rather than a prediction or a single definitive number."
+                />
+              </MethodologyGroup>
 
-            <MethodologyCard
-              T={T}
-              title="Sample size is useful, not magic"
-              body="Larger samples usually reduce random error, but weighting, turnout modelling and panel quality still matter. Bigger does not automatically mean better."
-            />
+              <MethodologyGroup T={T} title="How to read a poll">
+                <MethodologyCard
+                  T={T}
+                  title="Fieldwork dates matter"
+                  body="A poll released today may reflect interviews done earlier, so fieldwork dates often tell you more than the publish date alone."
+                />
 
-            <MethodologyCard
-              T={T}
-              title="Why pollsters differ"
-              body="Different turnout assumptions, house effects, weighting models and undecided-voter treatment can produce different results even in the same week."
-            />
+                <MethodologyCard
+                  T={T}
+                  title="Sample size helps, but it is not everything"
+                  body="Larger samples can reduce random error, but weighting, turnout models and panel quality still shape the final result."
+                />
+              </MethodologyGroup>
 
-            <MethodologyCard
-              T={T}
-              title="Trends are directional"
-              body="Trend views help show movement across the visible recent range. They are for direction of travel, not certainty or prediction."
-            />
-          </>
-        ) : null}
+              <MethodologyGroup T={T} title="Why polls differ">
+                <MethodologyCard
+                  T={T}
+                  title="Polling firms can show different pictures"
+                  body="House effects, turnout assumptions and different handling of undecided voters can all shift the topline, even in the same week."
+                />
+              </MethodologyGroup>
+            </>
+          ) : null}
       </div>
     </div>
   )

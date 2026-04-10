@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { StickyPills, haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
 import { API_BASE } from '../constants'
@@ -642,3 +642,5 @@ export default function ParliamentScreen({ T }) {
     </div>
   )
 }
+
+

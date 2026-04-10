@@ -1,3 +1,4 @@
+import React from 'react'
 export default function Swingometer({ fromColor, toColor, fromParty, toParty, swingPts, needed, T }) {
   const MAX = 35
   const angle = Math.min(swingPts / MAX * 90, 90)
@@ -20,3 +21,5 @@ export default function Swingometer({ fromColor, toColor, fromParty, toParty, sw
     </div>
   )
 }
+
+

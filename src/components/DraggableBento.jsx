@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import { SP } from '../constants'
 import { haptic } from '../components/ui'
 
@@ -147,3 +147,6 @@ export default function DraggableBento({ cards, renderCard, cols = 2, gap = 16 }
     </div>
   )
 }
+
+
+

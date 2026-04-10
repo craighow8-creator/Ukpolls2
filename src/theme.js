@@ -177,14 +177,12 @@ export const DARK = {
   },
 }
 
+import { getPartyByName } from './data/partyRegistry'
+
 export const THEMES = { ...LIGHT }
 
 export const partyTheme = (name) => {
-  const m = {
-    'Reform UK':'reform', 'Labour':'labour', 'Conservative':'con',
-    'Green':'green', 'Lib Dem':'ld', 'Restore Britain':'rb',
-  }
-  return m[name] || 'base'
+  return getPartyByName(name).themeKey || 'base'
 }
 
 export const getTheme = (name, dark = false) => {

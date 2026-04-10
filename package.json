@@ -7,17 +7,29 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "npm run build && gh-pages -d dist",
+    "polls:import:local": "cross-env POLITISCOPE_API_BASE=http://127.0.0.1:8787 node ./scripts/ingest-polls.mjs",
+    "polls:import:remote": "cross-env POLITISCOPE_API_BASE=https://politiscope-api.craighow8.workers.dev node ./scripts/ingest-polls.mjs",
+    "byelections:import:local": "node ./scripts/ingest-byelections.mjs --api-base=http://127.0.0.1:8787",
+    "byelections:import:remote": "node ./scripts/ingest-byelections.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
+    "elections:intelligence:refresh:local": "node ./scripts/refresh-elections-intelligence.mjs --api-base=http://127.0.0.1:8787",
+    "elections:intelligence:refresh:remote": "node ./scripts/refresh-elections-intelligence.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
+    "elections:mayors:refresh:local": "node ./scripts/refresh-mayors.mjs --api-base=http://127.0.0.1:8787",
+    "elections:mayors:refresh:remote": "node ./scripts/refresh-mayors.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
+    "elections:devolved:refresh:local": "node ./scripts/refresh-devolved.mjs --api-base=http://127.0.0.1:8787",
+    "elections:devolved:refresh:remote": "node ./scripts/refresh-devolved.mjs --api-base=https://politiscope-api.craighow8.workers.dev"
   },
   "dependencies": {
     "framer-motion": "^11.0.0",
     "node-fetch": "^2.7.0",
+    "pdf-parse": "^1.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
+    "cross-env": "^10.1.0",
     "gh-pages": "^6.3.0",
     "vite": "^5.2.0",
     "wrangler": "^4.77.0"

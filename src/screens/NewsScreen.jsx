@@ -1,31 +1,9 @@
-import { useMemo, useState } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { StickyPills, haptic } from '../components/ui'
+import { haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
-
-const NEWS_TABS = [
-  { key: 'all', label: 'All' },
-  { key: 'polls', label: 'Polls' },
-  { key: 'parties', label: 'Parties' },
-  { key: 'elections', label: 'Elections' },
-]
-
-const FALLBACK_NEWS = [
-  { title: 'Reform UK maintains 27% poll lead for third consecutive week', source: 'Politiscope', time: '2h ago', category: 'polls', url: '#', color: '#12B7D4' },
-  { title: 'Runcorn & Helsby by-election: Reform wins by just 6 votes in historic upset', source: 'BBC News', time: '3h ago', category: 'elections', url: 'https://bbc.co.uk', color: '#E4003B' },
-  { title: 'Keir Starmer faces Labour backbench revolt over welfare cuts', source: 'Guardian', time: '5h ago', category: 'parties', url: '#', color: '#E4003B' },
-  { title: 'Green Party surges to 16% in latest YouGov poll — highest ever', source: 'YouGov', time: '6h ago', category: 'polls', url: '#', color: '#02A95B' },
-  { title: 'Kemi Badenoch unveils Conservative immigration plan ahead of May elections', source: 'Telegraph', time: '8h ago', category: 'parties', url: '#', color: '#0087DC' },
-  { title: 'Scottish Parliament election: SNP vs Labour battleground intensifies', source: 'The Scotsman', time: '10h ago', category: 'elections', url: '#', color: '#C4922A' },
-  { title: 'Lib Dems ahead in Horsham by-election betting markets', source: 'Oddschecker', time: '12h ago', category: 'elections', url: '#', color: '#FAA61A' },
-  { title: 'Net migration falls to 204,000 — lowest since 2021', source: 'ONS', time: '1d ago', category: 'polls', url: '#', color: '#12B7D4' },
-  { title: 'Nigel Farage: Reform will win more than 100 councils in May local elections', source: 'Times', time: '1d ago', category: 'elections', url: '#', color: '#12B7D4' },
-  { title: 'PMQs: Starmer and Farage clash over NHS waiting times', source: 'Parliament TV', time: '2d ago', category: 'parties', url: '#', color: '#E4003B' },
-  { title: 'Gorton & Denton Green MP calls for proportional representation', source: 'Green Party', time: '2d ago', category: 'parties', url: '#', color: '#02A95B' },
-  { title: 'New MRP poll: Reform projected 335 seats if election held now', source: 'Electoral Calculus', time: '3d ago', category: 'polls', url: '#', color: '#12B7D4' },
-]
 
 function Badge({ children, color, subtle = false }) {
   return (
@@ -51,25 +29,7 @@ function Badge({ children, color, subtle = false }) {
   )
 }
 
-function SectionLabel({ children, T }) {
-  return (
-    <div
-      style={{
-        fontSize: 13,
-        fontWeight: 800,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        color: T.tl,
-        marginBottom: 10,
-        textAlign: 'center',
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-function ScrollAwayHeader({ T, count }) {
+function ScrollAwayHeader({ T, count, loading }) {
   return (
     <div style={{ padding: '8px 16px 10px' }}>
       <div
@@ -81,8 +41,8 @@ function ScrollAwayHeader({ T, count }) {
           marginBottom: 10,
         }}
       >
-        <Badge color={T.pr}>{count} stories</Badge>
-        <Badge color={T.tl} subtle>Recency first</Badge>
+        <Badge color={T.pr}>{loading ? 'Updating…' : `${count} stories`}</Badge>
+        <Badge color={T.tl} subtle>UK politics live</Badge>
       </div>
 
       <div
@@ -110,7 +70,7 @@ function ScrollAwayHeader({ T, count }) {
         }}
       >
         <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
-          Politics feed · grouped by topic
+          Live UK politics feed · newest first
         </div>
         <InfoButton id="news_feed" T={T} size={20} />
       </div>
@@ -118,32 +78,52 @@ function ScrollAwayHeader({ T, count }) {
   )
 }
 
-function StickyPillsBar({ T, tab, setTab }) {
-  return (
-    <div
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 8,
-        background: T.sf,
-        padding: '8px 16px 10px',
-        borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
-        boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
-      }}
-    >
-      <StickyPills pills={NEWS_TABS} active={tab} onSelect={setTab} T={T} />
-    </div>
-  )
+function formatRelativeTime(iso) {
+  if (!iso) return ''
+  const ts = new Date(iso).getTime()
+  if (Number.isNaN(ts)) return ''
+
+  const diffMs = Date.now() - ts
+  const diffMins = Math.max(0, Math.floor(diffMs / 60000))
+
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+
+  const diffHours = Math.floor(diffMins / 60)
+  if (diffHours < 24) return `${diffHours}h ago`
+
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays < 7) return `${diffDays}d ago`
+
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+  })
+}
+
+function tagColor(tag, T) {
+  switch (tag) {
+    case 'Polling':
+      return '#12B7D4'
+    case 'Elections':
+      return '#7A52F4'
+    case 'Party':
+      return '#E4003B'
+    case 'Policy':
+      return '#02A95B'
+    default:
+      return T.pr
+  }
 }
 
 function NewsCard({ T, item, big }) {
-  const tappable = item.url && item.url !== '#'
+  const color = tagColor(item.tag, T)
 
   return (
     <motion.div
       {...TAP}
       onClick={() => {
-        if (!tappable) return
+        if (!item.url) return
         haptic(6)
         window.open(item.url, '_blank', 'noopener,noreferrer')
       }}
@@ -152,8 +132,8 @@ function NewsCard({ T, item, big }) {
         padding: big ? '16px' : '12px 14px',
         marginBottom: big ? 12 : 8,
         background: T.c0 || '#fff',
-        border: `1px solid ${item.color || T.pr}28`,
-        cursor: tappable ? 'pointer' : 'default',
+        border: `1px solid ${color}22`,
+        cursor: item.url ? 'pointer' : 'default',
         overflow: 'hidden',
         position: 'relative',
       }}
@@ -162,7 +142,7 @@ function NewsCard({ T, item, big }) {
         <div
           style={{
             height: 3,
-            background: item.color || T.pr,
+            background: color,
             position: 'absolute',
             top: 0,
             left: 0,
@@ -179,25 +159,36 @@ function NewsCard({ T, item, big }) {
             alignItems: 'center',
             marginBottom: big ? 8 : 5,
             gap: 8,
+            flexWrap: 'wrap',
           }}
         >
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: item.color || T.pr,
-              background: `${item.color || T.pr}1e`,
-              border: `1px solid ${(item.color || T.pr)}2B`,
-              borderRadius: 999,
-              padding: '3px 8px',
-            }}
-          >
-            {item.category}
-          </span>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            {item.tag ? (
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  color,
+                  background: `${color}12`,
+                  border: `1px solid ${color}2B`,
+                  borderRadius: 999,
+                  padding: '3px 8px',
+                }}
+              >
+                {item.tag}
+              </span>
+            ) : null}
 
-          <span style={{ fontSize: 13, fontWeight: 500, color: T.tl, flexShrink: 0 }}>{item.time}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: T.tl }}>
+              {item.source}
+            </span>
+          </div>
+
+          <span style={{ fontSize: 13, fontWeight: 600, color: T.tl, flexShrink: 0 }}>
+            {formatRelativeTime(item.publishedAt)}
+          </span>
         </div>
 
         <div
@@ -206,32 +197,82 @@ function NewsCard({ T, item, big }) {
             fontWeight: 700,
             color: T.th,
             lineHeight: 1.45,
-            marginBottom: 6,
           }}
         >
           {item.title}
-        </div>
-
-        <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
-          {item.source}
-          {tappable ? ' ↗' : ''}
         </div>
       </div>
     </motion.div>
   )
 }
 
+function EmptyState({ T, title, body }) {
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        padding: '16px',
+        background: T.c0,
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        textAlign: 'center',
+      }}
+    >
+      <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{title}</div>
+      <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 6, lineHeight: 1.55 }}>
+        {body}
+      </div>
+    </div>
+  )
+}
+
 export function NewsScreen({ T }) {
-  const [tab, setTab] = useState('all')
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const news = FALLBACK_NEWS
+  useEffect(() => {
+    let cancelled = false
 
-  const filtered = useMemo(() => {
-    return tab === 'all' ? news : news.filter((n) => n.category === tab)
-  }, [tab, news])
+    async function loadNews() {
+      try {
+        setLoading(true)
+        setError('')
 
-  const heroItem = filtered[0] || null
-  const rest = filtered.slice(1)
+        const res = await fetch('/api/news', {
+          headers: { Accept: 'application/json' },
+        })
+
+        if (!res.ok) {
+          throw new Error(`News request failed (${res.status})`)
+        }
+
+        const data = await res.json()
+        const nextItems = Array.isArray(data?.items) ? data.items : []
+
+        if (!cancelled) {
+          setItems(nextItems)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setItems([])
+          setError(err instanceof Error ? err.message : 'Unable to load news.')
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadNews()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const heroItem = items[0] || null
+  const rest = useMemo(() => items.slice(1), [items])
 
   return (
     <div
@@ -242,40 +283,46 @@ export function NewsScreen({ T }) {
         background: T.sf,
       }}
     >
-      <ScrollAwayHeader T={T} count={filtered.length} />
-      <StickyPillsBar T={T} tab={tab} setTab={setTab} />
+      <ScrollAwayHeader T={T} count={items.length} loading={loading} />
 
       <div style={{ padding: '12px 16px 40px' }}>
-        {heroItem ? (
-          <>
-            <SectionLabel T={T}>Top story</SectionLabel>
-            <NewsCard T={T} item={heroItem} big />
-          </>
+        {loading && !items.length ? (
+          <EmptyState
+            T={T}
+            title="Loading live politics news"
+            body="Pulling the latest UK politics stories now."
+          />
         ) : null}
 
-        {rest.length > 0 ? (
+        {!loading && error ? (
+          <EmptyState
+            T={T}
+            title="News feed unavailable"
+            body={error}
+          />
+        ) : null}
+
+        {!loading && !error && heroItem ? (
           <>
-            <SectionLabel T={T}>Latest feed</SectionLabel>
+            <NewsCard T={T} item={heroItem} big />
             {rest.map((item, i) => (
-              <NewsCard key={`${item.title}-${i}`} T={T} item={item} big={false} />
+              <NewsCard key={`${item.url || item.title}-${i}`} T={T} item={item} big={false} />
             ))}
           </>
         ) : null}
 
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '10px 0 0',
-            fontSize: 13,
-            fontWeight: 500,
-            color: T.tl,
-          }}
-        >
-          News feed is curated for layout while live sourcing is still being wired.
-        </div>
+        {!loading && !error && !heroItem ? (
+          <EmptyState
+            T={T}
+            title="No live stories found"
+            body="No matching UK politics stories are available from the current source list right now."
+          />
+        ) : null}
       </div>
     </div>
   )
 }
 
 export default NewsScreen
+
+

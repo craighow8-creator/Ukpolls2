@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { haptic } from '../components/ui'
 
 // Info content — explanations for every data point in the app
@@ -22,24 +22,91 @@ These figures come from the Ipsos Political Monitor, which has tracked leader ap
     source: 'Ipsos Political Monitor · Monthly',
   },
   poll_average: {
-    title: '7-Poll Average',
-    body: `The headline polling figure is a simple average of the seven most recent published polls from BPC (British Polling Council) member pollsters.
+    title: 'Polling Snapshot',
+    body: `• Polls are refreshed automatically through the ingest pipeline.
 
-BPC members are required to publish their full data tables, including methodology, weighting, and fieldwork dates. This transparency requirement distinguishes them from non-member polls.
+• Each pollster contributes its latest validated eligible poll to the headline snapshot.
 
-Current pollsters included: YouGov, Savanta, Opinium, Redfield & Wilton, More in Common, Techne, and BMG Research.
+• Direct-source polls are preferred where available, with validated fallback or archive rows used when needed.
 
-All polls use some form of likelihood to vote weighting. Fieldwork is typically conducted online over 2-4 days.`,
-    source: 'BPC member polls · 7-poll rolling average',
+• The snapshot is weighted by recency and sample size, while trend lines are built from the validated poll archive over time.
+
+• Pollster freshness can vary because some houses publish more often than others.`,
+    source: 'Validated poll archive · weighted latest-by-pollster snapshot',
+  },
+  voting_by_thirds: {
+    title: 'What does “voting by thirds” mean?',
+    body: `Some councils do not elect every councillor at the same time. Instead, roughly one third of councillors are elected in each ordinary election year, usually across a three-year cycle, followed by one fallow year with no ordinary election.
+
+That means a council with 60 seats will often have about 20 seats up in one year, another 20 the next year, and another 20 the year after that.
+
+This matters because a party can perform well in one year without taking full control immediately. It also means the political story is often about momentum, ward targeting, and whether a party is steadily building over several cycles.`,
+    source: 'UK local government election cycles',
+  },
+  all_out_election: {
+    title: 'What is an all-out election?',
+    body: `An all-out election means every council seat is contested at the same time.
+
+So if a council has 63 seats, all 63 are up for election in one go. That makes the result much more dramatic than a by-thirds contest, because control of the whole council can change in a single night.
+
+All-out elections often happen in London boroughs, county councils, many unitary authorities, and councils that have recently had boundary reviews.`,
+    source: 'UK local government election cycles',
+  },
+  noc: {
+    title: 'No Overall Control (NOC)',
+    body: `No Overall Control means no single party has enough councillors to run the council on its own.
+
+That does not mean the council stops working. It usually means parties have to govern through coalitions, confidence-and-supply deals, committee arrangements, or issue-by-issue bargaining.
+
+A council can be politically very important even under NOC, because small seat changes can alter who is able to run it.`,
+    source: 'Common UK local government term',
+  },
+  directly_elected_mayor: {
+    title: 'Directly elected mayor',
+    body: `Some councils have a mayor elected directly by voters across the whole council area.
+
+That mayor is separate from ordinary ward councillors and can have executive power even if the council chamber has a different party balance.
+
+So a place can have a Labour mayor but a Reform-leaning or fragmented council chamber, or vice versa. That is why mayoral control and council control are not always the same thing.`,
+    source: 'UK local government governance models',
+  },
+  seats_up: {
+    title: 'What does “seats up” mean?',
+    body: `“Seats up” means how many council seats are actually being contested in the current election.
+
+This is not always the same as the total number of councillors. In an all-out election, every seat is up. In a by-thirds council, only about one third of seats are up this time.
+
+That number matters because it tells you how big the immediate electoral test really is.`,
+    source: 'UK local election terminology',
+  },
+  majority_local: {
+    title: 'Council majority',
+    body: `A council majority is the cushion a ruling group has above the line needed for overall control.
+
+A big majority usually means control is secure. A small majority means a few losses can change who runs the council. A majority of zero means there is no single-party overall control.
+
+This is one of the quickest ways to judge whether a council is genuinely at risk of changing hands.`,
+    source: 'Local council control arithmetic',
+  },
+  not_voting_this_time: {
+    title: 'Why is this council shown if it is not voting this year?',
+    body: `Some councils are still politically important even when they do not have scheduled local elections in the current cycle.
+
+Showing them avoids confusing blank results, and it helps users understand the wider political map — especially where governance, mayoral control, or recent breakthroughs still matter.
+
+In those cases, the app should clearly say there is no scheduled election this time, while still showing the council’s current political context.`,
+    source: 'Politiscope council status design',
   },
   news_feed: {
     title: 'About this news feed',
-    body: `Stories are ranked by how many outlets cover them. If BBC, GB News, Guardian and Sky News all run the same story, it scores highly. A story only one outlet covers ranks lower. Recency breaks ties.
+    body: `This feed is limited to approved UK politics sources and is filtered to try to remove non-political, foreign, audio, live-blog, and lifestyle stories.
 
-Sources include a mix of broadcasters, newspapers, and party-adjacent political outlets. Some outlets such as the Telegraph, Daily Mail and Times restrict automated access, so coverage can never be fully universal.
+Stories do not refresh constantly. The app checks for fresh news roughly every 12 hours rather than hammering the API all day. That keeps usage sensible while still updating the feed regularly.
 
-This feed is designed as a fast political briefing layer, not a complete substitute for reading full source reporting.`,
-    source: 'Ranked by coverage · recency first',
+Because filtering is intentionally strict, the feed may sometimes show fewer stories, older stories, or a source mix that leans heavily toward whichever outlet has the clearest matching UK politics coverage at that moment.
+
+This feed is designed as a fast political briefing layer, not a complete substitute for reading the original reporting.`,
+    source: 'Approved sources · filtered UK politics feed · ~12h refresh',
   },
   betting_odds: {
     title: 'Betting Odds & Implied Probability',

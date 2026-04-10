@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { ScrollArea, StickyPills, haptic } from '../components/ui'
 
 // MRP-style seat calculation using proportional + tactical adjustment
@@ -274,3 +274,6 @@ export default function SeatBuilderScreen({ T, nav }) {
     </div>
   )
 }
+
+
+

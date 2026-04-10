@@ -1,8 +1,37 @@
-const IPSOS_TOPIC_URL = 'https://www.ipsos.com/en-uk/topic/political-monitor'
-const IPSOS_ARTICLE_URL = 'https://www.ipsos.com/en-uk/reform-uk-holds-7-point-lead-over-labour-greens-5-points'
+/**
+ * ipsos.mjs — Ipsos Political Monitor ingestion
+ *
+ * Exports:
+ *   fetchIpsosPolls()  → Poll[]   archive-first, many rows, newest-first
+ *   fetchIpsosPoll()   → Poll     latest only (fallback / convenience)
+ */
 
-function cleanText(value) {
-  return String(value || '')
+const BASE         = 'https://www.ipsos.com'
+const ARCHIVE_URL  = `${BASE}/en-uk/political-monitor-archive`
+const TOPIC_URL    = `${BASE}/en-uk/topic/political-monitor`
+const KNOWN_LATEST = `${BASE}/en-uk/reform-uk-holds-7-point-lead-over-labour-greens-5-points`
+
+const HISTORY_LIMIT = 20
+const CONCURRENCY = 4
+
+async function fetchText(url) {
+  const res = await fetch(url, {
+    headers: {
+      Accept:            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-GB,en;q=0.9',
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
+        '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      Referer: 'https://www.ipsos.com/',
+    },
+    redirect: 'follow',
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`)
+  return res.text()
+}
+
+function cleanText(html) {
+  return String(html || '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&#8211;/g, '–')
     .replace(/&#8217;/g, "'")
@@ -18,10 +47,8 @@ function cleanText(value) {
 }
 
 function safeNumber(value) {
-  if (value === null || value === undefined || value === '') return null
-  const raw = String(value).trim().replace(/%/g, '').replace(/,/g, '')
-  if (!raw) return null
-  const n = Number(raw)
+  if (value == null || value === '') return null
+  const n = Number(String(value).trim().replace(/%/g, '').replace(/,/g, ''))
   return Number.isFinite(n) ? n : null
 }
 
@@ -33,139 +60,269 @@ function slugify(value) {
     .replace(/^-+|-+$/g, '')
 }
 
-function absolutizeUrl(base, maybeUrl) {
-  try {
-    return new URL(maybeUrl, base).toString()
-  } catch {
-    return maybeUrl
+function absolutize(base, href) {
+  try { return new URL(href, base).toString() } catch { return href }
+}
+
+function parseArchiveUrls(html) {
+  const urls = []
+  const linkRe = /<a\s[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
+  let m
+  while ((m = linkRe.exec(html)) !== null) {
+    const href  = m[1]
+    const label = cleanText(m[2])
+
+    if (!href.startsWith('/en-uk/') && !href.startsWith('https://www.ipsos.com/en-uk/')) continue
+    if (!/political monitor/i.test(label)) continue
+    if (/prediction poll|scottish|welsh/i.test(label)) continue
+    if (/archive|older.surveys/i.test(href)) continue
+    if (href.startsWith('https://www.google.')) continue
+
+    const url = absolutize(BASE, href)
+    if (!urls.includes(url)) urls.push(url)
   }
+  return urls
 }
 
-async function fetchText(url) {
-  const res = await fetch(url, {
-    headers: {
-      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'User-Agent': 'Mozilla/5.0',
-    },
-    redirect: 'follow',
-  })
-
-  if (!res.ok) {
-    throw new Error(`Request failed ${res.status} for ${url}`)
+function parseTopicUrls(html) {
+  const excluded = new Set([
+    '/en-uk/topic/political-monitor',
+    '/en-uk/insights-hub',
+    '/en-uk/about-us',
+    '/en-uk/contact',
+    '/en-uk/careers-at-ipsos',
+  ])
+  const re   = /href=["'](\/en-uk\/[a-z0-9][a-z0-9-]+)["']/gi
+  const seen = []
+  let m
+  while ((m = re.exec(html)) !== null) {
+    const path = m[1]
+    if (!seen.includes(path) && !excluded.has(path) && !path.startsWith('/en-uk/topic/')) {
+      seen.push(path)
+    }
   }
-
-  return res.text()
+  return seen.map(p => absolutize(BASE, p))
 }
 
-function extractLatestArticleUrl(topicHtml) {
-  const m = String(topicHtml || '').match(/###\s*<a[^>]+href=["']([^"']+)["'][^>]*>\s*Reform UK holds 7-point lead over Labour, Greens up 5 points/i)
-  if (m) return absolutizeUrl(IPSOS_TOPIC_URL, m[1])
-  return IPSOS_ARTICLE_URL
+const MONTH_MAP = {
+  january:'01', february:'02', march:'03',    april:'04',
+  may:'05',     june:'06',     july:'07',      august:'08',
+  september:'09', october:'10', november:'11', december:'12',
 }
+const MO = Object.keys(MONTH_MAP).join('|')
 
-function extractPublishedDate(articleHtml) {
-  const m = String(articleHtml || '').match(/\b(\d{2})\.(\d{2})\.(\d{2})\b/)
-  if (!m) return null
-  return `20${m[3]}-${m[2]}-${m[1]}`
+function extractPublishedDate(html) {
+  const s = html.match(/\b(\d{2})\.(\d{2})\.(\d{2})\b/)
+  if (s) return `20${s[3]}-${s[2]}-${s[1]}`
+
+  const text = cleanText(html)
+  const l = text.match(new RegExp(`\\b(\\d{1,2})\\s+(${MO})\\s+(20\\d{2})\\b`, 'i'))
+  if (l) return `${l[3]}-${MONTH_MAP[l[2].toLowerCase()]}-${String(l[1]).padStart(2,'0')}`
+
+  return null
 }
 
 function extractFieldwork(text) {
-  const m = String(text || '').match(/fieldwork carried out\s+(\d{1,2})\s*[-–]\s*(\d{1,2})\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+(20\d{2})/i)
-  if (!m) return { fieldworkStart: null, fieldworkEnd: null }
-
-  const monthMap = {
-    january: '01', february: '02', march: '03', april: '04', may: '05', june: '06',
-    july: '07', august: '08', september: '09', october: '10', november: '11', december: '12'
+  const a = text.match(
+    new RegExp(
+      `(\\d{1,2})(?:st|nd|rd|th)?\\s*[-–]\\s*(\\d{1,2})(?:st|nd|rd|th)?\\s+(${MO})\\s+(20\\d{2})`,
+      'i'
+    )
+  )
+  if (a) {
+    const mo = MONTH_MAP[a[3].toLowerCase()]
+    return {
+      fieldworkStart: `${a[4]}-${mo}-${String(a[1]).padStart(2,'0')}`,
+      fieldworkEnd:   `${a[4]}-${mo}-${String(a[2]).padStart(2,'0')}`,
+    }
   }
-  const month = monthMap[m[3].toLowerCase()]
-  const year = m[4]
 
-  return {
-    fieldworkStart: `${year}-${month}-${String(m[1]).padStart(2, '0')}`,
-    fieldworkEnd: `${year}-${month}-${String(m[2]).padStart(2, '0')}`,
+  const b = text.match(
+    new RegExp(
+      `(\\d{1,2})(?:st|nd|rd|th)?\\s+(${MO})\\s*[-–]\\s*(\\d{1,2})(?:st|nd|rd|th)?\\s+(${MO})\\s+(20\\d{2})`,
+      'i'
+    )
+  )
+  if (b) {
+    return {
+      fieldworkStart: `${b[5]}-${MONTH_MAP[b[2].toLowerCase()]}-${String(b[1]).padStart(2,'0')}`,
+      fieldworkEnd:   `${b[5]}-${MONTH_MAP[b[4].toLowerCase()]}-${String(b[3]).padStart(2,'0')}`,
+    }
   }
+
+  return { fieldworkStart: null, fieldworkEnd: null }
 }
 
 function extractSample(text) {
-  const m = String(text || '').match(/representative probability sample of\s+([\d,]+)\s+British adults/i)
+  const m = text.match(/(?:probability\s+)?sample\s+of\s+([\d,]+)\s+British\s+adults/i)
   return m ? safeNumber(m[1]) : null
 }
 
 function extractPartyValues(text) {
-  const values = {}
-  let m = String(text || '').match(/Reform\s+are on\s+(\d+)%/i)
-  if (m) values.ref = safeNumber(m[1])
+  const result = {}
 
-  m = String(text || '').match(/Labour\s+(\d+)%/i)
-  if (m) values.lab = safeNumber(m[1])
+  const summaryLine = text.match(
+    /Reform\s+UK\s+(\d+)%[^.]*?Labour\s+(\d+)%[^.]*?Conservatives?\s+(\d+)%/i
+  )
+  if (summaryLine) {
+    result.ref = safeNumber(summaryLine[1])
+    result.lab = safeNumber(summaryLine[2])
+    result.con = safeNumber(summaryLine[3])
 
-  m = String(text || '').match(/Conservative\s+(\d+)%/i)
-  if (m) values.con = safeNumber(m[1])
+    const grn = text.match(/Green\s+[Pp]arty\s+(\d+)%/i) || text.match(/Greens?\s+(\d+)%/i)
+    if (grn) result.grn = safeNumber(grn[1])
 
-  m = String(text || '').match(/Greens\s+(\d+)%/i)
-  if (m) values.grn = safeNumber(m[1])
+    const ld = text.match(/Liberal\s+Democrats?\s+(\d+)%/i) || text.match(/Lib\s+Dems?\s+(\d+)%/i)
+    if (ld) result.ld = safeNumber(ld[1])
 
-  m = String(text || '').match(/Lib Dems\s+(\d+)%/i)
-  if (m) values.ld = safeNumber(m[1])
+    const oth = text.match(/Others?\s+(\d+)%/i)
+    if (oth) result.oth = safeNumber(oth[1])
 
-  m = String(text || '').match(/Others\s+(\d+)%/i)
-  if (m) values.oth = safeNumber(m[1])
+    return result
+  }
 
-  return values
+  const patterns = {
+    ref: [/Reform\s+UK\s+(\d+)%/i,          /Reform\s+(?:are\s+)?(?:on\s+)?(\d+)%/i],
+    lab: [/Labour\s+(\d+)%/i,                /Labour\s+(?:on\s+)?(\d+)%/i],
+    con: [/Conservatives?\s+(\d+)%/i,         /Conservative\s+Party\s+(\d+)%/i],
+    grn: [/Green\s+[Pp]arty\s+(\d+)%/i,      /Greens?\s+(\d+)%/i],
+    ld:  [/Liberal\s+Democrats?\s+(\d+)%/i,   /Lib\s+Dems?\s+(\d+)%/i],
+    oth: [/Others?\s+(\d+)%/i],
+  }
+  for (const [key, pats] of Object.entries(patterns)) {
+    for (const pat of pats) {
+      const m = text.match(pat)
+      if (m) { result[key] = safeNumber(m[1]); break }
+    }
+  }
+
+  return result
 }
 
 function extractTablesUrl(html) {
-  const links = [...String(html || '').matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)]
-  for (const [, href, inner] of links) {
-    const text = cleanText(inner)
-    if (/download pdf/i.test(text) || /download the tables here/i.test(text)) {
-      return absolutizeUrl(IPSOS_ARTICLE_URL, href)
+  const re = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi
+  let m
+  while ((m = re.exec(html)) !== null) {
+    const label = cleanText(m[2])
+    if (/download\s+(pdf|the\s+tables)/i.test(label) || /tables\s+here/i.test(label)) {
+      return absolutize(ARCHIVE_URL, m[1])
     }
   }
   return null
 }
 
-export async function fetchIpsosPoll() {
-  const topicHtml = await fetchText(IPSOS_TOPIC_URL)
-  const articleUrl = extractLatestArticleUrl(topicHtml)
-  const articleHtml = await fetchText(articleUrl)
-  const text = cleanText(articleHtml)
+async function parseArticle(url) {
+  let html
+  try {
+    html = await fetchText(url)
+  } catch (err) {
+    console.warn(`[ipsos] skip ${url}: ${err.message}`)
+    return null
+  }
 
-  const publishedAt = extractPublishedDate(articleHtml)
+  const text = cleanText(html)
+
+  const looksLikePoliticalMonitor =
+    /political monitor/i.test(text) ||
+    /reform\s+uk\s+\d+%/i.test(text) ||
+    /labour\s+\d+%/i.test(text) ||
+    /conservatives?\s+\d+%/i.test(text)
+
+  if (!looksLikePoliticalMonitor) {
+    return null
+  }
+
+  const publishedAt = extractPublishedDate(html)
   const { fieldworkStart, fieldworkEnd } = extractFieldwork(text)
   const sample = extractSample(text)
   const values = extractPartyValues(text)
-  const tablesUrl = extractTablesUrl(articleHtml)
+  const tablesUrl = extractTablesUrl(html)
 
-  const poll = {
-    id: `ipsos-${slugify(publishedAt || fieldworkEnd || 'latest')}`,
-    pollster: 'Ipsos',
-    isBpcMember: true,
-    fieldworkStart,
-    fieldworkEnd,
-    publishedAt,
-    date: fieldworkEnd || publishedAt || null,
-    sample,
-    method: 'Political Monitor',
-    mode: 'Online random probability panel',
-    commissioner: null,
-    sourceUrl: articleUrl,
-    source: tablesUrl ? `Ipsos Political Monitor · tables ${tablesUrl}` : 'Ipsos Political Monitor',
-    ref: values.ref ?? null,
-    lab: values.lab ?? null,
-    con: values.con ?? null,
-    grn: values.grn ?? null,
-    ld: values.ld ?? null,
-    rb: null,
-    snp: null,
-  }
-
-  const hasCore = [poll.ref, poll.lab, poll.con, poll.grn, poll.ld].some((v) => typeof v === 'number')
+  const hasCore = ['ref','lab','con','grn','ld'].some(k => typeof values[k] === 'number')
   if (!hasCore) {
-    throw new Error('Ipsos parser did not find core party values on latest Political Monitor article')
+    return null
   }
 
-  return poll
+  const date = fieldworkEnd || publishedAt || null
+
+  return {
+    id:             `ipsos-${slugify(fieldworkEnd || publishedAt || url)}`,
+    pollster:       'Ipsos',
+    isBpcMember:    true,
+    fieldworkStart: fieldworkStart ?? null,
+    fieldworkEnd:   fieldworkEnd   ?? null,
+    publishedAt:    publishedAt    ?? null,
+    date,
+    sample:         sample         ?? null,
+    method:         'Political Monitor',
+    mode:           fieldworkEnd && fieldworkEnd >= '2025-06-01'
+                      ? 'Online random probability panel'
+                      : 'Telephone',
+    commissioner:   null,
+    sourceUrl:      url,
+    source:         tablesUrl
+                      ? `Ipsos Political Monitor · tables ${tablesUrl}`
+                      : 'Ipsos Political Monitor',
+    ref:  values.ref  ?? null,
+    lab:  values.lab  ?? null,
+    con:  values.con  ?? null,
+    grn:  values.grn  ?? null,
+    ld:   values.ld   ?? null,
+    oth:  values.oth  ?? null,
+    rb:   null,
+    snp:  null,
+  }
 }
 
-export default fetchIpsosPoll
+async function mapConcurrent(items, limit, fn) {
+  const results = new Array(items.length)
+  let i = 0
+  async function worker() {
+    while (i < items.length) {
+      const idx = i++
+      results[idx] = await fn(items[idx])
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+  return results
+}
+
+export async function fetchIpsosPolls() {
+  let articleUrls = []
+
+  try {
+    const archiveHtml = await fetchText(ARCHIVE_URL)
+    articleUrls = parseArchiveUrls(archiveHtml)
+    console.log(`[ipsos] archive: found ${articleUrls.length} article links`)
+  } catch (err) {
+    console.warn(`[ipsos] archive page failed (${err.message}), trying topic page`)
+    try {
+      const topicHtml = await fetchText(TOPIC_URL)
+      articleUrls = parseTopicUrls(topicHtml)
+      console.log(`[ipsos] topic page: found ${articleUrls.length} article links`)
+    } catch (err2) {
+      console.warn(`[ipsos] topic page also failed (${err2.message}), using known latest URL`)
+      articleUrls = [KNOWN_LATEST]
+    }
+  }
+
+  const targets = articleUrls.slice(0, HISTORY_LIMIT)
+  const rows = await mapConcurrent(targets, CONCURRENCY, parseArticle)
+
+  const polls = rows
+    .filter(Boolean)
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+
+  if (polls.length === 0) {
+    throw new Error('[ipsos] fetchIpsosPolls: no valid poll rows recovered')
+  }
+
+  return polls
+}
+
+export async function fetchIpsosPoll() {
+  const polls = await fetchIpsosPolls()
+  return polls[0]
+}
+
+export default fetchIpsosPolls

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { ScrollArea, haptic } from '../components/ui'
 
 const BENCHMARKS = [
@@ -8,6 +8,46 @@ const BENCHMARKS = [
   { name:'Horsham',           needed:3.4,  from:'Conservative', to:'Lib Dem',   result:'Upcoming — TBC 2026' },
   { name:'Avg Lab marginal',  needed:12.0, from:'Labour',       to:'Reform UK', result:'Typical Red Wall marginal' },
 ]
+
+
+function safeNumber(value) {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : 0
+}
+
+function getCurrentGap(fromParty, toParty) {
+  return +(safeNumber(fromParty?.pct) - safeNumber(toParty?.pct)).toFixed(1)
+}
+
+function getSwingStory({ fromParty, toParty, fromNew, toNew, swing }) {
+  if (!fromParty || !toParty) return 'Choose two parties to model the race.'
+  if (!swing) return `Move the slider to model a swing from ${fromParty.name} to ${toParty.name}.`
+
+  const gapNow = getCurrentGap(fromParty, toParty)
+  const gapAfter = +(fromNew - toNew).toFixed(1)
+
+  if (toNew > fromNew) {
+    return `${toParty.name} would move ahead of ${fromParty.name} nationally on this model.`
+  }
+
+  if (gapNow > 0 && gapAfter < gapNow) {
+    return `${toParty.name} would narrow the national gap, but ${fromParty.name} would still lead.`
+  }
+
+  if (gapAfter === gapNow) {
+    return `This would change very little nationally.`
+  }
+
+  return `${fromParty.name} would still stay ahead, and the gap would barely shift.`
+}
+
+function getMajorityStory(toParty) {
+  if (!toParty) return '326 seats are needed for a House of Commons majority.'
+  const seats = safeNumber(toParty?.seats)
+  if (seats >= 326) return `${toParty.name} are already in rough majority territory on the current projection.`
+  const short = 326 - seats
+  return `${toParty.name} are about ${short} seats short of a Commons majority on the current projection.`
+}
 
 export default function SwingCalcScreen({ T, nav, parties }) {
   const mainParties = (parties || []).filter(p => !['Other','SNP','Plaid Cymru'].includes(p.name))
@@ -22,6 +62,11 @@ export default function SwingCalcScreen({ T, nav, parties }) {
   const benchmark   = BENCHMARKS.find(b => b.from === fromParty && b.to === toParty)
   const needed      = benchmark?.needed || null
   const beaten      = needed !== null && swing >= needed
+  const gapNow      = fp && tp ? getCurrentGap(fp, tp) : null
+  const gapAfter    = +(fromNew - toNew).toFixed(1)
+  const swingToLevel = fp && tp ? Math.max(0, Math.ceil(((safeNumber(fp?.pct) - safeNumber(tp?.pct)) / 2) * 10) / 10) : null
+  const story = getSwingStory({ fromParty: fp, toParty: tp, fromNew, toNew, swing })
+  const majorityStory = getMajorityStory(tp)
 
   const isDark  = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
   const cardBg  = isDark ? '#0d1a24' : '#ffffff'
@@ -30,11 +75,49 @@ export default function SwingCalcScreen({ T, nav, parties }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden', background:T.sf }}>
       <div style={{ padding:'16px 18px 0', flexShrink:0 }}>
-        <div style={{ fontSize:26, fontWeight:800, letterSpacing:-0.8, color:T.th, lineHeight:1 }}>Swing Calculator</div>
+        <div style={{ fontSize:28, fontWeight:800, letterSpacing:-1, color:T.th, lineHeight:1 }}>Swing Calculator</div>
         <div style={{ fontSize:13, fontWeight:500, color:T.tl, marginTop:4 }}>How many points does it take to change the result?</div>
       </div>
 
       <ScrollArea>
+        <div style={{ padding:'12px 16px 32px' }}>
+        <div style={{ background:cardBg, border:`1px solid ${border}`, borderRadius:16, overflow:'hidden', marginBottom:14 }}>
+          <div style={{ height:4, background:tp?.color||T.pr }} />
+          <div style={{ padding:'16px 16px 18px' }}>
+            <div style={{ display:'flex', justifyContent:'center', gap:8, flexWrap:'wrap', marginBottom:10 }}>
+              <div style={{ fontSize:12, fontWeight:800, letterSpacing:'0.05em', textTransform:'uppercase', color:tp?.color||T.pr, background:`${tp?.color||T.pr}1F`, border:`1px solid ${(tp?.color||T.pr)}2B`, borderRadius:999, padding:'4px 9px' }}>Live baseline</div>
+              <div style={{ fontSize:12, fontWeight:800, letterSpacing:'0.05em', textTransform:'uppercase', color:T.tl, background:`${T.tl}12`, border:`1px solid ${T.tl}2B`, borderRadius:999, padding:'4px 9px' }}>326 seats for majority</div>
+            </div>
+
+            <div style={{ fontSize:30, fontWeight:800, letterSpacing:'-0.03em', color:T.th, textAlign:'center', lineHeight:1 }}>
+              {tp?.name || 'Target party'}
+            </div>
+
+            <div style={{ fontSize:15, fontWeight:700, color:T.th, textAlign:'center', marginTop:10 }}>
+              {gapNow !== null ? `${fp?.name} lead ${tp?.name} by ${Math.abs(gapNow)}pt right now` : 'Choose parties to model the race'}
+            </div>
+
+            <div style={{ fontSize:13, fontWeight:600, color:T.tl, textAlign:'center', marginTop:6, lineHeight:1.55 }}>
+              {majorityStory}
+            </div>
+
+            <div style={{ marginTop:14, display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
+              <div style={{ background:isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)', borderRadius:12, padding:'10px 12px', border:`1px solid ${fp?.color||'#888'}22`, textAlign:'center' }}>
+                <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:T.tl, marginBottom:4 }}>Current gap</div>
+                <div style={{ fontSize:20, fontWeight:800, color:T.th }}>{gapNow !== null ? `${Math.abs(gapNow)}pt` : '—'}</div>
+              </div>
+              <div style={{ background:isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)', borderRadius:12, padding:'10px 12px', border:`1px solid ${tp?.color||'#888'}22`, textAlign:'center' }}>
+                <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:T.tl, marginBottom:4 }}>Swing to level</div>
+                <div style={{ fontSize:20, fontWeight:800, color:tp?.color||T.th }}>{swingToLevel !== null ? `${swingToLevel}pt` : '—'}</div>
+              </div>
+              <div style={{ background:isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)', borderRadius:12, padding:'10px 12px', border:`1px solid ${tp?.color||'#888'}22`, textAlign:'center' }}>
+                <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:T.tl, marginBottom:4 }}>After swing</div>
+                <div style={{ fontSize:20, fontWeight:800, color:beaten?(tp?.color||T.pr):T.th }}>{Math.abs(gapAfter)}pt</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Party selectors */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14 }}>
           {[
@@ -91,6 +174,20 @@ export default function SwingCalcScreen({ T, nav, parties }) {
           </div>
         </div>
 
+        <div style={{ background:cardBg, border:`1px solid ${border}`, borderRadius:16, padding:'16px 16px 18px', marginBottom:14 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:T.tl, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:8, textAlign:'center' }}>What this means</div>
+          <div style={{ fontSize:16, fontWeight:700, color:T.th, lineHeight:1.55, textAlign:'center', marginBottom:10 }}>
+            {story}
+          </div>
+          <div style={{ fontSize:13, fontWeight:600, color:T.tl, lineHeight:1.6, textAlign:'center' }}>
+            {needed !== null
+              ? beaten
+                ? `This model clears the ${needed}pt benchmark from ${fromParty} to ${toParty}.`
+                : `${Math.max(0, +(needed - swing).toFixed(1))}pt more would be needed to match the ${needed}pt benchmark.`
+              : 'No benchmark is stored yet for this exact matchup, so use the slider as a national guide rather than a seat forecast.'}
+          </div>
+        </div>
+
         {/* Benchmarks */}
         <div style={{ fontSize:13, fontWeight:700, color:T.tl, letterSpacing:'0.06em', marginBottom:10 }}>Real contest benchmarks · tap to load</div>
         {BENCHMARKS.map((ex, i) => {
@@ -118,7 +215,11 @@ export default function SwingCalcScreen({ T, nav, parties }) {
           )
         })}
         <div style={{ height:32 }}/>
+        </div>
       </ScrollArea>
     </div>
   )
 }
+
+
+

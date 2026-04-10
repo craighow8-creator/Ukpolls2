@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { R, EZ } from '../constants'
 
 export function TrendLine({ data, color, width = 120, height = 40 }) {
@@ -82,3 +82,6 @@ export default function TrendChart({ T, trends, parties }) {
     </div>
   )
 }
+
+
+

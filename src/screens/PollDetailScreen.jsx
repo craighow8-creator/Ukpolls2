@@ -1,5 +1,7 @@
+import React from 'react'
 import { haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
+import { formatUKDate } from '../utils/date'
 
 const PARTY_KEYS = ['ref', 'lab', 'con', 'grn', 'ld', 'rb', 'snp']
 
@@ -38,20 +40,6 @@ function cleanText(value) {
   return String(value).replace(/Â·/g, '·').replace(/\s+/g, ' ').trim()
 }
 
-function formatUkDate(value) {
-  const text = cleanText(value)
-  if (!text) return ''
-
-  const d = new Date(text)
-  if (Number.isNaN(d.getTime())) return text
-
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const year = d.getFullYear()
-
-  return `${day}-${month}-${year}`
-}
-
 function safeNumber(value) {
   if (value == null || value === '') return null
   const raw = String(value).replace(/%/g, '').replace(/,/g, '').trim()
@@ -61,13 +49,13 @@ function safeNumber(value) {
 }
 
 function displayPrimaryDate(poll) {
-  return formatUkDate(poll?.publishedAt) || formatUkDate(poll?.fieldworkEnd) || formatUkDate(poll?.date) || 'Date unavailable'
+  return formatUKDate(poll?.publishedAt) || formatUKDate(poll?.fieldworkEnd) || formatUKDate(poll?.date) || 'Date unavailable'
 }
 
 function displayFieldwork(poll) {
-  const start = formatUkDate(poll?.fieldworkStart)
-  const end = formatUkDate(poll?.fieldworkEnd)
-  const fallback = formatUkDate(poll?.date || poll?.fieldwork || poll?.fieldworkDate)
+  const start = formatUKDate(poll?.fieldworkStart)
+  const end = formatUKDate(poll?.fieldworkEnd)
+  const fallback = formatUKDate(poll?.date || poll?.fieldwork || poll?.fieldworkDate)
 
   if (start && end && start !== end) return `${start} to ${end}`
   if (end) return end
@@ -319,7 +307,7 @@ export default function PollDetailScreen({ T, poll, nav }) {
 
   const pollster = cleanText(poll?.pollster)
   const fieldwork = displayFieldwork(poll)
-  const published = formatUkDate(poll?.publishedAt || poll?.published || poll?.releaseDate)
+  const published = formatUKDate(poll?.publishedAt || poll?.published || poll?.releaseDate)
   const sample = poll?.sample ? String(poll.sample) : ''
   const method = cleanText(poll?.method)
   const mode = cleanText(poll?.mode)
@@ -458,3 +446,5 @@ export default function PollDetailScreen({ T, poll, nav }) {
     </div>
   )
 }
+
+

@@ -1,3 +1,4 @@
+import React, { useEffect, useRef } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import { haptic } from './ui'
 import { useSwipeNav } from '../utils/swipe'
@@ -5,6 +6,34 @@ import { CARD_SIZES } from './cardSizes'
 
 const SPRING_OPEN = { type: 'spring', stiffness: 350, damping: 32 }
 const SPRING_DISMISS = { type: 'spring', stiffness: 400, damping: 36 }
+
+function resetScrollableElement(el) {
+  if (!el) return
+  el.scrollTop = 0
+  el.scrollLeft = 0
+}
+
+function resetScrollContainers(root) {
+  if (!root) return
+
+  resetScrollableElement(root)
+
+  const marked = root.querySelectorAll('[data-scroll-container], [data-scroll-root]')
+  marked.forEach(resetScrollableElement)
+
+  // Some older screens use local overflow containers rather than ScrollArea.
+  // Keep this central and defensive so route changes do not inherit stale scroll.
+  root.querySelectorAll('*').forEach((el) => {
+    const styles = window.getComputedStyle(el)
+    const canScrollY = /(auto|scroll)/.test(styles.overflowY || '')
+    const canScrollX = /(auto|scroll)/.test(styles.overflowX || '')
+    if ((canScrollY && el.scrollHeight > el.clientHeight) || (canScrollX && el.scrollWidth > el.clientWidth)) {
+      resetScrollableElement(el)
+    }
+  })
+
+  window.scrollTo?.(0, 0)
+}
 
 function BrandHeader({ T, onClose }) {
   const logoSrc = `${import.meta.env.BASE_URL}icons/icon-192.png`
@@ -140,9 +169,27 @@ function BrandHeader({ T, onClose }) {
   )
 }
 
-export function ExpandedCard({ layoutId, T, children, onClose }) {
+export function ExpandedCard({ layoutId, T, children, onClose, resetKey }) {
   const y = useMotionValue(0)
   const bgOpacity = useTransform(y, [0, 180], [1, 0])
+  const contentRef = useRef(null)
+
+  useEffect(() => {
+    let rafA = 0
+    let rafB = 0
+
+    const reset = () => resetScrollContainers(contentRef.current)
+    reset()
+    rafA = requestAnimationFrame(() => {
+      reset()
+      rafB = requestAnimationFrame(reset)
+    })
+
+    return () => {
+      cancelAnimationFrame(rafA)
+      cancelAnimationFrame(rafB)
+    }
+  }, [resetKey])
 
   const handleDragEnd = (_, info) => {
     if (info.velocity.y > 450 || info.offset.y > 140) {
@@ -210,6 +257,8 @@ export function ExpandedCard({ layoutId, T, children, onClose }) {
         </motion.div>
 
         <div
+          ref={contentRef}
+          data-scroll-root
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}

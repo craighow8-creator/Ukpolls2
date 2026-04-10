@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { getTheme, partyTheme } from './theme'
 import { EZ } from './constants'
@@ -32,6 +32,98 @@ import QuoteMatchScreen from './screens/QuoteMatchScreen'
 import SeatBuilderScreen from './screens/SeatBuilderScreen'
 import PollPredictorScreen from './screens/PollPredictorScreen'
 import { getData } from './data/store.js'
+import { buildPollingAverage } from './utils/pollAverage'
+
+function getPollKeyForParty(party = {}) {
+  const abbr = String(party?.abbr || '').trim().toLowerCase()
+  const name = String(party?.name || '').trim().toLowerCase()
+
+  const map = {
+    ref: 'ref',
+    labour: 'lab',
+    lab: 'lab',
+    conservative: 'con',
+    con: 'con',
+    green: 'grn',
+    grn: 'grn',
+    'lib dem': 'ld',
+    'lib dems': 'ld',
+    'liberal democrats': 'ld',
+    ld: 'ld',
+    'restore britain': 'rb',
+    rb: 'rb',
+    snp: 'snp',
+  }
+
+  return map[abbr] || map[name] || null
+}
+
+
+function getPollDateMs(poll) {
+  const raw = poll?.fieldworkEnd || poll?.publishedAt || poll?.date || null
+  if (!raw) return 0
+
+  if (typeof raw === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(raw)) {
+    const [dd, mm, yyyy] = raw.split('-').map(Number)
+    return Date.UTC(yyyy, mm - 1, dd)
+  }
+
+  const ts = new Date(raw).getTime()
+  return Number.isFinite(ts) ? ts : 0
+}
+
+function mergePollHistory(preferred = [], fallback = []) {
+  const merged = new Map()
+
+  const upsert = (poll, sourceRank) => {
+    if (!poll || typeof poll !== 'object') return
+
+    const key = [
+      String(poll.id || '').trim().toLowerCase(),
+      String(poll.pollster || '').trim().toLowerCase(),
+      String(poll.fieldworkEnd || poll.publishedAt || poll.date || '').trim(),
+    ].join('|')
+
+    const ts = getPollDateMs(poll)
+    const existing = merged.get(key)
+
+    if (!existing || ts > existing.ts || (ts === existing.ts && sourceRank < existing.sourceRank)) {
+      merged.set(key, { poll, sourceRank, ts })
+    }
+  }
+
+  preferred.forEach((poll) => upsert(poll, 0))
+  fallback.forEach((poll) => upsert(poll, 1))
+
+  return [...merged.values()]
+    .sort((a, b) => b.ts - a.ts)
+    .map((entry) => entry.poll)
+}
+
+function getRouteResetKey(route, depth = 0) {
+  if (!route) return 'home'
+  const params = route.params || {}
+  const poll = params.poll || {}
+  return [
+    route.screen,
+    depth,
+    params.idx,
+    params.lIdx,
+    params.name,
+    params.pollster,
+    params.tab,
+    params.search,
+    params.localFilter,
+    params.localSort,
+    poll.id,
+    poll.pollster,
+    poll.fieldworkEnd,
+    poll.publishedAt,
+    poll.date,
+  ]
+    .map((part) => String(part ?? ''))
+    .join('|')
+}
 
 export default function App() {
   const { dark, toggle: toggleDark } = useDarkMode()
@@ -48,51 +140,103 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const toastRef = useRef()
 
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      try {
-        const d = await getData()
-        if (cancelled) return
-        setAppData(d)
-        const top = [...(d?.parties || [])].sort((a, b) => b.pct - a.pct)[0]
-        if (top) setThemeKey(partyTheme(top.name))
-      } catch (e) {
-        console.error('App data load failed', e)
-      } finally {
-        if (!cancelled) setDataReady(true)
-      }
-    }
-    load()
-    return () => {
-      cancelled = true
+  const loadAppData = useCallback(async () => {
+    try {
+      const data = await getData()
+      setAppData(data)
+
+      const top = [...(data?.parties || [])].sort((a, b) => (b.pct || 0) - (a.pct || 0))[0]
+      if (top) setThemeKey(partyTheme(top.name))
+    } catch (e) {
+      console.error('App data load failed', e)
+    } finally {
+      setDataReady(true)
     }
   }, [])
 
+  useEffect(() => {
+    loadAppData().catch(() => {})
+  }, [loadAppData])
+
+  useEffect(() => {
+    const refresh = () => {
+      loadAppData().catch(() => {})
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+
+    const onStorage = (event) => {
+      if (!event.key || event.key.startsWith('PS_')) refresh()
+    }
+
+    window.addEventListener('politiscope:data-updated', refresh)
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      window.removeEventListener('politiscope:data-updated', refresh)
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [loadAppData])
+
   const META = appData?.meta || {}
-  const PARTIES = appData?.parties || []
-  const TRENDS = appData?.trends || []
+  const RAW_PARTIES = appData?.parties || []
   const POLLS = appData?.polls || []
+  const POLLS_HISTORY = appData?.pollsData || appData?.pollContext?.allPollsSorted || appData?.polls || []
   const LEADERS = appData?.leaders || []
+  const POLL_CONTEXT = appData?.pollContext || {}
+  const TRENDS = POLL_CONTEXT?.trendSeries || appData?.trends || []
   const DEMO = appData?.demographics || {}
+  const POLICY_RECORDS_DATA = Array.isArray(appData?.policyRecords) ? appData.policyRecords : null
   const MIGRATION = appData?.migration || {}
   const BY_ELEC = appData?.byElections || { upcoming: [], recent: [] }
   const ELECTIONS = appData?.elections || {}
   const BETTING = appData?.betting || { odds: [] }
   const MILESTONES = appData?.milestones || []
+  const COUNCIL_REGISTRY = appData?.councilRegistry || []
+  const COUNCIL_STATUS = appData?.councilStatus || []
+  const COUNCIL_EDITORIAL = appData?.councilEditorial || []
+
+  const latestPoll = POLLS_HISTORY?.[0] || null
+  const pollingAverage = POLL_CONTEXT?.pollingAverage || buildPollingAverage(POLLS_HISTORY, { windowDays: 30 })
+
+  const PARTIES = pollingAverage
+    ? RAW_PARTIES.map((p) => {
+        const key = getPollKeyForParty(p)
+        if (!key) return p
+        return {
+          ...p,
+          pct: pollingAverage?.[key] != null ? pollingAverage[key] : 0,
+        }
+      })
+    : latestPoll
+      ? RAW_PARTIES.map((p) => {
+          const key = getPollKeyForParty(p)
+          if (!key) return p
+          return {
+            ...p,
+            pct: latestPoll?.[key] != null ? latestPoll[key] : 0,
+          }
+        })
+      : RAW_PARTIES
 
   const PARTIES_WITH_LEADERS = PARTIES.map((p) => ({
     ...p,
     _leader:
       (LEADERS || []).find(
-        (l) => (l.party || '').toLowerCase() === (p.name || '').toLowerCase()
+        (l) => (l.party || '').toLowerCase() === (p.name || '').toLowerCase(),
       ) || null,
   }))
 
   const closeExpanded = useCallback(() => {
     setExpanded(null)
     setNavStack([])
-    const top = [...PARTIES].sort((a, b) => b.pct - a.pct)[0]
+    const top = [...PARTIES].sort((a, b) => (b.pct || 0) - (a.pct || 0))[0]
     if (top) setThemeKey(partyTheme(top.name))
   }, [PARTIES])
 
@@ -104,7 +248,7 @@ export default function App() {
       if (screen === 'home') {
         setExpanded(null)
         setNavStack([])
-        const top = [...PARTIES].sort((a, b) => b.pct - a.pct)[0]
+        const top = [...PARTIES].sort((a, b) => (b.pct || 0) - (a.pct || 0))[0]
         if (top) setThemeKey(partyTheme(top.name))
         return
       }
@@ -115,13 +259,41 @@ export default function App() {
       setExpanded({ screen, params, layoutId })
       setNavStack([])
     },
-    [expanded, PARTIES, LEADERS]
+    [expanded, PARTIES, LEADERS],
   )
 
   const goBack = useCallback(() => {
     if (navStack.length > 0) setNavStack((s) => s.slice(0, -1))
     else setExpanded(null)
   }, [navStack])
+
+  const updateCurrentParams = useCallback(
+    (patch = {}) => {
+      if (navStack.length > 0) {
+        setNavStack((stack) => {
+          if (!stack.length) return stack
+          const next = [...stack]
+          const last = next[next.length - 1]
+          next[next.length - 1] = {
+            ...last,
+            params: { ...(last.params || {}), ...(patch || {}) },
+          }
+          return next
+        })
+        return
+      }
+
+      setExpanded((prev) =>
+        prev
+          ? {
+              ...prev,
+              params: { ...(prev.params || {}), ...(patch || {}) },
+            }
+          : prev,
+      )
+    },
+    [navStack.length],
+  )
 
   useEffect(() => {
     const onPop = () => {
@@ -140,6 +312,7 @@ export default function App() {
 
   const T = getTheme(themeKey === 'reform' ? 'Reform UK' : themeKey, dark)
   const currentNav = navStack.length > 0 ? navStack[navStack.length - 1] : expanded
+  const navResetKey = getRouteResetKey(currentNav, navStack.length)
 
   const showToast = (msg) => {
     setToast(msg)
@@ -148,7 +321,7 @@ export default function App() {
   }
 
   const genShareText = () => {
-    const sorted = [...PARTIES].sort((a, b) => b.pct - a.pct)
+    const sorted = [...PARTIES].sort((a, b) => (b.pct || 0) - (a.pct || 0))
     const snap = sorted
       .filter((p) => p.name !== 'Other')
       .map((p) => `${p.abbr} ${p.pct}%`)
@@ -225,20 +398,25 @@ export default function App() {
     parties: PARTIES_WITH_LEADERS,
     meta: META,
     showToast,
+    updateCurrentParams,
+    councilRegistry: COUNCIL_REGISTRY,
+    councilStatus: COUNCIL_STATUS,
+    councilEditorial: COUNCIL_EDITORIAL,
+    pollContext: POLL_CONTEXT,
   }
 
   const renderScreen = (s, p = {}) => {
     switch (s) {
       case 'polls':
-        return <PollsScreen {...common} polls={POLLS} />
+        return <PollsScreen {...common} polls={POLLS_HISTORY} />
       case 'pollDetail':
         return <PollDetailScreen {...common} poll={p.poll} />
       case 'pollster':
-        return <PollsterScreen {...common} pollster={p.pollster} polls={POLLS} />
+        return <PollsterScreen {...common} pollster={p.pollster} polls={POLLS_HISTORY} />
       case 'parties':
         return <PartiesScreen {...common} polls={POLLS} leaders={LEADERS} trends={TRENDS} />
       case 'party':
-        return <PartyScreen {...common} idx={p.idx ?? 0} from={p.from || 'polls'} leaders={LEADERS} trends={TRENDS} polls={POLLS} />
+        return <PartyScreen {...common} idx={p.idx ?? 0} from={p.from || 'polls'} leaders={LEADERS} trends={TRENDS} polls={POLLS} policyRecords={POLICY_RECORDS_DATA || undefined} />
       case 'leaders':
         return <LeadersScreen {...common} leaders={LEADERS} />
       case 'leader':
@@ -250,9 +428,31 @@ export default function App() {
       case 'migration':
         return <MigrationScreen {...common} migration={MIGRATION} />
       case 'elections':
-        return <ElectionsScreen {...common} elections={ELECTIONS} byElections={BY_ELEC} />
+        return (
+          <ElectionsScreen
+            {...common}
+            elections={ELECTIONS}
+            byElections={BY_ELEC}
+            councilRegistry={COUNCIL_REGISTRY}
+            councilStatus={COUNCIL_STATUS}
+            councilEditorial={COUNCIL_EDITORIAL}
+            initialTab={p.tab || 'overview'}
+            initialSearch={p.search || ''}
+            initialLocalFilter={p.localFilter || 'all'}
+            initialLocalSort={p.localSort || 'difficulty'}
+          />
+        )
       case 'council':
-        return <CouncilScreen {...common} name={p.name} />
+        return (
+          <CouncilScreen
+            {...common}
+            name={p.name}
+            fromTab={p.fromTab}
+            councilRegistry={COUNCIL_REGISTRY}
+            councilStatus={COUNCIL_STATUS}
+            councilEditorial={COUNCIL_EDITORIAL}
+          />
+        )
       case 'betting':
         return <BettingScreen {...common} betting={BETTING} />
       case 'news':
@@ -332,6 +532,7 @@ export default function App() {
             byElections={BY_ELEC}
             migration={MIGRATION}
             betting={BETTING}
+            pollContext={POLL_CONTEXT}
             onMenu={() => setMenuOpen(true)}
           />
         </div>
@@ -339,7 +540,7 @@ export default function App() {
 
       <AnimatePresence mode="wait">
         {expanded && currentNav && (
-          <ExpandedCard key={expanded.layoutId} layoutId={expanded.layoutId} T={T} onClose={closeExpanded}>
+          <ExpandedCard key={expanded.layoutId} layoutId={expanded.layoutId} T={T} onClose={closeExpanded} resetKey={navResetKey}>
             {renderScreen(currentNav.screen, currentNav.params || {})}
           </ExpandedCard>
         )}

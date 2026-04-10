@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { WORKER, APP_TOKEN, R } from '../constants'
 import { LS, getDeviceId } from '../utils/helpers'
 
@@ -82,3 +82,6 @@ export default function POTDWidget({ T }) {
     </div>
   )
 }
+
+
+

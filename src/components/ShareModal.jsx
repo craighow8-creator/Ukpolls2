@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { R } from '../constants'
 
 export default function ShareModal({ open, onClose, T, text, appUrl, title = 'Politiscope' }) {
@@ -51,3 +51,5 @@ const btnStyle = (bg) => ({
   color: '#fff', fontWeight: 800, fontSize: 16, cursor: 'pointer',
   fontFamily: "'Outfit',sans-serif",
 })
+
+

@@ -1,6 +1,9 @@
+import React from 'react'
 import { haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
 import { POLLSTER_INFO } from '../utils/pollsterInfo'
+import { formatUKDate } from '../utils/date'
+import { canWinPollConflict, comparePollConflictPriority, getConflictDateMs, sourceTier } from '../shared/pollValidation'
 
 const PARTY_KEYS = ['ref', 'lab', 'con', 'grn', 'ld', 'rb', 'snp']
 
@@ -29,20 +32,6 @@ function cleanText(value) {
   return String(value).replace(/Â·/g, '·').replace(/\s+/g, ' ').trim()
 }
 
-function formatUkDate(value) {
-  const text = cleanText(value)
-  if (!text) return ''
-
-  const d = new Date(text)
-  if (Number.isNaN(d.getTime())) return text
-
-  const day = String(d.getDate()).padStart(2, '0')
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const year = d.getFullYear()
-
-  return `${day}-${month}-${year}`
-}
-
 function safeNumber(value) {
   if (value == null || value === '') return null
   const raw = String(value).replace(/%/g, '').replace(/,/g, '').trim()
@@ -52,7 +41,7 @@ function safeNumber(value) {
 }
 
 function displayDate(poll) {
-  return formatUkDate(poll?.publishedAt) || formatUkDate(poll?.fieldworkEnd) || formatUkDate(poll?.date) || 'Date unavailable'
+  return formatUKDate(poll?.publishedAt) || formatUKDate(poll?.fieldworkEnd) || formatUKDate(poll?.date) || 'Date unavailable'
 }
 
 function metaLine(poll) {
@@ -66,11 +55,25 @@ function metaLine(poll) {
 }
 
 function isImportedPoll(poll) {
-  return !!cleanText(poll?.sourceUrl)
+  const tier = sourceTier(poll)
+  return tier === 'manual' || tier === 'direct'
 }
 
 function pollSortScore(poll) {
   return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
+}
+
+function comparePollRows(a, b) {
+  const priorityDiff = comparePollConflictPriority(a, b)
+  if (priorityDiff !== 0) return priorityDiff
+
+  const dateDiff = getConflictDateMs(b) - getConflictDateMs(a)
+  if (dateDiff !== 0) return dateDiff
+
+  const dateTextDiff = pollSortScore(b).localeCompare(pollSortScore(a))
+  if (dateTextDiff !== 0) return dateTextDiff
+
+  return cleanText(a?.id || '').localeCompare(cleanText(b?.id || ''))
 }
 
 function getPollResults(poll) {
@@ -286,9 +289,9 @@ export default function PollsterScreen({ T, pollster, polls = [], nav }) {
 
   const pollsterPolls = [...(polls || [])]
     .filter((p) => cleanText(p.pollster) === cleanText(pollster))
-    .sort((a, b) => pollSortScore(b).localeCompare(pollSortScore(a)))
+    .sort(comparePollRows)
 
-  const latestPoll = pollsterPolls[0] || null
+  const latestPoll = pollsterPolls.find((p) => canWinPollConflict(p)) || pollsterPolls[0] || null
   const latestLivePoll = pollsterPolls.find((p) => isImportedPoll(p)) || null
   const isBpcMember = latestPoll?.isBpcMember === true
   const importedCount = pollsterPolls.filter((p) => isImportedPoll(p)).length
@@ -406,3 +409,4 @@ export default function PollsterScreen({ T, pollster, polls = [], nav }) {
     </div>
   )
 }
+

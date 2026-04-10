@@ -1,440 +1,527 @@
-import { useState } from 'react'
-import { ScrollArea, StickyPills, haptic } from '../components/ui'
+import React, { useEffect, useMemo, useState } from 'react'
 
-const TABS = [
-  { key: 'upcoming', label: 'Upcoming' },
-  { key: 'recent', label: 'Recent' },
-]
+const PARTY_COLORS = {
+  Conservative: '#0087DC',
+  Con: '#0087DC',
+  Labour: '#E4003B',
+  Lab: '#E4003B',
+  'Reform UK': '#12B7D4',
+  Reform: '#12B7D4',
+  Green: '#02A95B',
+  Grn: '#02A95B',
+  'Lib Dem': '#FAA61A',
+  'Liberal Democrat': '#FAA61A',
+  LD: '#FAA61A',
+  SNP: '#C4922A',
+  'Plaid Cymru': '#3F8428',
+  PC: '#3F8428',
+}
 
-function ResultBar({ result, T }) {
-  const max = Math.max(...(result || []).map((r) => r.pct || 0), 1)
+function cleanText(value) {
+  if (value == null) return ''
+  return String(value).replace(/\s+/g, ' ').trim()
+}
 
+function parseDateish(...values) {
+  for (const raw of values) {
+    const value = cleanText(raw)
+    if (!value) continue
+
+    const ddmmyyyy = value.match(/^(\d{2})-(\d{2})-(\d{4})$/)
+    if (ddmmyyyy) {
+      const [, day, month, year] = ddmmyyyy
+      const parsed = new Date(`${year}-${month}-${day}T00:00:00`)
+      if (!Number.isNaN(parsed.getTime())) return parsed.getTime()
+    }
+
+    const parsed = new Date(value)
+    if (!Number.isNaN(parsed.getTime())) return parsed.getTime()
+  }
+
+  return 0
+}
+
+function formatDisplayDate(contest) {
+  const raw = cleanText(contest?.date)
+  if (raw) {
+    const parsed = new Date(raw)
+    if (!Number.isNaN(parsed.getTime())) {
+      const day = String(parsed.getDate()).padStart(2, '0')
+      const month = String(parsed.getMonth() + 1).padStart(2, '0')
+      const year = parsed.getFullYear()
+      return `${day}-${month}-${year}`
+    }
+    const ddmmyyyy = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/)
+    if (ddmmyyyy) return raw
+  }
+
+  return cleanText(contest?.dateLabel) || 'Date TBC'
+}
+
+function formatDateLabel(value) {
+  const raw = cleanText(value)
+  if (!raw) return null
+
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (iso) {
+    return `${iso[3]}-${iso[2]}-${iso[1]}`
+  }
+
+  const parsed = new Date(raw)
+  if (!Number.isNaN(parsed.getTime())) {
+    const day = String(parsed.getDate()).padStart(2, '0')
+    const month = String(parsed.getMonth() + 1).padStart(2, '0')
+    const year = parsed.getFullYear()
+    return `${day}-${month}-${year}`
+  }
+
+  return raw
+}
+
+function getPartyColor(party, fallback = '#12B7D4') {
+  return PARTY_COLORS[cleanText(party)] || fallback
+}
+
+function getWinner(contest) {
+  return cleanText(contest?.winner)
+}
+
+function getPrevious(contest) {
+  return cleanText(contest?.previous || contest?.defending)
+}
+
+function isGain(contest) {
+  const gainLoss = cleanText(contest?.gainLoss).toLowerCase()
+  if (gainLoss.includes('gain')) return true
+  const winner = getWinner(contest)
+  const previous = getPrevious(contest)
+  return !!winner && !!previous && winner.toLowerCase() !== previous.toLowerCase()
+}
+
+function isHold(contest) {
+  const gainLoss = cleanText(contest?.gainLoss).toLowerCase()
+  if (gainLoss.includes('hold')) return true
+  const winner = getWinner(contest)
+  const previous = getPrevious(contest)
+  return !!winner && !!previous && winner.toLowerCase() === previous.toLowerCase()
+}
+
+function getSwingPoints(contest) {
+  if (contest?.swing?.pts != null && !Number.isNaN(Number(contest.swing.pts))) return Number(contest.swing.pts)
+  const raw = cleanText(contest?.swing)
+  const parsed = Number.parseFloat(raw.replace(/[^\d.-]/g, ''))
+  return Number.isNaN(parsed) ? 0 : Math.abs(parsed)
+}
+
+function getMajorityToDefend(contest) {
+  const candidates = [contest?.majority2024, contest?.majority]
+  for (const value of candidates) {
+    const parsed = Number(value)
+    if (!Number.isNaN(parsed) && parsed > 0) return parsed
+  }
+  return 0
+}
+
+function getResultLine(contest) {
+  const winner = getWinner(contest)
+  const previous = getPrevious(contest)
+  if (!winner) return 'Result pending'
+  if (isGain(contest) && previous) return `${winner} gain from ${previous}`
+  if (isHold(contest) && previous) return `${winner} hold`
+  return `${winner} win`
+}
+
+function getBenefitingParty(recent) {
+  const counts = recent.reduce((acc, contest) => {
+    if (!isGain(contest)) return acc
+    const winner = getWinner(contest)
+    if (!winner) return acc
+    acc[winner] = (acc[winner] || 0) + 1
+    return acc
+  }, {})
+
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
+  if (!sorted.length) return null
+  if (sorted.length === 1 || sorted[0][1] > sorted[1][1]) {
+    return { party: sorted[0][0], count: sorted[0][1] }
+  }
+  return null
+}
+
+function heroSummary(recent) {
+  const total = recent.length
+  const gains = recent.filter(isGain)
+  const holds = recent.filter(isHold)
+  const biggestSwing = recent.reduce((best, contest) => {
+    const swing = getSwingPoints(contest)
+    if (!best || swing > best.swing) return { contest, swing }
+    return best
+  }, null)
+  const benefiting = getBenefitingParty(recent)
+
+  const lines = []
+  lines.push(`There have been ${total} recent by-elections, producing ${gains.length} gains and ${holds.length} holds.`)
+
+  if (benefiting) {
+    lines.push(`${benefiting.party} appear to be benefiting most, with ${benefiting.count} gain${benefiting.count === 1 ? '' : 's'}.`)
+  } else if (gains.length) {
+    lines.push('The gains are more fragmented, with no single party dominating the picture.')
+  } else {
+    lines.push('Recent contests have mostly reinforced existing party control rather than overturning it.')
+  }
+
+  if (biggestSwing?.contest) {
+    lines.push(`The sharpest movement came in ${biggestSwing.contest.name}, with a ${biggestSwing.swing.toFixed(1)} point swing.`)
+  }
+
+  return { total, gains: gains.length, holds: holds.length, biggestSwing, benefiting, text: lines.join(' ') }
+}
+
+function tagBoost(contest) {
+  const text = [
+    ...(contest?.tags || []),
+    cleanText(contest?.verdict),
+    cleanText(contest?.significance),
+    cleanText(contest?.watchFor),
+    cleanText(contest?.context),
+  ].join(' ').toLowerCase()
+
+  let score = 0
+  if (text.includes('upset')) score += 10
+  if (text.includes('bellwether')) score += 10
+  if (text.includes('government pressure')) score += 8
+  if (text.includes('historic')) score += 8
+  if (text.includes('largest swing')) score += 8
+  return score
+}
+
+function contestRank(contest) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 10 }}>
-      {(result || []).map((r, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: r.color,
-              width: 28,
-              flexShrink: 0,
-            }}
-          >
-            {(r.party || '').split(' ')[0].slice(0, 3).toUpperCase()}
-          </div>
-
-          <div
-            style={{
-              flex: 1,
-              height: 6,
-              borderRadius: 999,
-              background: 'rgba(0,0,0,0.07)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                width: `${(r.pct / max) * 100}%`,
-                height: '100%',
-                background: r.color,
-                borderRadius: 999,
-              }}
-            />
-          </div>
-
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: r.color,
-              width: 28,
-              textAlign: 'right',
-            }}
-          >
-            {r.pct}%
-          </div>
-
-          {r.change != null && (
-            <div
-              style={{
-                fontSize: 13,
-                color: r.change > 0 ? '#02A95B' : '#C8102E',
-                width: 24,
-                textAlign: 'right',
-              }}
-            >
-              {r.change > 0 ? '+' : ''}
-              {r.change}
-            </div>
-          )}
-
-          {r.winner && (
-            <div style={{ fontSize: 13, fontWeight: 800, color: r.color }}>
-              ✓
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
+    (isGain(contest) ? 100 : 40) +
+    getSwingPoints(contest) * 3 +
+    Math.min(getMajorityToDefend(contest) / 1000, 20) +
+    tagBoost(contest)
   )
 }
 
-function ContestCard({ T, contest, isUpcoming }) {
-  const [open, setOpen] = useState(false)
-  const result = isUpcoming ? contest.result2024 : contest.result
-  const accent = (isUpcoming ? contest.defColor : contest.winnerColor || contest.defColor) || '#888'
+function keyContestSentence(contest) {
+  if (cleanText(contest?.significance)) return cleanText(contest.significance)
+  if (isGain(contest)) {
+    return `${getWinner(contest)} overturned ${getPrevious(contest)} in a contest with wider political weight.`
+  }
+  if (getSwingPoints(contest) >= 10) {
+    return `${getWinner(contest)} held on, but only after a sharp swing in the seat.`
+  }
+  return `${getResultLine(contest)} in a contest watched beyond the constituency itself.`
+}
 
+function recentSignificance(contest) {
+  return cleanText(contest?.significance || contest?.watchFor || contest?.verdict || contest?.context)
+}
+
+function watchForLine(contest) {
+  return cleanText(contest?.watchFor || contest?.context || contest?.verdict || 'Watch whether the defending party can withstand local pressure.')
+}
+
+function Card({ T, borderColor, children, style }) {
   return (
     <div
-      onClick={() => {
-        haptic(6)
-        setOpen((o) => !o)
-      }}
       style={{
-        borderRadius: 14,
-        padding: 18,
+        borderRadius: 16,
+        padding: '14px 14px',
         marginBottom: 10,
         background: T.c0,
-        border: `1px solid ${accent}44`,
-        cursor: 'pointer',
-        position: 'relative',
-        overflow: 'hidden',
+        border: `1px solid ${borderColor || T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        ...style,
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: `${accent}06`,
-          pointerEvents: 'none',
-        }}
-      />
-
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: 12,
-            marginBottom: 8,
-          }}
-        >
-          <div style={{ minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: 17,
-                fontWeight: 800,
-                color: T.th,
-                letterSpacing: -0.3,
-                lineHeight: 1.1,
-              }}
-            >
-              {contest.name}
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, marginTop: 3 }}>
-              {contest.region} · Leave {contest.leaveVote}%
-            </div>
-          </div>
-
-          {isUpcoming ? (
-            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  letterSpacing: '0.08em',
-                  padding: '3px 8px',
-                  borderRadius: 999,
-                  background: '#E4003B22',
-                  color: '#E4003B',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Upcoming
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, marginTop: 4 }}>
-                {contest.dateLabel}
-              </div>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 800,
-                  padding: '3px 10px',
-                  borderRadius: 999,
-                  background: `${contest.winnerColor}22`,
-                  color: contest.winnerColor,
-                }}
-              >
-                {contest.winner} {contest.gainLoss}
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, marginTop: 4 }}>
-                {contest.dateLabel}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {isUpcoming ? (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                padding: '3px 10px',
-                borderRadius: 999,
-                background: `${contest.defColor}22`,
-                color: contest.defColor,
-              }}
-            >
-              {contest.defending} defend · {contest.majority2024?.toLocaleString()} maj
-            </div>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                padding: '3px 10px',
-                borderRadius: 999,
-                background: 'rgba(0,0,0,0.06)',
-                color: T.tm,
-              }}
-            >
-              {contest.swingNeeded}pt swing needed
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-            {contest.swing && (
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  padding: '3px 10px',
-                  borderRadius: 999,
-                  background: `${contest.winnerColor}22`,
-                  color: contest.winnerColor,
-                }}
-              >
-                {contest.swing.pts}pt swing {contest.swing.from}→{contest.swing.to}
-              </div>
-            )}
-            {contest.majority && (
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  padding: '3px 10px',
-                  borderRadius: 999,
-                  background: 'rgba(0,0,0,0.06)',
-                  color: T.tm,
-                }}
-              >
-                Majority: {contest.majority.toLocaleString()}
-              </div>
-            )}
-          </div>
-        )}
-
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: contest.verdictColor || T.tl,
-            marginBottom: 6,
-          }}
-        >
-          {contest.verdict}
-        </div>
-
-        <ResultBar result={result} T={T} />
-
-        {open && (
-          <div
-            style={{
-              marginTop: 14,
-              paddingTop: 14,
-              borderTop: `1px solid ${T.c1 || 'rgba(0,0,0,0.08)'}`,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: T.tm,
-                lineHeight: 1.7,
-                marginBottom: 10,
-              }}
-            >
-              {contest.context}
-            </div>
-
-            {contest.watchFor && (
-              <div
-                style={{
-                  borderRadius: 14,
-                  padding: '10px 14px',
-                  background: T.c1 || 'rgba(0,0,0,0.05)',
-                  marginBottom: 8,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 800,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: T.tl,
-                    marginBottom: 4,
-                  }}
-                >
-                  Watch for
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: T.tm }}>
-                  {contest.watchFor}
-                </div>
-              </div>
-            )}
-
-            {contest.significance && (
-              <div
-                style={{
-                  borderRadius: 14,
-                  padding: '10px 14px',
-                  background: T.c1 || 'rgba(0,0,0,0.05)',
-                  marginBottom: 8,
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 800,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: T.tl,
-                    marginBottom: 4,
-                  }}
-                >
-                  Significance
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: T.tm }}>
-                  {contest.significance}
-                </div>
-              </div>
-            )}
-
-            {contest.odds && (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-                {Object.entries(contest.odds).map(([party, odds], i) => (
-                  <div
-                    key={i}
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      padding: '4px 10px',
-                      borderRadius: 999,
-                      background: T.c1 || 'rgba(0,0,0,0.05)',
-                      color: T.th,
-                    }}
-                  >
-                    {party.split(' ')[0]} {odds}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {contest.tags?.length > 0 && (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
-                {contest.tags.map((tag, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 800,
-                      padding: '2px 8px',
-                      borderRadius: 999,
-                      background: `${contest.tagColors?.[i] || T.pr}22`,
-                      color: contest.tagColors?.[i] || T.pr,
-                      letterSpacing: 0.4,
-                    }}
-                  >
-                    {tag}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        <div
-          style={{
-            textAlign: 'right',
-            fontSize: 13,
-            color: T.tl,
-            opacity: 0.55,
-            marginTop: 8,
-            fontWeight: 600,
-          }}
-        >
-          {open ? '▲ less' : '▼ more'}
-        </div>
-      </div>
+      {children}
     </div>
   )
 }
 
-export default function ByElectionsScreen({ T, nav, byElections }) {
-  const [tab, setTab] = useState('upcoming')
-  const upcoming = (byElections?.upcoming || []).filter((b) => b.status !== 'skip')
-  const recent = byElections?.recent || []
+function SectionTitle({ T, children }) {
+  return (
+    <div
+      style={{
+        fontSize: 12,
+        fontWeight: 800,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: T.tl,
+        textAlign: 'center',
+        margin: '14px 0 8px',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function StatChip({ T, label, value, color, sub }) {
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        padding: '10px 8px',
+        background: T.c1 || 'rgba(0,0,0,0.03)',
+        border: `1px solid ${color}24`,
+        textAlign: 'center',
+      }}
+    >
+      <div style={{ fontSize: 18, fontWeight: 900, color, lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: T.tl, marginTop: 4 }}>
+        {label}
+      </div>
+      {sub ? <div style={{ fontSize: 11, fontWeight: 600, color: T.tl, marginTop: 3, lineHeight: 1.35 }}>{sub}</div> : null}
+    </div>
+  )
+}
+
+function KeySignalCard({ T, contest }) {
+  const accent = getPartyColor(getWinner(contest), T.pr || '#12B7D4')
+  return (
+    <Card T={T} borderColor={`${accent}30`}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: T.th, textAlign: 'center' }}>{contest.name}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginTop: 4, textAlign: 'center' }}>{formatDisplayDate(contest)}</div>
+      <div style={{ fontSize: 14, fontWeight: 800, color: accent, marginTop: 8, textAlign: 'center' }}>{getResultLine(contest)}</div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 9 }}>
+        {getSwingPoints(contest) ? <div style={{ fontSize: 12, fontWeight: 800, color: accent, background: `${accent}18`, borderRadius: 999, padding: '4px 9px' }}>Swing {getSwingPoints(contest).toFixed(1)} pts</div> : null}
+        {getMajorityToDefend(contest) ? <div style={{ fontSize: 12, fontWeight: 800, color: T.pr, background: `${T.pr}18`, borderRadius: 999, padding: '4px 9px' }}>Majority {getMajorityToDefend(contest).toLocaleString()}</div> : null}
+      </div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: T.th, lineHeight: 1.55, marginTop: 9, textAlign: 'center' }}>
+        {keyContestSentence(contest)}
+      </div>
+    </Card>
+  )
+}
+
+function UpcomingCard({ T, contest }) {
+  const defending = getPrevious(contest)
+  const color = getPartyColor(defending, contest?.defColor || T.pr || '#12B7D4')
+  return (
+    <Card T={T} borderColor={`${color}28`} style={{ padding: '12px 13px' }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: T.th, textAlign: 'center' }}>{contest.name}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, textAlign: 'center', marginTop: 4 }}>{formatDisplayDate(contest)}</div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+        {defending ? <div style={{ fontSize: 12, fontWeight: 800, color, background: `${color}18`, borderRadius: 999, padding: '4px 9px' }}>{defending} defend</div> : null}
+        {getMajorityToDefend(contest) ? <div style={{ fontSize: 12, fontWeight: 800, color: T.pr, background: `${T.pr}18`, borderRadius: 999, padding: '4px 9px' }}>Majority {getMajorityToDefend(contest).toLocaleString()}</div> : null}
+      </div>
+      <div style={{ fontSize: 12.5, fontWeight: 600, color: T.th, lineHeight: 1.55, marginTop: 9, textAlign: 'center' }}>
+        {watchForLine(contest)}
+      </div>
+    </Card>
+  )
+}
+
+function RecentResultCard({ T, contest }) {
+  const accent = getPartyColor(getWinner(contest), T.pr || '#12B7D4')
+  return (
+    <Card T={T} borderColor={`${accent}24`} style={{ padding: '12px 13px' }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: T.th, textAlign: 'center' }}>{contest.name}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, textAlign: 'center', marginTop: 4 }}>{formatDisplayDate(contest)}</div>
+      <div style={{ fontSize: 14, fontWeight: 800, color: accent, marginTop: 8, textAlign: 'center' }}>{getResultLine(contest)}</div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+        {getSwingPoints(contest) ? <div style={{ fontSize: 12, fontWeight: 800, color: accent, background: `${accent}18`, borderRadius: 999, padding: '4px 9px' }}>Swing {getSwingPoints(contest).toFixed(1)} pts</div> : null}
+        {contest?.majority ? <div style={{ fontSize: 12, fontWeight: 800, color: T.pr, background: `${T.pr}18`, borderRadius: 999, padding: '4px 9px' }}>Majority {Number(contest.majority).toLocaleString()}</div> : null}
+      </div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: T.th, lineHeight: 1.5, marginTop: 8, textAlign: 'center' }}>
+        {cleanText(contest?.summary || contest?.verdict || contest?.context)}
+      </div>
+      {recentSignificance(contest) ? (
+        <div style={{ fontSize: 12, fontWeight: 600, color: T.tl, lineHeight: 1.5, marginTop: 6, textAlign: 'center' }}>
+          {recentSignificance(contest)}
+        </div>
+      ) : null}
+    </Card>
+  )
+}
+
+export default function ByElectionsScreen({ T, byElections }) {
+  const meta = byElections?.meta && typeof byElections.meta === 'object' ? byElections.meta : null
+
+  const upcoming = useMemo(
+    () => [...(byElections?.upcoming || [])].filter((item) => item.status !== 'skip').sort((a, b) => parseDateish(a.date, a.dateLabel) - parseDateish(b.date, b.dateLabel)),
+    [byElections]
+  )
+
+  const recent = useMemo(
+    () => [...(byElections?.recent || [])].sort((a, b) => parseDateish(b.date, b.dateLabel) - parseDateish(a.date, a.dateLabel)),
+    [byElections]
+  )
+
+  const summary = useMemo(() => heroSummary(recent), [recent])
+  const keySignals = useMemo(() => [...recent].sort((a, b) => contestRank(b) - contestRank(a)).slice(0, Math.min(4, recent.length)), [recent])
+  const resolvedMeta = useMemo(() => ({
+    recentCount: meta?.recentCount ?? summary.total ?? recent.length,
+    upcomingCount: meta?.upcomingCount ?? upcoming.length,
+    biggestSwingContest: cleanText(meta?.biggestSwingContest) || cleanText(summary.biggestSwing?.contest?.name),
+    biggestSwingPoints:
+      meta?.biggestSwingPoints != null && !Number.isNaN(Number(meta.biggestSwingPoints))
+        ? Number(meta.biggestSwingPoints)
+        : summary.biggestSwing?.swing ?? null,
+    latestRecentDate: formatDateLabel(meta?.latestRecentDate) || formatDisplayDate(recent[0]),
+    updatedAt: formatDateLabel(meta?.updatedAt),
+    sourceCount:
+      meta?.sourceCount != null && !Number.isNaN(Number(meta.sourceCount))
+        ? Number(meta.sourceCount)
+        : null,
+  }), [meta, recent, summary, upcoming])
+  const heroText = useMemo(() => {
+    if (!resolvedMeta.recentCount) {
+      return 'No recent by-election results are loaded yet.'
+    }
+
+    const sentences = [
+      `There are ${resolvedMeta.recentCount} recent results and ${resolvedMeta.upcomingCount} upcoming contests in the tracker.`,
+    ]
+
+    if (summary.benefiting) {
+      sentences.push(`${summary.benefiting.party} appear to be benefiting most from recent contests.`)
+    } else if (summary.gains) {
+      sentences.push('The gains are more mixed, with no single party fully dominating the picture.')
+    } else {
+      sentences.push('Recent contests have mostly reinforced existing control rather than overturning it.')
+    }
+
+    if (resolvedMeta.biggestSwingContest && resolvedMeta.biggestSwingPoints != null) {
+      sentences.push(`The sharpest move came in ${resolvedMeta.biggestSwingContest}, with a ${resolvedMeta.biggestSwingPoints.toFixed(1)} point swing.`)
+    }
+
+    return sentences.join(' ')
+  }, [resolvedMeta, summary])
+  const [keySignalsOpen, setKeySignalsOpen] = useState(() => !(byElections?.upcoming || []).length)
+
+  useEffect(() => {
+    setKeySignalsOpen(upcoming.length === 0)
+  }, [upcoming.length])
 
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
         background: T.sf,
       }}
     >
-      <div style={{ padding: '18px 18px 0', flexShrink: 0 }}>
+      <div style={{ padding: '18px 18px 0' }}>
         <div
           style={{
-            fontSize: 24,
+            fontSize: 28,
             fontWeight: 800,
-            letterSpacing: -0.8,
+            letterSpacing: -1,
             color: T.th,
             lineHeight: 1,
+            textAlign: 'center',
           }}
         >
           By-elections
         </div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>
-          Constituency contests · tap card for full detail
+        <div style={{ fontSize: 14, fontWeight: 600, color: T.tl, marginTop: 6, textAlign: 'center', lineHeight: 1.5 }}>
+          Single-seat contests that can expose political pressure fast.
         </div>
       </div>
 
-      <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
-
-      <ScrollArea>
-        {tab === 'upcoming' &&
-          (upcoming.length > 0 ? (
-            upcoming.map((c, i) => <ContestCard key={i} T={T} contest={c} isUpcoming />)
-          ) : (
-            <div style={{ textAlign: 'center', padding: 40, color: T.tl }}>
-              No upcoming by-elections confirmed
+      <div style={{ padding: '12px 16px 40px' }}>
+        <Card T={T} borderColor={`${T.pr || '#12B7D4'}28`} style={{ marginBottom: 12 }}>
+          <SectionTitle T={T}>By-election picture</SectionTitle>
+          <div style={{ fontSize: 14, fontWeight: 600, color: T.th, lineHeight: 1.65, textAlign: 'center' }}>
+            {heroText}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 12 }}>
+            <StatChip T={T} label="Recent" value={resolvedMeta.recentCount} color={T.pr || '#12B7D4'} sub="Tracked now" />
+            <StatChip T={T} label="Upcoming" value={resolvedMeta.upcomingCount} color={T.pr || '#12B7D4'} sub="Tracked now" />
+            <StatChip
+              T={T}
+              label="Biggest swing"
+              value={resolvedMeta.biggestSwingPoints != null ? `${resolvedMeta.biggestSwingPoints.toFixed(1)}%` : '—'}
+              color={T.pr || '#12B7D4'}
+              sub={resolvedMeta.biggestSwingContest || 'No result'}
+            />
+          </div>
+          {(resolvedMeta.updatedAt || resolvedMeta.sourceCount != null || resolvedMeta.latestRecentDate) ? (
+            <div
+              style={{
+                marginTop: 10,
+                fontSize: 11.5,
+                fontWeight: 600,
+                color: T.tl,
+                textAlign: 'center',
+                lineHeight: 1.45,
+              }}
+            >
+              {[
+                resolvedMeta.updatedAt ? `Updated ${resolvedMeta.updatedAt}` : null,
+                resolvedMeta.sourceCount != null ? `${resolvedMeta.sourceCount} source${resolvedMeta.sourceCount === 1 ? '' : 's'} tracked` : null,
+                resolvedMeta.latestRecentDate ? `Latest result: ${resolvedMeta.latestRecentDate}` : null,
+              ].filter(Boolean).join(' · ')}
             </div>
-          ))}
+          ) : null}
+        </Card>
 
-        {tab === 'recent' && recent.map((c, i) => <ContestCard key={i} T={T} contest={c} isUpcoming={false} />)}
+        <SectionTitle T={T}>Upcoming watchlist</SectionTitle>
+        {upcoming.length ? (
+          upcoming.map((contest) => (
+            <UpcomingCard key={contest.id || contest.name} T={T} contest={contest} />
+          ))
+        ) : (
+          <Card T={T}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: T.tl, textAlign: 'center' }}>
+              No upcoming by-elections confirmed.
+            </div>
+          </Card>
+        )}
 
-        <div style={{ height: 40 }} />
-      </ScrollArea>
+        {keySignals.length ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setKeySignalsOpen((open) => !open)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+              }}
+            >
+              <SectionTitle T={T}>Key signals</SectionTitle>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  color: T.pr || '#12B7D4',
+                  marginTop: 6,
+                }}
+              >
+                {keySignalsOpen ? 'Hide' : 'Show'}
+              </span>
+            </button>
+            {keySignalsOpen
+              ? keySignals.map((contest) => (
+                  <KeySignalCard key={contest.id || contest.name} T={T} contest={contest} />
+                ))
+              : null}
+          </>
+        ) : null}
+
+        <SectionTitle T={T}>Recent results</SectionTitle>
+        {recent.length ? (
+          recent.map((contest) => (
+            <RecentResultCard key={contest.id || contest.name} T={T} contest={contest} />
+          ))
+        ) : (
+          <Card T={T}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: T.tl, textAlign: 'center' }}>
+              No recent by-election results loaded yet.
+            </div>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }

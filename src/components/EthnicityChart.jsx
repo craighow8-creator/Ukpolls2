@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { R, EZ } from '../constants'
 
 const CENSUS_DATA = [
@@ -140,3 +140,6 @@ export default function EthnicityChart({ T }) {
     </div>
   )
 }
+
+
+

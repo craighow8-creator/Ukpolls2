@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { ScrollArea, StickyPills, haptic } from '../components/ui'
+import BriefingPanel from '../components/BriefingPanel'
 import { PLEDGES } from '../data/pledges'
+import { buildSmartSummary } from '../utils/intelligence'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
@@ -56,9 +58,9 @@ function PartyPicker({ T, main, slot, exclude, onPick, onCancel }) {
           <div>
             <div
               style={{
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: 800,
-                letterSpacing: -0.8,
+                letterSpacing: -1,
                 color: T.th,
                 lineHeight: 1,
               }}
@@ -143,6 +145,52 @@ function PartyPicker({ T, main, slot, exclude, onPick, onCancel }) {
   )
 }
 
+function StickyPillsBar({ T, pills, tab, setTab }) {
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 8,
+        background: T.sf,
+        padding: '10px 16px 12px',
+        borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}` ,
+        boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
+      }}
+    >
+      <StickyPills pills={pills} active={tab} onSelect={setTab} T={T} />
+    </div>
+  )
+}
+
+
+function topicPreview(topic, leader, pledges) {
+  return leader?.[topic] || pledges?.[topic]?.[0]?.pledge || null
+}
+
+function compareLeaderLine(leaderA, leaderB, partyA, partyB) {
+  if (!leaderA || !leaderB) return null
+  const a = Number(leaderA.net ?? 0)
+  const b = Number(leaderB.net ?? 0)
+  const winningParty = a >= b ? partyA : partyB
+  const winningLeader = a >= b ? leaderA : leaderB
+  const losingLeader = a >= b ? leaderB : leaderA
+
+  if (a < 0 && b < 0) {
+    return {
+      title: `${winningParty.abbr} has the less negative leader rating`,
+      body: `${winningLeader.name.split(' ').slice(-1)[0]} is ${a >= b ? (a >= 0 ? '+' : '') + a : (b >= 0 ? '+' : '') + b}; ${losingLeader.name.split(' ').slice(-1)[0]} is ${a >= b ? (b >= 0 ? '+' : '') + b : (a >= 0 ? '+' : '') + a}. Neither leader is strongly well-rated overall.`,
+      accent: winningParty.color,
+    }
+  }
+
+  return {
+    title: `${winningParty.abbr} has the stronger leader rating in this comparison`,
+    body: `${winningLeader.name.split(' ').slice(-1)[0]} is ${a >= b ? (a >= 0 ? '+' : '') + a : (b >= 0 ? '+' : '') + b}; ${losingLeader.name.split(' ').slice(-1)[0]} is ${a >= b ? (b >= 0 ? '+' : '') + b : (a >= 0 ? '+' : '') + a}.`,
+    accent: winningParty.color,
+  }
+}
+
 function H2HRow({ T, label, valA, valB, colorA, colorB, winnerA }) {
   return (
     <div
@@ -201,7 +249,7 @@ function H2HRow({ T, label, valA, valB, colorA, colorB, winnerA }) {
   )
 }
 
-export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
+export default function CompareScreen({ T, nav, parties = [], leaders = [], pollContext = {} }) {
   const [selA, setSelA] = useState(null)
   const [selB, setSelB] = useState(null)
   const [tab, setTab] = useState('overview')
@@ -229,6 +277,69 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
   const pledgesA = PLEDGES?.[selA]
   const pledgesB = PLEDGES?.[selB]
   const both = partyA && partyB
+
+  const smartSummary = both ? buildSmartSummary({
+    parties: [partyA, partyB].map((p) => ({ ...p, pct: p.pct })),
+    leaders: [leaderA, leaderB].filter(Boolean),
+    trends: pollContext?.trendSeries || [],
+    pollContext,
+  }) : null
+
+  const leadParty = both ? ((partyA.pct || 0) >= (partyB.pct || 0) ? partyA : partyB) : null
+  const trailParty = both ? (leadParty?.name === partyA?.name ? partyB : partyA) : null
+  const gap = both ? Math.abs((partyA.pct || 0) - (partyB.pct || 0)) : null
+  const momentumParty = both
+    ? [partyA, partyB]
+        .map((p) => ({ ...p, _recentDelta: typeof p?.recentDelta === 'number' ? p.recentDelta : Number(p?.change || 0) }))
+        .sort((a, b) => (b._recentDelta || 0) - (a._recentDelta || 0))[0]
+    : null
+  const approvalLine = compareLeaderLine(leaderA, leaderB, partyA, partyB)
+  const issueTopic = ['immigration', 'economy', 'nhs', 'climate'].find((topic) => topicPreview(topic, leaderA, pledgesA) || topicPreview(topic, leaderB, pledgesB))
+  const issueA = issueTopic ? topicPreview(issueTopic, leaderA, pledgesA) : null
+  const issueB = issueTopic ? topicPreview(issueTopic, leaderB, pledgesB) : null
+
+  const briefingItems = both
+    ? [
+        {
+          key: 'race',
+          kicker: 'Race status',
+          title: smartSummary?.headline || (gap <= 2 ? 'This one is genuinely close' : `${leadParty?.abbr} leads in the current snapshot`),
+          body: smartSummary?.subhead || (gap <= 2
+              ? `${partyA.abbr} and ${partyB.abbr} are separated by just ${gap}pt in the current snapshot.`
+              : `${leadParty?.name} leads ${trailParty?.name} by ${gap}pt in the current snapshot.`),
+          accent: leadParty?.color,
+        },
+        momentumParty
+          ? {
+              key: 'momentum',
+              kicker: 'Recent movement',
+              title: `${momentumParty?.abbr} shows the stronger recent movement`,
+              body:
+                momentumParty?._recentDelta != null
+                  ? `${momentumParty?.name} is on ${momentumParty._recentDelta > 0 ? '+' : ''}${momentumParty._recentDelta}pt across the visible trend window.`
+                  : `${momentumParty?.name} has the stronger latest recorded change, but trend confidence is limited.`,
+              accent: momentumParty?.color,
+            }
+          : null,
+        approvalLine
+          ? {
+              key: 'leaders',
+              kicker: 'Leader edge',
+              title: approvalLine.title,
+              body: approvalLine.body,
+              accent: approvalLine.accent,
+            }
+          : issueTopic
+            ? {
+                key: 'policy',
+                kicker: `${POLICY_TOPICS.find((t) => t.key === issueTopic)?.label || 'Policy'} split`,
+                title: 'The argument is different, not just the branding',
+                body: `${partyA.abbr}: ${(issueA || 'No position').slice(0, 72)}${issueA && issueA.length > 72 ? '…' : ''}  ${partyB.abbr}: ${(issueB || 'No position').slice(0, 72)}${issueB && issueB.length > 72 ? '…' : ''}`,
+                accent: leadParty?.color,
+              }
+            : null,
+      ].filter(Boolean)
+    : []
 
   const availTabs = POLICY_TOPICS.filter((t) => {
     if (t.key === 'overview') return true
@@ -259,35 +370,17 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
+        minHeight: '100%',
         background: T.sf,
       }}
     >
-      <div style={{ padding: '18px 18px 0', flexShrink: 0 }}>
-        <div
-          style={{
-            fontSize: 24,
-            fontWeight: 800,
-            letterSpacing: -0.8,
-            color: T.th,
-            lineHeight: 1,
-            textAlign: 'center',
-          }}
-        >
-          Compare
-        </div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4, textAlign: 'center' }}>
-          Side-by-side party comparison
-        </div>
-      </div>
 
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 56px 1fr',
           gap: 10,
-          padding: '14px 14px 0',
+          padding: '0 14px 0',
           alignItems: 'stretch',
           flexShrink: 0,
         }}
@@ -353,7 +446,7 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
               </>
             ) : (
               <>
-                <div style={{ fontSize: 24, color: T.tl, marginBottom: 4 }}>+</div>
+                <div style={{ fontSize: 28, color: T.tl, marginBottom: 4 }}>+</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>Party A</div>
               </>
             )}
@@ -436,7 +529,7 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
               </>
             ) : (
               <>
-                <div style={{ fontSize: 24, color: T.tl, marginBottom: 4 }}>+</div>
+                <div style={{ fontSize: 28, color: T.tl, marginBottom: 4 }}>+</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>Party B</div>
               </>
             )}
@@ -444,9 +537,9 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
         </motion.div>
       </div>
 
-      {both && <StickyPills pills={availTabs} active={tab} onSelect={setTab} T={T} />}
+      {both && <StickyPillsBar T={T} pills={availTabs} tab={tab} setTab={setTab} />}
 
-      <ScrollArea>
+      <div style={{ padding: '12px 16px 40px' }}>
         {!both && (
           <div style={{ textAlign: 'center', padding: '44px 20px' }}>
             <div style={{ fontSize: 40, marginBottom: 14 }}>⚖️</div>
@@ -470,6 +563,14 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
 
         {both && tab === 'overview' && (
           <>
+            <BriefingPanel
+              T={T}
+              title="Comparison briefing"
+              subtitle={`${partyA.name} vs ${partyB.name} in plain English, before you get into the raw numbers.`}
+              items={briefingItems}
+              style={{ marginBottom: 12 }}
+            />
+
             <div
               style={{
                 borderRadius: 14,
@@ -511,7 +612,7 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
                   {partyA.abbr} {partyA.pct}%
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: T.th, textAlign: 'center' }}>
-                  {Math.abs(partyA.pct - partyB.pct)}pt {partyA.pct > partyB.pct ? partyA.name : partyB.name} lead
+                  {Math.abs(partyA.pct - partyB.pct)}pt lead in current snapshot
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: partyB.color }}>
                   {partyB.abbr} {partyB.pct}%
@@ -541,7 +642,7 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
             />
             <H2HRow
               T={T}
-              label="Weekly"
+              label="Weekly change (snapshot)"
               valA={`${partyA.change > 0 ? '+' : ''}${partyA.change}pt`}
               valB={`${partyB.change > 0 ? '+' : ''}${partyB.change}pt`}
               colorA={partyA.color}
@@ -779,7 +880,9 @@ export default function CompareScreen({ T, nav, parties = [], leaders = [] }) {
         )}
 
         <div style={{ height: 40 }} />
-      </ScrollArea>
+      </div>
     </div>
   )
 }
+
+

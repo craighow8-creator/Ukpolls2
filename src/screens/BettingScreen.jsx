@@ -1,3 +1,4 @@
+import React from 'react'
 import { ScrollArea } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
 
@@ -252,3 +253,4 @@ export default function BettingScreen({ T, nav, betting }) {
     </div>
   )
 }
+

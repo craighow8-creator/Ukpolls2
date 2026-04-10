@@ -1,3 +1,4 @@
+import React from 'react'
 import { R } from '../constants'
 import { POLLSTER_INFO } from '../utils/pollsterInfo'
 
@@ -22,3 +23,5 @@ export default function PollsterModal({ pollster, onClose, T }) {
     </div>
   )
 }
+
+

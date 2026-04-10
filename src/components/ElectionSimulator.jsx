@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { SP, EZ } from '../constants'
 import { haptic } from '../components/ui'
 
@@ -257,3 +257,6 @@ export default function ElectionSimulator({ T, parties }) {
     </div>
   )
 }
+
+
+

@@ -1,3 +1,4 @@
+import React from 'react'
 import { R, EZ } from '../constants'
 
 const PARTY_COLORS = { ref:'#12B7D4', lab:'#C8102E', con:'#0087DC', grn:'#02A95B', ld:'#FAA61A', rb:'#1a4a9e' }
@@ -30,3 +31,5 @@ export default function BarChart({ groups, T, partyKeys = ['ref','grn','lab','co
     </div>
   )
 }
+
+

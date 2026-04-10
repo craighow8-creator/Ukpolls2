@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { StickyPills, haptic } from '../components/ui'
-import { TrendLine } from '../components/TrendChart'
+import SharedTrendChart, { buildDisplayTrendRows, makeTrendPartyKeys } from '../components/charts/SharedTrendChart'
 import { PortraitAvatar } from '../utils/portraits'
 import { CardWatermark } from '../components/CardWatermark'
-import { PLEDGES, PLEDGE_TOPICS } from '../data/pledges'
+import { POLICY_AREAS, POLICY_RECORDS } from '../data/policy/policyRecords'
+import { POLICY_AREA_LABELS } from '../data/policy/policyTaxonomy'
+import { getAvailablePolicyAreasForParty, getPartyPolicies } from '../data/policy/policySelectors'
+import { getStanceLabel } from '../data/policy/stanceUtils'
 import { useSwipeNav } from '../utils/swipeNav'
-import { InfoButton } from '../components/InfoGlyph'
 
 const bCard = (T, color, extra = {}) => ({
   borderRadius: 14,
@@ -97,30 +99,6 @@ function SectionLabel({ children, T }) {
   )
 }
 
-function Badge({ children, color, subtle = false }) {
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 12,
-        fontWeight: 800,
-        letterSpacing: '0.05em',
-        textTransform: 'uppercase',
-        color,
-        background: subtle ? `${color}12` : `${color}1F`,
-        border: `1px solid ${color}2B`,
-        borderRadius: 999,
-        padding: '4px 9px',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      {children}
-    </span>
-  )
-}
-
 function StatBox({ T, label, value, sub, color, wide = false }) {
   return (
     <div
@@ -177,71 +155,6 @@ function StatBox({ T, label, value, sub, color, wide = false }) {
   )
 }
 
-function ScrollAwayHeader({ T, p, leader, rankLabel }) {
-  return (
-    <div style={{ padding: '8px 16px 10px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: 8,
-          flexWrap: 'wrap',
-          marginBottom: 10,
-        }}
-      >
-        <Badge color={p.color}>{p.abbr}</Badge>
-        {rankLabel ? <Badge color={T.tl} subtle>{rankLabel}</Badge> : null}
-      </div>
-
-      <div
-        style={{
-          fontSize: 30,
-          fontWeight: 800,
-          letterSpacing: -1,
-          color: T.th,
-          textAlign: 'center',
-          lineHeight: 1,
-        }}
-      >
-        {p.name}
-      </div>
-
-      <div
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 10,
-          flexWrap: 'wrap',
-          width: '100%',
-          marginTop: 6,
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
-          Party profile · polling · funding
-        </div>
-        <InfoButton id="party_profile" T={T} size={20} />
-      </div>
-
-      {leader ? (
-        <div
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: T.tl,
-            marginTop: 6,
-            opacity: 0.85,
-            textAlign: 'center',
-            lineHeight: 1.5,
-          }}
-        >
-          Leader: {leader.name}
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
 function StickyPillsBar({ T, tab, setTab }) {
   return (
     <div
@@ -250,7 +163,7 @@ function StickyPillsBar({ T, tab, setTab }) {
         top: 0,
         zIndex: 8,
         background: T.sf,
-        padding: '8px 16px 10px',
+        padding: '10px 16px 12px',
         borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
         boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
       }}
@@ -260,7 +173,151 @@ function StickyPillsBar({ T, tab, setTab }) {
   )
 }
 
-export default function PartyScreen({ T, idx, nav, parties, leaders, trends, polls }) {
+function PolicyRecordCard({ T, p, record }) {
+  const stanceLabel = record.stanceLabel || getStanceLabel(record.stanceScore)
+  const details = Array.isArray(record.details) ? record.details.filter(Boolean) : []
+  const sources = Array.isArray(record.sources) ? record.sources.filter(Boolean) : []
+  const title = cleanText(record.title || record.topic || record.area)
+  const summary = cleanText(record.summary)
+  const sourceTypeLabel = (type) => cleanText(type).replace(/_/g, ' ')
+
+  return (
+    <div style={{ ...bCard(T, p.color, { marginBottom: 12 }) }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: 10,
+          alignItems: 'flex-start',
+          position: 'relative',
+          zIndex: 1,
+          marginBottom: 10,
+        }}
+      >
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: T.th, lineHeight: 1.3 }}>
+            {title}
+          </div>
+          {summary && summary !== title ? (
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.tm, marginTop: 5, lineHeight: 1.45 }}>
+              {summary}
+            </div>
+          ) : null}
+        </div>
+        <div
+          style={{
+            fontSize: 10.5,
+            fontWeight: 800,
+            color: p.color,
+            background: `${p.color}12`,
+            border: `1px solid ${p.color}26`,
+            borderRadius: 999,
+            padding: '5px 8px',
+            whiteSpace: 'nowrap',
+            textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+          }}
+        >
+          {stanceLabel}
+        </div>
+      </div>
+
+      {details.length ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7, position: 'relative', zIndex: 1 }}>
+          {details.map((detail) => (
+            <div key={detail} style={{ display: 'flex', gap: 9, alignItems: 'flex-start' }}>
+              <div
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: p.color,
+                  flexShrink: 0,
+                  marginTop: 7,
+                  opacity: 0.85,
+                }}
+              />
+              <div style={{ fontSize: 13.5, fontWeight: 500, color: T.tm, lineHeight: 1.55 }}>
+                {detail}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {sources.length ? (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 8,
+            marginTop: 12,
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          {sources.map((source) => {
+            const label = source.title || source.label || 'Policy source'
+            const content = (
+              <>
+                {label}
+                {source.type ? <span style={{ color: T.tl, fontWeight: 700 }}> · {sourceTypeLabel(source.type)}</span> : null}
+              </>
+            )
+
+            if (source.url) {
+              return (
+                <a
+                  key={`${record.id}-${label}`}
+                  href={source.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: p.color,
+                    textDecoration: 'none',
+                  }}
+                >
+                  {content} →
+                </a>
+              )
+            }
+
+            return (
+              <div key={`${record.id}-${label}`} style={{ fontSize: 12, fontWeight: 700, color: T.tl }}>
+                {content}
+              </div>
+            )
+          })}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function PolicyUnavailable({ T, party, area }) {
+  return (
+    <div
+      style={{
+        textAlign: 'center',
+        padding: '26px 18px',
+        color: T.tl,
+        fontSize: 14,
+        fontWeight: 600,
+        lineHeight: 1.55,
+        borderRadius: 14,
+        background: T.c0,
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+      }}
+    >
+      No structured policy records available yet for {party}
+      {area ? ` on ${POLICY_AREA_LABELS[area] || area}` : ''}.
+    </div>
+  )
+}
+
+export default function PartyScreen({ T, idx, nav, parties, leaders, trends, polls, pollContext, policyRecords = POLICY_RECORDS }) {
   const p = parties[idx]
   const leader = leaders?.find((l) => l.party === p?.name)
   const [tab, setTab] = useState('overview')
@@ -282,9 +339,12 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
   const ranks = ['Leading', '2nd', '3rd', '4th', '5th', '6th', '7th']
   const rankLabel = ranks[rank] || ''
   const leaderIdx = leaders?.indexOf(leader)
-  const pledges = PLEDGES[p.name]
   const funding = FUNDING[p.name]
-  const availableTopics = PLEDGE_TOPICS.filter((t) => pledges?.[t.key]?.length > 0)
+  const availablePolicyAreas = getAvailablePolicyAreasForParty(p.name, policyRecords)
+  const selectedPolicyArea = availablePolicyAreas.includes(pledgeTopic)
+    ? pledgeTopic
+    : availablePolicyAreas[0] || POLICY_AREAS[0]
+  const selectedPolicyRecords = getPartyPolicies(p.name, selectedPolicyArea, policyRecords)
 
   const sorted = [...mainParties].sort((a, b) => b.pct - a.pct)
   const curIdx = sorted.findIndex((x) => x.name === p.name)
@@ -298,12 +358,17 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
       .slice(0, 8)
   }, [polls, p])
 
-  const trendData = useMemo(() => {
-    return (trends || [])
-      .map((t) => t[p.name])
-      .filter((v) => safeNumber(v) != null)
-      .map((v) => safeNumber(v))
-  }, [trends, p.name])
+  const displayTrendRows = useMemo(() => buildDisplayTrendRows(trends, pollContext), [trends, pollContext])
+  const partyTrendKeys = useMemo(() => makeTrendPartyKeys([p.name]), [p.name])
+  const rawPollRows = useMemo(() => pollContext?.allPollsSorted || polls || [], [pollContext, polls])
+  const partyTrendMeta = useMemo(() => {
+    const latest = displayTrendRows[displayTrendRows.length - 1]
+    return [
+      latest?.fullDate ? `Latest point: ${latest.fullDate}` : null,
+      displayTrendRows.length ? `${displayTrendRows.length} trend points` : null,
+      rawPollRows.length ? `${rawPollRows.length} polls in source` : null,
+    ].filter(Boolean).join(' · ')
+  }, [displayTrendRows, rawPollRows])
 
   return (
     <div
@@ -314,9 +379,16 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
         background: T.sf,
       }}
     >
-      <ScrollAwayHeader T={T} p={p} leader={leader} rankLabel={rankLabel} />
       <StickyPillsBar T={T} tab={tab} setTab={setTab} />
 
+      <div
+        style={{
+          height: 1,
+          background: T.cardBorder || 'rgba(0,0,0,0.10)',
+          boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
+          flexShrink: 0,
+        }}
+      />
       <div style={{ padding: '12px 16px 40px' }}>
         {tab === 'overview' ? (
           <>
@@ -410,12 +482,7 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
                   color={p.color}
                 />
 
-                <StatBox
-                  T={T}
-                  label="Seats"
-                  value={p.seats || 0}
-                  color={p.color}
-                />
+                <StatBox T={T} label="Seats" value={p.seats || 0} color={p.color} />
 
                 <StatBox
                   T={T}
@@ -424,19 +491,9 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
                   color={p.change > 0 ? '#02A95B' : p.change < 0 ? '#C8102E' : T.tl}
                 />
 
-                <StatBox
-                  T={T}
-                  label="Rank"
-                  value={rankLabel || '—'}
-                  color={T.th}
-                />
+                <StatBox T={T} label="Rank" value={rankLabel || '—'} color={T.th} />
 
-                <StatBox
-                  T={T}
-                  label="MRP"
-                  value={`${p.seats || 0}/650`}
-                  color={p.color}
-                />
+                <StatBox T={T} label="MRP" value={`${p.seats || 0}/650`} color={p.color} />
               </div>
 
               <div
@@ -588,90 +645,62 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
         ) : null}
 
         {tab === 'pledges' ? (
-          pledges ? (
-            <>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-                {availableTopics.map((t, i) => (
+          <>
+            {availablePolicyAreas.length ? (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+                {availablePolicyAreas.map((area) => (
                   <div
-                    key={i}
-                    onClick={() => setPledgeTopic(t.key)}
+                    key={area}
+                    onClick={() => {
+                      haptic(4)
+                      setPledgeTopic(area)
+                    }}
                     style={{
                       padding: '8px 14px',
                       borderRadius: 999,
-                      background: pledgeTopic === t.key ? p.color : T.c0,
-                      border: `1px solid ${pledgeTopic === t.key ? 'transparent' : p.color + '33'}`,
+                      background: selectedPolicyArea === area ? p.color : T.c0,
+                      border: `1px solid ${selectedPolicyArea === area ? 'transparent' : p.color + '33'}`,
                       fontSize: 14,
                       fontWeight: 700,
-                      color: pledgeTopic === t.key ? '#fff' : p.color,
+                      color: selectedPolicyArea === area ? '#fff' : p.color,
                       cursor: 'pointer',
                       WebkitTapHighlightColor: 'transparent',
                       transition: 'background 0.18s',
                     }}
                   >
-                    {t.label}
+                    {POLICY_AREA_LABELS[area] || area}
                   </div>
                 ))}
               </div>
+            ) : null}
 
-              {(pledges[pledgeTopic] || []).map((item, i) => (
-                <div key={i} style={{ ...bCard(T, p.color, { marginBottom: 12 }) }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: 12,
-                      alignItems: 'flex-start',
-                      position: 'relative',
-                      zIndex: 1,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        background: p.color,
-                        flexShrink: 0,
-                        marginTop: 6,
-                      }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: T.th, lineHeight: 1.65 }}>
-                        {item.pledge}
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, marginTop: 6 }}>
-                        {item.source}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </>
-          ) : (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: 40,
-                color: T.tl,
-                fontSize: 15,
-                fontWeight: 600,
-              }}
-            >
-              Manifesto data not yet available for {p.name}
-            </div>
-          )
+            {selectedPolicyRecords.length ? (
+              selectedPolicyRecords.map((record) => (
+                <PolicyRecordCard key={record.id} T={T} p={p} record={record} />
+              ))
+            ) : (
+              <PolicyUnavailable T={T} party={p.name} area={availablePolicyAreas.length ? selectedPolicyArea : null} />
+            )}
+          </>
         ) : null}
 
         {tab === 'trend' ? (
           <>
-            <div style={{ ...bCard(T, p.color, { marginBottom: 16, textAlign: 'center' }) }}>
-              <SectionLabel T={T}>12-month polling trend</SectionLabel>
-              <TrendLine data={trendData} color={p.color} width={280} height={100} />
+            <div style={{ ...bCard(T, p.color, { marginBottom: 16, textAlign: 'center', padding: '14px 10px 12px' }) }}>
+              <SectionLabel T={T}>{p.name} polling trend</SectionLabel>
+              <SharedTrendChart
+                trends={displayTrendRows}
+                rawPolls={rawPollRows}
+                partyKeys={partyTrendKeys}
+                T={T}
+                metaText={partyTrendMeta}
+              />
             </div>
 
             <div style={{ ...bCard(T, null) }}>
               <SectionLabel T={T}>Monthly data</SectionLabel>
 
-              {(trends || [])
+              {displayTrendRows
                 .slice()
                 .reverse()
                 .map((t, i) => (
@@ -682,10 +711,10 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '8px 0',
-                      borderBottom: i < trends.length - 1 ? `0.5px solid ${T.c1}` : 'none',
+                      borderBottom: i < displayTrendRows.length - 1 ? `0.5px solid ${T.c1}` : 'none',
                     }}
                   >
-                    <div style={{ fontSize: 14, fontWeight: 600, color: T.tm }}>{t.month}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: T.tm }}>{t.fullDate || t.month}</div>
                     <div
                       style={{
                         fontSize: 16,
@@ -694,7 +723,7 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
                         color: p.color,
                       }}
                     >
-                      {t[p.name] || '—'}%
+                      {safeNumber(t[partyTrendKeys[0]?.key]) != null ? `${safeNumber(t[partyTrendKeys[0]?.key])}%` : '—'}
                     </div>
                   </div>
                 ))}

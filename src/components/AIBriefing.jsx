@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { WORKER, APP_TOKEN, R } from '../constants'
 
 export default function AIBriefing({ T, partyName, partyColor: pc, parties, meta }) {
@@ -106,3 +106,6 @@ export default function AIBriefing({ T, partyName, partyColor: pc, parties, meta
     </div>
   )
 }
+
+
+

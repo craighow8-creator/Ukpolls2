@@ -5,3 +5,4 @@ import AdminApp from './screens/AdminApp'
 ReactDOM.createRoot(document.getElementById('admin-root')).render(
   <React.StrictMode><AdminApp/></React.StrictMode>
 )
+

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { ScrollArea, StickyPills, haptic } from '../components/ui'
 
 const STORAGE_KEY = 'politiscope_predictor'
@@ -227,3 +227,6 @@ export default function PollPredictorScreen({ T, nav }) {
     </div>
   )
 }
+
+
+

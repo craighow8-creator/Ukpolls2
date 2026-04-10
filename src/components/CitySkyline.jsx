@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 // Left cluster heights (3 cols) and right cluster heights (3 cols)
 // Each profile: [L1,L2,L3, R1,R2,R3] as % of container height
@@ -102,3 +102,6 @@ export function CitySkyline({ color = '#000000' }) {
 }
 
 export default CitySkyline
+
+
+

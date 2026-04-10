@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { R, SP, EZ, TYPE, SPACING } from '../constants'
 
 // ── Haptic ────────────────────────────────────────────────
@@ -147,6 +147,31 @@ export function StickyPills({ pills, active, onSelect, T, accentColor }) {
   const [scrollRef, setScrollRef] = useState(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const resetActiveScreenScroll = (origin) => {
+    const root =
+      origin?.closest?.('[data-scroll-root]') ||
+      origin?.closest?.('[data-scroll-container]')
+
+    if (!root) {
+      window.scrollTo?.(0, 0)
+      return
+    }
+
+    const reset = () => {
+      root.scrollTop = 0
+      root.querySelectorAll?.('[data-scroll-container]').forEach((el) => {
+        el.scrollTop = 0
+      })
+      window.scrollTo?.(0, 0)
+    }
+
+    reset()
+    requestAnimationFrame(() => {
+      reset()
+      requestAnimationFrame(reset)
+    })
+  }
 
   const updateScrollState = (el) => {
     if (!el) return
@@ -321,9 +346,10 @@ export function StickyPills({ pills, active, onSelect, T, accentColor }) {
               <button
                 key={i}
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
                   haptic(6)
                   onSelect(pill.key || pill.label)
+                  resetActiveScreenScroll(e.currentTarget)
                 }}
                 style={{
                   flexShrink: 0,
@@ -404,7 +430,7 @@ export const SectionLabel = ({ children, T }) => (
 // ── Scroll area ───────────────────────────────────────────
 export function ScrollArea({ children, style = {} }) {
   return (
-    <div style={{ flex:1, minHeight:0, overflowY:'auto', overflowX:'hidden', WebkitOverflowScrolling:'touch', padding:'10px 14px 32px', overscrollBehavior:'contain', scrollbarWidth:'none', ...style }}>
+    <div data-scroll-container style={{ flex:1, minHeight:0, overflowY:'auto', overflowX:'hidden', WebkitOverflowScrolling:'touch', padding:'10px 14px 32px', overscrollBehavior:'contain', scrollbarWidth:'none', ...style }}>
       <style>{`::-webkit-scrollbar{display:none}`}</style>
       {children}
     </div>

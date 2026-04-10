@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import { R } from '../constants'
 import { StickyPills, haptic } from '../components/ui'
-import Ring from '../components/Ring'
 import { PortraitAvatar } from '../utils/portraits'
 import { useSwipeNav } from '../utils/swipeNav'
 import { InfoButton } from '../components/InfoGlyph'
@@ -40,7 +39,7 @@ function Badge({ children, color, subtle = false }) {
 
 function ScrollAwayHeader({ T, l, party, rankLabel }) {
   return (
-    <div style={{ padding: '8px 16px 10px' }}>
+    <div style={{ padding: '10px 16px 12px' }}>
       <div
         style={{
           display: 'flex',
@@ -56,9 +55,9 @@ function ScrollAwayHeader({ T, l, party, rankLabel }) {
 
       <div
         style={{
-          fontSize: 30,
+          fontSize: 32,
           fontWeight: 800,
-          letterSpacing: -1,
+          letterSpacing: -1.1,
           color: T.th,
           textAlign: 'center',
           lineHeight: 1,
@@ -95,7 +94,7 @@ function StickyPillsBar({ T, pills, tab, setTab }) {
         top: 0,
         zIndex: 8,
         background: T.sf,
-        padding: '8px 16px 10px',
+        padding: '10px 16px 12px',
         borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
         boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
       }}
@@ -123,6 +122,36 @@ function SectionLabel({ children, T }) {
   )
 }
 
+function buildSnapshotText(leader) {
+  if (!leader) return { title: 'Public standing unclear', body: 'There is not enough approval context yet.' }
+
+  if (leader.net >= 10) {
+    return {
+      title: 'Strong public standing',
+      body: 'More voters approve than disapprove, giving this leader a relatively solid public footing.',
+    }
+  }
+
+  if (leader.net >= 0) {
+    return {
+      title: 'Slightly positive standing',
+      body: 'Approval is ahead of disapproval, but not by enough to look secure.',
+    }
+  }
+
+  if (leader.net <= -20) {
+    return {
+      title: 'Deeply underwater',
+      body: 'Disapproval is far ahead of approval, which is a serious political weakness.',
+    }
+  }
+
+  return {
+    title: 'Weak public standing',
+    body: 'More voters disapprove than approve, leaving this leader on the back foot.',
+  }
+}
+
 export default function LeaderScreen({ T, lIdx, nav, leaders, parties }) {
   const l = leaders?.[lIdx]
   const party = parties?.find((p) => p.name === l?.party)
@@ -146,6 +175,7 @@ export default function LeaderScreen({ T, lIdx, nav, leaders, parties }) {
   const rankLabel = curRank >= 0 ? `#${curRank + 1} by net approval` : null
 
   const netColor = l.net >= 0 ? '#02A95B' : '#C8102E'
+  const snapshot = buildSnapshotText(l)
 
   return (
     <div
@@ -162,111 +192,134 @@ export default function LeaderScreen({ T, lIdx, nav, leaders, parties }) {
       <div style={{ padding: '12px 16px 40px' }}>
         <div
           style={{
-            borderRadius: 14,
-            padding: '14px 14px 16px',
+            borderRadius: 16,
+            padding: '18px 16px 16px',
             background: T.c0,
             border: `1px solid ${(party?.color || l.color) + '28'}`,
             marginBottom: 12,
           }}
         >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr auto',
-              gap: 14,
-              alignItems: 'center',
-              marginBottom: 12,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                minWidth: 0,
-              }}
-            >
-              <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <div style={{ position: 'relative' }}>
                 <style>{`@keyframes breathe{0%,100%{transform:scale(1);opacity:0.45}50%{transform:scale(1.04);opacity:0.85}}`}</style>
                 <div
                   style={{
                     position: 'absolute',
-                    inset: -7,
+                    inset: -8,
                     borderRadius: '50%',
-                    border: `2px solid ${l.color}44`,
+                    border: `2px solid ${(party?.color || l.color)}44`,
                     animation: 'breathe 2.8s ease-in-out infinite',
                   }}
                 />
-                <PortraitAvatar name={l.name} color={l.color} size={92} radius={46} />
-              </div>
-
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 800,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: T.tl,
-                    marginBottom: 8,
-                    lineHeight: 1.2,
-                  }}
-                >
-                  Net approval
-                </div>
-
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '6px 11px 6px 8px',
-                    borderRadius: R.pill,
-                    background: `${party?.color || l.color}22`,
-                    color: party?.color || l.color,
-                    fontSize: 14,
-                    fontWeight: 700,
-                    marginBottom: 10,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: party?.color || l.color,
-                    }}
-                  />
-                  {party?.abbr || l.party}
-                </div>
-
-                <div
-                  style={{
-                    fontSize: 28,
-                    fontWeight: 800,
-                    color: netColor,
-                    lineHeight: 1,
-                  }}
-                >
-                  {l.net >= 0 ? '+' : ''}
-                  {l.net}
-                </div>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: T.tl,
-                    marginTop: 4,
-                    lineHeight: 1,
-                  }}
-                >
-                  {l.approve}% approve · {l.disapprove}% disapprove
-                </div>
+                <PortraitAvatar name={l.name} color={party?.color || l.color} size={112} radius={56} />
               </div>
             </div>
 
-            <div style={{ flexShrink: 0, justifySelf: 'end' }}>
-              <Ring value={l.net} size={76} />
+            <div
+              style={{
+                fontSize: 32,
+                fontWeight: 800,
+                color: T.th,
+                lineHeight: 1,
+                marginBottom: 8,
+              }}
+            >
+              {l.name}
+            </div>
+
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 11px 6px 8px',
+                borderRadius: R.pill,
+                background: `${party?.color || l.color}22`,
+                color: party?.color || l.color,
+                fontSize: 14,
+                fontWeight: 700,
+                marginBottom: 12,
+              }}
+            >
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: party?.color || l.color,
+                }}
+              />
+              {party?.abbr || l.party}
+            </div>
+
+            <div
+              style={{
+                fontSize: 40,
+                fontWeight: 900,
+                color: netColor,
+                lineHeight: 1,
+              }}
+            >
+              {l.net >= 0 ? '+' : ''}{l.net}
+            </div>
+
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: T.tl,
+                marginTop: 8,
+                lineHeight: 1.4,
+              }}
+            >
+              {l.approve}% approve · {l.disapprove}% disapprove
+            </div>
+          </div>
+
+          <div
+            style={{
+              borderRadius: 14,
+              padding: '16px',
+              background: T.sf,
+              border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+              marginBottom: 12,
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: T.tl,
+                marginBottom: 8,
+              }}
+            >
+              Snapshot
+            </div>
+
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: T.th,
+                marginBottom: 8,
+              }}
+            >
+              {snapshot.title}
+            </div>
+
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                color: T.tm,
+                lineHeight: 1.6,
+              }}
+            >
+              {snapshot.body}
             </div>
           </div>
 
@@ -275,8 +328,7 @@ export default function LeaderScreen({ T, lIdx, nav, leaders, parties }) {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              minHeight: 18,
-              marginBottom: 4,
+              minHeight: 20,
             }}
           >
             <div
@@ -375,10 +427,10 @@ export default function LeaderScreen({ T, lIdx, nav, leaders, parties }) {
 
           <div
             style={{
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: 500,
               color: T.tm,
-              lineHeight: 1.8,
+              lineHeight: 1.7,
             }}
           >
             {tab === 'bio' ? l.bio : l[tab]}
@@ -388,3 +440,5 @@ export default function LeaderScreen({ T, lIdx, nav, leaders, parties }) {
     </div>
   )
 }
+
+

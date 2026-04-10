@@ -1,3 +1,4 @@
+import React from 'react'
 import { EZ } from '../constants'
 
 // Transitioning `background` on complex multi-layer radial gradients is not
@@ -33,7 +34,6 @@ export default function AtmoBg({ T }) {
           `radial-gradient(ellipse at 50% 35%, ${T.bgTop}ee 0%, ${T.bgMid}88 35%, transparent 65%)`,
           `linear-gradient(180deg, ${T.bgTop} 0%, ${T.bgMid} 30%, transparent 65%)`,
         ].join(','),
-        // Transition opacity, not background — opacity is GPU-composited
         transition: `opacity 1.2s ${EZ}`,
         willChange: 'opacity',
       }}/>
@@ -57,7 +57,6 @@ export default function AtmoBg({ T }) {
         transition: `opacity 1.2s ${EZ}`,
         willChange: 'opacity',
       }}/>
-      {/* Centre concentrated glow */}
       <div style={{
         position: 'absolute',
         top: '5%', left: '25%',
@@ -71,4 +70,3 @@ export default function AtmoBg({ T }) {
     </div>
   )
 }
-

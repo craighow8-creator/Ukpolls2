@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { saveSection, loadTimestamps, formatTs, getData, clearAll } from '../data/store.js'
 
 const GOOGLE_CLIENT_ID = '427686428321-pcb44g2h03ahesjsejmo9nqodrkehn7c.apps.googleusercontent.com'
@@ -156,6 +156,70 @@ function Section({ title, children }) {
 function toNumberOrZero(value) {
   const n = Number(value)
   return Number.isFinite(n) ? n : 0
+}
+
+function toOptionalNumber(value) {
+  if (value === '' || value === null || value === undefined) return null
+  const n = Number(value)
+  return Number.isFinite(n) ? n : null
+}
+
+function toPollIdPart(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+const FRESHNESS_POLLSTERS = [
+  'YouGov',
+  'More in Common',
+  'Find Out Now',
+  'Opinium',
+  'Lord Ashcroft Polls',
+  'Focaldata',
+]
+
+function parseIsoDate(value) {
+  const text = String(value || '').trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null
+  const [yyyy, mm, dd] = text.split('-').map(Number)
+  const date = new Date(Date.UTC(yyyy, mm - 1, dd))
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function getPollUsableDate(poll) {
+  return poll?.publishedAt || poll?.fieldworkEnd || poll?.fieldworkStart || null
+}
+
+function getFreshnessStatus(daysOld, options = {}) {
+  const checkedRecently = !!options.checkedRecently
+  if (daysOld == null) return { label: 'Missing', color: '#8f9bb3' }
+  if (daysOld <= 3) return { label: 'Current', color: '#4dd98a' }
+  if (daysOld <= 7) return { label: 'Aging', color: '#f6c85f' }
+  if (checkedRecently) return { label: 'Checked', color: '#5fb6ff' }
+  return { label: 'Stale', color: '#ff6b8a' }
+}
+
+function getIngestRunStatus(status) {
+  const value = String(status || '').trim().toLowerCase()
+  if (value === 'success') return { label: 'Success', color: '#4dd98a' }
+  if (value === 'error') return { label: 'Error', color: '#ff6b8a' }
+  return { label: 'Unknown', color: '#8f9bb3' }
+}
+
+function formatAdminDateTime(value) {
+  if (!value) return 'Unknown'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleString('en-GB', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 async function runSaves(tasks) {
@@ -363,6 +427,417 @@ function PollsTab({ data, setData, ts, onAfterSave }) {
       })()}
 
       <SaveBtn onClick={save} saving={saving} />
+    </>
+  )
+}
+
+function PollImportTab({ data, setData, ts, onAfterSave }) {
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState('')
+  const [editingPollId, setEditingPollId] = useState(null)
+  const emptyForm = {
+    pollster: '',
+    publishedAt: '',
+    fieldworkStart: '',
+    fieldworkEnd: '',
+    sample: '',
+    method: '',
+    mode: '',
+    commissioner: '',
+    sourceUrl: '',
+    ref: '',
+    lab: '',
+    con: '',
+    grn: '',
+    ld: '',
+    rb: '',
+    snp: '',
+    pc: '',
+    oth: '',
+  }
+  const [form, setForm] = useState(emptyForm)
+
+  const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
+  const manualPolls = (data.pollsData || []).filter((poll) => poll?.sourceType === 'manual')
+  const ingestStatus = data?.ingestStatus && typeof data.ingestStatus === 'object' ? data.ingestStatus : null
+  const ingestStatusPill = getIngestRunStatus(ingestStatus?.status)
+  const ingestCountSummary = Object.entries(ingestStatus?.countsByPollster || {})
+    .sort((a, b) => String(a[0]).localeCompare(String(b[0])))
+    .map(([name, count]) => `${name} ${count}`)
+    .join(' · ')
+  const ingestLastRun = ingestStatus?.lastRunAt ? new Date(ingestStatus.lastRunAt) : null
+  const ingestAgeHours = ingestLastRun && !Number.isNaN(ingestLastRun.getTime())
+    ? (Date.now() - ingestLastRun.getTime()) / 3600000
+    : null
+  const checkedRecently =
+    String(ingestStatus?.status || '').trim().toLowerCase() === 'success' &&
+    ingestStatus?.overwriteOk !== false &&
+    ingestAgeHours != null &&
+    ingestAgeHours <= 12
+  const freshnessRows = FRESHNESS_POLLSTERS.map((pollster) => {
+    const latest = (data.pollsData || [])
+      .filter((poll) => String(poll?.pollster || '').trim() === pollster)
+      .map((poll) => ({ poll, usableDate: getPollUsableDate(poll) }))
+      .filter(({ usableDate }) => parseIsoDate(usableDate))
+      .sort((a, b) => b.usableDate.localeCompare(a.usableDate))[0]
+
+    if (!latest) {
+      return {
+        pollster,
+        latestDate: null,
+        daysOld: null,
+        status: getFreshnessStatus(null),
+        checkedRecently: false,
+      }
+    }
+
+    const today = new Date()
+    const nowUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+    const latestUtc = parseIsoDate(latest.usableDate)?.getTime() || nowUtc
+    const daysOld = Math.max(0, Math.floor((nowUtc - latestUtc) / 86400000))
+
+    return {
+      pollster,
+      latestDate: latest.usableDate,
+      daysOld,
+      status: getFreshnessStatus(daysOld, { checkedRecently }),
+      checkedRecently: checkedRecently && daysOld > 7,
+    }
+  })
+  const startEdit = (poll) => {
+    setEditingPollId(poll?.id || null)
+    setForm({
+      pollster: poll?.pollster || '',
+      publishedAt: poll?.publishedAt || '',
+      fieldworkStart: poll?.fieldworkStart || '',
+      fieldworkEnd: poll?.fieldworkEnd || '',
+      sample: poll?.sample == null ? '' : String(poll.sample),
+      method: poll?.method || '',
+      mode: poll?.mode || '',
+      commissioner: poll?.commissioner || '',
+      sourceUrl: poll?.sourceUrl || '',
+      ref: poll?.ref == null ? '' : String(poll.ref),
+      lab: poll?.lab == null ? '' : String(poll.lab),
+      con: poll?.con == null ? '' : String(poll.con),
+      grn: poll?.grn == null ? '' : String(poll.grn),
+      ld: poll?.ld == null ? '' : String(poll.ld),
+      rb: poll?.rb == null ? '' : String(poll.rb),
+      snp: poll?.snp == null ? '' : String(poll.snp),
+      pc: poll?.pc == null ? '' : String(poll.pc),
+      oth: poll?.oth == null ? '' : String(poll.oth),
+    })
+  }
+
+  const resetForm = () => {
+    setEditingPollId(null)
+    setForm(emptyForm)
+  }
+
+  const save = async () => {
+    setSaving(true)
+    setErr('')
+
+    try {
+      const pollster = form.pollster.trim()
+      const publishedAt = form.publishedAt.trim()
+      const fieldworkStart = form.fieldworkStart.trim()
+      const fieldworkEnd = form.fieldworkEnd.trim()
+      const ref = toOptionalNumber(form.ref)
+      const lab = toOptionalNumber(form.lab)
+      const con = toOptionalNumber(form.con)
+      const grn = toOptionalNumber(form.grn)
+      const ld = toOptionalNumber(form.ld)
+      const rb = toOptionalNumber(form.rb)
+      const snp = toOptionalNumber(form.snp)
+      const pc = toOptionalNumber(form.pc)
+      const oth = toOptionalNumber(form.oth)
+
+      if (!pollster) throw new Error('Pollster is required.')
+      if (!publishedAt) throw new Error('Published date is required.')
+
+      const majorCount = [ref, lab, con, grn, ld].filter(v => v != null).length
+      if (majorCount < 3) throw new Error('Enter at least 3 values across Ref, Lab, Con, Grn, and LD.')
+
+      const total = [ref, lab, con, grn, ld, rb, snp, pc, oth]
+        .filter(v => v != null)
+        .reduce((sum, value) => sum + value, 0)
+      if (total > 105) throw new Error('Total populated party values must not exceed 105.')
+
+      const existingPoll = (data.pollsData || []).find(
+        (poll) => String(poll?.pollster || '').trim().toLowerCase() === pollster.toLowerCase()
+      )
+      const editingPoll = (data.pollsData || []).find((poll) => poll?.id === editingPollId)
+
+      const newPoll = {
+        id: editingPoll?.id || `${toPollIdPart(pollster)}-${fieldworkEnd || publishedAt}`,
+        pollster,
+        publishedAt,
+        fieldworkStart: fieldworkStart || null,
+        fieldworkEnd: fieldworkEnd || null,
+        sample: toOptionalNumber(form.sample),
+        method: form.method.trim() || null,
+        mode: form.mode.trim() || null,
+        commissioner: form.commissioner.trim() || null,
+        sourceUrl: form.sourceUrl.trim() || null,
+        ref,
+        lab,
+        con,
+        grn,
+        ld,
+        rb,
+        snp,
+        pc,
+        oth,
+        sourceType: 'manual',
+        confidence: 'high',
+        verificationStatus: 'verified',
+        isBpcMember: Boolean(editingPoll?.isBpcMember ?? existingPoll?.isBpcMember),
+      }
+
+      const updatedPolls = editingPollId
+        ? (data.pollsData || []).map((poll) => (poll?.id === editingPollId ? newPoll : poll))
+        : [newPoll, ...(data.pollsData || [])]
+      setData({ ...data, pollsData: updatedPolls })
+      await Promise.resolve(saveSection('pollsData', updatedPolls))
+      resetForm()
+      onAfterSave?.()
+    } catch (e) {
+      setErr(e?.message || 'Failed to save imported poll.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const removePoll = async (pollId) => {
+    setSaving(true)
+    setErr('')
+
+    try {
+      const updatedPolls = (data.pollsData || []).filter((poll) => poll?.id !== pollId)
+      setData({ ...data, pollsData: updatedPolls })
+      await Promise.resolve(saveSection('pollsData', updatedPolls))
+      if (editingPollId === pollId) resetForm()
+      onAfterSave?.()
+    } catch (e) {
+      setErr(e?.message || 'Failed to delete imported poll.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <>
+      <div style={{ fontSize: 13, color: C.lo, marginBottom: 14, lineHeight: 1.6 }}>
+        Add or edit a verified poll row manually and save it straight into <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 6px', borderRadius: 4 }}>pollsData</code>.
+      </div>
+
+      <ErrorBanner message={err} />
+      <TsLabel ts={ts?.pollsData} />
+
+      <div style={{ background: C.card, borderRadius: 18, border: `1px solid ${C.bdr}`, padding: 20, marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: C.lo, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+          Ingest Status
+        </div>
+        {!ingestStatus ? (
+          <div style={{ fontSize: 13, color: C.lo }}>No ingest run recorded yet</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 13, color: C.hi, fontWeight: 700 }}>
+                Last run {formatAdminDateTime(ingestStatus.lastRunAt)}
+              </div>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '6px 10px',
+                  borderRadius: 999,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: ingestStatusPill.color,
+                  background: `${ingestStatusPill.color}1A`,
+                  border: `1px solid ${ingestStatusPill.color}33`,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {ingestStatusPill.label}
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: C.mid, lineHeight: 1.7 }}>
+              <div>API base: {ingestStatus.apiBase || 'Unknown'}</div>
+              <div>Total fetched: {ingestStatus.totalFetched ?? '—'}</div>
+              <div>Dropped invalid rows: {ingestStatus.droppedInvalidRows ?? '—'}</div>
+              <div>Overwrite result: {ingestStatus.overwriteOk ? 'OK' : 'Failed'}</div>
+              <div>Pollster counts: {ingestCountSummary || 'None recorded'}</div>
+              {ingestStatus.error ? <div>Error: {ingestStatus.error}</div> : null}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ background: C.card, borderRadius: 18, border: `1px solid ${C.bdr}`, padding: 20, marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: C.lo, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+          Poll Freshness
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {freshnessRows.map((row) => (
+            <div
+              key={row.pollster}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+                flexWrap: 'wrap',
+                padding: '10px 12px',
+                background: 'rgba(255,255,255,0.04)',
+                border: `1px solid ${C.bdr}`,
+                borderRadius: 12,
+              }}
+            >
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.hi, marginBottom: 2 }}>{row.pollster}</div>
+                <div style={{ fontSize: 12, color: C.mid }}>
+                  latest {row.latestDate || 'missing'}
+                  {row.daysOld == null ? '' : ` · ${row.daysOld} day${row.daysOld === 1 ? '' : 's'} old`}
+                  {row.checkedRecently ? ' · checked on last ingest' : ''}
+                </div>
+              </div>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '6px 10px',
+                  borderRadius: 999,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: row.status.color,
+                  background: `${row.status.color}1A`,
+                  border: `1px solid ${row.status.color}33`,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {row.status.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ background: C.card, borderRadius: 18, border: `1px solid ${C.bdr}`, padding: 20, marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: C.lo, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+          Poll details
+        </div>
+
+        <AdminInput label="Pollster" value={form.pollster} onChange={v => update('pollster', v)} required />
+        <AdminInput label="Published at" value={form.publishedAt} onChange={v => update('publishedAt', v)} required />
+        <AdminInput label="Fieldwork start" value={form.fieldworkStart} onChange={v => update('fieldworkStart', v)} />
+        <AdminInput label="Fieldwork end" value={form.fieldworkEnd} onChange={v => update('fieldworkEnd', v)} />
+        <AdminInput label="Sample" value={form.sample} onChange={v => update('sample', v)} type="number" min={0} />
+        <AdminInput label="Method" value={form.method} onChange={v => update('method', v)} />
+        <AdminInput label="Mode" value={form.mode} onChange={v => update('mode', v)} />
+        <AdminInput label="Commissioner" value={form.commissioner} onChange={v => update('commissioner', v)} />
+        <AdminInput label="Source URL" value={form.sourceUrl} onChange={v => update('sourceUrl', v)} />
+      </div>
+
+      <div style={{ background: C.card, borderRadius: 18, border: `1px solid ${C.bdr}`, padding: 20, marginBottom: 14 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: C.lo, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+          Party values
+        </div>
+
+        <AdminInput label="Ref" value={form.ref} onChange={v => update('ref', v)} type="number" min={0} max={100} />
+        <AdminInput label="Lab" value={form.lab} onChange={v => update('lab', v)} type="number" min={0} max={100} />
+        <AdminInput label="Con" value={form.con} onChange={v => update('con', v)} type="number" min={0} max={100} />
+        <AdminInput label="Grn" value={form.grn} onChange={v => update('grn', v)} type="number" min={0} max={100} />
+        <AdminInput label="LD" value={form.ld} onChange={v => update('ld', v)} type="number" min={0} max={100} />
+        <AdminInput label="RB" value={form.rb} onChange={v => update('rb', v)} type="number" min={0} max={100} />
+        <AdminInput label="SNP" value={form.snp} onChange={v => update('snp', v)} type="number" min={0} max={100} />
+        <AdminInput label="PC" value={form.pc} onChange={v => update('pc', v)} type="number" min={0} max={100} />
+        <AdminInput label="Oth" value={form.oth} onChange={v => update('oth', v)} type="number" min={0} max={100} />
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <SaveBtn onClick={save} saving={saving} label={editingPollId ? 'Update poll row' : 'Save poll row'} />
+        {editingPollId ? (
+          <button
+            onClick={resetForm}
+            disabled={saving}
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              border: `1px solid ${C.bdr}`,
+              borderRadius: 999,
+              padding: '11px 18px',
+              fontSize: 13,
+              fontWeight: 700,
+              color: C.mid,
+              cursor: saving ? 'wait' : 'pointer',
+              fontFamily: "'Outfit',sans-serif",
+            }}
+          >
+            Cancel edit
+          </button>
+        ) : null}
+      </div>
+
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.lo, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '24px 0 10px' }}>
+        Manual polls
+      </div>
+
+      {manualPolls.length ? manualPolls.slice(0, 10).map((poll) => (
+        <Section
+          key={poll.id}
+          title={`${poll.pollster || 'Unknown'} — ${poll.fieldworkEnd || poll.publishedAt || 'No date'}`}
+        >
+          <div style={{ fontSize: 13, color: C.mid, lineHeight: 1.6, marginBottom: 14 }}>
+            {poll.pollster || 'Unknown'} · {poll.fieldworkEnd || poll.publishedAt || 'No date'} · Ref {poll.ref ?? '—'} · Lab {poll.lab ?? '—'} · Con {poll.con ?? '—'}
+          </div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => startEdit(poll)}
+              disabled={saving}
+              style={{
+                background: 'rgba(18,183,212,0.12)',
+                border: '1px solid rgba(18,183,212,0.25)',
+                borderRadius: 999,
+                padding: '10px 18px',
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#7dd8ea',
+                cursor: saving ? 'wait' : 'pointer',
+                fontFamily: "'Outfit',sans-serif",
+              }}
+            >
+              Edit
+            </button>
+          
+            <button
+              onClick={() => removePoll(poll.id)}
+              disabled={saving}
+              style={{
+                background: 'rgba(228,0,59,0.15)',
+                border: '1px solid rgba(228,0,59,0.3)',
+                borderRadius: 999,
+                padding: '10px 18px',
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#ff6b8a',
+                cursor: saving ? 'wait' : 'pointer',
+                fontFamily: "'Outfit',sans-serif",
+              }}
+            >
+              Delete this poll
+            </button>
+          </div>
+        </Section>
+      )) : (
+        <div style={{ fontSize: 13, color: C.lo }}>No manual polls yet.</div>
+      )}
     </>
   )
 }
@@ -769,10 +1244,35 @@ export default function AdminApp() {
 
   const TABS = [
     { k: 'polls', label: 'Polls' },
+    { k: 'pollImport', label: 'Poll Import' },
     { k: 'elections', label: 'Elections' },
     { k: 'leaders', label: 'Leaders' },
     { k: 'meta', label: 'Meta' },
   ]
+
+  const ingestStatus = data?.ingestStatus && typeof data.ingestStatus === 'object' ? data.ingestStatus : null
+  const ingestLastRun = ingestStatus?.lastRunAt ? new Date(ingestStatus.lastRunAt) : null
+  const ingestAgeHours = ingestLastRun && !Number.isNaN(ingestLastRun.getTime())
+    ? (Date.now() - ingestLastRun.getTime()) / 3600000
+    : null
+  const showIngestError = String(ingestStatus?.status || '').trim().toLowerCase() === 'error'
+  const showIngestStale = !showIngestError && ingestAgeHours != null && ingestAgeHours > 12
+  const ingestBannerMessage = showIngestError
+    ? 'Poll ingest failed on the last run'
+    : showIngestStale
+      ? 'Poll ingest looks stale'
+      : ''
+  const ingestBannerTone = showIngestError
+    ? {
+        color: '#ffb8c6',
+        background: 'rgba(228,0,59,0.14)',
+        border: '1px solid rgba(228,0,59,0.28)',
+      }
+    : {
+        color: '#ffd88a',
+        background: 'rgba(246,200,95,0.12)',
+        border: '1px solid rgba(246,200,95,0.24)',
+      }
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a1628', fontFamily: "'Outfit',sans-serif", paddingBottom: 80 }}>
@@ -838,6 +1338,27 @@ export default function AdminApp() {
 
       <div style={{ padding: '20px 20px 0' }}>
         <ErrorBanner message={loadError} />
+        {ingestBannerMessage ? (
+          <div
+            style={{
+              marginBottom: 16,
+              fontSize: 13,
+              color: ingestBannerTone.color,
+              background: ingestBannerTone.background,
+              border: ingestBannerTone.border,
+              borderRadius: 12,
+              padding: '12px 14px',
+              lineHeight: 1.6,
+            }}
+          >
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>{ingestBannerMessage}</div>
+            <div>Last run: {formatAdminDateTime(ingestStatus?.lastRunAt)}</div>
+            <div>API base: {ingestStatus?.apiBase || 'Unknown'}</div>
+            {ingestStatus?.droppedInvalidRows != null ? (
+              <div>Dropped invalid rows: {ingestStatus.droppedInvalidRows}</div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <div style={{ display: 'flex', gap: 8, padding: '16px 20px 0', overflowX: 'auto', scrollbarWidth: 'none' }}>
@@ -860,7 +1381,7 @@ export default function AdminApp() {
             }}
           >
             {t.label}
-            {ts[t.k === 'polls' ? 'parties' : t.k] && (
+            {ts[t.k === 'polls' ? 'parties' : t.k === 'pollImport' ? 'pollsData' : t.k] && (
               <span style={{ marginLeft: 6, fontSize: 11, opacity: 0.7 }}>✓</span>
             )}
           </div>
@@ -869,6 +1390,7 @@ export default function AdminApp() {
 
       <div style={{ padding: '20px' }}>
         {tab === 'polls' && <PollsTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
+        {tab === 'pollImport' && <PollImportTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
         {tab === 'elections' && <ElectionsTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
         {tab === 'leaders' && <LeadersTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
         {tab === 'meta' && <MetaTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
@@ -928,3 +1450,5 @@ export default function AdminApp() {
     </div>
   )
 }
+
+
