@@ -1,0 +1,30 @@
+{
+  "name": "Politiscope",
+  "short_name": "Politiscope",
+  "description": "Your full view on UK politics — live polling, leaders, elections & AI briefings",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#041C24",
+  "theme_color": "#12B7D4",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "news",
+    "politics"
+  ],
+  "lang": "en-GB"
+}
