@@ -1,0 +1,35 @@
+{
+  "file": "C:\\Users\\User\\Documents\\politiscope.v2\\ps2\\data\\polls\\find-out-now.json",
+  "total": 40,
+  "accepted": 40,
+  "quarantined": 0,
+  "warnings": 18,
+  "errors": 0,
+  "coverage": {
+    "Find Out Now": {
+      "count": 40,
+      "latestDate": "2026-03-18"
+    }
+  },
+  "warningDetails": [
+    "row 24: stale poll (183 days old)",
+    "row 25: stale poll (190 days old)",
+    "row 26: stale poll (197 days old)",
+    "row 27: stale poll (203 days old)",
+    "row 28: stale poll (211 days old)",
+    "row 29: stale poll (218 days old)",
+    "row 30: stale poll (225 days old)",
+    "row 31: stale poll (232 days old)",
+    "row 32: stale poll (238 days old)",
+    "row 33: stale poll (253 days old)",
+    "row 34: stale poll (260 days old)",
+    "row 35: stale poll (267 days old)",
+    "row 36: stale poll (274 days old)",
+    "row 36: only 4 populated party values",
+    "row 37: stale poll (281 days old)",
+    "row 38: stale poll (288 days old)",
+    "row 39: stale poll (295 days old)",
+    "row 40: stale poll (302 days old)"
+  ],
+  "errorDetails": []
+}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { StickyPills, haptic } from '../components/ui'
 import SharedTrendChart, { buildDisplayTrendRows, makeTrendPartyKeys } from '../components/charts/SharedTrendChart'
 import { PortraitAvatar } from '../utils/portraits'
@@ -8,6 +8,7 @@ import { POLICY_AREA_LABELS } from '../data/policy/policyTaxonomy'
 import { getAvailablePolicyAreasForParty, getPartyPolicies } from '../data/policy/policySelectors'
 import { getStanceLabel } from '../data/policy/stanceUtils'
 import { useSwipeNav } from '../utils/swipeNav'
+import CompareLauncherSheet from '../components/CompareLauncherSheet'
 
 const bCard = (T, color, extra = {}) => ({
   borderRadius: 14,
@@ -25,6 +26,8 @@ const TABS = [
   { key: 'trend', label: 'Trend' },
   { key: 'funding', label: 'Funding' },
 ]
+
+const COMPARE_POLICY_AREAS = new Set(['immigration', 'economy', 'nhs', 'climate'])
 
 const FUNDING = {
   'Reform UK': {
@@ -317,11 +320,40 @@ function PolicyUnavailable({ T, party, area }) {
   )
 }
 
-export default function PartyScreen({ T, idx, nav, parties, leaders, trends, polls, pollContext, policyRecords = POLICY_RECORDS }) {
+function normaliseInitialTab(tab) {
+  if (tab === 'policy') return 'pledges'
+  return TABS.some((item) => item.key === tab) ? tab : 'overview'
+}
+
+export default function PartyScreen({
+  T,
+  idx,
+  nav,
+  parties,
+  leaders,
+  trends,
+  polls,
+  pollContext,
+  policyRecords = POLICY_RECORDS,
+  openTab,
+  selectedPolicyArea: initialPolicyArea,
+  policyArea,
+  updateCurrentParams,
+}) {
   const p = parties[idx]
   const leader = leaders?.find((l) => l.party === p?.name)
-  const [tab, setTab] = useState('overview')
-  const [pledgeTopic, setPledgeTopic] = useState('immigration')
+  const incomingPolicyArea = initialPolicyArea || policyArea || 'immigration'
+  const [tab, setTab] = useState(() => normaliseInitialTab(openTab))
+  const [pledgeTopic, setPledgeTopic] = useState(() => incomingPolicyArea)
+  const [compareOpen, setCompareOpen] = useState(false)
+
+  useEffect(() => {
+    setTab(normaliseInitialTab(openTab))
+  }, [openTab, idx])
+
+  useEffect(() => {
+    if (initialPolicyArea || policyArea) setPledgeTopic(initialPolicyArea || policyArea)
+  }, [initialPolicyArea, policyArea, idx])
 
   if (!p) return null
 
@@ -332,7 +364,12 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
   useSwipeNav({
     items: mainParties,
     currentIdx: mainIdx,
-    onNavigate: (newIdx) => nav('party', { idx: parties.indexOf(mainParties[newIdx]) }),
+    onNavigate: (newIdx) =>
+      nav('party', {
+        idx: parties.indexOf(mainParties[newIdx]),
+        openTab: tab,
+        selectedPolicyArea: pledgeTopic,
+      }),
   })
 
   const rank = ranked.findIndex((x) => x.name === p.name)
@@ -345,6 +382,26 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
     ? pledgeTopic
     : availablePolicyAreas[0] || POLICY_AREAS[0]
   const selectedPolicyRecords = getPartyPolicies(p.name, selectedPolicyArea, policyRecords)
+  const compareContextArea = tab === 'pledges' && COMPARE_POLICY_AREAS.has(selectedPolicyArea) ? selectedPolicyArea : 'overview'
+  const openCompareWith = ({ baseParty, opponent, contextArea }) => {
+    setCompareOpen(false)
+    updateCurrentParams?.({
+      openTab: tab,
+      selectedPolicyArea: selectedPolicyArea,
+      policyArea: selectedPolicyArea,
+    })
+    nav('compare', {
+      leftParty: baseParty.name,
+      rightParty: opponent.name,
+      fromScreen: 'party',
+      fromPartyIdx: idx,
+      returnTab: tab,
+      returnPolicyArea: tab === 'pledges' ? selectedPolicyArea : undefined,
+      compareContext: tab,
+      policyArea: contextArea,
+      tab: contextArea,
+    })
+  }
 
   const sorted = [...mainParties].sort((a, b) => b.pct - a.pct)
   const curIdx = sorted.findIndex((x) => x.name === p.name)
@@ -390,6 +447,29 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
         }}
       />
       <div style={{ padding: '12px 16px 40px' }}>
+        <button
+          onClick={() => {
+            haptic(6)
+            setCompareOpen(true)
+          }}
+          style={{
+            width: '100%',
+            border: `1px solid ${p.color}30`,
+            background: `${p.color}10`,
+            color: p.color,
+            borderRadius: 999,
+            padding: '10px 14px',
+            fontSize: 14,
+            fontWeight: 850,
+            letterSpacing: '0.01em',
+            marginBottom: 12,
+            cursor: 'pointer',
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          Compare with…
+        </button>
+
         {tab === 'overview' ? (
           <>
             <div
@@ -775,6 +855,17 @@ export default function PartyScreen({ T, idx, nav, parties, leaders, trends, pol
           </div>
         ) : null}
       </div>
+
+      <CompareLauncherSheet
+        T={T}
+        open={compareOpen}
+        baseParty={p}
+        parties={parties}
+        contextArea={compareContextArea}
+        fromScreen="party"
+        onClose={() => setCompareOpen(false)}
+        onLaunch={openCompareWith}
+      />
     </div>
   )
 }

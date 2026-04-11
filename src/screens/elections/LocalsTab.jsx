@@ -1,0 +1,356 @@
+import React, { useMemo } from 'react'
+import { motion } from 'framer-motion'
+import { InfoButton } from '../../components/InfoGlyph'
+import { LOCAL_ELECTIONS, LOCAL_REGIONS } from '../../data/elections'
+import {
+  Chip,
+  CONTROL_COLORS,
+  DIFF_COLORS,
+  FilterChip,
+  InteractiveStatCard,
+  SectionLabel,
+  SurfaceCard,
+  TAP,
+} from './ElectionsSurfaceCard'
+import CouncilRow from './CouncilRow'
+import { LOCAL_FILTERS, selectLocalElectionModel } from './electionsSelectors'
+
+export default function LocalsTab({
+  T,
+  councilRegistry,
+  councilStatus,
+  councilEditorial,
+  search,
+  setSearch,
+  localFilter,
+  setLocalFilter,
+  openCouncil,
+}) {
+  const regions = LOCAL_REGIONS || []
+  const {
+    councils,
+    trackedLaunchCouncils,
+    trackedLaunchSeatsUp,
+    veryContested,
+    hardToCall,
+    topCouncilsToWatch,
+    liveBriefing,
+    localSummaryFilter,
+    localFilteredCouncils,
+    hasLocalRefinement,
+    currentLocalFilterLabel,
+  } = useMemo(
+    () =>
+      selectLocalElectionModel({
+        staticCouncils: LOCAL_ELECTIONS?.councils || [],
+        regions,
+        councilRegistry,
+        councilStatus,
+        councilEditorial,
+        search,
+        localFilter,
+      }),
+    [regions, councilRegistry, councilStatus, councilEditorial, search, localFilter],
+  )
+
+  return (
+    <>
+      <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+        <SectionLabel T={T}>Local elections overview</SectionLabel>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            marginBottom: 12,
+            textAlign: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: T.pr || '#12B7D4',
+              boxShadow: `0 0 0 4px ${(T.pr || '#12B7D4')}18`,
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ fontSize: 14, fontWeight: 600, color: T.th, lineHeight: 1.6 }}>
+            {liveBriefing}
+          </div>
+          <InfoButton id="elections_overview" T={T} size={18} />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+          <InteractiveStatCard
+            T={T}
+            label="Tracked councils"
+            value={trackedLaunchCouncils.length}
+            color={T.pr || '#12B7D4'}
+            sub="Tap to view"
+            active={localSummaryFilter === 'tracked'}
+            onClick={() => {
+              setSearch('')
+              setLocalFilter('all')
+            }}
+          />
+          <InteractiveStatCard
+            T={T}
+            label="Seats up"
+            value={`${trackedLaunchSeatsUp.toLocaleString()}+`}
+            color={T.pr || '#12B7D4'}
+            sub="Across tracked councils"
+            active={localSummaryFilter === 'tracked'}
+            onClick={() => {
+              setSearch('')
+              setLocalFilter('all')
+            }}
+          />
+          <InteractiveStatCard
+            T={T}
+            label="Toss-ups"
+            value={veryContested.length}
+            color="#E4003B"
+            sub="Tap to filter"
+            active={localSummaryFilter === 'tossups'}
+            onClick={() => {
+              setSearch('')
+              setLocalFilter('veryhard')
+            }}
+          />
+          <InteractiveStatCard
+            T={T}
+            label="Competitive"
+            value={hardToCall.length}
+            color="#F97316"
+            sub="Tap to filter"
+            active={localSummaryFilter === 'competitive'}
+            onClick={() => {
+              setSearch('')
+              setLocalFilter('hard')
+            }}
+          />
+        </div>
+
+        {topCouncilsToWatch.length ? (
+          <>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: T.tl,
+                textAlign: 'center',
+                marginTop: 14,
+                marginBottom: 8,
+              }}
+            >
+              Top councils to watch
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+              {topCouncilsToWatch.map((council, i) => (
+                <motion.button
+                  key={i}
+                  {...TAP}
+                  onClick={() => openCouncil(council.name)}
+                  style={{
+                    border: `1px solid ${(CONTROL_COLORS[council.control] || T.pr)}28`,
+                    background: T.c0,
+                    color: CONTROL_COLORS[council.control] || T.th,
+                    borderRadius: 999,
+                    padding: '8px 12px',
+                    fontSize: 13,
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {council.name}
+                </motion.button>
+              ))}
+            </div>
+          </>
+        ) : null}
+      </SurfaceCard>
+
+      <SectionLabel T={T}>Search and filters</SectionLabel>
+
+      <div style={{ position: 'relative', marginBottom: 10 }}>
+        <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.tl} strokeWidth="2" strokeLinecap="round">
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+        </div>
+
+        <input
+          type="search"
+          placeholder="Search councils, regions, parties…"
+          value={search}
+          onChange={(e) => {
+            const nextValue = e.target.value
+            setSearch(nextValue)
+            if (nextValue.trim() && localFilter !== 'all') {
+              setLocalFilter('all')
+            }
+          }}
+          style={{
+            width: '100%',
+            padding: '13px 14px 13px 38px',
+            background: T.c0,
+            border: `1.5px solid ${search ? T.pr : T.cardBorder || 'rgba(0,0,0,0.1)'}`,
+            borderRadius: 12,
+            fontSize: 15,
+            color: T.th,
+            fontFamily: "'Outfit', sans-serif",
+            outline: 'none',
+            boxSizing: 'border-box',
+            transition: 'border-color 0.15s',
+            marginBottom: 10,
+          }}
+        />
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          overflowX: 'auto',
+          paddingBottom: 6,
+          marginBottom: 12,
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {LOCAL_FILTERS.map((item) => (
+          <FilterChip
+            key={item.key}
+            label={item.label}
+            active={localFilter === item.key}
+            onClick={() => setLocalFilter(item.key)}
+            T={T}
+          />
+        ))}
+      </div>
+
+      {hasLocalRefinement ? (
+        <>
+          <SectionLabel
+            T={T}
+            action={{
+              label: 'Clear',
+              onClick: () => {
+                setSearch('')
+                setLocalFilter('all')
+              },
+            }}
+          >
+            Filtered councils
+          </SectionLabel>
+
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginBottom: 8, textAlign: 'center' }}>
+            {localFilteredCouncils.length} of {councils.length} councils
+            {search ? ` · search: "${search}"` : ''}
+            {localFilter !== 'all' ? ` · ${currentLocalFilterLabel}` : ''}
+          </div>
+
+          {localFilteredCouncils.length > 0 ? (
+            localFilteredCouncils.map((council, i) => (
+              <CouncilRow key={`${council.slug || council.name}-${i}`} T={T} council={council} onOpen={openCouncil} />
+            ))
+          ) : (
+            <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
+              <div style={{ fontSize: 14, color: T.tl }}>No councils match that search/filter yet.</div>
+            </SurfaceCard>
+          )}
+        </>
+      ) : (
+        <>
+          <SectionLabel T={T}>Regional picture</SectionLabel>
+
+          {regions.map((region, i) => (
+            <SurfaceCard key={i} T={T} borderColor={`${region.accentColor || T.pr}28`} style={{ marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <div style={{ fontSize: 20 }}>{region.emoji}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{region.name}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
+                    {region.councils} councils · {region.seats} seats
+                  </div>
+                </div>
+                <Chip color={DIFF_COLORS[region.difficulty] || '#888'}>{region.difficulty}</Chip>
+              </div>
+
+              <div style={{ fontSize: 13, fontWeight: 500, color: T.th, lineHeight: 1.65, marginBottom: 8 }}>
+                {region.story}
+              </div>
+
+              {region.watchFor ? (
+                <div
+                  style={{
+                    padding: '8px 10px',
+                    background: T.c1 || 'rgba(0,0,0,0.04)',
+                    borderRadius: 8,
+                    marginBottom: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 800,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: T.tl,
+                      marginBottom: 3,
+                    }}
+                  >
+                    Watch for
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.th }}>{region.watchFor}</div>
+                </div>
+              ) : null}
+
+              {region.councils_list?.length > 0 ? (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {region.councils_list.map((council, j) => (
+                    <motion.div
+                      key={j}
+                      {...TAP}
+                      onClick={() => openCouncil(council.name)}
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        padding: '3px 9px',
+                        borderRadius: 999,
+                        background: T.c1 || 'rgba(0,0,0,0.05)',
+                        color: T.th,
+                        cursor: 'pointer',
+                        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
+                      }}
+                    >
+                      {council.name}
+                    </motion.div>
+                  ))}
+                </div>
+              ) : null}
+            </SurfaceCard>
+          ))}
+
+          <SectionLabel T={T}>Council directory</SectionLabel>
+
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginBottom: 8 }}>
+            {localFilteredCouncils.length} of {councils.length} councils · tap for full profile
+          </div>
+
+          {localFilteredCouncils.map((council, i) => (
+            <CouncilRow key={`${council.slug || council.name}-${i}`} T={T} council={council} onOpen={openCouncil} />
+          ))}
+        </>
+      )}
+    </>
+  )
+}

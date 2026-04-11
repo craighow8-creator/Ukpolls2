@@ -1,0 +1,29 @@
+Generated: 2026-04-09T11:10:22.131Z
+Merged polls: 362
+Quarantined: 0
+
+Source provenance:
+- Direct-backed merged rows: 151
+- Fallback-backed merged rows: 246
+- Manual-backed merged rows: 0
+
+Direct-only pollsters (0): none
+Fallback-only pollsters (9): BMG Research, Deltapoll, Freshwater Strategy, Good Growth Foundation, Ipsos, Lord Ashcroft Polls, Survation, Techne, Verian
+Mixed pollsters (6): Find Out Now, Focaldata, JL Partners, More in Common, Opinium, YouGov
+
+Coverage:
+- BMG Research: 9 polls (latest: 2026-03-26) [tiers: fallback] [sources: wikipedia] [direct=0, fallback=9, manual=0]
+- Deltapoll: 1 polls (latest: 2025-12-18) [tiers: fallback] [sources: wikipedia] [direct=0, fallback=1, manual=0]
+- Find Out Now: 62 polls (latest: 2026-04-02) [tiers: fallback, direct] [sources: wikipedia, find out now] [direct=40, fallback=55, manual=0]
+- Focaldata: 10 polls (latest: 2026-03-10) [tiers: fallback, direct] [sources: wikipedia, focaldata] [direct=1, fallback=9, manual=0]
+- Freshwater Strategy: 9 polls (latest: 2026-01-11) [tiers: fallback] [sources: wikipedia] [direct=0, fallback=9, manual=0]
+- Good Growth Foundation: 1 polls (latest: 2026-02-16) [tiers: fallback] [sources: wikipedia] [direct=0, fallback=1, manual=0]
+- Ipsos: 3 polls (latest: 2026-03-11) [tiers: fallback] [sources: wikipedia] [direct=0, fallback=3, manual=0]
+- JL Partners: 6 polls (latest: 2026-03-05) [tiers: fallback, direct] [sources: wikipedia, jl partners] [direct=2, fallback=4, manual=0]
+- Lord Ashcroft Polls: 10 polls (latest: 2026-03-30) [tiers: fallback] [sources: wikipedia] [direct=0, fallback=10, manual=0]
+- More in Common: 84 polls (latest: 2026-04-08) [tiers: direct, fallback] [sources: more in common, wikipedia] [direct=40, fallback=45, manual=0]
+- Opinium: 30 polls (latest: 2026-03-20) [tiers: fallback, direct] [sources: wikipedia, opinium] [direct=4, fallback=26, manual=0]
+- Survation: 8 polls (latest: 2026-03-05) [tiers: fallback] [sources: wikipedia] [direct=0, fallback=8, manual=0]
+- Techne: 15 polls (latest: 2026-03-12) [tiers: fallback] [sources: wikipedia] [direct=0, fallback=15, manual=0]
+- Verian: 3 polls (latest: 2026-03-23) [tiers: fallback] [sources: wikipedia] [direct=0, fallback=3, manual=0]
+- YouGov: 111 polls (latest: 2026-04-07) [tiers: direct, fallback] [sources: yougov, wikipedia] [direct=64, fallback=48, manual=0]

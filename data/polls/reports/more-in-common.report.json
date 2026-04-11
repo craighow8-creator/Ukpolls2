@@ -1,0 +1,34 @@
+{
+  "file": "C:\\Users\\User\\Documents\\politiscope.v2\\ps2\\data\\polls\\more-in-common.json",
+  "total": 40,
+  "accepted": 40,
+  "quarantined": 0,
+  "warnings": 17,
+  "errors": 0,
+  "coverage": {
+    "More in Common": {
+      "count": 40,
+      "latestDate": "2026-04-08"
+    }
+  },
+  "warningDetails": [
+    "row 24: stale poll (185 days old)",
+    "row 25: stale poll (192 days old)",
+    "row 26: stale poll (199 days old)",
+    "row 27: stale poll (206 days old)",
+    "row 28: stale poll (220 days old)",
+    "row 29: stale poll (234 days old)",
+    "row 30: stale poll (239 days old)",
+    "row 31: stale poll (249 days old)",
+    "row 32: stale poll (254 days old)",
+    "row 33: stale poll (261 days old)",
+    "row 34: stale poll (268 days old)",
+    "row 35: stale poll (283 days old)",
+    "row 36: stale poll (290 days old)",
+    "row 37: stale poll (304 days old)",
+    "row 38: stale poll (353 days old)",
+    "row 39: very stale poll (381 days old)",
+    "row 40: very stale poll (403 days old)"
+  ],
+  "errorDetails": []
+}

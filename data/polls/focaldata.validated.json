@@ -1,0 +1,31 @@
+[
+  {
+    "id": "focaldata-2026-03-10",
+    "pollster": "Focaldata",
+    "isBpcMember": true,
+    "fieldworkStart": null,
+    "fieldworkEnd": "2026-03-10",
+    "publishedAt": "2026-03-10",
+    "date": "2026-03-10",
+    "sample": null,
+    "method": "Online poll",
+    "mode": "Online",
+    "commissioner": null,
+    "sourceUrl": "https://www.focaldata.com/blog/westminster-voting-intention-greens-surge-after-by-election-win",
+    "source": "Focaldata Westminster VI · https://www.focaldata.com/blog/westminster-voting-intention-greens-surge-after-by-election-win",
+    "ref": 27,
+    "lab": 20,
+    "con": 18,
+    "grn": null,
+    "ld": null,
+    "snp": null,
+    "pc": null,
+    "oth": null,
+    "rb": null,
+    "sourceType": "focaldata",
+    "confidence": "high",
+    "pollsterId": "focaldata",
+    "suspect": false,
+    "verificationStatus": "flagged"
+  }
+]

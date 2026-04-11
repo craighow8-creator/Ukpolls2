@@ -61,12 +61,9 @@ export function getLeader(name) {
   const detail = {
     x:    leader.x    || null,
     bio:  leader.bio  || null,
-    policies: {
-      immigration: leader.immigration || null,
-      economy:     leader.economy     || null,
-      nhs:         leader.nhs         || null,
-      climate:     leader.climate     || null,
-    },
+    // Policy text is deliberately not mirrored here. Use structured
+    // policyRecords for all party policy previews and comparisons.
+    policies: null,
     // Not in source data:
     // quotes, recentStatements, mediaAppearances — null
   }

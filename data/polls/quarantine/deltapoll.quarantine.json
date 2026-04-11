@@ -1,0 +1,33 @@
+[
+  {
+    "id": "deltapoll-2025-12-18",
+    "pollster": "Deltapoll",
+    "isBpcMember": true,
+    "fieldworkStart": "2025-12-16",
+    "fieldworkEnd": "2025-12-18",
+    "publishedAt": "2026-01-05",
+    "date": "2025-12-18",
+    "sample": 1997,
+    "method": "PDF scrape",
+    "mode": null,
+    "commissioner": "The Mirror Methodology Deltapoll interviewed 1,997 adults in Great Britain between 16th and 18th December 2025 The data have been weighted to be representative of the British adult population as a whole. Download PDF Deltapoll Ltd, Golden Cross House, 8 Duncannon St, London WC2N 4JF Privacy Policy Cookie Policy Modern Slavery Policy",
+    "sourceUrl": "https://deltapoll.co.uk/wp-content/uploads/2026/01/260105_Deltapoll-Mirror-pdf.pdf",
+    "source": "Deltapoll PDF · https://deltapoll.co.uk/wp-content/uploads/2026/01/260105_Deltapoll-Mirror-pdf.pdf",
+    "ref": 30,
+    "lab": 20,
+    "con": 19,
+    "ld": 14,
+    "grn": 10,
+    "snp": 33,
+    "pc": 11,
+    "oth": 22,
+    "confidence": "rejected",
+    "sourceType": "deltapoll",
+    "pollsterId": "deltapoll",
+    "suspect": true,
+    "verificationStatus": "rejected",
+    "validationIssues": [
+      "row 1: party total too high = 159"
+    ]
+  }
+]

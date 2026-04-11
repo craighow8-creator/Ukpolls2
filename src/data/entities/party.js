@@ -2,14 +2,15 @@
  * Party entity getter — src/data/entities/party.js
  *
  * Derives a structured { summary, breakdown, detail } shape from RAW.parties,
- * RAW.trends, RAW.polls, RAW.demographics, RAW.leaders, and PLEDGES.
+ * RAW.trends, RAW.polls, RAW.demographics, RAW.leaders, and policy records.
  *
- * Data source: data.js (read-only). PLEDGES from pledges.js (read-only).
+ * Data source: data.js (read-only). Policy text comes from policyRecords.
  * No data fabricated. Fields not present in source data are explicitly null.
  */
 
 import RAW from '../data.js'
-import { PLEDGES } from '../pledges.js'
+import { POLICY_RECORDS } from '../policy/policyRecords.js'
+import { derivePartyAreaPreview } from '../policy/policyCompareSelectors.js'
 
 /**
  * getParty(name)
@@ -88,8 +89,13 @@ export function getParty(name) {
   }
 
   // ── Detail ────────────────────────────────────────────────────────────────
-  // Full available data — pledges from manifestos, full leader bio and policies.
-  const pledges = PLEDGES[name] || null
+  // Full available data — structured policies are the policy source of truth.
+  const policyAreas = ['immigration', 'economy', 'nhs', 'climate', 'housing', 'crime', 'education', 'welfare', 'democracy']
+  const policyPreviews = Object.fromEntries(
+    policyAreas
+      .map((area) => [area, derivePartyAreaPreview(POLICY_RECORDS, name, area)])
+      .filter(([, preview]) => preview && !preview.missing),
+  )
 
   const leaderDetail = leader ? {
     name:        leader.name,
@@ -99,16 +105,11 @@ export function getParty(name) {
     net:         leader.net,
     approve:     leader.approve,
     disapprove:  leader.disapprove,
-    policies: {
-      immigration: leader.immigration || null,
-      economy:     leader.economy     || null,
-      nhs:         leader.nhs         || null,
-      climate:     leader.climate     || null,
-    },
   } : null
 
   const detail = {
-    pledges,      // { immigration: [], economy: [], nhs: [], climate: [], housing: [], ... } | null
+    policyPreviews,
+    policyRecords: POLICY_RECORDS.filter((record) => record.party === name),
     leaderDetail, // full leader profile | null
     // Fields not present in source data are explicitly absent:
     // donors, membershipCount, foundedYear — not in data.js

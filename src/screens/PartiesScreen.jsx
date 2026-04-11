@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { StickyPills, haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
+import { POLICY_RECORDS } from '../data/policy/policyRecords'
+import { derivePartyAreaPreview } from '../data/policy/policyCompareSelectors'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
@@ -346,7 +348,7 @@ function PartyLandscapeBriefing({ T, insight, card, border }) {
   )
 }
 
-export default function PartiesScreen({ T, nav, parties, polls, leaders }) {
+export default function PartiesScreen({ T, nav, parties, polls, leaders, policyRecords = POLICY_RECORDS }) {
   const [activeTab, setActiveTab] = useState('overview')
   const [expandedFunding, setExpanded] = useState(null)
 
@@ -860,11 +862,10 @@ export default function PartiesScreen({ T, nav, parties, polls, leaders }) {
             <SectionLabel T={T}>Policy snapshots</SectionLabel>
 
             {mainParties.map((p, i) => {
-              const leader = leadersByParty[p.name]
               const pIdx = (parties || []).indexOf(p)
               const policyCards = ['immigration', 'economy', 'nhs', 'climate']
-                .map((topic) => ({ topic, text: leader?.[topic] }))
-                .filter((x) => x.text)
+                .map((topic) => ({ topic, preview: derivePartyAreaPreview(policyRecords, p.name, topic) }))
+                .filter((x) => !x.preview?.missing)
 
               if (!policyCards.length) return null
 
@@ -876,7 +877,7 @@ export default function PartiesScreen({ T, nav, parties, polls, leaders }) {
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
-                    {policyCards.map(({ topic, text }) => (
+                    {policyCards.map(({ topic, preview }) => (
                       <motion.div
                         key={topic}
                         {...TAP}
@@ -917,11 +918,11 @@ export default function PartiesScreen({ T, nav, parties, polls, leaders }) {
                             overflow: 'hidden',
                           }}
                         >
-                          {cleanText(text)}
+                          {cleanText(preview.summary)}
                         </div>
 
-                        <div style={{ fontSize: 13, fontWeight: 700, color: p.color, marginTop: 10 }}>
-                          Full profile →
+                        <div style={{ fontSize: 12, fontWeight: 800, color: p.color, marginTop: 10, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          {preview.stanceLabel}
                         </div>
                       </motion.div>
                     ))}

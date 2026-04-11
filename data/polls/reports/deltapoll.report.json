@@ -1,0 +1,13 @@
+{
+  "file": "C:\\Users\\User\\Documents\\politiscope.v2\\ps2\\data\\polls\\deltapoll.json",
+  "total": 1,
+  "accepted": 0,
+  "quarantined": 1,
+  "warnings": 0,
+  "errors": 1,
+  "coverage": {},
+  "warningDetails": [],
+  "errorDetails": [
+    "row 1: party total too high = 159"
+  ]
+}

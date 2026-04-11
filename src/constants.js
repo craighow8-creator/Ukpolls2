@@ -45,7 +45,7 @@ export const APP_TOKEN = 'afc1e6a1834e52b57a583ad850daeb3e5d41440952946f594b20fb
 export const APP_VERSION = 'v21V2.04'
 export const APP_UPDATED = '08 Apr 2026'
 
-const PROD_API_BASE = 'https://politiscope-api.craighow8.workers.dev'
+const PROD_API_BASE = 'https://api.politiscope.co.uk'
 const LOCAL_API_BASE = 'http://127.0.0.1:8787'
 
 function readEnv(name) {

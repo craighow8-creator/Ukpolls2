@@ -92,6 +92,50 @@ export function BentoCard({
   )
 }
 
+// ── Accent Card ───────────────────────────────────────────
+// Neutral surface with party colour as accent only.
+// - Thin top strip in `accent` colour
+// - `selected`: subtle tint background + stronger accent border
+// - `onClick`: press-scale feedback
+export function AccentCard({
+  children, onClick, T,
+  accent,
+  selected = false,
+  style = {},
+}) {
+  const { pressed, h } = usePress()
+  const isClickable = !!onClick
+  const borderColor = selected
+    ? `${accent}55`
+    : accent
+    ? `${accent}28`
+    : T.cardBorder || 'rgba(0,0,0,0.07)'
+
+  return (
+    <div
+      {...(isClickable ? h : {})}
+      onClick={isClickable ? () => { haptic(8); onClick() } : undefined}
+      style={{
+        borderRadius: R.card,
+        overflow: 'hidden',
+        background: selected && accent ? `${accent}0C` : T.c0,
+        border: `1px solid ${borderColor}`,
+        cursor: isClickable ? 'pointer' : 'default',
+        transform: pressed ? 'scale(0.985)' : 'scale(1)',
+        transition: `transform 0.14s ${SP}, background 0.18s, border-color 0.18s`,
+        WebkitTapHighlightColor: 'transparent',
+        userSelect: 'none',
+        ...style,
+      }}
+    >
+      {accent && (
+        <div style={{ height: 3, background: accent, flexShrink: 0 }} />
+      )}
+      {children}
+    </div>
+  )
+}
+
 // ── Card Label (top-left) ─────────────────────────────────
 export function CardLabel({ children, T }) {
   return (

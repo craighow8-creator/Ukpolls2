@@ -599,7 +599,7 @@ const STANDARD_COVERAGE_RECORDS = [
 ]
 
 // Maintained structured policy source.
-// Most records below are converted from the previous flat pledges.js arrays.
+// Most records below are converted from earlier maintained manifesto pledge material.
 // Future manifesto ingestion can replace or enrich this export while preserving
 // the POLICY_RECORDS contract consumed by selectors and UI.
 export const POLICY_RECORDS = [

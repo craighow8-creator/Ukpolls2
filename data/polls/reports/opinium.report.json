@@ -1,0 +1,16 @@
+{
+  "file": "C:\\Users\\User\\Documents\\politiscope.v2\\ps2\\data\\polls\\opinium.json",
+  "total": 4,
+  "accepted": 4,
+  "quarantined": 0,
+  "warnings": 0,
+  "errors": 0,
+  "coverage": {
+    "Opinium": {
+      "count": 4,
+      "latestDate": "2026-03-18"
+    }
+  },
+  "warningDetails": [],
+  "errorDetails": []
+}

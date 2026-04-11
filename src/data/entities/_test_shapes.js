@@ -22,8 +22,8 @@ export const EXPECTED_SHAPES = {
       nullable: ['leader'],
     },
     detail: {
-      required: ['pledges', 'leaderDetail'],
-      nullable: ['pledges', 'leaderDetail'],
+      required: ['policyPreviews', 'policyRecords', 'leaderDetail'],
+      nullable: ['leaderDetail'],
     },
   },
 
@@ -38,7 +38,7 @@ export const EXPECTED_SHAPES = {
     },
     detail: {
       required: ['x', 'bio', 'policies'],
-      nullable: ['x', 'bio'],
+      nullable: ['x', 'bio', 'policies'],
     },
   },
 

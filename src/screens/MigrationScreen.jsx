@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react'
 import { ScrollArea, StickyPills } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
-import { MIGRATION_POLICIES } from '../data/policy/migrationPolicies'
 import { getPartyByName } from '../data/partyRegistry'
+import { POLICY_RECORDS } from '../data/policy/policyRecords'
+import { deriveComparisonBriefing, getComparisonRows } from '../data/policy/policyCompareSelectors'
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
@@ -214,33 +215,21 @@ function deriveVisaSummary(M = {}) {
   }
 }
 
-function getStanceLabel(score) {
-  const value = Number(score)
-  if (value >= 9) return 'Maximum restriction'
-  if (value >= 7) return 'High restriction'
-  if (value >= 5) return 'Controlled reduction'
-  if (value >= 3) return 'Managed system'
-  return 'Open / liberal'
-}
-
 function getPolicyColor(policy) {
   return getPartyByName(policy?.party).color
 }
 
-function derivePartySummary(policies = MIGRATION_POLICIES) {
-  const ranked = [...policies].sort((a, b) => (b.stanceScore || 0) - (a.stanceScore || 0))
-  const toughest = ranked[0]
-  const mostOpen = ranked[ranked.length - 1]
-  const middle = [...policies].sort((a, b) => Math.abs((a.stanceScore || 0) - 5) - Math.abs((b.stanceScore || 0) - 5))[0]
-
+function derivePartySummary(policyRecords = POLICY_RECORDS) {
+  const briefing = deriveComparisonBriefing(policyRecords, 'immigration')
   return {
-    headline: 'The main split is restriction versus managed migration',
-    body: `${toughest.party} sits at the most restrictive end, while ${mostOpen.party} is the clearest liberal outlier. ${middle.party} is closest to the controlled-reduction middle ground.`,
-    stats: [
-      { label: 'HARDEST LINE', value: toughest.party, meta: getStanceLabel(toughest.stanceScore), color: getPolicyColor(toughest) },
-      { label: 'MOST OPEN', value: mostOpen.party, meta: getStanceLabel(mostOpen.stanceScore), color: getPolicyColor(mostOpen) },
-      { label: 'DIVIDING LINE', value: 'Control vs deterrence', meta: 'Where the contrast sharpens', color: '#FAA61A' },
-    ],
+    headline: briefing.headline,
+    body: briefing.body,
+    stats: (briefing.signals || []).map((signal) => ({
+      label: signal.label.toUpperCase(),
+      value: signal.value,
+      meta: 'Structured record',
+      color: getPartyByName(signal.value).color || '#FAA61A',
+    })),
   }
 }
 
@@ -584,7 +573,7 @@ function ContextMovementCard({ T, rows = [] }) {
 
 function PartyViewCard({ T, party }) {
   const color = getPolicyColor(party)
-  const stanceLabel = getStanceLabel(party.stanceScore)
+  const stanceLabel = party.stanceLabel || 'No record'
 
   return (
     <div
@@ -620,11 +609,11 @@ function PartyViewCard({ T, party }) {
       </div>
 
       <div style={{ fontSize: 13.5, fontWeight: 700, color: T.th, lineHeight: 1.35 }}>
-        {party.positioning}
+        {party.summary}
       </div>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 9 }}>
-        {(party.routes || []).slice(0, 4).map((route) => (
+        {(party.details || []).slice(0, 4).map((route) => (
           <div
             key={route}
             style={{
@@ -644,15 +633,11 @@ function PartyViewCard({ T, party }) {
         ))}
       </div>
 
-      <div style={{ fontSize: 12.5, fontWeight: 500, color: T.tl, lineHeight: 1.5, marginTop: 8 }}>
-        {party.summary}
-      </div>
-
       {Array.isArray(party.sources) && party.sources.length ? (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
           {party.sources.slice(0, 2).map((source) => (
             <a
-              key={`${party.party}-${source.label}`}
+              key={`${party.party}-${source.title || source.label}`}
               href={source.url}
               target="_blank"
               rel="noreferrer"
@@ -663,7 +648,7 @@ function PartyViewCard({ T, party }) {
                 textDecoration: 'none',
               }}
             >
-              {source.label} →
+              {source.title || source.label || source.type} →
             </a>
           ))}
         </div>
@@ -672,14 +657,15 @@ function PartyViewCard({ T, party }) {
   )
 }
 
-export default function MigrationScreen({ T, nav, migration }) {
+export default function MigrationScreen({ T, nav, migration, policyRecords = POLICY_RECORDS }) {
   const [tab, setTab] = useState('overview')
   const M = migration || {}
 
   const overview = useMemo(() => deriveMigrationOverviewSummary(M), [M])
   const breakdown = useMemo(() => deriveBreakdownSummary(M), [M])
   const visaSummary = useMemo(() => deriveVisaSummary(M), [M])
-  const partySummary = useMemo(() => derivePartySummary(MIGRATION_POLICIES), [])
+  const partyRows = useMemo(() => getComparisonRows(policyRecords, 'immigration'), [policyRecords])
+  const partySummary = useMemo(() => derivePartySummary(policyRecords), [policyRecords])
   const nationalitySplit = useMemo(() => splitNationalityRows(M), [M])
   const nationalityRows = nationalitySplit.foreignRows
   const britishNationalityRows = nationalitySplit.britishRows
@@ -942,7 +928,7 @@ export default function MigrationScreen({ T, nav, migration }) {
             <BriefingCard T={T} title={partySummary.headline} body={partySummary.body} stats={partySummary.stats} subtle />
 
             <SectionLabel T={T}>Party positions</SectionLabel>
-            {MIGRATION_POLICIES.map((party) => (
+            {partyRows.map((party) => (
               <PartyViewCard key={party.party} T={T} party={party} />
             ))}
           </>

@@ -1,0 +1,18 @@
+{
+  "file": "C:\\Users\\User\\Documents\\politiscope.v2\\ps2\\data\\polls\\focaldata.json",
+  "total": 1,
+  "accepted": 1,
+  "quarantined": 0,
+  "warnings": 1,
+  "errors": 0,
+  "coverage": {
+    "Focaldata": {
+      "count": 1,
+      "latestDate": "2026-03-10"
+    }
+  },
+  "warningDetails": [
+    "row 1: only 3 populated party values"
+  ],
+  "errorDetails": []
+}

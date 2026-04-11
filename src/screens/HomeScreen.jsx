@@ -7,34 +7,9 @@ import BriefingPanel from '../components/BriefingPanel'
 import { buildSmartSummary } from '../utils/intelligence'
 import { buildDisplayTrendRows } from '../components/charts/SharedTrendChart'
 import { buildHomeElectionsBriefing } from '../utils/homeElectionsBriefing'
+import { buildHomeNewsBriefing } from '../utils/news'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
-
-function SparkLine({ data = [], color = '#888', width = 80, height = 28, filled = false }) {
-  const vals = (data || []).filter((v) => v != null && !isNaN(v))
-  if (vals.length < 2) return null
-
-  const min = Math.min(...vals)
-  const max = Math.max(...vals)
-  const range = max - min || 1
-
-  const pts = vals.map((v, i) => {
-    const x = (i / (vals.length - 1)) * width
-    const y = height - 3 - ((v - min) / range) * (height - 6)
-    return [+x.toFixed(1), +y.toFixed(1)]
-  })
-
-  const line = pts.map((p) => p.join(',')).join(' ')
-  const fill = filled ? `${pts[0][0]},${height} ${line} ${pts[pts.length - 1][0]},${height}` : null
-
-  return (
-    <svg width={width} height={height} style={{ overflow: 'visible', display: 'block', flexShrink: 0 }}>
-      {filled && <polygon points={fill} fill={color} fillOpacity="0.14" />}
-      <polyline points={line} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r="2.5" fill={color} />
-    </svg>
-  )
-}
 
 function MiniBar({ value, max, color, height = 8, T }) {
   const pct = Math.max(2, Math.min(100, (value / (max || 1)) * 100))
@@ -280,6 +255,7 @@ export default function HomeScreen({
   byElections = {},
   migration = {},
   betting = {},
+  news = {},
   meta = {},
   pollContext = {},
 }) {
@@ -348,6 +324,7 @@ export default function HomeScreen({
     [meta, byElections],
   )
   const [electionSignalIndex, setElectionSignalIndex] = React.useState(0)
+  const newsBriefing = React.useMemo(() => buildHomeNewsBriefing(news), [news])
 
   React.useEffect(() => {
     setElectionSignalIndex(0)
@@ -360,23 +337,6 @@ export default function HomeScreen({
     }, 4200)
     return () => window.clearInterval(timer)
   }, [electionsBriefing.signals])
-
-  const alertParty = (() => {
-    const trendSource = displayTrends
-    if (trendSource.length < 2) return null
-    const f = trendSource[0]
-    const l = trendSource[trendSource.length - 1]
-    let worst = null
-    let drop = 0
-    main.forEach((p) => {
-      const d = (f[p.name] || 0) - (l[p.name] || 0)
-      if (d > drop) {
-        drop = d
-        worst = { ...p, drop: +d.toFixed(1), start: f[p.name], end: l[p.name] }
-      }
-    })
-    return worst
-  })()
 
   const winProb = topBet?.odds ? impliedProb(topBet.odds) : null
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
@@ -919,38 +879,41 @@ export default function HomeScreen({
           <LargeCard T={T} onClick={() => nav('news')}>
             <div style={pL}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <Lbl T={T}>News</Lbl>
-                <Chip color={T.pr}>Live</Chip>
+                <Lbl T={T}>News / Live</Lbl>
+                <Chip color={T.pr}>
+                  {newsBriefing.sourceCount ? `${newsBriefing.sourceCount} sources` : 'Live'}
+                </Chip>
               </div>
 
-              <div style={{ fontSize: 20, fontWeight: 700, color: T.th, lineHeight: 1.3, textAlign: 'center' }}>
-                {meta?.latestHeadline || (alertParty ? `${alertParty.name} down ${alertParty.drop}pt over 12 months` : 'Top UK political headlines')}
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: T.th,
+                  lineHeight: 1.22,
+                  textAlign: 'center',
+                  maxWidth: 520,
+                  margin: '0 auto',
+                }}
+              >
+                {newsBriefing.headline}
               </div>
 
-              <Divider T={T} />
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                {alertParty && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-                    <SparkLine data={tr12(alertParty.name)} color="#E4003B" width={isMobile ? 110 : 160} height={26} filled />
-                    <span style={{ fontSize: 13, color: T.tl, fontWeight: 600 }}>{alertParty.name} trajectory</span>
-                  </div>
-                )}
-
-                {(meta?.headlines || []).slice(0, 2).map((h, i) => (
-                  <div key={i} style={{ fontSize: 14, color: T.tm, fontWeight: 500, lineHeight: 1.35 }}>
-                    · {h}
-                  </div>
-                ))}
-
-                {!meta?.headlines?.length && (
-                  <div style={{ fontSize: 13, color: T.tl, textAlign: 'center' }}>
-                    Open the news feed for the latest political coverage
-                  </div>
-                )}
+              <div
+                style={{
+                  margin: '14px auto 0',
+                  maxWidth: 480,
+                  fontSize: 13,
+                  color: T.tl,
+                  fontWeight: 650,
+                  lineHeight: 1.45,
+                  textAlign: 'center',
+                }}
+              >
+                {newsBriefing.supportingLine}
               </div>
 
-              <Cta T={T}>Open news →</Cta>
+              <Cta T={T}>Open live feed →</Cta>
             </div>
           </LargeCard>
 

@@ -22,6 +22,7 @@ import DemographicsScreen from './screens/DemographicsScreen'
 import MigrationScreen from './screens/MigrationScreen'
 import ElectionsScreen from './screens/ElectionsScreen'
 import CouncilScreen from './screens/CouncilScreen'
+import PolicyCompareScreen from './screens/PolicyCompareScreen'
 import BettingScreen from './screens/BettingScreen'
 import NewsScreen from './screens/NewsScreen'
 import VoteScreen from './screens/VoteScreen'
@@ -115,6 +116,16 @@ function getRouteResetKey(route, depth = 0) {
     params.search,
     params.localFilter,
     params.localSort,
+    params.openTab,
+    params.selectedPolicyArea,
+    params.policyArea,
+    params.leftParty,
+    params.rightParty,
+    params.fromScreen,
+    params.fromPartyIdx,
+    params.fromLeaderIdx,
+    params.returnTab,
+    params.returnPolicyArea,
     poll.id,
     poll.pollster,
     poll.fieldworkEnd,
@@ -139,14 +150,23 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const toastRef = useRef()
+  // Tracks whether the initial data load has completed.
+  // Background refreshes (focus/storage/visibility) update appData but must NOT
+  // reset themeKey — doing so would clobber any leader/party-specific theme the
+  // user navigated to and cause a visible flash a few seconds after landing.
+  const initialLoadDone = useRef(false)
 
   const loadAppData = useCallback(async () => {
+    const isInitial = !initialLoadDone.current
     try {
       const data = await getData()
       setAppData(data)
 
-      const top = [...(data?.parties || [])].sort((a, b) => (b.pct || 0) - (a.pct || 0))[0]
-      if (top) setThemeKey(partyTheme(top.name))
+      if (isInitial) {
+        initialLoadDone.current = true
+        const top = [...(data?.parties || [])].sort((a, b) => (b.pct || 0) - (a.pct || 0))[0]
+        if (top) setThemeKey(partyTheme(top.name))
+      }
     } catch (e) {
       console.error('App data load failed', e)
     } finally {
@@ -193,10 +213,24 @@ export default function App() {
   const TRENDS = POLL_CONTEXT?.trendSeries || appData?.trends || []
   const DEMO = appData?.demographics || {}
   const POLICY_RECORDS_DATA = Array.isArray(appData?.policyRecords) ? appData.policyRecords : null
+  const POLICY_TAXONOMY_DATA =
+    appData?.policyTaxonomy && typeof appData.policyTaxonomy === 'object' && !Array.isArray(appData.policyTaxonomy)
+      ? appData.policyTaxonomy
+      : null
   const MIGRATION = appData?.migration || {}
   const BY_ELEC = appData?.byElections || { upcoming: [], recent: [] }
   const ELECTIONS = appData?.elections || {}
   const BETTING = appData?.betting || { odds: [] }
+  const NEWS =
+    appData?.news && typeof appData.news === 'object' && !Array.isArray(appData.news)
+      ? appData.news
+      : appData?.newsItems && typeof appData.newsItems === 'object' && !Array.isArray(appData.newsItems)
+        ? {
+            items: Array.isArray(appData.newsItems.items) ? appData.newsItems.items : [],
+            meta: appData.newsItems.meta || null,
+            fetchedAt: appData.newsItems.fetchedAt || null,
+          }
+        : { items: Array.isArray(appData?.newsItems) ? appData.newsItems : [], meta: null }
   const MILESTONES = appData?.milestones || []
   const COUNCIL_REGISTRY = appData?.councilRegistry || []
   const COUNCIL_STATUS = appData?.councilStatus || []
@@ -397,6 +431,7 @@ export default function App() {
     closeSheet: closeExpanded,
     parties: PARTIES_WITH_LEADERS,
     meta: META,
+    news: NEWS,
     showToast,
     updateCurrentParams,
     councilRegistry: COUNCIL_REGISTRY,
@@ -414,19 +449,43 @@ export default function App() {
       case 'pollster':
         return <PollsterScreen {...common} pollster={p.pollster} polls={POLLS_HISTORY} />
       case 'parties':
-        return <PartiesScreen {...common} polls={POLLS} leaders={LEADERS} trends={TRENDS} />
+        return <PartiesScreen {...common} polls={POLLS} leaders={LEADERS} trends={TRENDS} policyRecords={POLICY_RECORDS_DATA || undefined} />
       case 'party':
-        return <PartyScreen {...common} idx={p.idx ?? 0} from={p.from || 'polls'} leaders={LEADERS} trends={TRENDS} polls={POLLS} policyRecords={POLICY_RECORDS_DATA || undefined} />
+        return (
+          <PartyScreen
+            {...common}
+            idx={p.idx ?? 0}
+            from={p.from || 'polls'}
+            leaders={LEADERS}
+            trends={TRENDS}
+            polls={POLLS}
+            policyRecords={POLICY_RECORDS_DATA || undefined}
+            openTab={p.openTab}
+            selectedPolicyArea={p.selectedPolicyArea || p.policyArea}
+            policyArea={p.policyArea}
+          />
+        )
       case 'leaders':
         return <LeadersScreen {...common} leaders={LEADERS} />
       case 'leader':
-        return <LeaderScreen {...common} lIdx={p.lIdx ?? 0} leaders={LEADERS} />
+        return <LeaderScreen {...common} lIdx={p.lIdx ?? 0} leaders={LEADERS} initialTab={p.openTab || p.returnTab} />
       case 'trends':
         return <TrendsScreen {...common} trends={TRENDS} milestones={MILESTONES} />
       case 'demographics':
         return <DemographicsScreen {...common} demographics={DEMO} />
       case 'migration':
-        return <MigrationScreen {...common} migration={MIGRATION} />
+        return <MigrationScreen {...common} migration={MIGRATION} policyRecords={POLICY_RECORDS_DATA || undefined} />
+      case 'policyCompare':
+        return (
+          <PolicyCompareScreen
+            {...common}
+            parties={RAW_PARTIES}
+            policyRecords={POLICY_RECORDS_DATA || undefined}
+            policyTaxonomy={POLICY_TAXONOMY_DATA || undefined}
+            initialArea={p.area || 'immigration'}
+            initialTopic={p.topic || 'All'}
+          />
+        )
       case 'elections':
         return (
           <ElectionsScreen
@@ -456,11 +515,25 @@ export default function App() {
       case 'betting':
         return <BettingScreen {...common} betting={BETTING} />
       case 'news':
-        return <NewsScreen {...common} />
+        return <NewsScreen {...common} news={NEWS} />
       case 'vote':
         return <VoteScreen {...common} parties={PARTIES} />
       case 'compare':
-        return <CompareScreen {...common} leaders={LEADERS} />
+        return (
+          <CompareScreen
+            {...common}
+            leaders={LEADERS}
+            policyRecords={POLICY_RECORDS_DATA || undefined}
+            initialTab={p.tab || p.policyArea || 'overview'}
+            leftParty={p.leftParty}
+            rightParty={p.rightParty}
+            fromScreen={p.fromScreen}
+            fromPartyIdx={p.fromPartyIdx}
+            fromLeaderIdx={p.fromLeaderIdx}
+            returnTab={p.returnTab}
+            returnPolicyArea={p.returnPolicyArea}
+          />
+        )
       case 'swingcalc':
         return <SwingCalcScreen {...common} />
       case 'parliament':
@@ -532,6 +605,7 @@ export default function App() {
             byElections={BY_ELEC}
             migration={MIGRATION}
             betting={BETTING}
+            news={NEWS}
             pollContext={POLL_CONTEXT}
             onMenu={() => setMenuOpen(true)}
           />

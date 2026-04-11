@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
+import { formatNewsSourceList, formatRelativeNewsTime, normaliseNewsPayload } from '../utils/news'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
@@ -29,7 +30,12 @@ function Badge({ children, color, subtle = false }) {
   )
 }
 
-function ScrollAwayHeader({ T, count, loading }) {
+function ScrollAwayHeader({ T, meta, loading }) {
+  const count = meta?.storyCount || 0
+  const sourceCount = meta?.sourceCount || 0
+  const sources = formatNewsSourceList(meta?.sources || [])
+  const freshness = formatRelativeNewsTime(meta?.updatedAt || meta?.latestPublishedAt)
+
   return (
     <div style={{ padding: '8px 16px 10px' }}>
       <div
@@ -41,8 +47,8 @@ function ScrollAwayHeader({ T, count, loading }) {
           marginBottom: 10,
         }}
       >
-        <Badge color={T.pr}>{loading ? 'Updating…' : `${count} stories`}</Badge>
-        <Badge color={T.tl} subtle>UK politics live</Badge>
+        <Badge color={T.pr}>{loading ? 'Updating...' : `${count} stories`}</Badge>
+        <Badge color={T.tl} subtle>{sourceCount ? `${sourceCount} sources` : 'UK politics live'}</Badge>
       </div>
 
       <div
@@ -70,35 +76,12 @@ function ScrollAwayHeader({ T, count, loading }) {
         }}
       >
         <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
-          Live UK politics feed · newest first
+          Live UK politics wire{freshness ? ` · updated ${freshness}` : ''}{sources ? ` · ${sources}` : ''}
         </div>
         <InfoButton id="news_feed" T={T} size={20} />
       </div>
     </div>
   )
-}
-
-function formatRelativeTime(iso) {
-  if (!iso) return ''
-  const ts = new Date(iso).getTime()
-  if (Number.isNaN(ts)) return ''
-
-  const diffMs = Date.now() - ts
-  const diffMins = Math.max(0, Math.floor(diffMs / 60000))
-
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-
-  const diffHours = Math.floor(diffMins / 60)
-  if (diffHours < 24) return `${diffHours}h ago`
-
-  const diffDays = Math.floor(diffHours / 24)
-  if (diffDays < 7) return `${diffDays}d ago`
-
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-  })
 }
 
 function tagColor(tag, T) {
@@ -111,6 +94,16 @@ function tagColor(tag, T) {
       return '#E4003B'
     case 'Policy':
       return '#02A95B'
+    case 'Government':
+      return '#0F766E'
+    case 'Parliament':
+      return '#8B5CF6'
+    case 'Economy':
+      return '#B45309'
+    case 'Foreign Affairs':
+      return '#2563EB'
+    case 'Campaign':
+      return '#DB2777'
     default:
       return T.pr
   }
@@ -187,7 +180,7 @@ function NewsCard({ T, item, big }) {
           </div>
 
           <span style={{ fontSize: 13, fontWeight: 600, color: T.tl, flexShrink: 0 }}>
-            {formatRelativeTime(item.publishedAt)}
+            {formatRelativeNewsTime(item.publishedAt)}
           </span>
         </div>
 
@@ -201,6 +194,20 @@ function NewsCard({ T, item, big }) {
         >
           {item.title}
         </div>
+
+        {big && (item.description || item.summary) ? (
+          <div
+            style={{
+              marginTop: 8,
+              fontSize: 13,
+              fontWeight: 550,
+              color: T.tm,
+              lineHeight: 1.45,
+            }}
+          >
+            {item.description || item.summary}
+          </div>
+        ) : null}
       </div>
     </motion.div>
   )
@@ -225,10 +232,15 @@ function EmptyState({ T, title, body }) {
   )
 }
 
-export function NewsScreen({ T }) {
-  const [items, setItems] = useState([])
+export function NewsScreen({ T, news }) {
+  const initialPayload = useMemo(() => normaliseNewsPayload(news), [news])
+  const [payload, setPayload] = useState(initialPayload)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (initialPayload.items.length) setPayload(initialPayload)
+  }, [initialPayload])
 
   useEffect(() => {
     let cancelled = false
@@ -247,14 +259,13 @@ export function NewsScreen({ T }) {
         }
 
         const data = await res.json()
-        const nextItems = Array.isArray(data?.items) ? data.items : []
+        const nextPayload = normaliseNewsPayload(data)
 
         if (!cancelled) {
-          setItems(nextItems)
+          setPayload(nextPayload)
         }
       } catch (err) {
         if (!cancelled) {
-          setItems([])
           setError(err instanceof Error ? err.message : 'Unable to load news.')
         }
       } finally {
@@ -271,6 +282,8 @@ export function NewsScreen({ T }) {
     }
   }, [])
 
+  const items = payload.items
+  const meta = payload.meta
   const heroItem = items[0] || null
   const rest = useMemo(() => items.slice(1), [items])
 
@@ -283,7 +296,7 @@ export function NewsScreen({ T }) {
         background: T.sf,
       }}
     >
-      <ScrollAwayHeader T={T} count={items.length} loading={loading} />
+      <ScrollAwayHeader T={T} meta={meta} loading={loading} />
 
       <div style={{ padding: '12px 16px 40px' }}>
         {loading && !items.length ? (
@@ -324,5 +337,4 @@ export function NewsScreen({ T }) {
 }
 
 export default NewsScreen
-
 

@@ -857,6 +857,54 @@ export default {
       ) return 'Elections'
 
       if (
+        t.includes('parliament') ||
+        t.includes('commons') ||
+        t.includes('lords') ||
+        t.includes('pmqs') ||
+        t.includes('mp ') ||
+        t.includes(' mps') ||
+        t.includes('select committee')
+      ) return 'Parliament'
+
+      if (
+        t.includes('budget') ||
+        t.includes('tax') ||
+        t.includes('economy') ||
+        t.includes('growth') ||
+        t.includes('inflation') ||
+        t.includes('borrowing') ||
+        t.includes('spending')
+      ) return 'Economy'
+
+      if (
+        t.includes('foreign') ||
+        t.includes('ukraine') ||
+        t.includes('russia') ||
+        t.includes('gaza') ||
+        t.includes('israel') ||
+        t.includes('trump') ||
+        t.includes('eu ')
+      ) return 'Foreign Affairs'
+
+      if (
+        t.includes('prime minister') ||
+        t.includes('minister') ||
+        t.includes('cabinet') ||
+        t.includes('chancellor') ||
+        t.includes('home secretary') ||
+        t.includes('government') ||
+        t.includes('no 10') ||
+        t.includes('downing street')
+      ) return 'Government'
+
+      if (
+        t.includes('campaign') ||
+        t.includes('candidate') ||
+        t.includes('manifesto') ||
+        t.includes('leaflet')
+      ) return 'Campaign'
+
+      if (
         t.includes('labour') ||
         t.includes('conservative') ||
         t.includes('reform') ||
@@ -868,8 +916,6 @@ export default {
         t.includes('farage') ||
         t.includes('starmer') ||
         t.includes('badenoch') ||
-        t.includes('minister') ||
-        t.includes('cabinet') ||
         t.includes('mp')
       ) return 'Party'
 
@@ -975,7 +1021,7 @@ export default {
       if (combined.includes('death plans')) score -= 3
       if (textMatchesAny(combined, CIVIC_BUT_NOT_NECESSARILY_POLITICAL_TERMS)) score -= 2
 
-      if (actorMatches === 0 && institutionMatches === 0) return null
+      if (actorMatches === 0 && institutionMatches === 0 && hubPolicyMatches === 0) return null
 
       if (
         hostname === 'bbc.co.uk' &&
@@ -990,6 +1036,7 @@ export default {
       return {
         title,
         source: titleCase(article?.source?.name || article.source || ''),
+        description,
         publishedAt: article.publishedAt || null,
         url,
         tag: inferNewsTag(title),
@@ -1006,6 +1053,7 @@ export default {
       return {
         title: scored.title,
         source: scored.source,
+        description: scored.description,
         publishedAt: scored.publishedAt,
         url: scored.url,
         tag: scored.tag,
@@ -1013,8 +1061,21 @@ export default {
       }
     }
 
+    function newsTitleKey(title) {
+      return String(title || '')
+        .toLowerCase()
+        .replace(/['"]/g, '')
+        .replace(/\b(live|latest|breaking|updates?|uk|politics|says|said|after|over|amid)\b/g, ' ')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+        .split(' ')
+        .slice(0, 12)
+        .join(' ')
+    }
+
     function dedupeNewsItems(items) {
       const seen = new Set()
+      const seenTitles = new Set()
       const out = []
 
       for (const item of items || []) {
@@ -1025,9 +1086,11 @@ export default {
           .split(' ')
           .slice(0, 10)
           .join(' ')
+        const titleKey = newsTitleKey(item.title)
 
-        if (!key || seen.has(key)) continue
+        if (!key || seen.has(key) || (titleKey && seenTitles.has(titleKey))) continue
         seen.add(key)
+        if (titleKey) seenTitles.add(titleKey)
         out.push(item)
       }
 
@@ -1173,6 +1236,7 @@ export default {
           return {
             title,
             source: 'BBC News',
+            description,
             publishedAt: !Number.isNaN(publishedAtTs)
               ? new Date(publishedAtTs).toISOString()
               : new Date().toISOString(),
@@ -1219,6 +1283,7 @@ export default {
           return {
             title,
             source: 'Sky News',
+            description,
             publishedAt,
             url,
             tag: inferNewsTag(title),
@@ -1285,6 +1350,7 @@ export default {
             return {
               title,
               source: 'The Guardian',
+              description,
               publishedAt,
               url,
               tag: inferNewsTag(title),
@@ -1297,14 +1363,94 @@ export default {
       }
     }
 
+    const NEWS_RSS_SOURCES = [
+      {
+        name: 'Financial Times',
+        urls: [
+          'https://www.ft.com/uk-politics?format=rss',
+          'https://www.ft.com/world/uk?format=rss',
+        ],
+        minScore: 4,
+      },
+      {
+        name: 'GB News',
+        urls: [
+          'https://www.gbnews.com/politics.rss',
+          'https://www.gbnews.com/feeds/news.xml',
+        ],
+        minScore: 4,
+      },
+      {
+        name: 'Daily Mail',
+        urls: [
+          'https://www.dailymail.co.uk/news/index.rss',
+        ],
+        minScore: 5,
+      },
+      {
+        name: 'Daily Express',
+        urls: [
+          'https://www.express.co.uk/news/politics/rss',
+        ],
+        minScore: 4,
+      },
+      {
+        name: 'The Telegraph',
+        urls: [
+          'https://www.telegraph.co.uk/politics/rss.xml',
+        ],
+        minScore: 4,
+      },
+    ]
+
+    async function fetchRssNewsSource(sourceConfig) {
+      for (const feedUrl of sourceConfig.urls || []) {
+        const xml = await fetchText(feedUrl)
+        if (!xml) continue
+
+        const items = parseRssItems(xml, sourceConfig.name)
+          .map((item) => {
+            const normalized = normalizeNewsItem(item)
+            if (!normalized) return null
+            if ((normalized.score || 0) < (sourceConfig.minScore || 3)) return null
+            return normalized
+          })
+          .filter(Boolean)
+
+        if (items.length) return items
+      }
+
+      return []
+    }
+
+    function buildNewsMeta(items = [], fetchedAt = new Date().toISOString()) {
+      const sourceNames = [...new Set((items || []).map((item) => item.source).filter(Boolean))]
+      const latestPublishedAt = items?.[0]?.publishedAt || null
+
+      return {
+        updatedAt: fetchedAt,
+        fetchedAt,
+        storyCount: Array.isArray(items) ? items.length : 0,
+        sourceCount: sourceNames.length,
+        sources: sourceNames,
+        latestPublishedAt,
+        latestHeadline: items?.[0]?.title || '',
+        headlines: (items || []).slice(0, 3).map((item) => item.title).filter(Boolean),
+        coverageNote: 'Live RSS/API politics feed with per-source balancing and duplicate suppression.',
+      }
+    }
+
     async function fetchLiveNews(env) {
       const now = Date.now()
 
-      const bbcItems = await fetchBbcNews()
-      const guardianItems = await fetchGuardianNews(env)
-      const skyItems = await fetchSkyNews()
+      const sourceResults = await Promise.all([
+        fetchBbcNews(),
+        fetchGuardianNews(env),
+        fetchSkyNews(),
+        ...NEWS_RSS_SOURCES.map((sourceConfig) => fetchRssNewsSource(sourceConfig)),
+      ])
 
-      const ranked = [...bbcItems, ...guardianItems, ...skyItems]
+      const ranked = sourceResults.flat()
         .sort((a, b) => {
           const aTime = new Date(a.publishedAt || 0).getTime()
           const bTime = new Date(b.publishedAt || 0).getTime()
@@ -1320,7 +1466,7 @@ export default {
         })
 
       const deduped = dedupeNewsItems(ranked)
-      const balanced = capNewsItemsBySource(deduped, 3, 12)
+      const balanced = capNewsItemsBySource(deduped, 3, 18)
 
       return balanced.map(({ score, ...item }) => item)
     }
@@ -1335,11 +1481,17 @@ export default {
       return (Date.now() - ts) < maxAgeMs
     }
 
-    async function getNewsItems() {
+    async function getNewsPayload() {
       const hasContent = await tableExists('content')
 
       if (!hasContent) {
-        return await fetchLiveNews(env)
+        const fetchedAt = new Date().toISOString()
+        const items = await fetchLiveNews(env)
+        return {
+          fetchedAt,
+          items,
+          meta: buildNewsMeta(items, fetchedAt),
+        }
       }
 
       const cached = await loadContentSectionRow(NEWS_CACHE_SECTION)
@@ -1350,17 +1502,33 @@ export default {
         cached.data.items.length > 0 &&
         isFreshEnough(cached.data.fetchedAt || cached.updated_at)
       ) {
-        return cached.data.items
+        const fetchedAt = cached.data.fetchedAt || cached.updated_at || new Date().toISOString()
+        return {
+          ...cached.data,
+          fetchedAt,
+          items: cached.data.items,
+          meta: {
+            ...buildNewsMeta(cached.data.items, fetchedAt),
+            ...(cached.data.meta || {}),
+          },
+        }
       }
 
       const items = await fetchLiveNews(env)
+      const fetchedAt = new Date().toISOString()
       const payload = {
-        fetchedAt: new Date().toISOString(),
+        fetchedAt,
         items,
+        meta: buildNewsMeta(items, fetchedAt),
       }
 
       await saveContentSection(NEWS_CACHE_SECTION, payload)
-      return items
+      return payload
+    }
+
+    async function getNewsItems() {
+      const payload = await getNewsPayload()
+      return Array.isArray(payload?.items) ? payload.items : []
     }
 
     async function saveContentSection(section, payload) {
@@ -1504,8 +1672,8 @@ export default {
         return jsonResponse({ items })
       }
       if (request.method === 'GET' && url.pathname === '/api/news') {
-        const items = await getNewsItems()
-        return jsonResponse({ items })
+        const payload = await getNewsPayload()
+        return jsonResponse(payload)
       }
 
       if (request.method === 'GET' && url.pathname === '/api/parliament-video') {
@@ -2104,7 +2272,7 @@ export default {
         const policyRecords = await loadContentSection('policyRecords')
         const policyTaxonomy = await loadContentSection('policyTaxonomy')
         const policyDelivery = await loadContentSection('policyDelivery')
-        const newsItems = await loadContentSection('newsItems')
+        const newsPayload = await getNewsPayload()
         const councilRegistry = await loadContentSection('councilRegistry')
         const councilStatus = await loadContentSection('councilStatus')
         const councilEditorial = await loadContentSection('councilEditorial')
@@ -2139,7 +2307,8 @@ export default {
           policyRecords: Array.isArray(policyRecords) ? policyRecords : null,
           policyTaxonomy: policyTaxonomy || null,
           policyDelivery: Array.isArray(policyDelivery) ? policyDelivery : null,
-          newsItems: newsItems || [],
+          news: newsPayload || { items: [], meta: null },
+          newsItems: Array.isArray(newsPayload?.items) ? newsPayload.items : [],
           councilRegistry: councilRegistry || [],
           councilStatus: councilStatus || [],
           councilEditorial: councilEditorial || [],

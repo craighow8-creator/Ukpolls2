@@ -1,0 +1,290 @@
+{
+  "generatedAt": "2026-04-09T11:10:22.131Z",
+  "mergedCount": 362,
+  "quarantinedCount": 0,
+  "coverage": {
+    "BMG Research": {
+      "count": 9,
+      "latestDate": "2026-03-26",
+      "sourceTypes": [
+        "wikipedia"
+      ],
+      "sourceTiers": [
+        "fallback"
+      ],
+      "confidence": [
+        "medium"
+      ],
+      "directCount": 0,
+      "fallbackCount": 9,
+      "manualCount": 0
+    },
+    "Deltapoll": {
+      "count": 1,
+      "latestDate": "2025-12-18",
+      "sourceTypes": [
+        "wikipedia"
+      ],
+      "sourceTiers": [
+        "fallback"
+      ],
+      "confidence": [
+        "medium"
+      ],
+      "directCount": 0,
+      "fallbackCount": 1,
+      "manualCount": 0
+    },
+    "Find Out Now": {
+      "count": 62,
+      "latestDate": "2026-04-02",
+      "sourceTypes": [
+        "wikipedia",
+        "find out now"
+      ],
+      "sourceTiers": [
+        "fallback",
+        "direct"
+      ],
+      "confidence": [
+        "medium",
+        "high"
+      ],
+      "directCount": 40,
+      "fallbackCount": 55,
+      "manualCount": 0
+    },
+    "Focaldata": {
+      "count": 10,
+      "latestDate": "2026-03-10",
+      "sourceTypes": [
+        "wikipedia",
+        "focaldata"
+      ],
+      "sourceTiers": [
+        "fallback",
+        "direct"
+      ],
+      "confidence": [
+        "medium",
+        "high"
+      ],
+      "directCount": 1,
+      "fallbackCount": 9,
+      "manualCount": 0
+    },
+    "Freshwater Strategy": {
+      "count": 9,
+      "latestDate": "2026-01-11",
+      "sourceTypes": [
+        "wikipedia"
+      ],
+      "sourceTiers": [
+        "fallback"
+      ],
+      "confidence": [
+        "medium"
+      ],
+      "directCount": 0,
+      "fallbackCount": 9,
+      "manualCount": 0
+    },
+    "Good Growth Foundation": {
+      "count": 1,
+      "latestDate": "2026-02-16",
+      "sourceTypes": [
+        "wikipedia"
+      ],
+      "sourceTiers": [
+        "fallback"
+      ],
+      "confidence": [
+        "medium"
+      ],
+      "directCount": 0,
+      "fallbackCount": 1,
+      "manualCount": 0
+    },
+    "Ipsos": {
+      "count": 3,
+      "latestDate": "2026-03-11",
+      "sourceTypes": [
+        "wikipedia"
+      ],
+      "sourceTiers": [
+        "fallback"
+      ],
+      "confidence": [
+        "medium"
+      ],
+      "directCount": 0,
+      "fallbackCount": 3,
+      "manualCount": 0
+    },
+    "JL Partners": {
+      "count": 6,
+      "latestDate": "2026-03-05",
+      "sourceTypes": [
+        "wikipedia",
+        "jl partners"
+      ],
+      "sourceTiers": [
+        "fallback",
+        "direct"
+      ],
+      "confidence": [
+        "medium"
+      ],
+      "directCount": 2,
+      "fallbackCount": 4,
+      "manualCount": 0
+    },
+    "Lord Ashcroft Polls": {
+      "count": 10,
+      "latestDate": "2026-03-30",
+      "sourceTypes": [
+        "wikipedia"
+      ],
+      "sourceTiers": [
+        "fallback"
+      ],
+      "confidence": [
+        "medium"
+      ],
+      "directCount": 0,
+      "fallbackCount": 10,
+      "manualCount": 0
+    },
+    "More in Common": {
+      "count": 84,
+      "latestDate": "2026-04-08",
+      "sourceTypes": [
+        "more in common",
+        "wikipedia"
+      ],
+      "sourceTiers": [
+        "direct",
+        "fallback"
+      ],
+      "confidence": [
+        "high",
+        "medium"
+      ],
+      "directCount": 40,
+      "fallbackCount": 45,
+      "manualCount": 0
+    },
+    "Opinium": {
+      "count": 30,
+      "latestDate": "2026-03-20",
+      "sourceTypes": [
+        "wikipedia",
+        "opinium"
+      ],
+      "sourceTiers": [
+        "fallback",
+        "direct"
+      ],
+      "confidence": [
+        "medium",
+        "high"
+      ],
+      "directCount": 4,
+      "fallbackCount": 26,
+      "manualCount": 0
+    },
+    "Survation": {
+      "count": 8,
+      "latestDate": "2026-03-05",
+      "sourceTypes": [
+        "wikipedia"
+      ],
+      "sourceTiers": [
+        "fallback"
+      ],
+      "confidence": [
+        "medium"
+      ],
+      "directCount": 0,
+      "fallbackCount": 8,
+      "manualCount": 0
+    },
+    "Techne": {
+      "count": 15,
+      "latestDate": "2026-03-12",
+      "sourceTypes": [
+        "wikipedia"
+      ],
+      "sourceTiers": [
+        "fallback"
+      ],
+      "confidence": [
+        "medium"
+      ],
+      "directCount": 0,
+      "fallbackCount": 15,
+      "manualCount": 0
+    },
+    "Verian": {
+      "count": 3,
+      "latestDate": "2026-03-23",
+      "sourceTypes": [
+        "wikipedia"
+      ],
+      "sourceTiers": [
+        "fallback"
+      ],
+      "confidence": [
+        "medium"
+      ],
+      "directCount": 0,
+      "fallbackCount": 3,
+      "manualCount": 0
+    },
+    "YouGov": {
+      "count": 111,
+      "latestDate": "2026-04-07",
+      "sourceTypes": [
+        "yougov",
+        "wikipedia"
+      ],
+      "sourceTiers": [
+        "direct",
+        "fallback"
+      ],
+      "confidence": [
+        "high",
+        "medium"
+      ],
+      "directCount": 64,
+      "fallbackCount": 48,
+      "manualCount": 0
+    }
+  },
+  "provenance": {
+    "mergedRows": 362,
+    "directRows": 151,
+    "fallbackRows": 246,
+    "manualRows": 0,
+    "directOnlyPollsters": [],
+    "fallbackOnlyPollsters": [
+      "BMG Research",
+      "Deltapoll",
+      "Freshwater Strategy",
+      "Good Growth Foundation",
+      "Ipsos",
+      "Lord Ashcroft Polls",
+      "Survation",
+      "Techne",
+      "Verian"
+    ],
+    "mixedPollsters": [
+      "Find Out Now",
+      "Focaldata",
+      "JL Partners",
+      "More in Common",
+      "Opinium",
+      "YouGov"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "regional": {
+    "london": {
+      "politicalReading": "Test enrichment override working.",
+      "updatedAt": "2026-04-10"
+    }
+  },
+  "council": {}
+}

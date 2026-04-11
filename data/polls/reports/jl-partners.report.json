@@ -1,0 +1,23 @@
+{
+  "file": "C:\\Users\\User\\Documents\\politiscope.v2\\ps2\\data\\polls\\jl-partners.json",
+  "total": 3,
+  "accepted": 2,
+  "quarantined": 1,
+  "warnings": 3,
+  "errors": 2,
+  "coverage": {
+    "JL Partners": {
+      "count": 2,
+      "latestDate": "2025-01-19"
+    }
+  },
+  "warningDetails": [
+    "row 1: very stale poll (394 days old)",
+    "row 2: very stale poll (445 days old)",
+    "row 3: very stale poll (655 days old)"
+  ],
+  "errorDetails": [
+    "row 1: party total too high = 122",
+    "row 1: core party total too high = 110"
+  ]
+}

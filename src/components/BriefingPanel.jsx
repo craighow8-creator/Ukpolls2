@@ -2,9 +2,11 @@ import React from 'react'
 
 function ToneCard({ T, item, index }) {
   const accent = item?.accent || (index === 0 ? T.pr : T.tl)
+  const clickable = typeof item?.onClick === 'function'
 
   return (
     <div
+      onClick={item?.onClick}
       style={{
         borderRadius: 18,
         padding: '18px 18px 16px',
@@ -14,6 +16,8 @@ function ToneCard({ T, item, index }) {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-start',
+        cursor: clickable ? 'pointer' : 'default',
+        WebkitTapHighlightColor: 'transparent',
       }}
     >
       <div
@@ -54,6 +58,23 @@ function ToneCard({ T, item, index }) {
       >
         {item.body}
       </div>
+
+      {clickable ? (
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            color: accent,
+            textAlign: 'center',
+            marginTop: 'auto',
+            paddingTop: 12,
+          }}
+        >
+          {item.actionLabel || 'Open detail'}
+        </div>
+      ) : null}
     </div>
   )
 }
