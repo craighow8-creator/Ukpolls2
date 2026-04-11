@@ -9,7 +9,7 @@ function Root() {
     if (!('serviceWorker' in navigator)) return undefined
 
     let refreshing = false
-    const swUrl = `${import.meta.env.BASE_URL}sw.js`
+    const swUrl = '/sw.js'
 
     const onControllerChange = () => {
       if (refreshing) return
