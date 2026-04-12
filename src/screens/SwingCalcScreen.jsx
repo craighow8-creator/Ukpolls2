@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ScrollArea, haptic } from '../components/ui'
 
 const BENCHMARKS = [
@@ -9,44 +9,123 @@ const BENCHMARKS = [
   { name:'Avg Lab marginal',  needed:12.0, from:'Labour',       to:'Reform UK', result:'Typical Red Wall marginal' },
 ]
 
+const EPSILON = 0.05
+const CLOSE_BENCHMARK_RANGE = 1
+
 
 function safeNumber(value) {
   const n = Number(value)
   return Number.isFinite(n) ? n : 0
 }
 
+function roundToTenth(value) {
+  return +safeNumber(value).toFixed(1)
+}
+
+function formatPoints(value) {
+  return `${Math.abs(safeNumber(value)).toFixed(1)} pts`
+}
+
+function formatPercent(value) {
+  return `${safeNumber(value).toFixed(1)}%`
+}
+
 function getCurrentGap(fromParty, toParty) {
-  return +(safeNumber(fromParty?.pct) - safeNumber(toParty?.pct)).toFixed(1)
+  return roundToTenth(safeNumber(fromParty?.pct) - safeNumber(toParty?.pct))
 }
 
-function getSwingStory({ fromParty, toParty, fromNew, toNew, swing }) {
+function getCurrentStateCopy(fromParty, toParty, gapNow, swingToLevel) {
   if (!fromParty || !toParty) return 'Choose two parties to model the race.'
-  if (!swing) return `Move the slider to model a swing from ${fromParty.name} to ${toParty.name}.`
 
-  const gapNow = getCurrentGap(fromParty, toParty)
-  const gapAfter = +(fromNew - toNew).toFixed(1)
-
-  if (toNew > fromNew) {
-    return `${toParty.name} would move ahead of ${fromParty.name} nationally on this model.`
+  if (Math.abs(gapNow) <= EPSILON) {
+    return {
+      title: 'Race currently level',
+      subtext: `No swing is needed for ${toParty.name} to draw level.`,
+    }
   }
 
-  if (gapNow > 0 && gapAfter < gapNow) {
-    return `${toParty.name} would narrow the national gap, but ${fromParty.name} would still lead.`
+  if (gapNow > 0) {
+    return {
+      title: `${fromParty.name} lead ${toParty.name} by ${formatPoints(gapNow)}`,
+      subtext: `${toParty.name} would need ${formatPoints(swingToLevel)} swing to draw level.`,
+    }
   }
 
-  if (gapAfter === gapNow) {
-    return `This would change very little nationally.`
+  return {
+    title: `${toParty.name} lead ${fromParty.name} by ${formatPoints(gapNow)}`,
+    subtext: `${toParty.name} are already ahead in the current baseline.`,
   }
-
-  return `${fromParty.name} would still stay ahead, and the gap would barely shift.`
 }
 
-function getMajorityStory(toParty) {
-  if (!toParty) return '326 seats are needed for a House of Commons majority.'
-  const seats = safeNumber(toParty?.seats)
-  if (seats >= 326) return `${toParty.name} are already in rough majority territory on the current projection.`
-  const short = 326 - seats
-  return `${toParty.name} are about ${short} seats short of a Commons majority on the current projection.`
+function getModelledStateCopy(fromParty, toParty, gapAfter, swing) {
+  if (!fromParty || !toParty || swing <= EPSILON) return null
+
+  if (Math.abs(gapAfter) <= EPSILON) {
+    return {
+      title: 'Race tied after swing',
+      subtext: 'The gap has been fully eliminated.',
+    }
+  }
+
+  if (gapAfter > 0) {
+    return {
+      title: `${fromParty.name} still lead after swing`,
+      subtext: `${toParty.name} close the gap but remain behind.`,
+    }
+  }
+
+  return {
+    title: `${toParty.name} take the lead after swing`,
+    subtext: `A swing of ${formatPoints(swing)} would put ${toParty.name} ahead.`,
+  }
+}
+
+function getMeaningCopy({ fromParty, toParty, gapNow, gapAfter, swing, swingToLevel }) {
+  if (!fromParty || !toParty) {
+    return 'Choose two parties to compare.'
+  }
+
+  if (swing <= EPSILON) {
+    return 'This reflects the current polling gap between the parties.'
+  }
+
+  if (Math.abs(gapAfter) <= EPSILON) {
+    return 'The race becomes highly competitive at this level.'
+  }
+
+  if (gapAfter < 0 && gapNow > EPSILON) {
+    return 'This level of swing would be enough to change the national lead.'
+  }
+
+  if (gapAfter < 0) {
+    return `This adds to the lead already held by ${toParty.name}.`
+  }
+
+  if (Math.abs(gapAfter) <= 2 || Math.abs(swing - swingToLevel) <= 1) {
+    return 'The race becomes highly competitive at this level.'
+  }
+
+  return 'The swing narrows the gap but does not change the overall leader.'
+}
+
+function getGapStatusLabel(gap, leadingParty, trailingParty) {
+  if (Math.abs(gap) <= EPSILON) return 'Tied'
+  return gap > 0 ? `${leadingParty} ahead` : `${trailingParty} ahead`
+}
+
+function formatGapValue(gap) {
+  if (gap === null || gap === undefined) return '—'
+  if (Math.abs(gap) <= EPSILON) return 'Tied'
+  return formatPoints(gap)
+}
+
+function getBenchmarkStatus(isSame, swing, needed) {
+  if (!isSame) return 'Tap to load this matchup.'
+
+  const difference = roundToTenth(swing - needed)
+  if (Math.abs(difference) <= CLOSE_BENCHMARK_RANGE) return 'Within range of this contest'
+  if (difference < 0) return 'Short of the swing needed for this seat'
+  return 'Exceeds the swing required here'
 }
 
 export default function SwingCalcScreen({ T, nav, parties }) {
@@ -57,16 +136,25 @@ export default function SwingCalcScreen({ T, nav, parties }) {
 
   const fp      = mainParties.find(p => p.name === fromParty)
   const tp      = mainParties.find(p => p.name === toParty)
-  const fromNew = Math.max(0, Math.round((fp?.pct || 0) - swing))
-  const toNew   = Math.min(60, Math.round((tp?.pct || 0) + swing))
+  const maxSwing = fp ? roundToTenth(Math.max(0, safeNumber(fp?.pct))) : 40
+
+  useEffect(() => {
+    setSwing(prev => roundToTenth(Math.min(prev, maxSwing)))
+  }, [maxSwing])
+
+  const appliedSwing = roundToTenth(Math.min(swing, maxSwing))
+  const fromNew = fp ? roundToTenth(Math.max(0, safeNumber(fp?.pct) - appliedSwing)) : 0
+  const toNew   = tp ? roundToTenth(Math.min(100, safeNumber(tp?.pct) + appliedSwing)) : 0
   const benchmark   = BENCHMARKS.find(b => b.from === fromParty && b.to === toParty)
   const needed      = benchmark?.needed || null
-  const beaten      = needed !== null && swing >= needed
+  const beaten      = needed !== null && appliedSwing >= needed
   const gapNow      = fp && tp ? getCurrentGap(fp, tp) : null
-  const gapAfter    = +(fromNew - toNew).toFixed(1)
-  const swingToLevel = fp && tp ? Math.max(0, Math.ceil(((safeNumber(fp?.pct) - safeNumber(tp?.pct)) / 2) * 10) / 10) : null
-  const story = getSwingStory({ fromParty: fp, toParty: tp, fromNew, toNew, swing })
-  const majorityStory = getMajorityStory(tp)
+  const gapAfter    = fp && tp ? roundToTenth(fromNew - toNew) : null
+  const swingToLevel = fp && tp ? roundToTenth(Math.max(0, getCurrentGap(fp, tp) / 2)) : null
+  const currentState = getCurrentStateCopy(fp, tp, gapNow, swingToLevel)
+  const modelledState = getModelledStateCopy(fp, tp, gapAfter, appliedSwing)
+  const story = getMeaningCopy({ fromParty: fp, toParty: tp, gapNow, gapAfter, swing: appliedSwing, swingToLevel })
+  const benchmarkGap = needed !== null ? roundToTenth(needed - appliedSwing) : null
 
   const isDark  = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
   const cardBg  = isDark ? '#0d1a24' : '#ffffff'
@@ -85,34 +173,52 @@ export default function SwingCalcScreen({ T, nav, parties }) {
           <div style={{ height:4, background:tp?.color||T.pr }} />
           <div style={{ padding:'16px 16px 18px' }}>
             <div style={{ display:'flex', justifyContent:'center', gap:8, flexWrap:'wrap', marginBottom:10 }}>
-              <div style={{ fontSize:12, fontWeight:800, letterSpacing:'0.05em', textTransform:'uppercase', color:tp?.color||T.pr, background:`${tp?.color||T.pr}1F`, border:`1px solid ${(tp?.color||T.pr)}2B`, borderRadius:999, padding:'4px 9px' }}>Live baseline</div>
-              <div style={{ fontSize:12, fontWeight:800, letterSpacing:'0.05em', textTransform:'uppercase', color:T.tl, background:`${T.tl}12`, border:`1px solid ${T.tl}2B`, borderRadius:999, padding:'4px 9px' }}>326 seats for majority</div>
+              <div style={{ fontSize:12, fontWeight:800, letterSpacing:'0.05em', textTransform:'uppercase', color:tp?.color||T.pr, background:`${tp?.color||T.pr}1F`, border:`1px solid ${(tp?.color||T.pr)}2B`, borderRadius:999, padding:'4px 9px' }}>Current state</div>
+              <div style={{ fontSize:12, fontWeight:800, letterSpacing:'0.05em', textTransform:'uppercase', color:T.tl, background:`${T.tl}12`, border:`1px solid ${T.tl}2B`, borderRadius:999, padding:'4px 9px' }}>{appliedSwing > EPSILON ? 'Modelled state' : 'No swing applied'}</div>
             </div>
 
-            <div style={{ fontSize:30, fontWeight:800, letterSpacing:'-0.03em', color:T.th, textAlign:'center', lineHeight:1 }}>
-              {tp?.name || 'Target party'}
+            <div style={{ fontSize:12, fontWeight:800, letterSpacing:'0.08em', textTransform:'uppercase', color:T.tl, textAlign:'center', marginBottom:8 }}>
+              Baseline reality
             </div>
 
-            <div style={{ fontSize:15, fontWeight:700, color:T.th, textAlign:'center', marginTop:10 }}>
-              {gapNow !== null ? `${fp?.name} lead ${tp?.name} by ${Math.abs(gapNow)}pt right now` : 'Choose parties to model the race'}
+            <div style={{ fontSize:28, fontWeight:800, letterSpacing:'-0.03em', color:T.th, textAlign:'center', lineHeight:1.15 }}>
+              {fp && tp ? currentState.title : 'Choose parties to model the race'}
             </div>
 
             <div style={{ fontSize:13, fontWeight:600, color:T.tl, textAlign:'center', marginTop:6, lineHeight:1.55 }}>
-              {majorityStory}
+              {fp && tp ? currentState.subtext : 'Select two parties to compare the current gap and the swing needed to change it.'}
             </div>
+
+            {modelledState && (
+              <>
+                <div style={{ height:1, background:isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.07)', margin:'14px auto', width:'100%' }} />
+                <div style={{ fontSize:12, fontWeight:800, letterSpacing:'0.08em', textTransform:'uppercase', color:T.tl, textAlign:'center', marginBottom:8 }}>
+                  After swing
+                </div>
+                <div style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.03em', color:T.th, textAlign:'center', lineHeight:1.2 }}>
+                  {modelledState.title}
+                </div>
+                <div style={{ fontSize:13, fontWeight:600, color:T.tl, textAlign:'center', marginTop:6, lineHeight:1.55 }}>
+                  {modelledState.subtext}
+                </div>
+              </>
+            )}
 
             <div style={{ marginTop:14, display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8 }}>
               <div style={{ background:isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)', borderRadius:12, padding:'10px 12px', border:`1px solid ${fp?.color||'#888'}22`, textAlign:'center' }}>
                 <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:T.tl, marginBottom:4 }}>Current gap</div>
-                <div style={{ fontSize:20, fontWeight:800, color:T.th }}>{gapNow !== null ? `${Math.abs(gapNow)}pt` : '—'}</div>
+                <div style={{ fontSize:20, fontWeight:800, color:T.th }}>{formatGapValue(gapNow)}</div>
+                <div style={{ fontSize:12, fontWeight:700, color:T.tl, marginTop:4 }}>{gapNow !== null ? getGapStatusLabel(gapNow, fp?.name, tp?.name) : '—'}</div>
               </div>
               <div style={{ background:isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)', borderRadius:12, padding:'10px 12px', border:`1px solid ${tp?.color||'#888'}22`, textAlign:'center' }}>
                 <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:T.tl, marginBottom:4 }}>Swing to level</div>
-                <div style={{ fontSize:20, fontWeight:800, color:tp?.color||T.th }}>{swingToLevel !== null ? `${swingToLevel}pt` : '—'}</div>
+                <div style={{ fontSize:20, fontWeight:800, color:tp?.color||T.th }}>{swingToLevel !== null ? formatPoints(swingToLevel) : '—'}</div>
+                <div style={{ fontSize:12, fontWeight:700, color:T.tl, marginTop:4 }}>{swingToLevel > 0 ? `${tp?.name} to tie` : `${tp?.name} level or ahead`}</div>
               </div>
               <div style={{ background:isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)', borderRadius:12, padding:'10px 12px', border:`1px solid ${tp?.color||'#888'}22`, textAlign:'center' }}>
                 <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:T.tl, marginBottom:4 }}>After swing</div>
-                <div style={{ fontSize:20, fontWeight:800, color:beaten?(tp?.color||T.pr):T.th }}>{Math.abs(gapAfter)}pt</div>
+                <div style={{ fontSize:20, fontWeight:800, color:gapAfter < 0 ? (tp?.color||T.pr) : T.th }}>{formatGapValue(gapAfter)}</div>
+                <div style={{ fontSize:12, fontWeight:700, color:T.tl, marginTop:4 }}>{appliedSwing > EPSILON ? getGapStatusLabel(gapAfter, fp?.name, tp?.name) : 'Same as current state'}</div>
               </div>
             </div>
           </div>
@@ -140,13 +246,13 @@ export default function SwingCalcScreen({ T, nav, parties }) {
 
             {/* Plain English output */}
             <div style={{ padding:'14px 16px', borderRadius:12, background:beaten?`${tp?.color||T.pr}14`:isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.04)', border:`1px solid ${beaten?(tp?.color||T.pr)+'30':border}`, marginBottom:16 }}>
-              {swing === 0 ? (
+              {appliedSwing <= EPSILON ? (
                 <div style={{ fontSize:14, fontWeight:600, color:T.tl, textAlign:'center', lineHeight:1.5 }}>
-                  Drag the slider to model a swing from <span style={{ color:fp?.color, fontWeight:800 }}>{fromParty}</span> to <span style={{ color:tp?.color, fontWeight:800 }}>{toParty}</span>
+                  No swing is applied. The baseline remains <span style={{ color:fp?.color, fontWeight:800 }}>{fromParty} {formatPercent(fp?.pct)}</span> and <span style={{ color:tp?.color, fontWeight:800 }}>{toParty} {formatPercent(tp?.pct)}</span>.
                 </div>
               ) : (
                 <div style={{ fontSize:15, fontWeight:600, color:T.th, lineHeight:1.6 }}>
-                  A <span style={{ fontWeight:800, color:tp?.color||T.pr }}>{swing}pt swing</span> from <span style={{ color:fp?.color, fontWeight:700 }}>{fromParty}</span> to <span style={{ color:tp?.color, fontWeight:700 }}>{toParty}</span> gives <span style={{ color:fp?.color, fontWeight:700 }}>{fromParty} {fromNew}%</span> and <span style={{ color:tp?.color, fontWeight:700 }}>{toParty} {toNew}%</span>{beaten && <span style={{ color:tp?.color, fontWeight:800 }}> — enough to win</span>}
+                  Applying <span style={{ fontWeight:800, color:tp?.color||T.pr }}>{formatPoints(appliedSwing)}</span> from <span style={{ color:fp?.color, fontWeight:700 }}>{fromParty}</span> to <span style={{ color:tp?.color, fontWeight:700 }}>{toParty}</span> gives modelled shares of <span style={{ color:fp?.color, fontWeight:700 }}>{fromParty} {formatPercent(fromNew)}</span> and <span style={{ color:tp?.color, fontWeight:700 }}>{toParty} {formatPercent(toNew)}</span>.
                 </div>
               )}
             </div>
@@ -154,21 +260,24 @@ export default function SwingCalcScreen({ T, nav, parties }) {
             {/* Slider */}
             <div style={{ marginBottom:14 }}>
               <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-                <div style={{ fontSize:13, fontWeight:700, color:T.tl, textTransform:'uppercase', letterSpacing:'0.06em' }}>Swing</div>
-                <div style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.02em', color:beaten?tp?.color||T.pr:T.th }}>{swing}pt {beaten?'✓':''}</div>
+                <div style={{ fontSize:13, fontWeight:700, color:T.tl, textTransform:'uppercase', letterSpacing:'0.06em' }}>Swing ({fromParty} → {toParty})</div>
+                <div style={{ fontSize:24, fontWeight:800, letterSpacing:'-0.02em', color:beaten?tp?.color||T.pr:T.th }}>{formatPoints(appliedSwing)} {beaten?'✓':''}</div>
               </div>
-              <input type="range" min="0" max="40" step="1" value={swing} onChange={e=>{haptic(4);setSwing(+e.target.value)}} style={{ width:'100%', accentColor:tp?.color||T.pr }}/>
+              <input type="range" min="0" max={maxSwing} step="0.1" value={appliedSwing} onChange={e=>{haptic(4);setSwing(roundToTenth(e.target.value))}} style={{ width:'100%', accentColor:tp?.color||T.pr }}/>
+              <div style={{ fontSize:12, fontWeight:600, color:T.tl, marginTop:6, textAlign:'center', lineHeight:1.45 }}>
+                This transfers vote share directly from {fromParty} to {toParty} in the model.
+              </div>
             </div>
 
             {/* Vote share boxes */}
             <div style={{ display:'flex', gap:8 }}>
               <div style={{ flex:1, background:isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)', borderRadius:12, padding:'10px 12px', border:`1px solid ${fp?.color||'#888'}22` }}>
                 <div style={{ fontSize:13, fontWeight:700, color:T.tl, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>{fp?.abbr||'From'} vote</div>
-                <div style={{ fontSize:20, fontWeight:800, color:fp?.color||T.th }}>{fp?.pct||0}% → {fromNew}%</div>
+                <div style={{ fontSize:20, fontWeight:800, color:fp?.color||T.th }}>{formatPercent(fp?.pct)} → {formatPercent(fromNew)}</div>
               </div>
               <div style={{ flex:1, background:isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.04)', borderRadius:12, padding:'10px 12px', border:`1px solid ${tp?.color||'#888'}22` }}>
                 <div style={{ fontSize:13, fontWeight:700, color:T.tl, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>{tp?.abbr||'To'} vote</div>
-                <div style={{ fontSize:20, fontWeight:800, color:tp?.color||T.th }}>{tp?.pct||0}% → {toNew}%</div>
+                <div style={{ fontSize:20, fontWeight:800, color:tp?.color||T.th }}>{formatPercent(tp?.pct)} → {formatPercent(toNew)}</div>
               </div>
             </div>
           </div>
@@ -181,10 +290,12 @@ export default function SwingCalcScreen({ T, nav, parties }) {
           </div>
           <div style={{ fontSize:13, fontWeight:600, color:T.tl, lineHeight:1.6, textAlign:'center' }}>
             {needed !== null
-              ? beaten
-                ? `This model clears the ${needed}pt benchmark from ${fromParty} to ${toParty}.`
-                : `${Math.max(0, +(needed - swing).toFixed(1))}pt more would be needed to match the ${needed}pt benchmark.`
-              : 'No benchmark is stored yet for this exact matchup, so use the slider as a national guide rather than a seat forecast.'}
+              ? `Benchmark for this matchup: ${formatPoints(needed)} required. ${getBenchmarkStatus(true, appliedSwing, needed)}.`
+              : appliedSwing <= EPSILON
+                ? 'No seat benchmark is stored for this exact matchup, so this remains a national vote-share guide.'
+                : swingToLevel !== null && appliedSwing < swingToLevel
+                  ? `${formatPoints(swingToLevel - appliedSwing)} more would be needed to draw level nationally.`
+                  : 'No seat benchmark is stored for this exact matchup, so treat this as a national guide rather than a forecast.'}
           </div>
         </div>
 
@@ -194,8 +305,8 @@ export default function SwingCalcScreen({ T, nav, parties }) {
           const fromP  = mainParties.find(p => p.name===ex.from)
           const toP    = mainParties.find(p => p.name===ex.to)
           const isSame = fromParty===ex.from && toParty===ex.to
-          const reached = isSame && swing >= ex.needed
-          const gap    = isSame ? Math.max(0, +(ex.needed-swing).toFixed(1)) : null
+          const reached = isSame && appliedSwing >= ex.needed
+          const status = getBenchmarkStatus(isSame, appliedSwing, ex.needed)
           return (
             <div key={i} onClick={()=>{haptic(8);setFromParty(ex.from);setToParty(ex.to);setSwing(0)}} style={{ background:reached?`${toP?.color||T.pr}12`:cardBg, border:`${isSame?2:1}px solid ${isSame?(toP?.color||T.pr)+'44':border}`, borderRadius:14, padding:'14px 16px', marginBottom:10, cursor:'pointer', WebkitTapHighlightColor:'transparent' }}>
               <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:10 }}>
@@ -203,12 +314,18 @@ export default function SwingCalcScreen({ T, nav, parties }) {
                   <div style={{ fontSize:14, fontWeight:800, color:T.th, marginBottom:3 }}>{ex.name}</div>
                   <div style={{ fontSize:13, fontWeight:600, color:T.tl }}><span style={{ color:fromP?.color }}>{ex.from}</span>{' → '}<span style={{ color:toP?.color }}>{ex.to}</span></div>
                   <div style={{ fontSize:13, color:T.tl, marginTop:3 }}>{ex.result}</div>
-                  {isSame && gap > 0 && <div style={{ fontSize:13, fontWeight:700, color:toP?.color||T.pr, marginTop:5 }}>{gap}pt still needed</div>}
-                  {reached && <div style={{ fontSize:13, fontWeight:700, color:toP?.color||T.pr, marginTop:5 }}>✓ Modelled swing exceeds what was needed</div>}
+                  <div style={{ fontSize:13, fontWeight:700, color:isSame ? (toP?.color||T.pr) : T.tl, marginTop:5 }}>
+                    {status}
+                  </div>
+                  {isSame && (
+                    <div style={{ fontSize:12, fontWeight:600, color:T.tl, marginTop:4 }}>
+                      Current slider: {formatPoints(appliedSwing)}{benchmarkGap !== null && benchmarkGap > CLOSE_BENCHMARK_RANGE ? ` · ${formatPoints(benchmarkGap)} short` : ''}
+                    </div>
+                  )}
                 </div>
                 <div style={{ textAlign:'right', flexShrink:0 }}>
-                  <div style={{ fontSize:20, fontWeight:800, color:toP?.color||T.pr }}>{ex.needed}pt</div>
-                  <div style={{ fontSize:13, fontWeight:600, color:T.tl }}>needed</div>
+                  <div style={{ fontSize:20, fontWeight:800, color:toP?.color||T.pr }}>{formatPoints(ex.needed)}</div>
+                  <div style={{ fontSize:13, fontWeight:600, color:T.tl }}>required swing</div>
                 </div>
               </div>
             </div>
@@ -220,6 +337,5 @@ export default function SwingCalcScreen({ T, nav, parties }) {
     </div>
   )
 }
-
 
 
