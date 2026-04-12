@@ -499,6 +499,12 @@ export default {
         control: row.control || '',
         leader: row.leader || '',
         mayor: row.mayor || '',
+        administration: row.administration || '',
+        composition: Array.isArray(row.composition)
+          ? row.composition
+          : row.composition && typeof row.composition === 'object'
+            ? row.composition
+            : null,
         governanceModel: row.governanceModel || '',
         verificationStatus: row.verificationStatus || 'unverified',
         verificationSourceType: row.verificationSourceType || '',

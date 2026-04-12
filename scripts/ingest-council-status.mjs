@@ -561,6 +561,8 @@ function validateCouncilStatusRow(row) {
   if (row.seatsTotal != null && !Number.isFinite(Number(row.seatsTotal))) errors.push(`Invalid seatsTotal for ${row.name}`)
   if (row.seatsUp != null && !Number.isFinite(Number(row.seatsUp))) errors.push(`Invalid seatsUp for ${row.name}`)
   if (!Array.isArray(row.sourceUrls)) errors.push(`sourceUrls must be an array for ${row.name}`)
+  if (row.administration != null && typeof row.administration !== 'string') errors.push(`administration must be a string for ${row.name}`)
+  if (row.composition != null && !Array.isArray(row.composition) && typeof row.composition !== 'object') errors.push(`composition must be an object or array for ${row.name}`)
   if (row.lastVerifiedAt && !/^\d{2}-\d{2}-\d{4}$/.test(String(row.lastVerifiedAt))) errors.push(`lastVerifiedAt must be dd-mm-yyyy for ${row.name}`)
   return errors
 }
@@ -579,6 +581,12 @@ function normalizeCouncilStatusRow(row) {
     control: row.control || '',
     leader: row.leader || '',
     mayor: row.mayor || '',
+    administration: row.administration || '',
+    composition: Array.isArray(row.composition)
+      ? row.composition
+      : row.composition && typeof row.composition === 'object'
+        ? row.composition
+        : null,
     governanceModel: row.governanceModel || '',
     verificationStatus: row.verificationStatus || 'verified',
     verificationSourceType: row.verificationSourceType || 'seeded from elections.js',
@@ -723,6 +731,42 @@ function inferVerificationSourceType(row, slug) {
   return 'seeded from elections.js'
 }
 
+function inferAdministration(row, slug, profile = {}) {
+  const override = STATUS_OVERRIDES[slug]
+  if (cleanText(override?.administration)) return cleanText(override.administration)
+  if (cleanText(row?.administration)) return cleanText(row.administration)
+  if (cleanText(profile?.administration)) return cleanText(profile.administration)
+
+  const control = cleanText(inferControl(row, slug, profile))
+  if (!control) return ''
+
+  if (control === 'NOC') return 'No overall control'
+  if (control === 'Split control') return 'Split control'
+  if (/^Lab$/i.test(control)) return 'Labour administration'
+  if (/^Con$/i.test(control)) return 'Conservative administration'
+  if (/^LD$/i.test(control)) return 'Liberal Democrat administration'
+  if (/^Grn$/i.test(control)) return 'Green administration'
+  if (/^Reform$/i.test(control)) return 'Reform UK administration'
+  if (/^Ind$/i.test(control)) return 'Independent administration'
+  if (/^SNP$/i.test(control)) return 'SNP administration'
+  if (/^PC$/i.test(control)) return 'Plaid Cymru administration'
+  return `${control} administration`
+}
+
+function inferComposition(row, slug, profile = {}) {
+  const override = STATUS_OVERRIDES[slug]
+  if (override?.composition && (Array.isArray(override.composition) || typeof override.composition === 'object')) {
+    return override.composition
+  }
+  if (row?.composition && (Array.isArray(row.composition) || typeof row.composition === 'object')) {
+    return row.composition
+  }
+  if (profile?.composition && (Array.isArray(profile.composition) || typeof profile.composition === 'object')) {
+    return profile.composition
+  }
+  return null
+}
+
 function buildCouncilStatusRows() {
   const councils = Array.isArray(LOCAL_ELECTIONS?.councils) ? LOCAL_ELECTIONS.councils : []
   const seen = new Set()
@@ -754,6 +798,8 @@ function buildCouncilStatusRows() {
       control: inferControl(row, slug, profile),
       leader: inferLeader(row, slug, profile),
       mayor: inferMayor(row, slug, profile),
+      administration: inferAdministration(row, slug, profile),
+      composition: inferComposition(row, slug, profile),
       governanceModel: inferGovernanceModel(row, slug, profile),
       verificationStatus: inferVerificationStatus(row, slug),
       verificationSourceType: inferVerificationSourceType(row, slug),
