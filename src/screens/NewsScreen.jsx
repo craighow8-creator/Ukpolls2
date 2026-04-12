@@ -4,11 +4,17 @@ import { haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
 import { API_BASE } from '../constants'
 import { parseJsonResponse } from '../utils/http'
-import { formatNewsSourceList, formatRelativeNewsTime, normaliseNewsPayload } from '../utils/news'
+import {
+  formatNewsSourceList,
+  formatRelativeNewsTime,
+  getNewsErrorState,
+  getNewsFreshnessState,
+  normaliseNewsPayload,
+} from '../utils/news'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
-function Badge({ children, color, subtle = false }) {
+function Badge({ children, color, subtle = false, style }) {
   return (
     <span
       style={{
@@ -25,6 +31,7 @@ function Badge({ children, color, subtle = false }) {
         borderRadius: 999,
         padding: '4px 9px',
         whiteSpace: 'nowrap',
+        ...style,
       }}
     >
       {children}
@@ -32,55 +39,196 @@ function Badge({ children, color, subtle = false }) {
   )
 }
 
-function ScrollAwayHeader({ T, meta, loading }) {
-  const count = meta?.storyCount || 0
-  const sourceCount = meta?.sourceCount || 0
-  const sources = formatNewsSourceList(meta?.sources || [])
-  const freshness = formatRelativeNewsTime(meta?.updatedAt || meta?.latestPublishedAt)
+function MetaPill({ T, label, value, accent }) {
+  return (
+    <div
+      style={{
+        minWidth: 90,
+        padding: '10px 12px',
+        borderRadius: 16,
+        background: T.sf,
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+      }}
+    >
+      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 18, fontWeight: 800, color: accent || T.th, marginTop: 3, lineHeight: 1.1 }}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function StatusBanner({ T, children }) {
+  return (
+    <div
+      style={{
+        marginTop: 14,
+        borderRadius: 16,
+        padding: '12px 14px',
+        background: `${T.pr}10`,
+        border: `1px solid ${T.pr}22`,
+        color: T.th,
+        fontSize: 13,
+        fontWeight: 600,
+        lineHeight: 1.45,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function EmptyState({ T, title, body }) {
+  return (
+    <div
+      style={{
+        borderRadius: 18,
+        padding: '18px 16px',
+        background: T.c0,
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        textAlign: 'center',
+      }}
+    >
+      <div style={{ fontSize: 16, fontWeight: 800, color: T.th }}>{title}</div>
+      <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 6, lineHeight: 1.55 }}>
+        {body}
+      </div>
+    </div>
+  )
+}
+
+function SectionLabel({ T, children }) {
+  return (
+    <div
+      style={{
+        fontSize: 12,
+        fontWeight: 800,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: T.tl,
+        margin: '18px 0 10px',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function NewsHero({ T, meta, heroItem, loading }) {
+  const freshness = getNewsFreshnessState(meta)
+  const sourceSummary = formatNewsSourceList(meta?.sources || [], 4)
+  const liveColor = freshness.tone === 'live' ? '#E4003B' : freshness.tone === 'stale' ? T.tl : T.pr
+  const title = freshness.isLive ? 'UK politics live' : 'UK politics wire'
+  const updatedLine = freshness.relativeTime ? `Updated ${freshness.relativeTime}` : 'Monitoring the latest available feed'
+  const summaryLine = sourceSummary
+    ? `${sourceSummary}${meta?.storyCount ? ` · ${meta.storyCount} stories in view` : ''}`
+    : meta?.storyCount
+      ? `${meta.storyCount} stories in view`
+      : 'Multi-source Westminster and campaign reporting'
 
   return (
-    <div style={{ padding: '8px 16px 10px' }}>
+    <div
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: 24,
+        padding: '18px 18px 20px',
+        background: T.c0,
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+      }}
+    >
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: 8,
-          flexWrap: 'wrap',
-          marginBottom: 10,
+          position: 'absolute',
+          top: -56,
+          right: -30,
+          width: 180,
+          height: 180,
+          borderRadius: '50%',
+          background: `${liveColor}16`,
+          filter: 'blur(8px)',
+          pointerEvents: 'none',
         }}
-      >
-        <Badge color={T.pr}>{loading ? 'Updating...' : `${count} stories`}</Badge>
-        <Badge color={T.tl} subtle>{sourceCount ? `${sourceCount} sources` : 'UK politics live'}</Badge>
-      </div>
+      />
 
-      <div
-        style={{
-          fontSize: 30,
-          fontWeight: 800,
-          letterSpacing: -1,
-          color: T.th,
-          textAlign: 'center',
-          lineHeight: 1,
-        }}
-      >
-        News
-      </div>
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 12,
+            marginBottom: 16,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                background: liveColor,
+                boxShadow: `0 0 0 5px ${liveColor}18`,
+                animation: freshness.isLive ? 'livePulse 1.8s ease-out infinite' : 'none',
+                flexShrink: 0,
+              }}
+            />
+            <Badge color={liveColor}>{freshness.statusLabel}</Badge>
+            {loading ? <Badge color={T.pr} subtle>Refreshing</Badge> : null}
+          </div>
 
-      <div
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 10,
-          flexWrap: 'wrap',
-          width: '100%',
-          marginTop: 6,
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
-          Live UK politics wire{freshness ? ` · updated ${freshness}` : ''}{sources ? ` · ${sources}` : ''}
+          <InfoButton id="news_feed" T={T} size={20} />
         </div>
-        <InfoButton id="news_feed" T={T} size={20} />
+
+        <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
+          Westminster, campaigns, parties
+        </div>
+
+        <div
+          style={{
+            fontSize: 34,
+            fontWeight: 800,
+            letterSpacing: '-0.05em',
+            color: T.th,
+            lineHeight: 0.98,
+            marginTop: 8,
+          }}
+        >
+          {title}
+        </div>
+
+        <div style={{ fontSize: 15, fontWeight: 600, color: T.th, lineHeight: 1.45, marginTop: 10 }}>
+          {updatedLine}
+        </div>
+
+        <div style={{ fontSize: 14, fontWeight: 550, color: T.tm, lineHeight: 1.5, marginTop: 6 }}>
+          {summaryLine}
+        </div>
+
+        {heroItem?.title ? (
+          <div
+            style={{
+              marginTop: 14,
+              paddingTop: 14,
+              borderTop: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
+              Lead line
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: T.th, lineHeight: 1.4, marginTop: 6 }}>
+              {heroItem.title}
+            </div>
+          </div>
+        ) : null}
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 16 }}>
+          {meta?.storyCount ? <MetaPill T={T} label="Stories" value={meta.storyCount} accent={T.th} /> : null}
+          {meta?.sourceCount ? <MetaPill T={T} label="Sources" value={meta.sourceCount} accent={liveColor} /> : null}
+          {freshness.relativeTime ? <MetaPill T={T} label="Freshness" value={freshness.relativeTime} accent={T.pr} /> : null}
+        </div>
       </div>
     </div>
   )
@@ -111,8 +259,10 @@ function tagColor(tag, T) {
   }
 }
 
-function NewsCard({ T, item, big }) {
+function NewsCard({ T, item, big = false }) {
   const color = tagColor(item.tag, T)
+  const publishedLabel = formatRelativeNewsTime(item.publishedAt) || 'Latest'
+  const summary = item.description || item.summary
 
   return (
     <motion.div
@@ -123,45 +273,49 @@ function NewsCard({ T, item, big }) {
         window.open(item.url, '_blank', 'noopener,noreferrer')
       }}
       style={{
-        borderRadius: big ? 16 : 14,
-        padding: big ? '16px' : '12px 14px',
-        marginBottom: big ? 12 : 8,
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: big ? 20 : 18,
+        padding: big ? '18px 18px 16px' : '14px 16px',
+        marginBottom: big ? 0 : 10,
         background: T.c0 || '#fff',
         border: `1px solid ${color}22`,
         cursor: item.url ? 'pointer' : 'default',
-        overflow: 'hidden',
-        position: 'relative',
       }}
     >
-      {big ? (
-        <div
-          style={{
-            height: 3,
-            background: color,
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-          }}
-        />
-      ) : null}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          bottom: 0,
+          left: 0,
+          width: big ? 5 : 4,
+          background: color,
+        }}
+      />
 
-      <div style={{ paddingTop: big ? 8 : 0 }}>
+      <div style={{ paddingLeft: big ? 8 : 6 }}>
+        {big ? (
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl, marginBottom: 10 }}>
+            Lead story
+          </div>
+        ) : null}
+
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: big ? 8 : 5,
-            gap: 8,
+            gap: 10,
             flexWrap: 'wrap',
+            marginBottom: 8,
           }}
         >
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             {item.tag ? (
               <span
                 style={{
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: 800,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
@@ -176,61 +330,51 @@ function NewsCard({ T, item, big }) {
               </span>
             ) : null}
 
-            <span style={{ fontSize: 13, fontWeight: 700, color: T.tl }}>
-              {item.source}
-            </span>
+            {item.source ? (
+              <span style={{ fontSize: 13, fontWeight: 700, color: T.th }}>
+                {item.source}
+              </span>
+            ) : null}
           </div>
 
-          <span style={{ fontSize: 13, fontWeight: 600, color: T.tl, flexShrink: 0 }}>
-            {formatRelativeNewsTime(item.publishedAt)}
+          <span style={{ fontSize: 12, fontWeight: 700, color: T.tl, flexShrink: 0 }}>
+            {publishedLabel}
           </span>
         </div>
 
         <div
           style={{
-            fontSize: big ? 16 : 14,
-            fontWeight: 700,
+            fontSize: big ? 20 : 15,
+            fontWeight: 750,
             color: T.th,
-            lineHeight: 1.45,
+            lineHeight: big ? 1.28 : 1.42,
+            letterSpacing: big ? '-0.02em' : '-0.01em',
           }}
         >
           {item.title}
         </div>
 
-        {big && (item.description || item.summary) ? (
+        {summary ? (
           <div
             style={{
-              marginTop: 8,
-              fontSize: 13,
+              marginTop: 9,
+              fontSize: big ? 14 : 13,
               fontWeight: 550,
               color: T.tm,
-              lineHeight: 1.45,
+              lineHeight: 1.55,
             }}
           >
-            {item.description || item.summary}
+            {summary}
+          </div>
+        ) : null}
+
+        {item.url ? (
+          <div style={{ fontSize: 12, fontWeight: 800, color, letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: 12 }}>
+            Open source ↗
           </div>
         ) : null}
       </div>
     </motion.div>
-  )
-}
-
-function EmptyState({ T, title, body }) {
-  return (
-    <div
-      style={{
-        borderRadius: 14,
-        padding: '16px',
-        background: T.c0,
-        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-        textAlign: 'center',
-      }}
-    >
-      <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{title}</div>
-      <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 6, lineHeight: 1.55 }}>
-        {body}
-      </div>
-    </div>
   )
 }
 
@@ -283,6 +427,9 @@ export function NewsScreen({ T, news }) {
   const meta = payload.meta
   const heroItem = items[0] || null
   const rest = useMemo(() => items.slice(1), [items])
+  const safeError = useMemo(() => getNewsErrorState(payload, items.length > 0), [payload, items.length])
+  const showCachedWarning = Boolean(error && items.length)
+  const showHardError = Boolean(!loading && error && !items.length)
 
   return (
     <div
@@ -293,40 +440,56 @@ export function NewsScreen({ T, news }) {
         background: T.sf,
       }}
     >
-      <ScrollAwayHeader T={T} meta={meta} loading={loading} />
-
       <div style={{ padding: '12px 16px 40px' }}>
+        <NewsHero T={T} meta={meta} heroItem={heroItem} loading={loading} />
+
         {loading && !items.length ? (
-          <EmptyState
-            T={T}
-            title="Loading live politics news"
-            body="Pulling the latest UK politics stories now."
-          />
+          <div style={{ marginTop: 14 }}>
+            <EmptyState
+              T={T}
+              title="Loading live politics feed"
+              body="Pulling the latest UK politics stories now."
+            />
+          </div>
         ) : null}
 
-        {!loading && error ? (
-          <EmptyState
-            T={T}
-            title="News feed unavailable"
-            body={error}
-          />
+        {showCachedWarning ? (
+          <StatusBanner T={T}>{safeError.banner}</StatusBanner>
         ) : null}
 
-        {!loading && !error && heroItem ? (
-          <>
-            <NewsCard T={T} item={heroItem} big />
-            {rest.map((item, i) => (
-              <NewsCard key={`${item.url || item.title}-${i}`} T={T} item={item} big={false} />
-            ))}
-          </>
+        {showHardError ? (
+          <div style={{ marginTop: 14 }}>
+            <EmptyState
+              T={T}
+              title={safeError.title}
+              body={safeError.body}
+            />
+          </div>
         ) : null}
 
         {!loading && !error && !heroItem ? (
-          <EmptyState
-            T={T}
-            title="No live stories found"
-            body="No matching UK politics stories are available from the current source list right now."
-          />
+          <div style={{ marginTop: 14 }}>
+            <EmptyState
+              T={T}
+              title="No live stories found"
+              body="No matching UK politics stories are available from the current source list right now."
+            />
+          </div>
+        ) : null}
+
+        {heroItem ? (
+          <>
+            <SectionLabel T={T}>Lead story</SectionLabel>
+            <NewsCard T={T} item={heroItem} big />
+
+            {rest.length ? <SectionLabel T={T}>Latest reporting</SectionLabel> : null}
+
+            <div style={{ contentVisibility: 'auto' }}>
+              {rest.map((item, i) => (
+                <NewsCard key={`${item.url || item.title}-${i}`} T={T} item={item} />
+              ))}
+            </div>
+          </>
         ) : null}
       </div>
     </div>

@@ -340,6 +340,12 @@ export default function HomeScreen({
 
   const winProb = topBet?.odds ? impliedProb(topBet.odds) : null
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
+  const newsLiveColor =
+    newsBriefing.statusTone === 'live'
+      ? '#E4003B'
+      : newsBriefing.statusTone === 'stale'
+        ? T.tl
+        : T.pr
   const leaderWeeklyChange = Number(leader.change || 0)
   const secondWeeklyChange = Number(second.change || 0)
   const activeElectionSignal =
@@ -877,23 +883,80 @@ export default function HomeScreen({
           </SmallPair>
 
           <LargeCard T={T} onClick={() => nav('news')}>
-            <div style={pL}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <Lbl T={T}>News / Live</Lbl>
-                <Chip color={T.pr}>
-                  {newsBriefing.sourceCount ? `${newsBriefing.sourceCount} sources` : 'Live'}
-                </Chip>
+            <div
+              style={{
+                ...pL,
+                padding: isMobile ? '20px 18px 18px' : '22px 22px 20px',
+                gap: 14,
+                minHeight: isMobile ? 244 : 256,
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background:
+                    newsBriefing.statusTone === 'live'
+                      ? 'radial-gradient(circle at top right, rgba(228,0,59,0.16), transparent 38%)'
+                      : 'radial-gradient(circle at top right, rgba(18,183,212,0.12), transparent 38%)',
+                  pointerEvents: 'none',
+                }}
+              />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      background: newsLiveColor,
+                      boxShadow: `0 0 0 5px ${newsLiveColor}18`,
+                      animation: newsBriefing.statusTone === 'live' ? 'livePulse 1.8s ease-out infinite' : 'none',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Chip
+                    color={newsLiveColor}
+                    style={{
+                      borderRadius: 999,
+                      padding: '4px 10px',
+                      background: `${newsLiveColor}16`,
+                      border: `1px solid ${newsLiveColor}26`,
+                    }}
+                  >
+                    {newsBriefing.statusLabel}
+                  </Chip>
+                </div>
+
+                {newsBriefing.freshnessLabel ? (
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: T.tl,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {newsBriefing.freshnessLabel}
+                  </div>
+                ) : null}
+              </div>
+
+              <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
+                UK politics wire
               </div>
 
               <div
                 style={{
-                  fontSize: 22,
+                  fontSize: isMobile ? 24 : 28,
                   fontWeight: 800,
                   color: T.th,
-                  lineHeight: 1.22,
-                  textAlign: 'center',
-                  maxWidth: 520,
-                  margin: '0 auto',
+                  lineHeight: 1.16,
+                  letterSpacing: '-0.03em',
+                  maxWidth: 560,
                 }}
               >
                 {newsBriefing.headline}
@@ -901,19 +964,85 @@ export default function HomeScreen({
 
               <div
                 style={{
-                  margin: '14px auto 0',
-                  maxWidth: 480,
-                  fontSize: 13,
-                  color: T.tl,
-                  fontWeight: 650,
-                  lineHeight: 1.45,
-                  textAlign: 'center',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: T.tm,
+                  lineHeight: 1.55,
+                  maxWidth: 560,
                 }}
               >
-                {newsBriefing.supportingLine}
+                {newsBriefing.teaser}
               </div>
 
-              <Cta T={T}>Open live feed →</Cta>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {newsBriefing.storyCount ? (
+                  <Chip
+                    color={T.pr}
+                    style={{
+                      borderRadius: 999,
+                      padding: '4px 10px',
+                      background: `${T.pr}12`,
+                      border: `1px solid ${T.pr}24`,
+                    }}
+                  >
+                    {newsBriefing.storyCount} stories
+                  </Chip>
+                ) : null}
+                {newsBriefing.sourceCount ? (
+                  <Chip
+                    color={T.tl}
+                    style={{
+                      borderRadius: 999,
+                      padding: '4px 10px',
+                      background: 'rgba(127,127,127,0.08)',
+                      border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                    }}
+                  >
+                    {newsBriefing.sourceCount} sources
+                  </Chip>
+                ) : null}
+              </div>
+
+              {newsBriefing.supportingLine ? (
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: T.tl,
+                    fontWeight: 650,
+                    lineHeight: 1.45,
+                    maxWidth: 560,
+                  }}
+                >
+                  {newsBriefing.supportingLine}
+                </div>
+              ) : null}
+
+              <div
+                style={{
+                  marginTop: 'auto',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-end',
+                  gap: 12,
+                }}
+              >
+                <div style={{ fontSize: 13, color: T.tm, lineHeight: 1.45, maxWidth: 430 }}>
+                  {newsBriefing.statusTone === 'live'
+                    ? 'Follow the newest Westminster and campaign reporting in one place.'
+                    : 'See the latest available reporting, source breadth and story order at a glance.'}
+                </div>
+
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: T.th,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {newsBriefing.ctaLabel} →
+                </div>
+              </div>
             </div>
           </LargeCard>
 
