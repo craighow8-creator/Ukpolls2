@@ -21,8 +21,112 @@ export function formatRelativeNewsTime(iso) {
   })
 }
 
+const HTML_ENTITY_MAP = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  ndash: '-',
+  mdash: '-',
+  hellip: '...',
+  rsquo: "'",
+  lsquo: "'",
+  rdquo: '"',
+  ldquo: '"',
+}
+
+function decodeHtmlEntities(text) {
+  return String(text || '').replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, entity) => {
+    const key = String(entity || '').toLowerCase()
+
+    if (key.startsWith('#x')) {
+      const code = Number.parseInt(key.slice(2), 16)
+      return Number.isFinite(code) ? String.fromCodePoint(code) : match
+    }
+
+    if (key.startsWith('#')) {
+      const code = Number.parseInt(key.slice(1), 10)
+      return Number.isFinite(code) ? String.fromCodePoint(code) : match
+    }
+
+    return HTML_ENTITY_MAP[key] ?? match
+  })
+}
+
+export function cleanNewsDisplayText(value, options = {}) {
+  const { maxLength = 0 } = options
+  if (value == null) return ''
+
+  let text = String(value)
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<\/(p|div|li|ul|ol|h[1-6]|blockquote)>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+
+  text = decodeHtmlEntities(text)
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (!maxLength || text.length <= maxLength) return text
+
+  const clipped = text.slice(0, maxLength).trimEnd()
+  const boundary = clipped.lastIndexOf(' ')
+  return `${(boundary > maxLength * 0.6 ? clipped.slice(0, boundary) : clipped).trimEnd()}...`
+}
+
+function titleCaseNewsLabel(value) {
+  const clean = cleanNewsDisplayText(value)
+  if (!clean) return ''
+
+  return clean
+    .split(/\s+/)
+    .map((word) => {
+      const lower = word.toLowerCase()
+      return lower.length <= 3 ? lower.toUpperCase() : `${lower[0].toUpperCase()}${lower.slice(1)}`
+    })
+    .join(' ')
+}
+
+export function normaliseNewsSourceName(value) {
+  const clean = cleanNewsDisplayText(value)
+  const lower = clean.toLowerCase()
+  if (!clean) return ''
+
+  if (lower.includes('bbc')) return 'BBC'
+  if (lower.includes('guardian')) return 'Guardian'
+  if (lower.includes('sky')) return 'Sky'
+  if (lower.includes('telegraph')) return 'Telegraph'
+  if (lower.includes('gb news') || lower.includes('gbnews')) return 'GB News'
+  if (lower.includes('independent')) return 'Independent'
+  if (lower.includes('financial times') || lower === 'ft') return 'FT'
+
+  return clean
+}
+
+export function normaliseNewsTag(value) {
+  const clean = cleanNewsDisplayText(value)
+  const lower = clean.toLowerCase()
+  if (!clean) return ''
+
+  if (lower === 'poll' || lower === 'polling') return 'Polling'
+  if (lower === 'election' || lower === 'elections') return 'Elections'
+  if (lower === 'party' || lower === 'parties') return 'Party'
+  if (lower === 'policy' || lower === 'policies') return 'Policy'
+  if (lower === 'government' || lower === 'govt') return 'Government'
+  if (lower === 'parliament' || lower === 'parliamentary') return 'Parliament'
+  if (lower === 'economy' || lower === 'economic') return 'Economy'
+  if (lower === 'foreign affairs' || lower === 'foreign' || lower === 'world' || lower === 'international') {
+    return 'Foreign Affairs'
+  }
+  if (lower === 'campaign' || lower === 'campaigns') return 'Campaign'
+
+  return titleCaseNewsLabel(clean)
+}
+
 export function formatNewsSourceList(sources = [], maxVisible = 3) {
-  const clean = [...new Set((sources || []).map((s) => String(s || '').trim()).filter(Boolean))]
+  const clean = [...new Set((sources || []).map((s) => normaliseNewsSourceName(s)).filter(Boolean))]
   if (!clean.length) return ''
 
   const visible = clean.slice(0, maxVisible)
@@ -81,9 +185,30 @@ export function normaliseNewsPayload(payload) {
 
   const items = [...rawItems]
     .filter((item) => item && typeof item === 'object')
+    .map((item) => {
+      const displayHeadline = cleanNewsDisplayText(item.title, { maxLength: 220 })
+      const displaySummary = cleanNewsDisplayText(
+        item.description || item.summary || item.excerpt || item.body,
+        { maxLength: 420 },
+      )
+      const descriptionDisplay = cleanNewsDisplayText(item.description, { maxLength: 420 })
+      const summaryDisplay = cleanNewsDisplayText(item.summary || item.excerpt || item.body, { maxLength: 420 })
+      const sourceDisplay = normaliseNewsSourceName(item.source || item.sourceName || item.publisher)
+      const tagDisplay = normaliseNewsTag(item.tag || item.category || item.section)
+
+      return {
+        ...item,
+        displayHeadline: displayHeadline || cleanNewsDisplayText(item.summary, { maxLength: 220 }) || 'Latest UK politics update',
+        displaySummary,
+        descriptionDisplay,
+        summaryDisplay,
+        sourceDisplay,
+        tagDisplay,
+      }
+    })
     .sort((a, b) => String(b.publishedAt || '').localeCompare(String(a.publishedAt || '')))
 
-  const sourceNames = [...new Set(items.map((item) => item.source).filter(Boolean))]
+  const sourceNames = [...new Set(items.map((item) => item.sourceDisplay).filter(Boolean))]
   const latestPublishedAt = items[0]?.publishedAt || null
   const meta = base.meta && typeof base.meta === 'object' ? base.meta : {}
   const updatedAt = meta.updatedAt || base.fetchedAt || latestPublishedAt || null
@@ -96,12 +221,14 @@ export function normaliseNewsPayload(payload) {
       fetchedAt: base.fetchedAt || meta.fetchedAt || updatedAt,
       storyCount: Number.isFinite(meta.storyCount) ? meta.storyCount : items.length,
       sourceCount: Number.isFinite(meta.sourceCount) ? meta.sourceCount : sourceNames.length,
-      sources: Array.isArray(meta.sources) && meta.sources.length ? meta.sources : sourceNames,
+      sources: Array.isArray(meta.sources) && meta.sources.length
+        ? meta.sources.map((source) => normaliseNewsSourceName(source)).filter(Boolean)
+        : sourceNames,
       latestPublishedAt: meta.latestPublishedAt || latestPublishedAt,
-      latestHeadline: meta.latestHeadline || items[0]?.title || '',
+      latestHeadline: cleanNewsDisplayText(meta.latestHeadline || items[0]?.displayHeadline || items[0]?.title, { maxLength: 220 }),
       headlines: Array.isArray(meta.headlines) && meta.headlines.length
-        ? meta.headlines
-        : items.slice(0, 3).map((item) => item.title).filter(Boolean),
+        ? meta.headlines.map((headline) => cleanNewsDisplayText(headline, { maxLength: 220 })).filter(Boolean)
+        : items.slice(0, 3).map((item) => item.displayHeadline).filter(Boolean),
     },
   }
 }
@@ -136,18 +263,17 @@ export function buildHomeNewsBriefing(payload) {
   if (meta.storyCount) liveParts.push(`${meta.storyCount} stories`)
 
   return {
-    headline: latest.title,
+    headline: latest.displayHeadline,
     supportingLine: liveParts.join(' · ') || 'Newest politics stories first',
     sourceLine,
     statusLabel: freshness.statusLabel,
     statusTone: freshness.tone,
-    tag: latest.tag || 'Live',
+    tag: latest.tagDisplay || 'Live',
     sourceCount: meta.sourceCount || sources.length,
     storyCount: meta.storyCount || items.length,
     freshnessLabel: freshness.relativeTime ? `Updated ${freshness.relativeTime}` : '',
     teaser:
-      latest.description ||
-      latest.summary ||
+      latest.displaySummary ||
       (freshness.isLive
         ? 'Track the live political wire with the newest stories and source mix surfaced first.'
         : 'See the latest available reporting, with source breadth and recency surfaced first.'),

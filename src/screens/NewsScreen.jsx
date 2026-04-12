@@ -5,6 +5,7 @@ import { InfoButton } from '../components/InfoGlyph'
 import { API_BASE } from '../constants'
 import { parseJsonResponse } from '../utils/http'
 import {
+  cleanNewsDisplayText,
   formatNewsSourceList,
   formatRelativeNewsTime,
   getNewsErrorState,
@@ -122,6 +123,7 @@ function NewsHero({ T, meta, heroItem, loading }) {
   const liveColor = freshness.tone === 'live' ? '#E4003B' : freshness.tone === 'stale' ? T.tl : T.pr
   const title = freshness.isLive ? 'UK politics live' : 'UK politics wire'
   const updatedLine = freshness.relativeTime ? `Updated ${freshness.relativeTime}` : 'Monitoring the latest available feed'
+  const leadContext = cleanNewsDisplayText(heroItem?.displaySummary || heroItem?.summaryDisplay, { maxLength: 180 })
   const summaryLine = sourceSummary
     ? `${sourceSummary}${meta?.storyCount ? ` · ${meta.storyCount} stories in view` : ''}`
     : meta?.storyCount
@@ -207,7 +209,7 @@ function NewsHero({ T, meta, heroItem, loading }) {
           {summaryLine}
         </div>
 
-        {heroItem?.title ? (
+        {heroItem?.displayHeadline ? (
           <div
             style={{
               marginTop: 14,
@@ -216,10 +218,19 @@ function NewsHero({ T, meta, heroItem, loading }) {
             }}
           >
             <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
-              Lead line
+              Leading now
             </div>
             <div style={{ fontSize: 16, fontWeight: 700, color: T.th, lineHeight: 1.4, marginTop: 6 }}>
-              {heroItem.title}
+              {heroItem.displayHeadline}
+            </div>
+            {leadContext ? (
+              <div style={{ fontSize: 13, fontWeight: 550, color: T.tm, lineHeight: 1.5, marginTop: 7 }}>
+                {leadContext}
+              </div>
+            ) : null}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+              {heroItem.sourceDisplay ? <Badge color={T.tl} subtle>{heroItem.sourceDisplay}</Badge> : null}
+              {heroItem.tagDisplay ? <Badge color={liveColor} subtle>{heroItem.tagDisplay}</Badge> : null}
             </div>
           </div>
         ) : null}
@@ -260,9 +271,13 @@ function tagColor(tag, T) {
 }
 
 function NewsCard({ T, item, big = false }) {
-  const color = tagColor(item.tag, T)
+  const color = tagColor(item.tagDisplay || item.tag, T)
   const publishedLabel = formatRelativeNewsTime(item.publishedAt) || 'Latest'
-  const summary = item.description || item.summary
+  const summary = item.displaySummary
+  const title = item.displayHeadline || 'Latest UK politics update'
+  const source = item.sourceDisplay
+  const tag = item.tagDisplay
+  const compactMeta = [source, publishedLabel].filter(Boolean).join(' · ')
 
   return (
     <motion.div
@@ -276,7 +291,7 @@ function NewsCard({ T, item, big = false }) {
         position: 'relative',
         overflow: 'hidden',
         borderRadius: big ? 20 : 18,
-        padding: big ? '18px 18px 16px' : '14px 16px',
+        padding: big ? '18px 18px 16px' : '14px 16px 13px',
         marginBottom: big ? 0 : 10,
         background: T.c0 || '#fff',
         border: `1px solid ${color}22`,
@@ -305,14 +320,14 @@ function NewsCard({ T, item, big = false }) {
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             gap: 10,
             flexWrap: 'wrap',
-            marginBottom: 8,
+            marginBottom: big ? 10 : 7,
           }}
         >
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            {item.tag ? (
+            {tag ? (
               <span
                 style={{
                   fontSize: 11,
@@ -326,21 +341,29 @@ function NewsCard({ T, item, big = false }) {
                   padding: '3px 8px',
                 }}
               >
-                {item.tag}
+                {tag}
               </span>
             ) : null}
 
-            {item.source ? (
+            {source ? (
               <span style={{ fontSize: 13, fontWeight: 700, color: T.th }}>
-                {item.source}
+                {source}
               </span>
             ) : null}
           </div>
 
-          <span style={{ fontSize: 12, fontWeight: 700, color: T.tl, flexShrink: 0 }}>
-            {publishedLabel}
-          </span>
+          {!big ? (
+            <span style={{ fontSize: 12, fontWeight: 700, color: T.tl, flexShrink: 0 }}>
+              {publishedLabel}
+            </span>
+          ) : null}
         </div>
+
+        {big && compactMeta ? (
+          <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, lineHeight: 1.4, marginBottom: 8 }}>
+            {compactMeta}
+          </div>
+        ) : null}
 
         <div
           style={{
@@ -351,26 +374,30 @@ function NewsCard({ T, item, big = false }) {
             letterSpacing: big ? '-0.02em' : '-0.01em',
           }}
         >
-          {item.title}
+          {title}
         </div>
 
         {summary ? (
           <div
             style={{
-              marginTop: 9,
+              marginTop: big ? 10 : 8,
               fontSize: big ? 14 : 13,
               fontWeight: 550,
               color: T.tm,
               lineHeight: 1.55,
+              display: '-webkit-box',
+              WebkitLineClamp: big ? 3 : 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
             }}
           >
             {summary}
           </div>
         ) : null}
 
-        {item.url ? (
+        {item.url && big ? (
           <div style={{ fontSize: 12, fontWeight: 800, color, letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: 12 }}>
-            Open source ↗
+            Read story ↗
           </div>
         ) : null}
       </div>
