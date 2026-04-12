@@ -46,6 +46,53 @@ function cleanText(value) {
   return String(value).replace(/\s+/g, ' ').trim()
 }
 
+function uniqueValues(values = []) {
+  return [...new Set((values || []).map((value) => cleanText(value)).filter(Boolean))]
+}
+
+function formatUkDate(value) {
+  const text = cleanText(value)
+  if (!text) return ''
+
+  if (/^\d{2}-\d{2}-\d{4}$/.test(text)) {
+    return text
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    const [yyyy, mm, dd] = text.split('-').map(Number)
+    const date = new Date(Date.UTC(yyyy, mm - 1, dd))
+    if (Number.isNaN(date.getTime())) return text
+    return `${String(dd).padStart(2, '0')}-${String(mm).padStart(2, '0')}-${yyyy}`
+  }
+
+  return text
+}
+
+function formatDatesInText(value) {
+  const text = cleanText(value)
+  if (!text) return ''
+
+  return text
+    .replace(/\b(\d{2}-\d{2}-\d{4})\b/g, (match) => formatUkDate(match))
+    .replace(/\b(\d{4}-\d{2}-\d{2})\b/g, (match) => formatUkDate(match))
+}
+
+function normalizeSeats(rawSeats, seatsTotal) {
+  if (rawSeats && typeof rawSeats === 'object' && !Array.isArray(rawSeats)) {
+    return {
+      ...rawSeats,
+      total: rawSeats.total ?? seatsTotal ?? null,
+    }
+  }
+
+  const total = rawSeats ?? seatsTotal
+  return total != null ? { total } : null
+}
+
+function distinctText(primary, secondary) {
+  return cleanText(primary).toLowerCase() !== cleanText(secondary).toLowerCase()
+}
+
 function findCouncilRecord(name) {
   const councils = LOCAL_ELECTIONS?.councils || []
   return councils.find((c) => cleanText(c.name).toLowerCase() === cleanText(name).toLowerCase()) || null
@@ -83,8 +130,11 @@ function mergeCouncilProfile(name, registry = [], status = [], editorial = []) {
 
   const seatsTotal =
     pipeline?.seatsTotal ||
+    pipeline?.seats?.total ||
     council?.seatsTotal ||
     council?.seats ||
+    council?.seats?.total ||
+    profile?.seatsTotal ||
     profile?.seats?.total ||
     null
 
@@ -96,10 +146,9 @@ function mergeCouncilProfile(name, registry = [], status = [], editorial = []) {
     control: pipeline?.control || council?.control || profile?.control || '',
     type: pipeline?.type || council?.type || profile?.type || '',
     region: pipeline?.region || council?.region || profile?.region || '',
-    seats:
-      pipeline?.seats ||
-      (seatsTotal ? { ...(profile?.seats || {}), total: seatsTotal } : profile?.seats) ||
-      null,
+    governanceModel: pipeline?.governanceModel || council?.governanceModel || profile?.governanceModel || '',
+    seatsTotal,
+    seats: normalizeSeats(pipeline?.seats || council?.seats || profile?.seats, seatsTotal),
     seatsUp: pipeline?.seatsUp ?? council?.seatsUp ?? profile?.seatsUp ?? null,
     majority: pipeline?.majority ?? council?.majority ?? profile?.majority ?? null,
     lastFought: pipeline?.lastFought ?? council?.lastFought ?? profile?.lastFought ?? null,
@@ -109,20 +158,31 @@ function mergeCouncilProfile(name, registry = [], status = [], editorial = []) {
     cycle: pipeline?.cycle || council?.cycle || profile?.cycle || '',
     targetParty: pipeline?.targetParty || council?.targetParty || profile?.targetParty || '',
     updatedAt: pipeline?.updatedAt || council?.updatedAt || profile?.updatedAt || pipeline?.lastVerifiedAt || '',
+    verificationSourceType: pipeline?.verificationSourceType || council?.verificationSourceType || profile?.verificationSourceType || '',
     source: pipeline?.verificationSourceType || council?.source || profile?.source || '',
-    leader: pipeline?.leader || pipeline?.mayor || council?.leader || profile?.leader || '',
+    leader: pipeline?.leader || council?.leader || profile?.leader || '',
+    mayor: pipeline?.mayor || council?.mayor || profile?.mayor || '',
     administration: pipeline?.administration || council?.administration || profile?.administration || '',
     composition: pipeline?.composition || council?.composition || profile?.composition || null,
+    notes: pipeline?.notes || council?.notes || profile?.notes || '',
     keyIssue: pipeline?.keyIssue || council?.keyIssue || profile?.keyIssue || '',
     prediction: pipeline?.prediction || council?.prediction || profile?.prediction || '',
     lastElection: pipeline?.lastElection || council?.lastElection || profile?.lastElection || '',
+    officialWebsite: pipeline?.officialWebsite || council?.officialWebsite || profile?.officialWebsite || pipeline?.website || council?.website || profile?.website || '',
+    officialElectionsUrl: pipeline?.officialElectionsUrl || council?.officialElectionsUrl || profile?.officialElectionsUrl || pipeline?.electionsPage || council?.electionsPage || profile?.electionsPage || '',
+    officialCompositionUrl: pipeline?.officialCompositionUrl || council?.officialCompositionUrl || profile?.officialCompositionUrl || '',
     website: pipeline?.officialWebsite || pipeline?.website || council?.website || profile?.website || '',
     electionStatus: pipeline?.electionStatus || council?.electionStatus || profile?.electionStatus || '',
     electionMessage: pipeline?.electionMessage || council?.electionMessage || profile?.electionMessage || '',
     nextElectionYear: pipeline?.nextElectionYear || council?.nextElectionYear || profile?.nextElectionYear || '',
-    electionsPage: pipeline?.electionsPage || council?.electionsPage || profile?.electionsPage || '',
+    electionsPage: pipeline?.officialElectionsUrl || pipeline?.electionsPage || council?.officialElectionsUrl || council?.electionsPage || profile?.officialElectionsUrl || profile?.electionsPage || '',
     wikipedia: pipeline?.wikipedia || council?.wikipedia || profile?.wikipedia || '',
     profileUrl: pipeline?.profileUrl || council?.profileUrl || profile?.profileUrl || '',
+    sourceUrls: uniqueValues([
+      ...(Array.isArray(pipeline?.sourceUrls) ? pipeline.sourceUrls : []),
+      ...(Array.isArray(council?.sourceUrls) ? council.sourceUrls : []),
+      ...(Array.isArray(profile?.sourceUrls) ? profile.sourceUrls : []),
+    ]),
   }
 }
 
@@ -155,9 +215,12 @@ function electionStatusLabel(profile) {
 }
 
 function governanceModelLabel(profile) {
+  const explicit = cleanText(profile?.governanceModel)
+  if (explicit) return explicit
+
   const type = cleanText(profile?.type).toLowerCase()
-  const leader = cleanText(profile?.leader).toLowerCase()
-  if (type.includes('mayoral') || leader.includes('mayor')) return 'Mayoral executive'
+  const executiveLeader = cleanText(profile?.leader || profile?.mayor).toLowerCase()
+  if (type.includes('mayoral') || executiveLeader.includes('mayor')) return 'Mayoral executive'
   if (type.includes('committee')) return 'Committee system'
   return 'Leader and cabinet'
 }
@@ -181,7 +244,7 @@ function seatsUpLabel(profile) {
 }
 
 function nextElectionInfo(profile) {
-  if (profile?.electionMessage) return profile.electionMessage
+  if (profile?.electionMessage) return formatDatesInText(profile.electionMessage)
   if (profile?.nextElectionYear && profile?.electionStatus === 'not-voting-2026') {
     return `This council is not voting in 2026 and next returns to the polls in ${profile.nextElectionYear}.`
   }
@@ -194,13 +257,15 @@ function nextElectionInfo(profile) {
   return ''
 }
 
-function detailRows(profile) {
+function councilSnapshotRows(profile) {
   return [
     { label: 'Seats total', value: profile?.seats?.total },
     { label: 'Seats up', value: seatsUpLabel(profile) },
+    { label: 'Control status', value: controlStatusLabel(profile) },
     { label: 'Governance model', value: governanceModelLabel(profile) },
     { label: 'Cycle', value: cycleLabel(profile) },
-    { label: 'Control status', value: controlStatusLabel(profile) },
+    { label: 'Next election', value: profile?.nextElectionYear ? `${profile.nextElectionYear}` : '' },
+    { label: 'Election status', value: electionStatusLabel(profile) },
   ].filter((row) => cleanText(row.value))
 }
 
@@ -233,12 +298,76 @@ function compositionRows(composition) {
 }
 
 function linkRows(profile) {
-  return [
+  const seen = new Set()
+  const links = []
+
+  for (const row of [
     { label: 'Council website', href: profile?.website },
     { label: 'Elections page', href: profile?.electionsPage },
+    { label: 'Council composition', href: profile?.officialCompositionUrl },
     { label: 'Wikipedia', href: profile?.wikipedia },
     { label: 'Official profile', href: profile?.profileUrl },
-  ].filter((row) => cleanText(row.href))
+  ]) {
+    const href = cleanText(row.href)
+    if (!href || seen.has(href)) continue
+    seen.add(href)
+    links.push({ label: row.label, href })
+  }
+
+  for (const href of (Array.isArray(profile?.sourceUrls) ? profile.sourceUrls : []).map((url) => cleanText(url)).filter(Boolean)) {
+    if (seen.has(href)) continue
+    seen.add(href)
+
+    let label = 'Verification source'
+    try {
+      const { hostname } = new URL(href)
+      const host = hostname.replace(/^www\./i, '')
+      if (host) label = `Source · ${host}`
+    } catch {
+      label = 'Verification source'
+    }
+
+    links.push({ label, href })
+  }
+
+  return links
+}
+
+function getCouncilSnapshotMessage(profile) {
+  const message = nextElectionInfo(profile)
+  const status = electionStatusLabel(profile)
+  if (!message) return ''
+  if (!distinctText(message, status)) return ''
+  return message
+}
+
+function getPoliticalControlRows(profile) {
+  return [
+    { label: 'Leader', value: profile?.leader },
+    { label: 'Mayor', value: profile?.mayor },
+    { label: 'Administration', value: profile?.administration },
+  ].filter((row) => cleanText(row.value))
+}
+
+function getPoliticalBriefing(profile) {
+  const prediction = formatDatesInText(profile?.prediction)
+  const watchFor = formatDatesInText(profile?.watchFor)
+  const keyIssue = formatDatesInText(profile?.keyIssue)
+
+  const lead = prediction || watchFor || keyIssue || ''
+  const supportCandidates = [
+    { label: 'Watch for', value: watchFor },
+    { label: 'Key issue', value: keyIssue },
+    { label: 'Context', value: prediction },
+  ]
+
+  const support = supportCandidates.find((item) => cleanText(item.value) && distinctText(item.value, lead))
+
+  return {
+    lead,
+    supportingLabel: support?.label || '',
+    supportingValue: support?.value || '',
+  }
 }
 
 function DetailCell({ T, label, value, color, span = false }) {
@@ -312,12 +441,17 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
   const controlColor = p ? (CONTROL_COLORS[p.control] || T.tl) : T.tl
   const diffColor = p ? (DIFF_COLORS[p.difficulty] || T.pr || T.tl) : T.tl
   const verdictColor = p ? partyColorFromText(p.verdict, diffColor) : diffColor
-  const snapshotRows = p ? detailRows(p) : []
+  const snapshotRows = p ? councilSnapshotRows(p) : []
   const politicalComposition = p ? compositionRows(p.composition) : []
+  const politicalControlRows = p ? getPoliticalControlRows(p) : []
+  const compositionLink = cleanText(p?.officialCompositionUrl)
+  const notes = cleanText(p?.notes)
   const links = p ? linkRows(p) : []
   const statusLabel = p ? electionStatusLabel(p) : ''
   const nextElectionLabel = p?.nextElectionYear ? `Next election ${p.nextElectionYear}` : ''
-  const electionInfo = p ? nextElectionInfo(p) : ''
+  const snapshotMessage = p ? getCouncilSnapshotMessage(p) : ''
+  const briefing = p ? getPoliticalBriefing(p) : { lead: '', supportingLabel: '', supportingValue: '' }
+  const sourceMeta = [formatUkDate(p?.updatedAt) ? `Updated ${formatUkDate(p.updatedAt)}` : '', p?.source || p?.verificationSourceType || ''].filter(Boolean).join(' · ')
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: T.sf }}>
@@ -394,8 +528,6 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                     { label: 'Region', value: p.region },
                     { label: 'Council type', value: p.type, span: true },
                     { label: 'Current control', value: controlStatusLabel(p), color: controlColor },
-                    { label: 'Election status', value: statusLabel || 'Current cycle' },
-                    { label: 'Next election year', value: p.nextElectionYear },
                   ].filter((row) => cleanText(row.value)).map((row) => (
                     <DetailCell
                       key={row.label}
@@ -409,15 +541,12 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                 </div>
               </Card>
 
-              {(cleanText(p.leader) || cleanText(p.administration) || politicalComposition.length) ? (
+              {(politicalControlRows.length || politicalComposition.length || compositionLink || notes) ? (
                 <Card T={T} color={controlColor}>
                   <div style={sectionHeadingStyle(T)}>Political control</div>
-                  {(cleanText(p.leader) || cleanText(p.administration)) ? (
+                  {politicalControlRows.length ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, marginBottom: politicalComposition.length ? 10 : 0 }}>
-                      {[
-                        { label: 'Leader', value: p.leader },
-                        { label: 'Administration', value: p.administration },
-                      ].filter((row) => cleanText(row.value)).map((row) => (
+                      {politicalControlRows.map((row) => (
                         <DetailCell
                           key={row.label}
                           T={T}
@@ -462,11 +591,45 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                       ))}
                     </div>
                   ) : null}
+                  {compositionLink ? (
+                    <div style={{ marginTop: politicalComposition.length || politicalControlRows.length ? 10 : 0 }}>
+                      <a
+                        href={compositionLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: 999,
+                          padding: '8px 12px',
+                          fontSize: 12,
+                          fontWeight: 800,
+                          color: controlColor,
+                          background: `${controlColor}12`,
+                          border: `1px solid ${controlColor}24`,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        {politicalComposition.length ? 'View official council composition' : 'View full council composition'}
+                      </a>
+                    </div>
+                  ) : null}
+                  {notes ? (
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, lineHeight: 1.6, marginTop: 10 }}>
+                      {notes}
+                    </div>
+                  ) : null}
                 </Card>
               ) : null}
 
               <Card T={T}>
-                <div style={sectionHeadingStyle(T)}>Snapshot</div>
+                <div style={sectionHeadingStyle(T)}>Council snapshot</div>
+                {snapshotMessage ? (
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.th, lineHeight: 1.6, textAlign: 'center', marginBottom: 10 }}>
+                    {snapshotMessage}
+                  </div>
+                ) : null}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
                   {snapshotRows.map((row) => (
                     <SnapshotCell
@@ -480,12 +643,12 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                 </div>
               </Card>
 
-              {(p.verdict || p.difficulty || p.watchFor || p.keyIssue) ? (
+              {(p.verdict || p.difficulty || briefing.lead || briefing.supportingValue) ? (
                 <Card T={T} color={diffColor}>
                   <div style={sectionHeadingStyle(T)}>
                     Political briefing
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: (p.watchFor || p.keyIssue) ? 10 : 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: briefing.lead || briefing.supportingValue ? 10 : 0 }}>
                     {p.verdict ? (
                       <span style={{
                         fontSize: 12, fontWeight: 800, padding: '4px 9px', borderRadius: 999,
@@ -499,59 +662,33 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                       }}>{p.difficulty}</span>
                     ) : null}
                   </div>
-                  {p.watchFor ? (
-                    <div style={{ marginBottom: p.keyIssue ? 10 : 0 }}>
-                      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.tl }}>
-                        Watch for
-                      </div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.65, marginTop: 4 }}>
-                        {p.watchFor}
-                      </div>
+                  {briefing.lead ? (
+                    <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.65, marginBottom: briefing.supportingValue ? 10 : 0 }}>
+                      {briefing.lead}
                     </div>
                   ) : null}
-                  {p.keyIssue ? (
-                    <div style={{ paddingTop: p.watchFor ? 2 : 0 }}>
+                  {briefing.supportingValue ? (
+                    <div>
                       <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.tl }}>
-                        Key issue
+                        {briefing.supportingLabel}
                       </div>
                       <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, lineHeight: 1.6, marginTop: 3 }}>
-                        {p.keyIssue}
+                        {briefing.supportingValue}
                       </div>
                     </div>
                   ) : null}
                 </Card>
               ) : null}
 
-              {(electionInfo || cycleLabel(p) || seatsUpLabel(p) || p.lastElection) ? (
-                <Card T={T}>
-                  <div style={sectionHeadingStyle(T)}>Election details</div>
-                  {electionInfo ? (
-                    <div style={{ fontSize: 13, fontWeight: 600, color: T.th, lineHeight: 1.6, textAlign: 'center', marginBottom: 10 }}>
-                      {electionInfo}
-                    </div>
-                  ) : null}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-                    {[
-                      { label: 'Next election', value: p.nextElectionYear ? `${p.nextElectionYear}` : '' },
-                      { label: 'Cycle', value: cycleLabel(p) },
-                      { label: 'Seats up', value: seatsUpLabel(p) },
-                      { label: 'Last election', value: p.lastElection, span: true },
-                    ].filter((row) => cleanText(row.value)).map((row) => (
-                      <DetailCell key={row.label} T={T} label={row.label} value={row.value} span={row.span} />
-                    ))}
-                  </div>
-                </Card>
-              ) : null}
-
-              {(links.length || p.updatedAt || p.source) ? (
+              {(links.length || sourceMeta) ? (
                 <Card T={T}>
                   <div style={sectionHeadingStyle(T)}>Links and sources</div>
                   {links.length ? (
                     <>
                       <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.tl, textAlign: 'center', marginBottom: 8 }}>
-                        Official links
+                        Reference links
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: (p.updatedAt || p.source) ? 12 : 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: sourceMeta ? 12 : 0 }}>
                       {links.map((link) => (
                         <a
                           key={link.label}
@@ -575,9 +712,9 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                       </div>
                     </>
                   ) : null}
-                  {(p.updatedAt || p.source) ? (
+                  {sourceMeta ? (
                     <div style={{ fontSize: 12, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.5, borderTop: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`, paddingTop: 10 }}>
-                      {p.updatedAt ? `Updated ${p.updatedAt}` : ''}{p.updatedAt && p.source ? ' · ' : ''}{p.source || ''}
+                      {sourceMeta}
                     </div>
                   ) : null}
                 </Card>
