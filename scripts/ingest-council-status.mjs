@@ -5,6 +5,18 @@ const API_BASE =
   process.env.POLITISCOPE_API_BASE ||
   'https://politiscope-api.craighow8.workers.dev'
 
+const COMPOSITION_SOURCE_URLS = {
+  lancashire: 'https://council.lancashire.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  'manchester-city': 'https://democracy.manchester.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  liverpool: 'https://liverpool.gov.uk/council/councillors-and-committees/how-the-council-works/',
+  trafford: 'https://democratic.trafford.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  stockport: 'https://www.stockport.gov.uk/councillors',
+  oldham: 'https://committees.oldham.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  rochdale: 'https://www.rochdale.gov.uk/councillors-committees',
+  'cheshire-east': 'https://www.cheshireeast.gov.uk/council_and_democracy/your_council/councillors/council-composition.aspx',
+  'cheshire-west-and-chester': 'https://www.cheshirewestandchester.gov.uk/your-council/councillors-and-committees/political-make-up',
+}
+
 function formatUkDate(date = new Date()) {
   const day = String(date.getDate()).padStart(2, '0')
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -595,6 +607,137 @@ function normalizeCouncilStatusRow(row) {
   }
 }
 
+
+function uniqueValues(values = []) {
+  return [...new Set((values || []).map((value) => cleanText(value)).filter(Boolean))]
+}
+
+function decodeHtmlEntities(value) {
+  return String(value || '')
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+}
+
+function stripTags(value) {
+  return decodeHtmlEntities(String(value || '').replace(/<[^>]*>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function normalizePartyLabel(value) {
+  const text = cleanText(value).toLowerCase()
+  if (!text) return ''
+  if (text.includes('labour')) return 'Labour'
+  if (text.includes('conservative')) return 'Conservative'
+  if (text.includes('lib dem') || text.includes('liberal democrat')) return 'Lib Dem'
+  if (text.includes('green')) return 'Green'
+  if (text.includes('reform')) return 'Reform UK'
+  if (text.includes('restore britain')) return 'Restore Britain'
+  if (text.includes('independent')) return 'Independent'
+  if (text === 'ind') return 'Independent'
+  if (text.includes('other')) return 'Other'
+  if (text.includes('resident')) return 'Residents'
+  return cleanText(value)
+}
+
+function looksLikeCompositionUrl(url) {
+  return /composition|political|mgmemberindex|memberindex|councillors|party/i.test(cleanText(url))
+}
+
+function inferCompositionSourceUrl(row) {
+  if (COMPOSITION_SOURCE_URLS[row.slug]) return COMPOSITION_SOURCE_URLS[row.slug]
+  const sourceUrl = (Array.isArray(row.sourceUrls) ? row.sourceUrls : []).find(looksLikeCompositionUrl)
+  return sourceUrl || ''
+}
+
+async function fetchText(url, timeoutMs = 12000) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, {
+      headers: {
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Politiscope/1.0 (+https://politiscope.co.uk)',
+      },
+      signal: controller.signal,
+    })
+    if (!res.ok) return ''
+    return await res.text()
+  } catch {
+    return ''
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+function parseCompositionFromHtml(html) {
+  const source = String(html || '')
+  if (!source) return null
+
+  const rows = []
+  const rowMatches = source.match(/<tr\b[\s\S]*?<\/tr>/gi) || []
+
+  for (const rowHtml of rowMatches) {
+    const cellMatches = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)]
+    const cells = cellMatches.map((m) => stripTags(m[1]))
+    if (cells.length < 2) continue
+
+    let party = ''
+    let seats = null
+
+    for (const cell of cells) {
+      if (!party && /[A-Za-z]/.test(cell) && !/party|group|political composition/i.test(cell)) {
+        party = normalizePartyLabel(cell)
+      }
+      if (seats == null) {
+        const numMatch = cell.match(/\b(\d{1,3})\b/)
+        if (numMatch) seats = Number(numMatch[1])
+      }
+    }
+
+    if (party && Number.isFinite(seats) && seats > 0) {
+      rows.push({ party, seats })
+    }
+  }
+
+  const merged = new Map()
+  for (const row of rows) {
+    const key = normalizePartyLabel(row.party)
+    if (!key) continue
+    merged.set(key, (merged.get(key) || 0) + row.seats)
+  }
+
+  const normalized = [...merged.entries()]
+    .map(([party, seats]) => ({ party, seats }))
+    .sort((a, b) => b.seats - a.seats)
+
+  return normalized.length ? normalized : null
+}
+
+async function enrichCouncilStatusRow(row) {
+  if (!row || row.composition) return row
+
+  const compositionUrl = inferCompositionSourceUrl(row)
+  if (!compositionUrl) return row
+
+  const html = await fetchText(compositionUrl)
+  const composition = parseCompositionFromHtml(html)
+
+  return {
+    ...row,
+    composition: composition || row.composition || null,
+    sourceUrls: uniqueValues([...(Array.isArray(row.sourceUrls) ? row.sourceUrls : []), compositionUrl]),
+    verificationStatus: composition ? (row.verificationStatus === 'seeded' ? 'verified' : row.verificationStatus) : row.verificationStatus,
+    verificationSourceType: composition ? (row.verificationSourceType || 'official council sources') : row.verificationSourceType,
+  }
+}
+
 async function importCouncilStatus(councils) {
   const res = await fetch(`${API_BASE}/api/elections/import-status`, {
     method: 'POST',
@@ -841,7 +984,8 @@ function buildCouncilStatusRows() {
 
 async function main() {
   console.log(`Using API base: ${API_BASE}`)
-  const rawRows = buildCouncilStatusRows()
+  const baseRows = buildCouncilStatusRows()
+  const rawRows = await Promise.all(baseRows.map(enrichCouncilStatusRow))
   const councils = rawRows.map(normalizeCouncilStatusRow)
   const validationErrors = councils.flatMap(validateCouncilStatusRow)
 
