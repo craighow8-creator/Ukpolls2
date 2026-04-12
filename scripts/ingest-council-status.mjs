@@ -39,6 +39,48 @@ function normaliseType(rawType = '') {
 }
 
 const STATUS_OVERRIDES = {
+  lancashire: {
+    administration: 'Reform UK administration',
+  },
+  'manchester-city': {
+    administration: 'Labour administration',
+  },
+  liverpool: {
+    administration: 'Labour administration',
+  },
+  trafford: {
+    administration: 'Labour administration',
+  },
+  stockport: {
+    administration: 'Labour administration',
+  },
+  oldham: {
+    administration: 'Labour administration',
+  },
+  rochdale: {
+    administration: 'Labour administration',
+  },
+  'cheshire-east': {
+    administration: 'Labour administration',
+  },
+  'cheshire-west-and-chester': {
+    administration: 'Labour administration',
+  },
+  warrington: {
+    administration: 'Labour administration',
+  },
+  halton: {
+    administration: 'Labour administration',
+  },
+  blackpool: {
+    administration: 'Labour administration',
+  },
+  'blackburn-with-darwen': {
+    administration: 'Labour administration',
+  },
+  preston: {
+    administration: 'Labour administration',
+  },
   sheffield: {
     electionStatus: 'scheduled-2026',
     electionMessage: 'Scheduled local council election on 7 May 2026.',
@@ -739,7 +781,6 @@ function inferAdministration(row, slug, profile = {}) {
 
   const control = cleanText(inferControl(row, slug, profile))
   if (!control) return ''
-
   if (control === 'NOC') return 'No overall control'
   if (control === 'Split control') return 'Split control'
   if (/^Lab$/i.test(control)) return 'Labour administration'
@@ -755,15 +796,9 @@ function inferAdministration(row, slug, profile = {}) {
 
 function inferComposition(row, slug, profile = {}) {
   const override = STATUS_OVERRIDES[slug]
-  if (override?.composition && (Array.isArray(override.composition) || typeof override.composition === 'object')) {
-    return override.composition
-  }
-  if (row?.composition && (Array.isArray(row.composition) || typeof row.composition === 'object')) {
-    return row.composition
-  }
-  if (profile?.composition && (Array.isArray(profile.composition) || typeof profile.composition === 'object')) {
-    return profile.composition
-  }
+  if (override?.composition && (Array.isArray(override.composition) || typeof override.composition === 'object')) return override.composition
+  if (row?.composition && (Array.isArray(row.composition) || typeof row.composition === 'object')) return row.composition
+  if (profile?.composition && (Array.isArray(profile.composition) || typeof profile.composition === 'object')) return profile.composition
   return null
 }
 
