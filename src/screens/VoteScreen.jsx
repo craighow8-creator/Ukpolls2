@@ -4,6 +4,7 @@ import { ScrollArea } from '../components/ui'
 import POTDWidget from '../components/POTDWidget'
 import { WORKER, APP_TOKEN } from '../constants'
 import { getMyVote, setMyVote, getDeviceId } from '../utils/helpers'
+import { parseJsonResponse } from '../utils/http'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
@@ -43,7 +44,7 @@ export default function VoteScreen({ T, nav, meta }) {
       const r = await fetch(`${WORKER}/votes`, {
         headers: { 'X-App-Token': APP_TOKEN },
       })
-      const data = await r.json()
+      const data = await parseJsonResponse(r, 'Vote totals')
       setVotes(data)
       setTotal(
         Object.entries(data)

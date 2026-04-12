@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { WORKER, APP_TOKEN, R } from '../constants'
+import { parseJsonResponse } from '../utils/http'
 
 export default function AIBriefing({ T, partyName, partyColor: pc, parties, meta }) {
   const [q, setQ] = useState('')
@@ -26,7 +27,7 @@ export default function AIBriefing({ T, partyName, partyColor: pc, parties, meta
     setLoading(true); setOut(null)
     try {
       const resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json','X-App-Token':APP_TOKEN}, body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:600, system:buildCtx(), messages:[{role:'user',content:question}] }) })
-      const data = await resp.json()
+      const data = await parseJsonResponse(resp, 'AI briefing')
       const text = data?.content?.[0]?.text
       if (text) setOut({ text, type:'party', color })
     } catch(e) { setOut({ text:'Error: '+e.message, type:'err' }) }
@@ -38,7 +39,7 @@ export default function AIBriefing({ T, partyName, partyColor: pc, parties, meta
     setLoading(true); setOut(null)
     try {
       const resp = await fetch(WORKER, { method:'POST', headers:{'Content-Type':'application/json','X-App-Token':APP_TOKEN}, body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:400, system:buildCtx(), messages:[{role:'user',content:question}] }) })
-      const data = await resp.json()
+      const data = await parseJsonResponse(resp, 'AI briefing')
       const text = data?.content?.[0]?.text
       if (text) setOut({ text, type:'general' })
     } catch(e) { setOut({ text:'Error: '+e.message, type:'err' }) }

@@ -5,6 +5,7 @@ import { POLICY_TAXONOMY } from './policy/policyTaxonomy.js'
 import { POLICY_DELIVERY } from './policy/policyDelivery.js'
 import { buildPollContext } from './pollEngine'
 import { comparePollConflictPriority, getConflictDateMs, getUsablePollDate, isDisplaySafePoll } from '../shared/pollValidation.js'
+import { parseJsonResponse } from '../utils/http'
 
 const CACHE_VERSION = 'v3'
 
@@ -28,6 +29,7 @@ const KEYS = {
   councilRegistry: `PS_councilRegistry_${CACHE_VERSION}`,
   councilStatus: `PS_councilStatus_${CACHE_VERSION}`,
   councilEditorial: `PS_councilEditorial_${CACHE_VERSION}`,
+  councilCachePurge: `PS_councilCachePurge_${CACHE_VERSION}`,
   timestamps: `PS_timestamps_${CACHE_VERSION}`,
   pollsData: `PS_polls_${CACHE_VERSION}`,
   deletedPollIds: `PS_deletedPollIds_${CACHE_VERSION}`,
@@ -200,6 +202,29 @@ function getDefaultData() {
     councilRegistry: withFallbackArray(DEFAULTS.councilRegistry, []),
     councilStatus: withFallbackArray(DEFAULTS.councilStatus, []),
     councilEditorial: withFallbackArray(DEFAULTS.councilEditorial, []),
+  }
+}
+
+function purgeLegacyCouncilCacheOnce() {
+  if (typeof window === 'undefined') return
+
+  try {
+    const already = readJson(KEYS.councilCachePurge, null)
+    if (already) return
+
+    const councilKeys = [
+      KEYS.councilRegistry,
+      KEYS.councilStatus,
+      KEYS.councilEditorial,
+      'PS_councilRegistry',
+      'PS_councilStatus',
+      'PS_councilEditorial',
+    ]
+
+    councilKeys.forEach((key) => localStorage.removeItem(key))
+    writeJson(KEYS.councilCachePurge, { doneAt: new Date().toISOString() })
+  } catch (e) {
+    console.warn('Store: council cache purge failed', e)
   }
 }
 
@@ -421,12 +446,7 @@ function normaliseRemote(remote, defaults) {
 
 async function fetchLatestPolls() {
   const res = await fetchWithTimeout(`${API_BASE}/api/polls/latest`, { cache: 'no-store' })
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Live polls failed: ${res.status} ${text}`)
-  }
-
-  const data = await res.json()
+  const data = await parseJsonResponse(res, 'Live polls')
   return normalisePollArray(data?.polls, [])
 }
 
@@ -488,13 +508,7 @@ async function postSection(section, payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ section, payload }),
   })
-
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Save failed: ${res.status} ${text}`)
-  }
-
-  return res.json().catch(() => ({}))
+  return parseJsonResponse(res, 'Save request', { allowEmpty: true })
 }
 
 function buildPayloadForKey(key, value) {
@@ -534,6 +548,7 @@ export async function getData() {
   const defaults = getDefaultData()
   const local = getLocalOverrides(defaults)
   installDevResetHelpers()
+  purgeLegacyCouncilCacheOnce()
 
   let remote
   let livePolls = []
@@ -547,12 +562,7 @@ export async function getData() {
       }),
     ])
 
-    if (!remoteRes.ok) {
-      const text = await remoteRes.text()
-      throw new Error(`Load failed: ${remoteRes.status} ${text}`)
-    }
-
-    remote = await remoteRes.json()
+    remote = await parseJsonResponse(remoteRes, 'Data load')
     livePolls = normalisePollArray(latest, []).filter(isDisplaySafePoll)
   } catch (e) {
     console.warn('Store: remote load failed, using local/default fallback', e)
@@ -590,6 +600,15 @@ export async function getData() {
 
   const finalTrends = pollContext?.trendSeries || withFallbackArray(normalised.trends, [])
   if (finalTrends.length) safeCacheSection('trends', finalTrends, { notify: false })
+  if (withFallbackArray(normalised.councilRegistry, []).length) {
+    safeCacheSection('councilRegistry', normalised.councilRegistry, { notify: false })
+  }
+  if (withFallbackArray(normalised.councilStatus, []).length) {
+    safeCacheSection('councilStatus', normalised.councilStatus, { notify: false })
+  }
+  if (withFallbackArray(normalised.councilEditorial, []).length) {
+    safeCacheSection('councilEditorial', normalised.councilEditorial, { notify: false })
+  }
 
   return {
     meta: mergeObject(normalised.meta, readJson(KEYS.meta, null)),

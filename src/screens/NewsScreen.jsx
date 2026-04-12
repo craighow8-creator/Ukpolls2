@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
+import { API_BASE } from '../constants'
+import { parseJsonResponse } from '../utils/http'
 import { formatNewsSourceList, formatRelativeNewsTime, normaliseNewsPayload } from '../utils/news'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
@@ -250,15 +252,10 @@ export function NewsScreen({ T, news }) {
         setLoading(true)
         setError('')
 
-        const res = await fetch('/api/news', {
+        const res = await fetch(`${API_BASE}/api/news`, {
           headers: { Accept: 'application/json' },
         })
-
-        if (!res.ok) {
-          throw new Error(`News request failed (${res.status})`)
-        }
-
-        const data = await res.json()
+        const data = await parseJsonResponse(res, 'News request')
         const nextPayload = normaliseNewsPayload(data)
 
         if (!cancelled) {
@@ -337,4 +334,3 @@ export function NewsScreen({ T, news }) {
 }
 
 export default NewsScreen
-

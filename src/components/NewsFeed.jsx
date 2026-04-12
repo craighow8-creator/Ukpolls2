@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { WORKER, APP_TOKEN, R } from '../constants'
+import { API_BASE, WORKER, APP_TOKEN, R } from '../constants'
+import { parseJsonResponse } from '../utils/http'
 
 export default function NewsFeed({ T }) {
   const [articles, setArticles] = useState([])
@@ -7,8 +8,8 @@ export default function NewsFeed({ T }) {
   const [err, setErr] = useState(null)
 
   useEffect(() => {
-    fetch(`${WORKER}/news`, { headers: { 'X-App-Token': APP_TOKEN } })
-      .then(r => r.json())
+    fetch(`${API_BASE}/api/news`, { headers: { Accept: 'application/json', 'X-App-Token': APP_TOKEN } })
+      .then((r) => parseJsonResponse(r, 'News request'))
       .then(d => { setArticles((d.articles || []).slice(0, 20)); setLoading(false) })
       .catch(() => { setErr('Could not load news'); setLoading(false) })
   }, [])

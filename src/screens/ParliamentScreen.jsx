@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { StickyPills, haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
 import { API_BASE } from '../constants'
+import { parseJsonResponse } from '../utils/http'
 
 const TABS = [
   { key: 'howworks', label: 'How it Works' },
@@ -423,11 +424,7 @@ export default function ParliamentScreen({ T }) {
 
       try {
         const res = await fetch(`${API_BASE}/api/parliament-video`)
-        const data = await res.json()
-
-        if (!res.ok) {
-          throw new Error(data?.message || 'Could not load Parliament video')
-        }
+        const data = await parseJsonResponse(res, 'Parliament video')
 
         if (!cancelled) {
           setVideo(data)

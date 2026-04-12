@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { WORKER, APP_TOKEN, R } from '../constants'
 import { LS, getDeviceId } from '../utils/helpers'
+import { parseJsonResponse } from '../utils/http'
 
 const POTD_QUESTIONS = [
   { id:'q_vote',   q:'If there was a general election tomorrow, who would you vote for?',      opts:['Reform UK','Labour','Conservative','Green','Lib Dem','Restore Britain','SNP / Plaid','Would not vote'] },
@@ -26,7 +27,7 @@ export default function POTDWidget({ T }) {
   const loadResults = async () => {
     try {
       const r = await fetch(`${WORKER}/potd-results?qid=${encodeURIComponent(q.id)}`, { headers: { 'X-App-Token': APP_TOKEN } })
-      setResults(await r.json())
+      setResults(await parseJsonResponse(r, 'Poll of the Day results'))
     } catch(e) {}
   }
 
@@ -35,7 +36,7 @@ export default function POTDWidget({ T }) {
     setVoted(opt)
     try {
       const r = await fetch(`${WORKER}/potd-vote`, { method:'POST', headers:{'Content-Type':'application/json','X-App-Token':APP_TOKEN}, body: JSON.stringify({ qid:q.id, option:opt, deviceId:getDeviceId() }) })
-      const data = await r.json()
+      const data = await parseJsonResponse(r, 'Poll of the Day vote')
       setResults(data.votes || null)
     } catch(e) {}
   }
