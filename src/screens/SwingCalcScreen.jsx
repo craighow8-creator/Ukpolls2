@@ -128,11 +128,39 @@ function getBenchmarkStatus(isSame, swing, needed) {
   return 'Exceeds the swing required here'
 }
 
-export default function SwingCalcScreen({ T, nav, parties }) {
-  const mainParties = (parties || []).filter(p => !['Other','SNP','Plaid Cymru'].includes(p.name))
+export default function SwingCalcScreen({ T, nav, parties, pollContext = {} }) {
+  const snapshotParties = Array.isArray(pollContext?.partyPollSnapshot)
+    ? pollContext.partyPollSnapshot.filter((party) => safeNumber(party?.pct) > 0)
+    : []
+  const fallbackParties = Array.isArray(parties)
+    ? parties.filter((party) => safeNumber(party?.pct) > 0)
+    : []
+  const sourceParties = snapshotParties.length ? snapshotParties : fallbackParties
+  const mainParties = [...sourceParties].sort((a, b) => safeNumber(b?.pct) - safeNumber(a?.pct))
   const [fromParty, setFromParty] = useState('Labour')
   const [toParty,   setToParty]   = useState('Reform UK')
   const [swing,     setSwing]     = useState(0)
+
+  useEffect(() => {
+    if (!mainParties.length) return
+
+    const topParty = mainParties[0]?.name || ''
+    const secondParty = mainParties.find((party) => party?.name && party.name !== topParty)?.name || topParty
+    const hasFromParty = mainParties.some((party) => party?.name === fromParty)
+    const hasToParty = mainParties.some((party) => party?.name === toParty)
+
+    if (!hasFromParty || !hasToParty || fromParty === toParty) {
+      const nextFromParty = hasFromParty && fromParty !== secondParty ? fromParty : topParty
+      const nextToParty =
+        hasToParty && toParty !== nextFromParty
+          ? toParty
+          : mainParties.find((party) => party?.name && party.name !== nextFromParty)?.name || nextFromParty
+
+      setFromParty(nextFromParty)
+      setToParty(nextToParty)
+      setSwing(0)
+    }
+  }, [fromParty, toParty, mainParties])
 
   const fp      = mainParties.find(p => p.name === fromParty)
   const tp      = mainParties.find(p => p.name === toParty)
@@ -337,5 +365,3 @@ export default function SwingCalcScreen({ T, nav, parties }) {
     </div>
   )
 }
-
-
