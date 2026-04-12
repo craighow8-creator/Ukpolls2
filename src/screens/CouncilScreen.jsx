@@ -111,6 +111,8 @@ function mergeCouncilProfile(name, registry = [], status = [], editorial = []) {
     updatedAt: pipeline?.updatedAt || council?.updatedAt || profile?.updatedAt || pipeline?.lastVerifiedAt || '',
     source: pipeline?.verificationSourceType || council?.source || profile?.source || '',
     leader: pipeline?.leader || pipeline?.mayor || council?.leader || profile?.leader || '',
+    administration: pipeline?.administration || council?.administration || profile?.administration || '',
+    composition: pipeline?.composition || council?.composition || profile?.composition || null,
     keyIssue: pipeline?.keyIssue || council?.keyIssue || profile?.keyIssue || '',
     prediction: pipeline?.prediction || council?.prediction || profile?.prediction || '',
     lastElection: pipeline?.lastElection || council?.lastElection || profile?.lastElection || '',
@@ -202,6 +204,34 @@ function detailRows(profile) {
   ].filter((row) => cleanText(row.value))
 }
 
+function compositionRows(composition) {
+  if (!composition) return []
+
+  if (Array.isArray(composition)) {
+    return composition
+      .map((row) => {
+        const party = cleanText(row?.party || row?.name || row?.label || row?.group || row?.key)
+        const seats = Number(row?.seats ?? row?.count ?? row?.value ?? row?.total)
+        return party && Number.isFinite(seats) ? { party, seats } : null
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.seats - a.seats)
+  }
+
+  if (typeof composition === 'object') {
+    return Object.entries(composition)
+      .map(([party, seats]) => {
+        const label = cleanText(party)
+        const count = Number(seats)
+        return label && Number.isFinite(count) ? { party: label, seats: count } : null
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.seats - a.seats)
+  }
+
+  return []
+}
+
 function linkRows(profile) {
   return [
     { label: 'Council website', href: profile?.website },
@@ -283,6 +313,7 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
   const diffColor = p ? (DIFF_COLORS[p.difficulty] || T.pr || T.tl) : T.tl
   const verdictColor = p ? partyColorFromText(p.verdict, diffColor) : diffColor
   const snapshotRows = p ? detailRows(p) : []
+  const politicalComposition = p ? compositionRows(p.composition) : []
   const links = p ? linkRows(p) : []
   const statusLabel = p ? electionStatusLabel(p) : ''
   const nextElectionLabel = p?.nextElectionYear ? `Next election ${p.nextElectionYear}` : ''
@@ -377,6 +408,62 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                   ))}
                 </div>
               </Card>
+
+              {(cleanText(p.leader) || cleanText(p.administration) || politicalComposition.length) ? (
+                <Card T={T} color={controlColor}>
+                  <div style={sectionHeadingStyle(T)}>Political control</div>
+                  {(cleanText(p.leader) || cleanText(p.administration)) ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, marginBottom: politicalComposition.length ? 10 : 0 }}>
+                      {[
+                        { label: 'Leader', value: p.leader },
+                        { label: 'Administration', value: p.administration },
+                      ].filter((row) => cleanText(row.value)).map((row) => (
+                        <DetailCell
+                          key={row.label}
+                          T={T}
+                          label={row.label}
+                          value={row.value}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                  {politicalComposition.length ? (
+                    <div>
+                      {politicalComposition.map((row) => (
+                        <div
+                          key={row.party}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 10,
+                            padding: '9px 0',
+                            borderTop: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                            <span
+                              style={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                background: partyColorFromText(row.party, controlColor),
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span style={{ fontSize: 13, fontWeight: 700, color: T.th, lineHeight: 1.4 }}>
+                              {row.party}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: T.th, lineHeight: 1.4 }}>
+                            {row.seats}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </Card>
+              ) : null}
 
               <Card T={T}>
                 <div style={sectionHeadingStyle(T)}>Snapshot</div>
