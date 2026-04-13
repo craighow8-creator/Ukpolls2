@@ -5,6 +5,8 @@ const API_BASE =
   process.env.POLITISCOPE_API_BASE ||
   'https://politiscope-api.craighow8.workers.dev'
 
+const OPEN_COUNCIL_DATA_URL = 'https://opencouncildata.co.uk/councils.php?model=E&y=0'
+
 const COMPOSITION_SOURCE_URLS = {
   lancashire: 'https://council.lancashire.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
   'manchester-city': 'https://democracy.manchester.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
@@ -608,6 +610,113 @@ function normalizeCouncilStatusRow(row) {
 }
 
 
+function normalizeOpenCouncilSlug(value) {
+  return slugifyCouncilName(
+    String(value || '')
+      .replace(/\bcity of\b/gi, '')
+      .replace(/\bcouncil\b/gi, '')
+      .replace(/\bmetropolitan borough\b/gi, '')
+      .replace(/\bborough\b/gi, '')
+      .replace(/\bdistrict\b/gi, '')
+      .replace(/\bcounty\b/gi, '')
+      .replace(/\bunitary authority\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  )
+}
+
+function parseOpenCouncilNumber(value) {
+  const text = cleanText(value).replace(/,/g, '')
+  if (!text || text === '-' || text === '–') return 0
+  return /^-?\d+$/.test(text) ? Number(text) : 0
+}
+
+async function fetchOpenCouncilCompositionIndex(timeoutMs = 15000) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const res = await fetch(OPEN_COUNCIL_DATA_URL, {
+      headers: {
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Politiscope/1.0 (+https://politiscope.co.uk)',
+      },
+      signal: controller.signal,
+    })
+
+    if (!res.ok) return new Map()
+
+    const html = await res.text()
+    const rowMatches = html.match(/<tr\b[\s\S]*?<\/tr>/gi) || []
+    const bySlug = new Map()
+
+    for (const rowHtml of rowMatches) {
+      const cellMatches = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)]
+      const cells = cellMatches.map((m) => stripTags(m[1]))
+      if (cells.length < 4) continue
+
+      const councilName = cleanText(cells[0])
+      if (!councilName || /^council$/i.test(councilName) || /^authority$/i.test(councilName)) continue
+
+      const numericCells = cells.slice(1).map(parseOpenCouncilNumber)
+      const total = Math.max(...numericCells, 0)
+      if (!total) continue
+
+      const composition = []
+      const knownColumns = [
+        ['Conservative', numericCells[0] || 0],
+        ['Labour', numericCells[1] || 0],
+        ['Lib Dem', numericCells[2] || 0],
+        ['Green', numericCells[3] || 0],
+        ['Reform UK', numericCells[4] || 0],
+      ]
+
+      for (const [party, seats] of knownColumns) {
+        if (Number.isFinite(seats) && seats > 0) {
+          composition.push({ party, seats })
+        }
+      }
+
+      const used = composition.reduce((sum, row) => sum + row.seats, 0)
+      const otherSeats = Math.max(0, total - used)
+      if (otherSeats > 0) {
+        composition.push({ party: 'Other', seats: otherSeats })
+      }
+
+      if (!composition.length) continue
+
+      const slug = normalizeOpenCouncilSlug(councilName)
+      if (!slug) continue
+
+      bySlug.set(slug, composition.sort((a, b) => b.seats - a.seats))
+    }
+
+    return bySlug
+  } catch {
+    return new Map()
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+function inferOpenCouncilComposition(row, slug, openCouncilMap) {
+  if (!(openCouncilMap instanceof Map) || !openCouncilMap.size) return null
+  if (openCouncilMap.has(slug)) return openCouncilMap.get(slug)
+
+  const altKeys = [
+    slug,
+    normalizeOpenCouncilSlug(row?.name),
+    normalizeOpenCouncilSlug(String(row?.name || '').replace(/^city of\s+/i, '')),
+    normalizeOpenCouncilSlug(String(row?.name || '').replace(/^the\s+/i, '')),
+  ].filter(Boolean)
+
+  for (const key of altKeys) {
+    if (openCouncilMap.has(key)) return openCouncilMap.get(key)
+  }
+
+  return null
+}
+
 function uniqueValues(values = []) {
   return [...new Set((values || []).map((value) => cleanText(value)).filter(Boolean))]
 }
@@ -720,8 +829,20 @@ function parseCompositionFromHtml(html) {
   return normalized.length ? normalized : null
 }
 
-async function enrichCouncilStatusRow(row) {
-  if (!row || row.composition) return row
+async function enrichCouncilStatusRow(row, openCouncilMap = new Map()) {
+  if (!row) return row
+  if (row.composition) return row
+
+  const openCouncilComposition = inferOpenCouncilComposition(row, row.slug, openCouncilMap)
+  if (openCouncilComposition?.length) {
+    return {
+      ...row,
+      composition: openCouncilComposition,
+      sourceUrls: uniqueValues([...(Array.isArray(row.sourceUrls) ? row.sourceUrls : []), OPEN_COUNCIL_DATA_URL]),
+      verificationStatus: row.verificationStatus === 'seeded' ? 'verified' : row.verificationStatus,
+      verificationSourceType: row.verificationSourceType || 'Open Council Data + official council sources',
+    }
+  }
 
   const compositionUrl = inferCompositionSourceUrl(row)
   if (!compositionUrl) return row
@@ -984,8 +1105,10 @@ function buildCouncilStatusRows() {
 
 async function main() {
   console.log(`Using API base: ${API_BASE}`)
+  const openCouncilMap = await fetchOpenCouncilCompositionIndex()
+  console.log(`Open Council Data composition rows: ${openCouncilMap.size}`)
   const baseRows = buildCouncilStatusRows()
-  const rawRows = await Promise.all(baseRows.map(enrichCouncilStatusRow))
+  const rawRows = await Promise.all(baseRows.map((row) => enrichCouncilStatusRow(row, openCouncilMap)))
   const councils = rawRows.map(normalizeCouncilStatusRow)
   const validationErrors = councils.flatMap(validateCouncilStatusRow)
 
