@@ -409,10 +409,11 @@ function getCouncilSnapshotMessage(profile) {
   return message
 }
 
+
 function getPoliticalControlRows(profile) {
   return [
-    { label: 'Leader', value: profile?.leader },
-    { label: 'Mayor', value: profile?.mayor },
+    { label: 'Leader', value: profile?.leader, type: 'leader' },
+    { label: 'Mayor', value: profile?.mayor, type: 'mayor' },
     { label: 'Administration', value: profile?.administration },
   ].filter((row) => cleanText(row.value))
 }
@@ -438,7 +439,37 @@ function getPoliticalBriefing(profile) {
   }
 }
 
-function DetailCell({ T, label, value, color, span = false }) {
+
+
+function buildPersonDetails(profile, type) {
+  const rawValue = cleanText(type === 'leader' ? profile?.leader : profile?.mayor)
+  if (!rawValue) return null
+
+  const match = rawValue.match(/^(.*?)\s*\((.*?)\)$/)
+  const name = cleanText(match?.[1] || rawValue)
+  const qualifier = cleanText(match?.[2] || '')
+  const links = []
+
+  const officialProfile = cleanText(profile?.profileUrl)
+  const officialWebsite = cleanText(profile?.officialWebsite || profile?.website)
+
+  if (officialProfile) links.push({ label: 'Official profile', href: officialProfile })
+  if (officialWebsite) links.push({ label: 'Council website', href: officialWebsite })
+
+  return {
+    type,
+    title: type === 'leader' ? 'Council leader' : 'Mayor',
+    name,
+    qualifier,
+    summary:
+      type === 'leader'
+        ? 'Political lead for the council. This panel can expand later when richer profile, biography and contact data is added to the pipeline.'
+        : 'Ceremonial or executive mayoral detail. This panel can expand later when richer profile, biography and contact data is added to the pipeline.',
+    links,
+  }
+}
+
+function DetailCell({ T, label, value, color, span = false, infoAction = null, infoLabel = '' }) {
   return (
     <div
       style={{
@@ -450,8 +481,36 @@ function DetailCell({ T, label, value, color, span = false }) {
         boxShadow: '0 4px 14px rgba(15,23,42,0.04)',
       }}
     >
-      <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
-        {label}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
+          {label}
+        </div>
+        {typeof infoAction === 'function' ? (
+          <button
+            type="button"
+            onClick={infoAction}
+            aria-label={infoLabel || `More information about ${label}`}
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: '50%',
+              border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
+              background: T.c0 || '#fff',
+              color: T.pr,
+              fontSize: 12,
+              fontWeight: 900,
+              lineHeight: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+              boxShadow: '0 2px 8px rgba(15,23,42,0.05)',
+            }}
+          >
+            i
+          </button>
+        ) : null}
       </div>
       <div style={{ fontSize: 15, fontWeight: 800, color: color || T.th, lineHeight: 1.4, marginTop: 6 }}>
         {value}
@@ -532,6 +591,7 @@ function HeroStat({ T, label, value, accent }) {
 }
 
 export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistry = [], councilStatus = [], councilEditorial = [] }) {
+  const [personModal, setPersonModal] = React.useState(null)
   const p = mergeCouncilProfile(name, councilRegistry, councilStatus, councilEditorial)
   const controlColor = p ? (CONTROL_COLORS[p.control] || T.tl) : T.tl
   const diffColor = p ? (DIFF_COLORS[p.difficulty] || T.pr || T.tl) : T.tl
@@ -552,6 +612,7 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
   const dominant = politicalComposition[0] || null
   const dominantShare = dominant && totalSeats ? Math.max(4, Math.round((Number(dominant.seats) / totalSeats) * 100)) : 0
   const dominantColor = dominant ? partyColorFromText(dominant.party, controlColor) : controlColor
+  const personDetails = personModal && p ? buildPersonDetails(p, personModal) : null
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: T.sf }}>
@@ -936,7 +997,104 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
             </>
           )}
         </div>
+
       </ScrollArea>
+
+      {personDetails ? (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15,23,42,0.38)',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            zIndex: 1200,
+            padding: 12,
+          }}
+          onClick={() => setPersonModal(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 760,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              background: T.c0 || '#fff',
+              border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+              boxShadow: '0 -16px 40px rgba(15,23,42,0.18)',
+              padding: '18px 18px 22px',
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div style={{ width: 44, height: 5, borderRadius: 999, background: T.c1 || 'rgba(0,0,0,0.08)', margin: '0 auto 14px' }} />
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
+                  {personDetails.title}
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 900, color: T.th, lineHeight: 1.12, marginTop: 6 }}>
+                  {personDetails.name}
+                </div>
+                {personDetails.qualifier ? (
+                  <div style={{ fontSize: 13, fontWeight: 800, color: T.pr, lineHeight: 1.45, marginTop: 6 }}>
+                    {personDetails.qualifier}
+                  </div>
+                ) : null}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPersonModal(null)}
+                aria-label="Close details"
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
+                  background: T.c0 || '#fff',
+                  color: T.th,
+                  fontSize: 18,
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ fontSize: 14, fontWeight: 700, color: T.tl, lineHeight: 1.7, marginTop: 14 }}>
+              {personDetails.summary}
+            </div>
+
+            {personDetails.links.length ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+                {personDetails.links.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      borderRadius: 999,
+                      padding: '9px 12px',
+                      fontSize: 12,
+                      fontWeight: 900,
+                      color: T.pr,
+                      background: `${T.pr}12`,
+                      border: `1px solid ${T.pr}24`,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
