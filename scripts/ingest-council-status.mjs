@@ -671,46 +671,123 @@ async function fetchOpenCouncilCompositionIndex(timeoutMs = 15000) {
 
     const html = await res.text()
     const rowMatches = html.match(/<tr\b[\s\S]*?<\/tr>/gi) || []
+    if (!rowMatches.length) return new Map()
+
     const bySlug = new Map()
+    let headerLabels = []
+
+    const headerPartyMap = {
+      con: 'Conservative',
+      conservative: 'Conservative',
+      cons: 'Conservative',
+      lab: 'Labour',
+      labour: 'Labour',
+      ld: 'Lib Dem',
+      libdem: 'Lib Dem',
+      'lib-dem': 'Lib Dem',
+      'lib dem': 'Lib Dem',
+      'liberal democrat': 'Lib Dem',
+      'liberal democrats': 'Lib Dem',
+      grn: 'Green',
+      green: 'Green',
+      reform: 'Reform UK',
+      'reform uk': 'Reform UK',
+      rb: 'Restore Britain',
+      'restore britain': 'Restore Britain',
+      snp: 'SNP',
+      pc: 'Plaid Cymru',
+      plaid: 'Plaid Cymru',
+      ind: 'Independent',
+      independent: 'Independent',
+      residents: 'Residents',
+      other: 'Other',
+      oth: 'Other',
+      vacancy: 'Vacant',
+      vacancies: 'Vacant',
+      vacant: 'Vacant',
+      total: 'Total',
+    }
+
+    function normalizeHeaderLabel(value) {
+      const raw = cleanText(value).toLowerCase()
+      if (!raw) return ''
+      const compact = raw.replace(/[^a-z0-9]+/g, ' ').trim()
+      return headerPartyMap[compact] || headerPartyMap[compact.replace(/ /g, '')] || cleanText(value)
+    }
 
     for (const rowHtml of rowMatches) {
-      const cellMatches = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)]
-      const cells = cellMatches.map((m) => stripTags(m[1]))
-      if (cells.length < 4) continue
+      const headerCells = [...rowHtml.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/gi)].map((m) => stripTags(m[1]))
+      const dataCells = [...rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((m) => stripTags(m[1]))
 
-      const councilName = cleanText(cells[0])
-      if (!councilName || /^council$/i.test(councilName) || /^authority$/i.test(councilName)) continue
-
-      const numericCells = cells.slice(1).map(parseOpenCouncilNumber)
-      const total = Math.max(...numericCells, 0)
-      if (!total) continue
-
-      const composition = []
-      const knownColumns = [
-        ['Conservative', numericCells[0] || 0],
-        ['Labour', numericCells[1] || 0],
-        ['Lib Dem', numericCells[2] || 0],
-        ['Green', numericCells[3] || 0],
-        ['Reform UK', numericCells[4] || 0],
-      ]
-
-      for (const [party, seats] of knownColumns) {
-        if (Number.isFinite(seats) && seats > 0) {
-          composition.push({ party, seats })
-        }
+      if (headerCells.length >= 3 && !dataCells.length) {
+        headerLabels = headerCells.map(normalizeHeaderLabel)
+        continue
       }
 
-      const used = composition.reduce((sum, row) => sum + row.seats, 0)
-      const otherSeats = Math.max(0, total - used)
-      if (otherSeats > 0) {
-        composition.push({ party: 'Other', seats: otherSeats })
-      }
+      if (dataCells.length < 3) continue
 
-      if (!composition.length) continue
+      const councilName = cleanText(dataCells[0])
+      if (!councilName) continue
 
       const slug = normalizeOpenCouncilSlug(councilName)
       if (!slug) continue
-      bySlug.set(slug, composition.sort((a, b) => b.seats - a.seats))
+
+      const composition = []
+      let total = 0
+
+      for (let i = 1; i < dataCells.length; i++) {
+        const header = normalizeHeaderLabel(headerLabels[i] || '')
+        const seats = parseOpenCouncilNumber(dataCells[i])
+        if (!Number.isFinite(seats) || seats <= 0) continue
+
+        if (header === 'Total') {
+          total = seats
+          continue
+        }
+
+        const party = header || ''
+        if (!party) continue
+        composition.push({ party, seats })
+      }
+
+      if (!composition.length) {
+        const numericCells = dataCells.slice(1).map(parseOpenCouncilNumber)
+        const knownColumns = [
+          ['Conservative', numericCells[0] || 0],
+          ['Labour', numericCells[1] || 0],
+          ['Lib Dem', numericCells[2] || 0],
+          ['Green', numericCells[3] || 0],
+          ['Reform UK', numericCells[4] || 0],
+          ['Independent', numericCells[5] || 0],
+          ['Other', numericCells[6] || 0],
+        ]
+        for (const [party, seats] of knownColumns) {
+          if (Number.isFinite(seats) && seats > 0) composition.push({ party, seats })
+        }
+        if (!total && numericCells.length) total = Math.max(...numericCells, 0)
+      }
+
+      const merged = new Map()
+      for (const row of composition) {
+        if (!row.party || !Number.isFinite(row.seats) || row.seats <= 0) continue
+        merged.set(row.party, (merged.get(row.party) || 0) + row.seats)
+      }
+
+      const normalized = [...merged.entries()]
+        .filter(([party]) => party && party !== 'Total')
+        .map(([party, seats]) => ({ party, seats }))
+        .sort((a, b) => b.seats - a.seats)
+
+      if (!normalized.length) continue
+
+      const used = normalized.reduce((sum, row) => sum + row.seats, 0)
+      const otherGap = total > used ? total - used : 0
+      if (otherGap > 0 && !normalized.some((row) => row.party === 'Other')) {
+        normalized.push({ party: 'Other', seats: otherGap })
+        normalized.sort((a, b) => b.seats - a.seats)
+      }
+
+      bySlug.set(slug, normalized)
     }
 
     return bySlug
@@ -730,6 +807,7 @@ function inferOpenCouncilComposition(row, slug, openCouncilMap) {
     slug,
     ...aliasKeys,
     slug.replace(/-city$/i, ''),
+    slug.replace(/-and-/g, '-'),
     normalizeOpenCouncilSlug(row?.name),
     normalizeOpenCouncilSlug(String(row?.name || '').replace(/^city of\s+/i, '')),
     normalizeOpenCouncilSlug(String(row?.name || '').replace(/^the\s+/i, '')),
@@ -878,10 +956,11 @@ async function enrichCouncilStatusRow(row, openCouncilMap = new Map()) {
   if (openCouncilComposition?.length) {
     return {
       ...row,
+      administration: row.administration || inferAdministration(row, row.slug),
       composition: openCouncilComposition,
       sourceUrls: uniqueValues([...(Array.isArray(row.sourceUrls) ? row.sourceUrls : []), OPEN_COUNCIL_DATA_URL]),
       verificationStatus: row.verificationStatus === 'seeded' ? 'verified' : row.verificationStatus,
-      verificationSourceType: row.verificationSourceType || 'Open Council Data + official council sources',
+      verificationSourceType: 'Open Council Data + official council sources',
     }
   }
 
@@ -894,10 +973,11 @@ async function enrichCouncilStatusRow(row, openCouncilMap = new Map()) {
 
   return {
     ...row,
+    administration: row.administration || inferAdministration(row, row.slug),
     composition: fallbackComposition,
     sourceUrls: uniqueValues([...(Array.isArray(row.sourceUrls) ? row.sourceUrls : []), compositionUrl]),
     verificationStatus: row.verificationStatus === 'seeded' ? 'verified' : row.verificationStatus,
-    verificationSourceType: row.verificationSourceType || 'official council sources',
+    verificationSourceType: 'official council sources',
   }
 }
 
@@ -1037,6 +1117,24 @@ function inferVerificationSourceType(row, slug) {
   return 'seeded from elections.js'
 }
 
+
+function inferAdministration(row, slug, profile = {}) {
+  if (cleanText(row?.administration)) return cleanText(row.administration)
+  if (cleanText(profile?.administration)) return cleanText(profile.administration)
+
+  const control = cleanText(inferControl(row, slug, profile))
+  if (!control) return ''
+  if (control === 'NOC') return 'No overall control'
+  if (control === 'Split control') return 'Split control'
+  if (/^Lab$/i.test(control)) return 'Labour administration'
+  if (/^Con$/i.test(control)) return 'Conservative administration'
+  if (/^LD$/i.test(control)) return 'Liberal Democrat administration'
+  if (/^Grn$/i.test(control)) return 'Green administration'
+  if (/^Reform$/i.test(control)) return 'Reform UK administration'
+  if (/^Ind$/i.test(control)) return 'Independent administration'
+  return `${control} administration`
+}
+
 function buildCouncilStatusRows() {
   const councils = Array.isArray(LOCAL_ELECTIONS?.councils) ? LOCAL_ELECTIONS.councils : []
   const seen = new Set()
@@ -1068,7 +1166,7 @@ function buildCouncilStatusRows() {
       control: inferControl(row, slug, profile),
       leader: inferLeader(row, slug, profile),
       mayor: inferMayor(row, slug, profile),
-      administration: '',
+      administration: inferAdministration(row, slug, profile),
       composition: null,
       governanceModel: inferGovernanceModel(row, slug, profile),
       verificationStatus: inferVerificationStatus(row, slug),
@@ -1085,6 +1183,8 @@ async function main() {
   console.log(`Open Council Data composition rows: ${openCouncilMap.size}`)
   const baseRows = buildCouncilStatusRows()
   const rawRows = await Promise.all(baseRows.map((row) => enrichCouncilStatusRow(row, openCouncilMap)))
+  const matchedCount = rawRows.filter((row) => Array.isArray(row?.composition) && row.composition.length > 0).length
+  console.log(`Matched composition councils: ${matchedCount}`)
   const councils = rawRows.map(normalizeCouncilStatusRow)
   const validationErrors = councils.flatMap(validateCouncilStatusRow)
 
