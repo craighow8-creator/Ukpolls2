@@ -189,11 +189,11 @@ function mergeCouncilProfile(name, registry = [], status = [], editorial = []) {
 function sectionHeadingStyle(T) {
   return {
     fontSize: 12,
-    fontWeight: 800,
-    letterSpacing: '0.10em',
+    fontWeight: 900,
+    letterSpacing: '0.12em',
     textTransform: 'uppercase',
     color: T.tl,
-    marginBottom: 8,
+    marginBottom: 10,
     textAlign: 'center',
   }
 }
@@ -297,6 +297,74 @@ function compositionRows(composition) {
   return []
 }
 
+function majorityThreshold(totalSeats) {
+  const total = Number(totalSeats)
+  if (!Number.isFinite(total) || total <= 0) return null
+  return Math.floor(total / 2) + 1
+}
+
+function formatSeatShare(seats, totalSeats) {
+  const total = Number(totalSeats)
+  const count = Number(seats)
+  if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(count)) return ''
+  return `${Math.round((count / total) * 100)}%`
+}
+
+function getControlInsight(profile, rows) {
+  const totalSeats = Number(profile?.seats?.total || profile?.seatsTotal || 0)
+  const threshold = majorityThreshold(totalSeats)
+  const top = Array.isArray(rows) && rows.length ? rows[0] : null
+  const second = Array.isArray(rows) && rows.length > 1 ? rows[1] : null
+  const controlLabel = cleanText(controlStatusLabel(profile))
+
+  if (!top || !Number.isFinite(totalSeats) || totalSeats <= 0) {
+    return {
+      headline: cleanText(profile?.administration) || controlLabel || '',
+      subline: '',
+      threshold,
+      majorityMargin: null,
+    }
+  }
+
+  const topSeats = Number(top.seats)
+  const secondSeats = Number(second?.seats ?? 0)
+  const dominantParty = cleanText(top.party)
+  const leadOverSecond = second ? topSeats - secondSeats : topSeats
+  const majorityMargin = Number.isFinite(threshold) ? topSeats - threshold : null
+
+  let headline = `${dominantParty} control the council`
+  let subline = `${dominantParty} hold ${topSeats} of ${totalSeats} seats.`
+
+  if (Number.isFinite(majorityMargin)) {
+    if (majorityMargin >= 0) {
+      headline = `${dominantParty} control the council with a working majority`
+      subline = `${dominantParty} hold ${topSeats} of ${totalSeats} seats, ${majorityMargin} above the ${threshold}-seat majority line.`
+    } else {
+      headline = `${dominantParty} are the largest group but short of a majority`
+      subline = `${dominantParty} hold ${topSeats} of ${totalSeats} seats, ${Math.abs(majorityMargin)} short of the ${threshold}-seat majority line.`
+    }
+  }
+
+  if (controlLabel.toLowerCase().includes('no overall control')) {
+    headline = `${dominantParty} are the largest group in a no overall control council`
+    subline = Number.isFinite(majorityMargin)
+      ? `${dominantParty} hold ${topSeats} of ${totalSeats} seats, ${Math.abs(majorityMargin)} short of the ${threshold}-seat majority line.`
+      : `${dominantParty} are ahead, but the council remains under no overall control.`
+  }
+
+  if (second && leadOverSecond > 0) {
+    subline += ` They lead ${cleanText(second.party)} by ${leadOverSecond} seat${leadOverSecond === 1 ? '' : 's'}.`
+  }
+
+  return {
+    headline,
+    subline,
+    threshold,
+    majorityMargin,
+  }
+}
+
+
 function linkRows(profile) {
   const seen = new Set()
   const links = []
@@ -375,16 +443,17 @@ function DetailCell({ T, label, value, color, span = false }) {
     <div
       style={{
         gridColumn: span ? '1 / -1' : 'auto',
-        borderRadius: 12,
-        padding: '10px 11px',
-        background: T.c1 || 'rgba(0,0,0,0.03)',
+        borderRadius: 16,
+        padding: '14px 14px',
+        background: T.c0 || '#fff',
         border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        boxShadow: '0 4px 14px rgba(15,23,42,0.04)',
       }}
     >
-      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.tl }}>
+      <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
         {label}
       </div>
-      <div style={{ fontSize: 13, fontWeight: 700, color: color || T.th, lineHeight: 1.45, marginTop: 4 }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: color || T.th, lineHeight: 1.4, marginTop: 6 }}>
         {value}
       </div>
     </div>
@@ -395,23 +464,24 @@ function SnapshotCell({ T, label, value, accent }) {
   return (
     <div
       style={{
-        borderRadius: 12,
-        padding: '11px 10px',
-        background: T.c1 || 'rgba(0,0,0,0.03)',
+        borderRadius: 16,
+        padding: '14px 14px',
+        background: T.c0 || '#fff',
         border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        boxShadow: '0 4px 14px rgba(15,23,42,0.04)',
         textAlign: 'left',
       }}
     >
-      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.tl }}>
+      <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
         {label}
       </div>
       <div
         style={{
-          fontSize: label === 'Seats total' || label === 'Seats up' ? 18 : 13,
-          fontWeight: 800,
+          fontSize: label === 'Seats total' || label === 'Seats up' ? 22 : 15,
+          fontWeight: 900,
           color: accent || T.th,
-          lineHeight: 1.3,
-          marginTop: 5,
+          lineHeight: 1.2,
+          marginTop: 7,
         }}
       >
         {value}
@@ -423,14 +493,39 @@ function SnapshotCell({ T, label, value, accent }) {
 function Card({ T, color, children }) {
   return (
     <div style={{
-      borderRadius: 14, marginBottom: 10,
+      borderRadius: 22,
+      marginBottom: 18,
       background: T.c0 || '#fff',
-      border: `1px solid ${color ? `${color}28` : T.cardBorder || 'rgba(0,0,0,0.07)'}`,
-      overflow: 'hidden', position: 'relative',
+      border: `1px solid ${color ? `${color}22` : T.cardBorder || 'rgba(0,0,0,0.06)'}`,
+      overflow: 'hidden',
+      position: 'relative',
+      boxShadow: '0 12px 30px rgba(15,23,42,0.06)',
     }}>
-      {color && <div style={{ height: 3, background: color }} />}
-      <div style={{ padding: '13px 14px' }}>
+      {color ? <div style={{ height: 4, background: `linear-gradient(90deg, ${color}, ${color}CC)` }} /> : null}
+      <div style={{ padding: '18px 18px 17px' }}>
         {children}
+      </div>
+    </div>
+  )
+}
+
+
+function HeroStat({ T, label, value, accent }) {
+  return (
+    <div
+      style={{
+        borderRadius: 18,
+        padding: '14px 14px',
+        background: T.c0 || '#fff',
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        boxShadow: '0 6px 18px rgba(15,23,42,0.05)',
+      }}
+    >
+      <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl, textAlign: 'center' }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 24, fontWeight: 900, color: accent || T.th, lineHeight: 1.1, marginTop: 7, textAlign: 'center' }}>
+        {value}
       </div>
     </div>
   )
@@ -444,6 +539,7 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
   const snapshotRows = p ? councilSnapshotRows(p) : []
   const politicalComposition = p ? compositionRows(p.composition) : []
   const politicalControlRows = p ? getPoliticalControlRows(p) : []
+  const controlInsight = p ? getControlInsight(p, politicalComposition) : { headline: '', subline: '', threshold: null, majorityMargin: null }
   const compositionLink = cleanText(p?.officialCompositionUrl)
   const notes = cleanText(p?.notes)
   const links = p ? linkRows(p) : []
@@ -452,6 +548,10 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
   const snapshotMessage = p ? getCouncilSnapshotMessage(p) : ''
   const briefing = p ? getPoliticalBriefing(p) : { lead: '', supportingLabel: '', supportingValue: '' }
   const sourceMeta = [formatUkDate(p?.updatedAt) ? `Updated ${formatUkDate(p.updatedAt)}` : '', p?.source || p?.verificationSourceType || ''].filter(Boolean).join(' · ')
+  const totalSeats = Number(p?.seats?.total || p?.seatsTotal || 0)
+  const dominant = politicalComposition[0] || null
+  const dominantShare = dominant && totalSeats ? Math.max(4, Math.round((Number(dominant.seats) / totalSeats) * 100)) : 0
+  const dominantColor = dominant ? partyColorFromText(dominant.party, controlColor) : controlColor
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: T.sf }}>
@@ -487,7 +587,7 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
         }}
       />
       <ScrollArea>
-        <div style={{ padding: '12px 14px 40px' }}>
+        <div style={{ padding: '18px 18px 48px', maxWidth: 1080, margin: '0 auto' }}>
 
           {!p ? (
             <div style={{ padding: 40, textAlign: 'center', color: T.tl, fontSize: 14 }}>
@@ -495,30 +595,65 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
             </div>
           ) : (
             <>
-              <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: -0.5, color: T.th, marginBottom: 4, lineHeight: 1.1, textAlign: 'center' }}>
-                {name}
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, marginBottom: 10, textAlign: 'center', lineHeight: 1.5 }}>
-                {[
-                  cleanText(p.region),
-                  cleanText(p.type),
-                  controlStatusLabel(p),
-                ].filter(Boolean).join(' · ')}
-              </div>
+              <div style={{ textAlign: 'center', marginBottom: 18 }}>
+                {p.verdict ? (
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 999,
+                      padding: '7px 12px',
+                      fontSize: 12,
+                      fontWeight: 900,
+                      color: verdictColor,
+                      background: `${verdictColor}14`,
+                      border: `1px solid ${verdictColor}22`,
+                      marginBottom: 12,
+                    }}
+                  >
+                    {p.verdict}
+                  </div>
+                ) : null}
 
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-                {statusLabel ? (
-                  <span style={{
-                    fontSize: 12, fontWeight: 800, padding: '4px 9px', borderRadius: 999,
-                    background: `${T.pr}18`, color: T.pr,
-                  }}>{statusLabel}</span>
-                ) : null}
-                {nextElectionLabel ? (
-                  <span style={{
-                    fontSize: 12, fontWeight: 800, padding: '4px 9px', borderRadius: 999,
-                    background: `${T.tl}16`, color: T.tl,
-                  }}>{nextElectionLabel}</span>
-                ) : null}
+                <div style={{ fontSize: 34, fontWeight: 900, letterSpacing: -1.1, color: T.th, marginBottom: 6, lineHeight: 1.05, textAlign: 'center' }}>
+                  {name}
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: T.tl, marginBottom: 14, textAlign: 'center', lineHeight: 1.55 }}>
+                  {[
+                    cleanText(p.region),
+                    cleanText(p.type),
+                    controlStatusLabel(p),
+                  ].filter(Boolean).join(' · ')}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 18 }}>
+                  {statusLabel ? (
+                    <span style={{
+                      fontSize: 12, fontWeight: 900, padding: '6px 10px', borderRadius: 999,
+                      background: `${T.pr}18`, color: T.pr,
+                    }}>{statusLabel}</span>
+                  ) : null}
+                  {nextElectionLabel ? (
+                    <span style={{
+                      fontSize: 12, fontWeight: 900, padding: '6px 10px', borderRadius: 999,
+                      background: `${T.tl}16`, color: T.tl,
+                    }}>{nextElectionLabel}</span>
+                  ) : null}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10 }}>
+                  {dominant ? <HeroStat T={T} label="Dominant party" value={dominant.party} accent={dominantColor} /> : <div />}
+                  {totalSeats ? <HeroStat T={T} label="Seats total" value={totalSeats} accent={T.pr} /> : <div />}
+                  {controlInsight.majorityMargin != null ? (
+                    <HeroStat
+                      T={T}
+                      label={controlInsight.majorityMargin >= 0 ? 'Majority cushion' : 'Short of majority'}
+                      value={`${Math.abs(controlInsight.majorityMargin)}`}
+                      accent={controlInsight.majorityMargin >= 0 ? dominantColor : diffColor}
+                    />
+                  ) : <div />}
+                </div>
               </div>
 
               <Card T={T} color={controlColor}>
@@ -542,10 +677,65 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
               </Card>
 
               {(politicalControlRows.length || politicalComposition.length || compositionLink || notes) ? (
-                <Card T={T} color={controlColor}>
+                <Card T={T} color={dominantColor}>
                   <div style={sectionHeadingStyle(T)}>Political control</div>
+
+                  <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                    <div style={{ fontSize: 24, fontWeight: 900, color: T.th, lineHeight: 1.15, letterSpacing: '-0.03em' }}>
+                      {controlInsight.headline || controlStatusLabel(p)}
+                    </div>
+                    {controlInsight.subline ? (
+                      <div style={{ fontSize: 14, fontWeight: 700, color: T.tl, lineHeight: 1.6, marginTop: 7, maxWidth: 760, marginLeft: 'auto', marginRight: 'auto' }}>
+                        {controlInsight.subline}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {dominant ? (
+                    <div
+                      style={{
+                        borderRadius: 20,
+                        padding: '18px 18px 16px',
+                        background: `${dominantColor}0F`,
+                        border: `1px solid ${dominantColor}20`,
+                        marginBottom: 14,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
+                            Dominant party
+                          </div>
+                          <div style={{ fontSize: 26, fontWeight: 900, color: dominantColor, lineHeight: 1.1, marginTop: 4 }}>
+                            {dominant.party}
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: 28, fontWeight: 900, color: T.th, lineHeight: 1 }}>
+                            {dominant.seats}
+                          </div>
+                          <div style={{ fontSize: 12.5, fontWeight: 800, color: T.tl, marginTop: 4 }}>
+                            seats · {formatSeatShare(dominant.seats, totalSeats)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ height: 14, borderRadius: 999, background: T.c1 || 'rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                        <div
+                          style={{
+                            width: `${dominantShare}%`,
+                            height: '100%',
+                            borderRadius: 999,
+                            background: `linear-gradient(90deg, ${dominantColor}, ${dominantColor}CC)`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+
                   {politicalControlRows.length ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, marginBottom: politicalComposition.length ? 10 : 0 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, marginBottom: politicalComposition.length ? 14 : 0 }}>
                       {politicalControlRows.map((row) => (
                         <DetailCell
                           key={row.label}
@@ -556,43 +746,67 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                       ))}
                     </div>
                   ) : null}
+
                   {politicalComposition.length ? (
                     <div>
-                      {politicalComposition.map((row) => (
-                        <div
-                          key={row.party}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 10,
-                            padding: '9px 0',
-                            borderTop: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                            <span
-                              style={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: '50%',
-                                background: partyColorFromText(row.party, controlColor),
-                                flexShrink: 0,
-                              }}
-                            />
-                            <span style={{ fontSize: 13, fontWeight: 700, color: T.th, lineHeight: 1.4 }}>
-                              {row.party}
-                            </span>
+                      {politicalComposition.map((row, index) => {
+                        const share = totalSeats > 0 ? Math.max(4, Math.round((Number(row.seats) / totalSeats) * 100)) : 0
+                        const barColor = partyColorFromText(row.party, index === 0 ? dominantColor : controlColor)
+
+                        return (
+                          <div
+                            key={row.party}
+                            style={{
+                              padding: '12px 0',
+                              borderTop: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 7 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                                <span
+                                  style={{
+                                    width: 10,
+                                    height: 10,
+                                    borderRadius: '50%',
+                                    background: barColor,
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span style={{ fontSize: index === 0 ? 16 : 14, fontWeight: index === 0 ? 900 : 800, color: T.th, lineHeight: 1.35 }}>
+                                  {row.party}
+                                </span>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexShrink: 0 }}>
+                                <span style={{ fontSize: 14, fontWeight: 900, color: T.th, lineHeight: 1.4 }}>
+                                  {row.seats}
+                                </span>
+                                {totalSeats ? (
+                                  <span style={{ fontSize: 11.5, fontWeight: 800, color: T.tl }}>
+                                    {formatSeatShare(row.seats, totalSeats)}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div style={{ height: 9, borderRadius: 999, background: T.c1 || 'rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                              <div
+                                style={{
+                                  width: `${share}%`,
+                                  height: '100%',
+                                  borderRadius: 999,
+                                  background: barColor,
+                                }}
+                              />
+                            </div>
                           </div>
-                          <span style={{ fontSize: 13, fontWeight: 800, color: T.th, lineHeight: 1.4 }}>
-                            {row.seats}
-                          </span>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   ) : null}
+
                   {compositionLink ? (
-                    <div style={{ marginTop: politicalComposition.length || politicalControlRows.length ? 10 : 0 }}>
+                    <div style={{ marginTop: politicalComposition.length || politicalControlRows.length ? 14 : 0, textAlign: 'center' }}>
                       <a
                         href={compositionLink}
                         target="_blank"
@@ -602,9 +816,9 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                           alignItems: 'center',
                           justifyContent: 'center',
                           borderRadius: 999,
-                          padding: '8px 12px',
+                          padding: '10px 14px',
                           fontSize: 12,
-                          fontWeight: 800,
+                          fontWeight: 900,
                           color: controlColor,
                           background: `${controlColor}12`,
                           border: `1px solid ${controlColor}24`,
@@ -616,7 +830,7 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                     </div>
                   ) : null}
                   {notes ? (
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, lineHeight: 1.6, marginTop: 10 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: T.tl, lineHeight: 1.65, marginTop: 12, textAlign: 'center' }}>
                       {notes}
                     </div>
                   ) : null}
@@ -663,16 +877,16 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                     ) : null}
                   </div>
                   {briefing.lead ? (
-                    <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.65, marginBottom: briefing.supportingValue ? 10 : 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: T.th, lineHeight: 1.65, marginBottom: briefing.supportingValue ? 10 : 0, textAlign: 'center' }}>
                       {briefing.lead}
                     </div>
                   ) : null}
                   {briefing.supportingValue ? (
                     <div>
-                      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: T.tl }}>
+                      <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl, textAlign: 'center' }}>
                         {briefing.supportingLabel}
                       </div>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, lineHeight: 1.6, marginTop: 3 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: T.tl, lineHeight: 1.65, marginTop: 6, textAlign: 'center' }}>
                         {briefing.supportingValue}
                       </div>
                     </div>
