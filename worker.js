@@ -414,38 +414,6 @@ export default {
       })
     }
 
-    function normalizeMigrationPayload(data, updatedAt = null) {
-      if (!data || typeof data !== 'object' || Array.isArray(data)) {
-        return null
-      }
-
-      // migrationData is the forward-compatible backend contract for the
-      // Migration screen. It is intentionally small and frontend-ready:
-      // headline totals, nationality rows, visa rows, and freshness metadata.
-      // Future ONS/Home Office ingestion should write this section directly.
-      return {
-        ...data,
-        netTotal: safeNumber(data.netTotal),
-        netPrev: safeNumber(data.netPrev),
-        netPrev2: safeNumber(data.netPrev2),
-        byNationality: Array.isArray(data.byNationality) ? data.byNationality : [],
-        byVisa: Array.isArray(data.byVisa) ? data.byVisa : [],
-        updatedAt: data.updatedAt || updatedAt || null,
-      }
-    }
-
-    async function loadMigrationData() {
-      const primary = await loadContentSectionRow('migrationData')
-      const primaryPayload = normalizeMigrationPayload(primary?.data, primary?.updated_at)
-      if (primaryPayload) return primaryPayload
-
-      // Legacy fallback: older deployments saved this section as "migration".
-      // Keep reading it so /api/data remains backward compatible while newer
-      // ingestion moves to migrationData.
-      const legacy = await loadContentSectionRow('migration')
-      return normalizeMigrationPayload(legacy?.data, legacy?.updated_at)
-    }
-
     async function loadNormalizedPolls() {
       const pollsData = await loadContentSection('pollsData')
       const raw = Array.isArray(pollsData) ? pollsData : []
@@ -499,12 +467,6 @@ export default {
         control: row.control || '',
         leader: row.leader || '',
         mayor: row.mayor || '',
-        administration: row.administration || '',
-        composition: Array.isArray(row.composition)
-          ? row.composition
-          : row.composition && typeof row.composition === 'object'
-            ? row.composition
-            : null,
         governanceModel: row.governanceModel || '',
         verificationStatus: row.verificationStatus || 'unverified',
         verificationSourceType: row.verificationSourceType || '',
@@ -863,54 +825,6 @@ export default {
       ) return 'Elections'
 
       if (
-        t.includes('parliament') ||
-        t.includes('commons') ||
-        t.includes('lords') ||
-        t.includes('pmqs') ||
-        t.includes('mp ') ||
-        t.includes(' mps') ||
-        t.includes('select committee')
-      ) return 'Parliament'
-
-      if (
-        t.includes('budget') ||
-        t.includes('tax') ||
-        t.includes('economy') ||
-        t.includes('growth') ||
-        t.includes('inflation') ||
-        t.includes('borrowing') ||
-        t.includes('spending')
-      ) return 'Economy'
-
-      if (
-        t.includes('foreign') ||
-        t.includes('ukraine') ||
-        t.includes('russia') ||
-        t.includes('gaza') ||
-        t.includes('israel') ||
-        t.includes('trump') ||
-        t.includes('eu ')
-      ) return 'Foreign Affairs'
-
-      if (
-        t.includes('prime minister') ||
-        t.includes('minister') ||
-        t.includes('cabinet') ||
-        t.includes('chancellor') ||
-        t.includes('home secretary') ||
-        t.includes('government') ||
-        t.includes('no 10') ||
-        t.includes('downing street')
-      ) return 'Government'
-
-      if (
-        t.includes('campaign') ||
-        t.includes('candidate') ||
-        t.includes('manifesto') ||
-        t.includes('leaflet')
-      ) return 'Campaign'
-
-      if (
         t.includes('labour') ||
         t.includes('conservative') ||
         t.includes('reform') ||
@@ -922,6 +836,8 @@ export default {
         t.includes('farage') ||
         t.includes('starmer') ||
         t.includes('badenoch') ||
+        t.includes('minister') ||
+        t.includes('cabinet') ||
         t.includes('mp')
       ) return 'Party'
 
@@ -1027,7 +943,7 @@ export default {
       if (combined.includes('death plans')) score -= 3
       if (textMatchesAny(combined, CIVIC_BUT_NOT_NECESSARILY_POLITICAL_TERMS)) score -= 2
 
-      if (actorMatches === 0 && institutionMatches === 0 && hubPolicyMatches === 0) return null
+      if (actorMatches === 0 && institutionMatches === 0) return null
 
       if (
         hostname === 'bbc.co.uk' &&
@@ -1042,7 +958,6 @@ export default {
       return {
         title,
         source: titleCase(article?.source?.name || article.source || ''),
-        description,
         publishedAt: article.publishedAt || null,
         url,
         tag: inferNewsTag(title),
@@ -1059,7 +974,6 @@ export default {
       return {
         title: scored.title,
         source: scored.source,
-        description: scored.description,
         publishedAt: scored.publishedAt,
         url: scored.url,
         tag: scored.tag,
@@ -1067,21 +981,8 @@ export default {
       }
     }
 
-    function newsTitleKey(title) {
-      return String(title || '')
-        .toLowerCase()
-        .replace(/['"]/g, '')
-        .replace(/\b(live|latest|breaking|updates?|uk|politics|says|said|after|over|amid)\b/g, ' ')
-        .replace(/[^a-z0-9]+/g, ' ')
-        .trim()
-        .split(' ')
-        .slice(0, 12)
-        .join(' ')
-    }
-
     function dedupeNewsItems(items) {
       const seen = new Set()
-      const seenTitles = new Set()
       const out = []
 
       for (const item of items || []) {
@@ -1092,11 +993,9 @@ export default {
           .split(' ')
           .slice(0, 10)
           .join(' ')
-        const titleKey = newsTitleKey(item.title)
 
-        if (!key || seen.has(key) || (titleKey && seenTitles.has(titleKey))) continue
+        if (!key || seen.has(key)) continue
         seen.add(key)
-        if (titleKey) seenTitles.add(titleKey)
         out.push(item)
       }
 
@@ -1242,7 +1141,6 @@ export default {
           return {
             title,
             source: 'BBC News',
-            description,
             publishedAt: !Number.isNaN(publishedAtTs)
               ? new Date(publishedAtTs).toISOString()
               : new Date().toISOString(),
@@ -1289,7 +1187,6 @@ export default {
           return {
             title,
             source: 'Sky News',
-            description,
             publishedAt,
             url,
             tag: inferNewsTag(title),
@@ -1356,7 +1253,6 @@ export default {
             return {
               title,
               source: 'The Guardian',
-              description,
               publishedAt,
               url,
               tag: inferNewsTag(title),
@@ -1369,94 +1265,14 @@ export default {
       }
     }
 
-    const NEWS_RSS_SOURCES = [
-      {
-        name: 'Financial Times',
-        urls: [
-          'https://www.ft.com/uk-politics?format=rss',
-          'https://www.ft.com/world/uk?format=rss',
-        ],
-        minScore: 4,
-      },
-      {
-        name: 'GB News',
-        urls: [
-          'https://www.gbnews.com/politics.rss',
-          'https://www.gbnews.com/feeds/news.xml',
-        ],
-        minScore: 4,
-      },
-      {
-        name: 'Daily Mail',
-        urls: [
-          'https://www.dailymail.co.uk/news/index.rss',
-        ],
-        minScore: 5,
-      },
-      {
-        name: 'Daily Express',
-        urls: [
-          'https://www.express.co.uk/news/politics/rss',
-        ],
-        minScore: 4,
-      },
-      {
-        name: 'The Telegraph',
-        urls: [
-          'https://www.telegraph.co.uk/politics/rss.xml',
-        ],
-        minScore: 4,
-      },
-    ]
-
-    async function fetchRssNewsSource(sourceConfig) {
-      for (const feedUrl of sourceConfig.urls || []) {
-        const xml = await fetchText(feedUrl)
-        if (!xml) continue
-
-        const items = parseRssItems(xml, sourceConfig.name)
-          .map((item) => {
-            const normalized = normalizeNewsItem(item)
-            if (!normalized) return null
-            if ((normalized.score || 0) < (sourceConfig.minScore || 3)) return null
-            return normalized
-          })
-          .filter(Boolean)
-
-        if (items.length) return items
-      }
-
-      return []
-    }
-
-    function buildNewsMeta(items = [], fetchedAt = new Date().toISOString()) {
-      const sourceNames = [...new Set((items || []).map((item) => item.source).filter(Boolean))]
-      const latestPublishedAt = items?.[0]?.publishedAt || null
-
-      return {
-        updatedAt: fetchedAt,
-        fetchedAt,
-        storyCount: Array.isArray(items) ? items.length : 0,
-        sourceCount: sourceNames.length,
-        sources: sourceNames,
-        latestPublishedAt,
-        latestHeadline: items?.[0]?.title || '',
-        headlines: (items || []).slice(0, 3).map((item) => item.title).filter(Boolean),
-        coverageNote: 'Live RSS/API politics feed with per-source balancing and duplicate suppression.',
-      }
-    }
-
     async function fetchLiveNews(env) {
       const now = Date.now()
 
-      const sourceResults = await Promise.all([
-        fetchBbcNews(),
-        fetchGuardianNews(env),
-        fetchSkyNews(),
-        ...NEWS_RSS_SOURCES.map((sourceConfig) => fetchRssNewsSource(sourceConfig)),
-      ])
+      const bbcItems = await fetchBbcNews()
+      const guardianItems = await fetchGuardianNews(env)
+      const skyItems = await fetchSkyNews()
 
-      const ranked = sourceResults.flat()
+      const ranked = [...bbcItems, ...guardianItems, ...skyItems]
         .sort((a, b) => {
           const aTime = new Date(a.publishedAt || 0).getTime()
           const bTime = new Date(b.publishedAt || 0).getTime()
@@ -1472,7 +1288,7 @@ export default {
         })
 
       const deduped = dedupeNewsItems(ranked)
-      const balanced = capNewsItemsBySource(deduped, 3, 18)
+      const balanced = capNewsItemsBySource(deduped, 3, 12)
 
       return balanced.map(({ score, ...item }) => item)
     }
@@ -1487,17 +1303,11 @@ export default {
       return (Date.now() - ts) < maxAgeMs
     }
 
-    async function getNewsPayload() {
+    async function getNewsItems() {
       const hasContent = await tableExists('content')
 
       if (!hasContent) {
-        const fetchedAt = new Date().toISOString()
-        const items = await fetchLiveNews(env)
-        return {
-          fetchedAt,
-          items,
-          meta: buildNewsMeta(items, fetchedAt),
-        }
+        return await fetchLiveNews(env)
       }
 
       const cached = await loadContentSectionRow(NEWS_CACHE_SECTION)
@@ -1508,33 +1318,17 @@ export default {
         cached.data.items.length > 0 &&
         isFreshEnough(cached.data.fetchedAt || cached.updated_at)
       ) {
-        const fetchedAt = cached.data.fetchedAt || cached.updated_at || new Date().toISOString()
-        return {
-          ...cached.data,
-          fetchedAt,
-          items: cached.data.items,
-          meta: {
-            ...buildNewsMeta(cached.data.items, fetchedAt),
-            ...(cached.data.meta || {}),
-          },
-        }
+        return cached.data.items
       }
 
       const items = await fetchLiveNews(env)
-      const fetchedAt = new Date().toISOString()
       const payload = {
-        fetchedAt,
+        fetchedAt: new Date().toISOString(),
         items,
-        meta: buildNewsMeta(items, fetchedAt),
       }
 
       await saveContentSection(NEWS_CACHE_SECTION, payload)
-      return payload
-    }
-
-    async function getNewsItems() {
-      const payload = await getNewsPayload()
-      return Array.isArray(payload?.items) ? payload.items : []
+      return items
     }
 
     async function saveContentSection(section, payload) {
@@ -1678,8 +1472,8 @@ export default {
         return jsonResponse({ items })
       }
       if (request.method === 'GET' && url.pathname === '/api/news') {
-        const payload = await getNewsPayload()
-        return jsonResponse(payload)
+        const items = await getNewsItems()
+        return jsonResponse({ items })
       }
 
       if (request.method === 'GET' && url.pathname === '/api/parliament-video') {
@@ -2270,18 +2064,13 @@ export default {
         const trends = await loadContentSection('trends')
         const betting = await loadContentSection('betting')
         const byElections = await loadContentSection('byElections')
-        const migration = await loadMigrationData()
+        const migration = await loadContentSection('migration')
         const milestones = await loadContentSection('milestones')
         const pollsData = await loadContentSection('pollsData')
         const ingestStatus = await loadContentSection('ingestStatus')
         const demographics = await loadContentSection('demographics')
-        const policyRecords = await loadContentSection('policyRecords')
-        const policyTaxonomy = await loadContentSection('policyTaxonomy')
-        const policyDelivery = await loadContentSection('policyDelivery')
-        const newsPayload = await getNewsPayload()
-        const councilRegistry = await loadContentSection('councilRegistry')
-        const councilStatus = await loadContentSection('councilStatus')
-        const councilEditorial = await loadContentSection('councilEditorial')
+        const newsItems = await loadContentSection('newsItems')
+        const mergedCouncilData = await loadMergedCouncilData()
         const electionsIntelligence = await loadElectionsIntelligence()
 
         const parsedElectionRows = (elections.results || []).map((row) => ({
@@ -2310,14 +2099,10 @@ export default {
           pollsData: pollsData || [],
           ingestStatus: ingestStatus || null,
           demographics: demographics || null,
-          policyRecords: Array.isArray(policyRecords) ? policyRecords : null,
-          policyTaxonomy: policyTaxonomy || null,
-          policyDelivery: Array.isArray(policyDelivery) ? policyDelivery : null,
-          news: newsPayload || { items: [], meta: null },
-          newsItems: Array.isArray(newsPayload?.items) ? newsPayload.items : [],
-          councilRegistry: councilRegistry || [],
-          councilStatus: councilStatus || [],
-          councilEditorial: councilEditorial || [],
+          newsItems: newsItems || [],
+          councilRegistry: mergedCouncilData.registry || [],
+          councilStatus: mergedCouncilData.status || [],
+          councilEditorial: mergedCouncilData.editorial || [],
           electionsIntelligence,
         })
       }
@@ -2402,15 +2187,11 @@ export default {
             'betting',
             'byElections',
             'electionsIntelligence',
-            'migrationData',
             'migration',
             'milestones',
             'pollsData',
             'ingestStatus',
             'demographics',
-            'policyRecords',
-            'policyTaxonomy',
-            'policyDelivery',
             'newsItems',
             'councilRegistry',
             'councilStatus',
@@ -2476,15 +2257,11 @@ export default {
             betting: body.betting || null,
             byElections: body.byElections || null,
             electionsIntelligence: body.electionsIntelligence || null,
-            migrationData: body.migrationData || body.migration || null,
             migration: body.migration || null,
             milestones: body.milestones || [],
             pollsData: body.polls || [],
             ingestStatus: body.ingestStatus || null,
             demographics: body.demographics || null,
-            policyRecords: body.policyRecords || null,
-            policyTaxonomy: body.policyTaxonomy || null,
-            policyDelivery: body.policyDelivery || null,
             newsItems: body.newsItems || [],
             councilRegistry: body.councilRegistry || [],
             councilStatus: body.councilStatus || [],
