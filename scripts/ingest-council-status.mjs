@@ -7,6 +7,32 @@ const API_BASE =
 
 const OPEN_COUNCIL_DATA_URL = 'https://opencouncildata.co.uk/councils.php?model=E&y=0'
 
+const COMPOSITION_SOURCE_URLS = {
+  sheffield: 'https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  lancashire: 'https://council.lancashire.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  'manchester-city': 'https://democracy.manchester.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  liverpool: 'https://liverpool.gov.uk/council/councillors-and-committees/how-the-council-works/',
+  trafford: 'https://democratic.trafford.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  stockport: 'https://www.stockport.gov.uk/councillors',
+  oldham: 'https://committees.oldham.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  rochdale: 'https://www.rochdale.gov.uk/councillors-committees',
+  bolton: 'https://www.bolton.gov.uk/councillors-wards/councillors',
+  bury: 'https://councildecisions.bury.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=0&VW=LIST',
+  salford: 'https://democracy.salford.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  tameside: 'https://tameside.moderngov.co.uk/mgMemberIndex.aspx?FN=PARTY&PIC=0&VW=LIST',
+  wigan: 'https://democracy.wigan.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  sefton: 'https://www.sefton.gov.uk/your-council/councillors-meetings-decisions/',
+  wirral: 'https://www.wirral.gov.uk/councillors-and-committees/councillors',
+  'st-helens': 'https://moderngov.sthelens.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  'cheshire-east': 'https://www.cheshireeast.gov.uk/council_and_democracy/your_council/councillors/council-composition.aspx',
+  'cheshire-west-and-chester': 'https://www.cheshirewestandchester.gov.uk/your-council/councillors-and-committees/political-make-up',
+  warrington: 'https://www.warrington.gov.uk/councillor',
+  halton: 'https://councillors.halton.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
+  blackpool: 'https://www.blackpool.gov.uk/Your-Council/The-Council/Council-make-up/Council-make-up.aspx',
+  'blackburn-with-darwen': 'https://democracy.blackburn.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=0&VW=LIST',
+  preston: 'https://www.preston.gov.uk/media/1737/Political-history-composition-of-the-Council/pdf/Political_History-Composition_of_Council_2025.26.pdf?m=1766577997083',
+}
+
 function formatUkDate(date = new Date()) {
   const day = String(date.getDate()).padStart(2, '0')
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -578,16 +604,26 @@ function normalizeOpenCouncilSlug(value) {
 }
 
 const OPEN_COUNCIL_SLUG_ALIASES = {
-  'manchester-city': ['manchester'],
+  'manchester-city': ['manchester', 'city-of-manchester'],
   liverpool: ['liverpool'],
   trafford: ['trafford'],
   stockport: ['stockport'],
   oldham: ['oldham'],
   rochdale: ['rochdale'],
+  bolton: ['bolton'],
+  bury: ['bury'],
+  salford: ['salford'],
+  tameside: ['tameside'],
+  wigan: ['wigan'],
+  sefton: ['sefton'],
+  wirral: ['wirral'],
+  'st-helens': ['st-helens', 'saint-helens'],
   'cheshire-east': ['cheshire-east'],
   'cheshire-west-and-chester': ['cheshire-west-chester', 'cheshire-west-and-chester'],
   'blackburn-with-darwen': ['blackburn-darwen', 'blackburn-with-darwen'],
   'stockton-on-tees': ['stockton-on-tees', 'stockton'],
+  'kingston-upon-hull': ['hull', 'kingston-upon-hull'],
+  'county-durham': ['durham', 'county-durham'],
 }
 
 function uniqueValues(values = []) {
@@ -706,6 +742,91 @@ function inferOpenCouncilComposition(row, slug, openCouncilMap) {
   return null
 }
 
+
+async function fetchText(url, timeoutMs = 12000) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, {
+      headers: {
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Politiscope/1.0 (+https://politiscope.co.uk)',
+      },
+      signal: controller.signal,
+    })
+    if (!res.ok) return ''
+    return await res.text()
+  } catch {
+    return ''
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+function normalizePartyLabel(value) {
+  const lowered = cleanText(value).toLowerCase()
+  if (!lowered) return ''
+  if (lowered.includes('labour')) return 'Labour'
+  if (lowered.includes('conservative')) return 'Conservative'
+  if (lowered.includes('lib dem') || lowered.includes('liberal democrat')) return 'Lib Dem'
+  if (lowered.includes('green')) return 'Green'
+  if (lowered.includes('reform')) return 'Reform UK'
+  if (lowered.includes('independent')) return 'Independent'
+  if (lowered.includes('resident')) return 'Residents'
+  if (lowered.includes('other')) return 'Other'
+  return cleanText(value)
+}
+
+function inferCompositionSourceUrl(row) {
+  if (COMPOSITION_SOURCE_URLS[row.slug]) return COMPOSITION_SOURCE_URLS[row.slug]
+  const urls = Array.isArray(row?.sourceUrls) ? row.sourceUrls : []
+  const candidate = urls.find((url) => /composition|political|mgmemberindex|memberindex|councillors|party/i.test(cleanText(url)))
+  return candidate || ''
+}
+
+function parseCompositionFromHtml(html) {
+  const source = String(html || '')
+  if (!source) return null
+
+  const rows = []
+  const rowMatches = source.match(/<tr\b[\s\S]*?<\/tr>/gi) || []
+
+  for (const rowHtml of rowMatches) {
+    const cells = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((m) => stripTags(m[1]))
+    if (cells.length < 2) continue
+
+    let party = ''
+    let seats = null
+
+    for (const cell of cells) {
+      if (!party && /[A-Za-z]/.test(cell) && !/party|group|political composition|members/i.test(cell)) {
+        party = normalizePartyLabel(cell)
+      }
+      if (seats == null) {
+        const match = cell.match(/\b(\d{1,3})\b/)
+        if (match) seats = Number(match[1])
+      }
+    }
+
+    if (party && Number.isFinite(seats) && seats > 0) {
+      rows.push({ party, seats })
+    }
+  }
+
+  const merged = new Map()
+  for (const row of rows) {
+    const key = normalizePartyLabel(row.party)
+    if (!key) continue
+    merged.set(key, (merged.get(key) || 0) + row.seats)
+  }
+
+  const normalized = [...merged.entries()]
+    .map(([party, seats]) => ({ party, seats }))
+    .sort((a, b) => b.seats - a.seats)
+
+  return normalized.length ? normalized : null
+}
+
 function validateCouncilStatusRow(row) {
   const errors = []
   if (!row || typeof row !== 'object') return ['Row must be an object']
@@ -764,7 +885,20 @@ async function enrichCouncilStatusRow(row, openCouncilMap = new Map()) {
     }
   }
 
-  return row
+  const compositionUrl = inferCompositionSourceUrl(row)
+  if (!compositionUrl) return row
+
+  const html = await fetchText(compositionUrl)
+  const fallbackComposition = parseCompositionFromHtml(html)
+  if (!fallbackComposition?.length) return row
+
+  return {
+    ...row,
+    composition: fallbackComposition,
+    sourceUrls: uniqueValues([...(Array.isArray(row.sourceUrls) ? row.sourceUrls : []), compositionUrl]),
+    verificationStatus: row.verificationStatus === 'seeded' ? 'verified' : row.verificationStatus,
+    verificationSourceType: row.verificationSourceType || 'official council sources',
+  }
 }
 
 async function importCouncilStatus(councils) {
