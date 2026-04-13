@@ -7,18 +7,6 @@ const API_BASE =
 
 const OPEN_COUNCIL_DATA_URL = 'https://opencouncildata.co.uk/councils.php?model=E&y=0'
 
-const COMPOSITION_SOURCE_URLS = {
-  lancashire: 'https://council.lancashire.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
-  'manchester-city': 'https://democracy.manchester.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
-  liverpool: 'https://liverpool.gov.uk/council/councillors-and-committees/how-the-council-works/',
-  trafford: 'https://democratic.trafford.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
-  stockport: 'https://www.stockport.gov.uk/councillors',
-  oldham: 'https://committees.oldham.gov.uk/mgMemberIndex.aspx?FN=PARTY&PIC=1&VW=TABLE',
-  rochdale: 'https://www.rochdale.gov.uk/councillors-committees',
-  'cheshire-east': 'https://www.cheshireeast.gov.uk/council_and_democracy/your_council/councillors/council-composition.aspx',
-  'cheshire-west-and-chester': 'https://www.cheshirewestandchester.gov.uk/your-council/councillors-and-committees/political-make-up',
-}
-
 function formatUkDate(date = new Date()) {
   const day = String(date.getDate()).padStart(2, '0')
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -566,63 +554,62 @@ const STATUS_OVERRIDES = {
 
 }
 
-function validateCouncilStatusRow(row) {
-  const errors = []
-  if (!row || typeof row !== 'object') return ['Row must be an object']
-  if (!row.name || !String(row.name).trim()) errors.push('Missing name')
-  if (!row.slug || !String(row.slug).trim()) errors.push(`Missing slug for ${row.name || 'unknown council'}`)
-  if (row.nextElectionYear != null && !Number.isFinite(Number(row.nextElectionYear))) errors.push(`Invalid nextElectionYear for ${row.name}`)
-  if (row.seatsTotal != null && !Number.isFinite(Number(row.seatsTotal))) errors.push(`Invalid seatsTotal for ${row.name}`)
-  if (row.seatsUp != null && !Number.isFinite(Number(row.seatsUp))) errors.push(`Invalid seatsUp for ${row.name}`)
-  if (!Array.isArray(row.sourceUrls)) errors.push(`sourceUrls must be an array for ${row.name}`)
-  if (row.administration != null && typeof row.administration !== 'string') errors.push(`administration must be a string for ${row.name}`)
-  if (row.composition != null && !Array.isArray(row.composition) && typeof row.composition !== 'object') errors.push(`composition must be an object or array for ${row.name}`)
-  if (row.lastVerifiedAt && !/^\d{2}-\d{2}-\d{4}$/.test(String(row.lastVerifiedAt))) errors.push(`lastVerifiedAt must be dd-mm-yyyy for ${row.name}`)
-  return errors
-}
-
-function normalizeCouncilStatusRow(row) {
-  const name = String(row.name || '').trim()
-  return {
-    slug: String(row.slug || slugifyCouncilName(name)).trim(),
-    name,
-    electionStatus: row.electionStatus || '',
-    electionMessage: row.electionMessage || '',
-    nextElectionYear: row.nextElectionYear == null || row.nextElectionYear === '' ? null : Number(row.nextElectionYear),
-    cycle: row.cycle || '',
-    seatsTotal: row.seatsTotal == null || row.seatsTotal === '' ? null : Number(row.seatsTotal),
-    seatsUp: row.seatsUp == null || row.seatsUp === '' ? null : Number(row.seatsUp),
-    control: row.control || '',
-    leader: row.leader || '',
-    mayor: row.mayor || '',
-    administration: row.administration || '',
-    composition: Array.isArray(row.composition)
-      ? row.composition
-      : row.composition && typeof row.composition === 'object'
-        ? row.composition
-        : null,
-    governanceModel: row.governanceModel || '',
-    verificationStatus: row.verificationStatus || 'verified',
-    verificationSourceType: row.verificationSourceType || 'seeded from elections.js',
-    lastVerifiedAt: row.lastVerifiedAt || formatUkDate(),
-    sourceUrls: Array.isArray(row.sourceUrls) ? row.sourceUrls : [],
-  }
-}
-
 
 function normalizeOpenCouncilSlug(value) {
   return slugifyCouncilName(
     String(value || '')
+      .toLowerCase()
       .replace(/\bcity of\b/gi, '')
+      .replace(/\bcity\b/gi, '')
       .replace(/\bcouncil\b/gi, '')
       .replace(/\bmetropolitan borough\b/gi, '')
+      .replace(/\bborough council\b/gi, '')
       .replace(/\bborough\b/gi, '')
+      .replace(/\bdistrict council\b/gi, '')
       .replace(/\bdistrict\b/gi, '')
+      .replace(/\bcounty council\b/gi, '')
       .replace(/\bcounty\b/gi, '')
       .replace(/\bunitary authority\b/gi, '')
+      .replace(/\bauthority\b/gi, '')
+      .replace(/\band\b/gi, ' ')
       .replace(/\s+/g, ' ')
       .trim()
   )
+}
+
+const OPEN_COUNCIL_SLUG_ALIASES = {
+  'manchester-city': ['manchester'],
+  liverpool: ['liverpool'],
+  trafford: ['trafford'],
+  stockport: ['stockport'],
+  oldham: ['oldham'],
+  rochdale: ['rochdale'],
+  'cheshire-east': ['cheshire-east'],
+  'cheshire-west-and-chester': ['cheshire-west-chester', 'cheshire-west-and-chester'],
+  'blackburn-with-darwen': ['blackburn-darwen', 'blackburn-with-darwen'],
+  'stockton-on-tees': ['stockton-on-tees', 'stockton'],
+}
+
+function uniqueValues(values = []) {
+  return [...new Set((values || []).map((value) => cleanText(value)).filter(Boolean))]
+}
+
+function decodeHtmlEntities(value) {
+  return String(value || '')
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+}
+
+function stripTags(value) {
+  return decodeHtmlEntities(String(value || '').replace(/<[^>]*>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 function parseOpenCouncilNumber(value) {
@@ -687,7 +674,6 @@ async function fetchOpenCouncilCompositionIndex(timeoutMs = 15000) {
 
       const slug = normalizeOpenCouncilSlug(councilName)
       if (!slug) continue
-
       bySlug.set(slug, composition.sort((a, b) => b.seats - a.seats))
     }
 
@@ -703,8 +689,11 @@ function inferOpenCouncilComposition(row, slug, openCouncilMap) {
   if (!(openCouncilMap instanceof Map) || !openCouncilMap.size) return null
   if (openCouncilMap.has(slug)) return openCouncilMap.get(slug)
 
+  const aliasKeys = Array.isArray(OPEN_COUNCIL_SLUG_ALIASES?.[slug]) ? OPEN_COUNCIL_SLUG_ALIASES[slug] : []
   const altKeys = [
     slug,
+    ...aliasKeys,
+    slug.replace(/-city$/i, ''),
     normalizeOpenCouncilSlug(row?.name),
     normalizeOpenCouncilSlug(String(row?.name || '').replace(/^city of\s+/i, '')),
     normalizeOpenCouncilSlug(String(row?.name || '').replace(/^the\s+/i, '')),
@@ -717,116 +706,47 @@ function inferOpenCouncilComposition(row, slug, openCouncilMap) {
   return null
 }
 
-function uniqueValues(values = []) {
-  return [...new Set((values || []).map((value) => cleanText(value)).filter(Boolean))]
+function validateCouncilStatusRow(row) {
+  const errors = []
+  if (!row || typeof row !== 'object') return ['Row must be an object']
+  if (!row.name || !String(row.name).trim()) errors.push('Missing name')
+  if (!row.slug || !String(row.slug).trim()) errors.push(`Missing slug for ${row.name || 'unknown council'}`)
+  if (row.nextElectionYear != null && !Number.isFinite(Number(row.nextElectionYear))) errors.push(`Invalid nextElectionYear for ${row.name}`)
+  if (row.seatsTotal != null && !Number.isFinite(Number(row.seatsTotal))) errors.push(`Invalid seatsTotal for ${row.name}`)
+  if (row.seatsUp != null && !Number.isFinite(Number(row.seatsUp))) errors.push(`Invalid seatsUp for ${row.name}`)
+  if (!Array.isArray(row.sourceUrls)) errors.push(`sourceUrls must be an array for ${row.name}`)
+  if (row.administration != null && typeof row.administration !== 'string') errors.push(`administration must be a string for ${row.name}`)
+  if (row.composition != null && !Array.isArray(row.composition) && typeof row.composition !== 'object') errors.push(`composition must be an object or array for ${row.name}`)
+  if (row.lastVerifiedAt && !/^\d{2}-\d{2}-\d{4}$/.test(String(row.lastVerifiedAt))) errors.push(`lastVerifiedAt must be dd-mm-yyyy for ${row.name}`)
+  return errors
 }
 
-function decodeHtmlEntities(value) {
-  return String(value || '')
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-}
-
-function stripTags(value) {
-  return decodeHtmlEntities(String(value || '').replace(/<[^>]*>/g, ' '))
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function normalizePartyLabel(value) {
-  const text = cleanText(value).toLowerCase()
-  if (!text) return ''
-  if (text.includes('labour')) return 'Labour'
-  if (text.includes('conservative')) return 'Conservative'
-  if (text.includes('lib dem') || text.includes('liberal democrat')) return 'Lib Dem'
-  if (text.includes('green')) return 'Green'
-  if (text.includes('reform')) return 'Reform UK'
-  if (text.includes('restore britain')) return 'Restore Britain'
-  if (text.includes('independent')) return 'Independent'
-  if (text === 'ind') return 'Independent'
-  if (text.includes('other')) return 'Other'
-  if (text.includes('resident')) return 'Residents'
-  return cleanText(value)
-}
-
-function looksLikeCompositionUrl(url) {
-  return /composition|political|mgmemberindex|memberindex|councillors|party/i.test(cleanText(url))
-}
-
-function inferCompositionSourceUrl(row) {
-  if (COMPOSITION_SOURCE_URLS[row.slug]) return COMPOSITION_SOURCE_URLS[row.slug]
-  const sourceUrl = (Array.isArray(row.sourceUrls) ? row.sourceUrls : []).find(looksLikeCompositionUrl)
-  return sourceUrl || ''
-}
-
-async function fetchText(url, timeoutMs = 12000) {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
-  try {
-    const res = await fetch(url, {
-      headers: {
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'User-Agent': 'Politiscope/1.0 (+https://politiscope.co.uk)',
-      },
-      signal: controller.signal,
-    })
-    if (!res.ok) return ''
-    return await res.text()
-  } catch {
-    return ''
-  } finally {
-    clearTimeout(timeout)
+function normalizeCouncilStatusRow(row) {
+  const name = String(row.name || '').trim()
+  return {
+    slug: String(row.slug || slugifyCouncilName(name)).trim(),
+    name,
+    electionStatus: row.electionStatus || '',
+    electionMessage: row.electionMessage || '',
+    nextElectionYear: row.nextElectionYear == null || row.nextElectionYear === '' ? null : Number(row.nextElectionYear),
+    cycle: row.cycle || '',
+    seatsTotal: row.seatsTotal == null || row.seatsTotal === '' ? null : Number(row.seatsTotal),
+    seatsUp: row.seatsUp == null || row.seatsUp === '' ? null : Number(row.seatsUp),
+    control: row.control || '',
+    leader: row.leader || '',
+    mayor: row.mayor || '',
+    administration: row.administration || '',
+    composition: Array.isArray(row.composition)
+      ? row.composition
+      : row.composition && typeof row.composition === 'object'
+        ? row.composition
+        : null,
+    governanceModel: row.governanceModel || '',
+    verificationStatus: row.verificationStatus || 'verified',
+    verificationSourceType: row.verificationSourceType || 'seeded from elections.js',
+    lastVerifiedAt: row.lastVerifiedAt || formatUkDate(),
+    sourceUrls: Array.isArray(row.sourceUrls) ? row.sourceUrls : [],
   }
-}
-
-function parseCompositionFromHtml(html) {
-  const source = String(html || '')
-  if (!source) return null
-
-  const rows = []
-  const rowMatches = source.match(/<tr\b[\s\S]*?<\/tr>/gi) || []
-
-  for (const rowHtml of rowMatches) {
-    const cellMatches = [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)]
-    const cells = cellMatches.map((m) => stripTags(m[1]))
-    if (cells.length < 2) continue
-
-    let party = ''
-    let seats = null
-
-    for (const cell of cells) {
-      if (!party && /[A-Za-z]/.test(cell) && !/party|group|political composition/i.test(cell)) {
-        party = normalizePartyLabel(cell)
-      }
-      if (seats == null) {
-        const numMatch = cell.match(/\b(\d{1,3})\b/)
-        if (numMatch) seats = Number(numMatch[1])
-      }
-    }
-
-    if (party && Number.isFinite(seats) && seats > 0) {
-      rows.push({ party, seats })
-    }
-  }
-
-  const merged = new Map()
-  for (const row of rows) {
-    const key = normalizePartyLabel(row.party)
-    if (!key) continue
-    merged.set(key, (merged.get(key) || 0) + row.seats)
-  }
-
-  const normalized = [...merged.entries()]
-    .map(([party, seats]) => ({ party, seats }))
-    .sort((a, b) => b.seats - a.seats)
-
-  return normalized.length ? normalized : null
 }
 
 async function enrichCouncilStatusRow(row, openCouncilMap = new Map()) {
@@ -844,19 +764,7 @@ async function enrichCouncilStatusRow(row, openCouncilMap = new Map()) {
     }
   }
 
-  const compositionUrl = inferCompositionSourceUrl(row)
-  if (!compositionUrl) return row
-
-  const html = await fetchText(compositionUrl)
-  const composition = parseCompositionFromHtml(html)
-
-  return {
-    ...row,
-    composition: composition || row.composition || null,
-    sourceUrls: uniqueValues([...(Array.isArray(row.sourceUrls) ? row.sourceUrls : []), compositionUrl]),
-    verificationStatus: composition ? (row.verificationStatus === 'seeded' ? 'verified' : row.verificationStatus) : row.verificationStatus,
-    verificationSourceType: composition ? (row.verificationSourceType || 'official council sources') : row.verificationSourceType,
-  }
+  return row
 }
 
 async function importCouncilStatus(councils) {
@@ -995,72 +903,6 @@ function inferVerificationSourceType(row, slug) {
   return 'seeded from elections.js'
 }
 
-function inferAdministration(row, slug, profile = {}) {
-  const override = STATUS_OVERRIDES[slug]
-  if (cleanText(override?.administration)) return cleanText(override.administration)
-  if (cleanText(row?.administration)) return cleanText(row.administration)
-  if (cleanText(profile?.administration)) return cleanText(profile.administration)
-
-  const control = cleanText(inferControl(row, slug, profile))
-  if (!control) return ''
-  if (control === 'NOC') return 'No overall control'
-  if (control === 'Split control') return 'Split control'
-  if (/^Lab$/i.test(control)) return 'Labour administration'
-  if (/^Con$/i.test(control)) return 'Conservative administration'
-  if (/^LD$/i.test(control)) return 'Liberal Democrat administration'
-  if (/^Grn$/i.test(control)) return 'Green administration'
-  if (/^Reform$/i.test(control)) return 'Reform UK administration'
-  if (/^Ind$/i.test(control)) return 'Independent administration'
-  if (/^SNP$/i.test(control)) return 'SNP administration'
-  if (/^PC$/i.test(control)) return 'Plaid Cymru administration'
-  return `${control} administration`
-}
-
-function inferCompositionFromSeats(seats) {
-  if (!seats || typeof seats !== 'object' || Array.isArray(seats)) return null
-
-  const PARTY_LABELS = {
-    lab: 'Labour',
-    con: 'Conservative',
-    ld: 'Lib Dem',
-    grn: 'Green',
-    ref: 'Reform UK',
-    reform: 'Reform UK',
-    rb: 'Restore Britain',
-    snp: 'SNP',
-    pc: 'Plaid Cymru',
-    ind: 'Independent',
-    oth: 'Other',
-    other: 'Other',
-  }
-
-  const rows = Object.entries(seats)
-    .map(([key, value]) => ({ key, value }))
-    .filter(({ key, value }) => key !== 'total' && Number.isFinite(Number(value)) && Number(value) > 0)
-    .map(({ key, value }) => ({
-      party: PARTY_LABELS[String(key).toLowerCase()] || String(key),
-      seats: Number(value),
-    }))
-    .sort((a, b) => b.seats - a.seats)
-
-  return rows.length ? rows : null
-}
-
-function inferComposition(row, slug, profile = {}) {
-  const override = STATUS_OVERRIDES[slug]
-  if (override?.composition && (Array.isArray(override.composition) || typeof override.composition === 'object')) return override.composition
-  if (row?.composition && (Array.isArray(row.composition) || typeof row.composition === 'object')) return row.composition
-  if (profile?.composition && (Array.isArray(profile.composition) || typeof profile.composition === 'object')) return profile.composition
-
-  const fromProfileSeats = inferCompositionFromSeats(profile?.seats)
-  if (fromProfileSeats) return fromProfileSeats
-
-  const fromRowSeats = inferCompositionFromSeats(row?.seats)
-  if (fromRowSeats) return fromRowSeats
-
-  return null
-}
-
 function buildCouncilStatusRows() {
   const councils = Array.isArray(LOCAL_ELECTIONS?.councils) ? LOCAL_ELECTIONS.councils : []
   const seen = new Set()
@@ -1092,8 +934,8 @@ function buildCouncilStatusRows() {
       control: inferControl(row, slug, profile),
       leader: inferLeader(row, slug, profile),
       mayor: inferMayor(row, slug, profile),
-      administration: inferAdministration(row, slug, profile),
-      composition: inferComposition(row, slug, profile),
+      administration: '',
+      composition: null,
       governanceModel: inferGovernanceModel(row, slug, profile),
       verificationStatus: inferVerificationStatus(row, slug),
       verificationSourceType: inferVerificationSourceType(row, slug),
