@@ -11,116 +11,163 @@ const TABS = [
   { key: 'live', label: 'Parliament Live' },
 ]
 
-const KEY_DATES = [
-  {
-    date: '7 May 2026',
-    label: 'Local & Devolved Elections',
-    color: '#E4003B',
-    desc: 'English council elections, Scottish Parliament, Senedd, mayoral elections across England.',
-  },
-  {
-    date: 'May 2026',
-    label: 'Horsham By-Election (TBC)',
-    color: '#0087DC',
-    desc: 'Conservative defending a 3,027 majority. Three-way fight: LD, Reform and Con all competitive.',
-  },
-  {
-    date: 'Every Wednesday',
-    label: 'PMQs · 12:00–12:30',
-    color: '#012169',
-    desc: "Prime Minister's Questions. The most watched event in UK politics. Commons chamber, Sky News and BBC Parliament live.",
-  },
-  {
-    date: 'Every Tuesday',
-    label: 'Cabinet Meeting',
-    color: '#012169',
-    desc: 'Senior government ministers meet to discuss policy. Rarely reported in real time but leaks often follow.',
-  },
-  {
-    date: 'Jun 2026',
-    label: 'NATO Summit',
-    color: '#1a4a9e',
-    desc: 'Starmer will face scrutiny over UK defence spending pledges and US-UK relations after Iran strike fallout.',
-  },
-  {
-    date: 'Autumn 2026',
-    label: 'Spending Review',
-    color: '#02A95B',
-    desc: 'Government sets departmental budgets for the Parliament. Will define whether Labour can fund NHS and housing pledges.',
-  },
-  {
-    date: 'Before May 2029',
-    label: 'Next General Election',
-    color: '#12B7D4',
-    desc: 'Must be held by 2 May 2029. Electoral Calculus currently projects a Reform UK majority if held today.',
-  },
-]
 
-const HOW_WORKS = [
-  {
-    title: 'The House of Commons',
-    icon: '🏛',
-    body: 'The Commons has 650 elected MPs. The party (or coalition) with the most MPs forms the government. The Prime Minister is whoever commands a majority in the Commons — not directly elected by the public. MPs debate and vote on laws (Bills). The government controls the timetable, meaning it decides what gets debated.',
-  },
-  {
-    title: 'The House of Lords',
-    icon: '🎩',
-    body: 'The Lords has around 800 unelected members — life peers appointed by the Crown on advice of the PM, 26 Church of England bishops, and 92 hereditary peers. Lords can delay and amend legislation but cannot permanently block it. The Commons always has the final word under the Parliament Acts 1911 and 1949.',
-  },
-  {
-    title: 'How a Bill becomes Law',
-    icon: '📜',
-    body: "1. First Reading — the Bill is introduced, no debate.\n2. Second Reading — the main debate on the Bill's principles.\n3. Committee Stage — line-by-line scrutiny, amendments proposed.\n4. Report Stage — further amendments considered.\n5. Third Reading — final vote in the Commons.\n6. Same process repeated in the Lords.\n7. Royal Assent — the monarch formally signs the Bill into law.",
-  },
-  {
-    title: "PMQs — Prime Minister's Questions",
-    icon: '🎤',
-    body: 'Every Wednesday from 12:00–12:30 when Parliament is sitting. The Leader of the Opposition gets 6 questions. Any MP can ask a question. The PM answers without advance notice of questions. It is broadcast live on BBC Parliament and Parliament TV. It is highly theatrical and rarely changes policy — but it shapes the news cycle.',
-  },
-  {
-    title: 'The Opposition',
-    icon: '⚔️',
-    body: `The largest party not in government forms "His Majesty's Official Opposition." Their leader becomes Leader of the Opposition and has a salary and official residence (Chevening). The Shadow Cabinet mirrors the Cabinet, with each Shadow Minister scrutinising their counterpart. Reform UK are now the Official Opposition in Parliament.`,
-  },
-  {
-    title: 'Confidence Votes',
-    icon: '⚠️',
-    body: 'If a government loses a vote of no confidence, the Prime Minister must either resign or call a general election. The Fixed Term Parliaments Act 2011 was repealed in 2022, so the PM can now call an early election at any time — but must advise the King, who grants or refuses dissolution. In practice, dissolution is always granted.',
-  },
-]
+const FALLBACK_PARLIAMENT_FACTS = {
+  verifiedAt: '2026-04-14',
+  sourceType: 'Official UK Parliament / Electoral Commission',
+  governmentParty: 'Labour',
+  primeMinister: 'Keir Starmer',
+  officialOppositionParty: 'Conservative',
+  leaderOfOpposition: 'Kemi Badenoch',
+  houseOfCommonsSeats: 650,
+  pmqsDay: 'Every Wednesday',
+  pmqsTime: '12:00–12:30',
+  oppositionSourceUrl: 'https://members.parliament.uk/opposition/cabinet',
+  pmqsSourceUrl: 'https://www.parliament.uk/site-information/glossary/prime-ministers-question-time/',
+  nextGeneralElectionDeadline: '2029-08-15',
+  nextGeneralElectionSourceUrl: 'https://www.electoralcommission.org.uk/about-us/our-plans-priorities-and-spending/corporate-plan-2025/6-2029/30/our-future-priorities',
+}
 
-const VOTING_SYSTEM = [
-  {
-    title: 'First Past the Post (FPTP)',
-    icon: '🗳',
-    body: "The UK uses FPTP for Westminster elections. Each constituency elects one MP — whoever gets the most votes wins, even if that's only 30%. There is no minimum threshold. This massively favours large established parties. In 2024, Labour won 63% of seats with just 34% of votes. Reform UK won 4 seats with 14% of votes — fewer seats than the Lib Dems who got 12%.",
-  },
-  {
-    title: 'Why is this controversial?',
-    icon: '⚖️',
-    body: `FPTP creates "safe seats" where millions of votes are effectively wasted. It rewards geographically concentrated support (SNP, Lib Dems) over nationally spread support (Reform, Greens). Tactical voting becomes rational — voting for your second choice to keep out your least-preferred party. Nearly 70% of votes in 2024 did not directly elect an MP.`,
-  },
-  {
-    title: 'Proportional Representation',
-    icon: '📊',
-    body: "PR systems allocate seats in proportion to votes received. Scotland uses the Additional Member System (AMS) for Holyrood — a mix of FPTP and regional lists. The Senedd (Wales) uses d'Hondt PR. European Parliament elections used PR until Brexit. Under PR in 2024, Reform UK would have won around 100 seats, Greens 50+, Labour around 220.",
-  },
-  {
-    title: 'How Swing is Calculated',
-    icon: '🔄',
-    body: 'Swing measures how much support has shifted between parties. The traditional "two-party swing" (Butler swing) calculates: (Party A gain + Party B loss) ÷ 2. Example: if Reform gains 10pts and Labour loses 10pts, the swing is 10pts Reform. Modern MRP models use multilevel regression to project seats from national polling.',
-  },
-  {
-    title: 'Tactical Voting',
-    icon: '🎯',
-    body: `In FPTP, voting for a candidate who cannot win in your constituency is often called a "wasted vote." Many voters choose the most viable party that shares their broad preferences. In 2024, co-ordinated tactical voting by "stop Reform" or "stop Labour" voters significantly altered results in marginal seats. Apps like Best for Britain publish tactical voting guides.`,
-  },
-  {
-    title: 'Electoral Calculus & MRP',
-    icon: '🤖',
-    body: 'Multi-level Regression and Poststratification (MRP) uses national polling data plus demographic and past-election data to model how each constituency might vote. Electoral Calculus currently projects Reform UK 335 seats — a majority. These projections are more accurate than uniform national swing models but still carry wide uncertainty ranges 3 years before an election.',
-  },
-]
+function buildFallbackParliament(meta = {}) {
+  const facts = { ...FALLBACK_PARLIAMENT_FACTS }
+  const nextElectionDate = meta?.nextElectionDate || '2026-05-07'
+  const nextElectionLabel = meta?.nextElectionLabel || 'Local + Devolved Elections'
+
+  return {
+    facts,
+    keyDates: [
+      {
+        date: nextElectionDate,
+        label: nextElectionLabel,
+        color: '#E4003B',
+        desc: 'Major scheduled election day across England, Scotland and Wales.',
+      },
+      {
+        date: facts.pmqsDay,
+        label: `PMQs · ${facts.pmqsTime}`,
+        color: '#012169',
+        desc: "Prime Minister's Questions in the Commons chamber when Parliament is sitting.",
+      },
+      {
+        date: facts.nextGeneralElectionDeadline,
+        label: 'Latest possible next General Election',
+        color: '#12B7D4',
+        desc: 'The next UK Parliamentary general election must be held no later than 15 August 2029.',
+      },
+    ],
+    howWorks: [
+      {
+        title: 'The House of Commons',
+        icon: '🏛',
+        body: `The Commons has ${facts.houseOfCommonsSeats} elected MPs. The party or coalition that can command a majority in the Commons forms the government. The Prime Minister is the person who can command that majority — not a directly elected president.`,
+      },
+      {
+        title: 'The House of Lords',
+        icon: '🎩',
+        body: 'The Lords is the revising chamber. It can scrutinise, amend and delay legislation, but the Commons has the final say.',
+      },
+      {
+        title: 'How a Bill becomes Law',
+        icon: '📜',
+        body: "1. First Reading — the Bill is introduced, no debate.\n2. Second Reading — the main debate on the Bill's principles.\n3. Committee Stage — line-by-line scrutiny, amendments proposed.\n4. Report Stage — further amendments considered.\n5. Third Reading — final vote in the Commons.\n6. Same process repeated in the Lords.\n7. Royal Assent — the monarch formally signs the Bill into law.",
+      },
+      {
+        title: "PMQs — Prime Minister's Questions",
+        icon: '🎤',
+        body: `${facts.pmqsDay} from ${facts.pmqsTime} when Parliament is sitting. The Leader of the Opposition gets 6 questions. Any MP can ask a question. It shapes the media cycle far more often than it changes policy.`,
+      },
+      {
+        title: 'The Opposition',
+        icon: '⚔️',
+        body: `The largest party not in government forms His Majesty's Official Opposition. Their leader becomes Leader of the Opposition and leads the Shadow Cabinet. The current Official Opposition is the ${facts.officialOppositionParty}, led by ${facts.leaderOfOpposition}.`,
+      },
+      {
+        title: 'Confidence and Dissolution',
+        icon: '⚠️',
+        body: 'If a government loses the confidence of the House of Commons, the Prime Minister may have to resign or seek a general election. Under the Dissolution and Calling of Parliament Act 2022, general elections must be no more than five years apart.',
+      },
+    ],
+    votingSystem: [
+      {
+        title: 'First Past the Post (FPTP)',
+        icon: '🗳',
+        body: "Each constituency elects one MP, and the candidate with the most votes wins. There is no proportional correction, so seat totals can diverge sharply from vote share.",
+      },
+      {
+        title: 'Why is this controversial?',
+        icon: '⚖️',
+        body: 'FPTP rewards concentrated support, creates safe seats and encourages tactical voting. It can produce strong Commons majorities from relatively modest national vote shares.',
+      },
+      {
+        title: 'Proportional Representation',
+        icon: '📊',
+        body: 'PR systems allocate seats more closely in line with votes cast. Westminster does not use PR, but other UK elections do use more proportional systems.',
+      },
+      {
+        title: 'How Swing is Calculated',
+        icon: '🔄',
+        body: 'Traditional two-party swing is calculated as: (Party A gain + Party B loss) ÷ 2. Modern models often combine polling, demographics and constituency history instead.',
+      },
+      {
+        title: 'Tactical Voting',
+        icon: '🎯',
+        body: 'In FPTP, voters often back the most viable candidate who can beat the party they most want to stop, rather than simply voting for their first preference.',
+      },
+      {
+        title: 'MRP and seat models',
+        icon: '🤖',
+        body: 'MRP uses polling plus demographic and geographic data to estimate constituency outcomes. It is usually stronger than a simple uniform national swing model, but it is still probabilistic rather than certain.',
+      },
+    ],
+    sittingPattern: [
+      { day: 'Monday', commons: '14:30–22:30' },
+      { day: 'Tuesday', commons: '11:30–19:00' },
+      { day: 'Wednesday', commons: '11:30–19:00 · PMQs 12:00' },
+      { day: 'Thursday', commons: '09:30–17:30' },
+      { day: 'Friday', commons: '09:30–14:30 (when sitting)' },
+    ],
+    liveLinks: [
+      {
+        title: 'Watch House of Commons',
+        desc: 'Open the official Commons live page in a full browser tab.',
+        color: '#C8102E',
+        cta: 'Open Commons',
+        emoji: '🏛',
+        url: 'https://www.parliamentlive.tv/Commons',
+      },
+      {
+        title: 'Watch UK Parliament on YouTube',
+        desc: 'Use the official YouTube channel for live streams, replays and clips.',
+        color: '#E4003B',
+        cta: 'Open YouTube channel',
+        emoji: '▶️',
+        url: 'https://www.youtube.com/@UKParliament',
+      },
+    ],
+  }
+}
+
+function mergeParliamentData(parliament = {}, meta = {}) {
+  const fallback = buildFallbackParliament(meta)
+  return {
+    ...fallback,
+    ...parliament,
+    facts: { ...fallback.facts, ...(parliament?.facts || {}) },
+    keyDates: Array.isArray(parliament?.keyDates) && parliament.keyDates.length ? parliament.keyDates : fallback.keyDates,
+    howWorks: Array.isArray(parliament?.howWorks) && parliament.howWorks.length ? parliament.howWorks : fallback.howWorks,
+    votingSystem: Array.isArray(parliament?.votingSystem) && parliament.votingSystem.length ? parliament.votingSystem : fallback.votingSystem,
+    sittingPattern: Array.isArray(parliament?.sittingPattern) && parliament.sittingPattern.length ? parliament.sittingPattern : fallback.sittingPattern,
+    liveLinks: Array.isArray(parliament?.liveLinks) && parliament.liveLinks.length ? parliament.liveLinks : fallback.liveLinks,
+  }
+}
+
+function getOppositionMetaLine(facts = {}) {
+  const source = facts?.officialOppositionParty && facts?.leaderOfOpposition
+    ? `${facts.officialOppositionParty} · ${facts.leaderOfOpposition}`
+    : ''
+  const verified = facts?.verifiedAt ? `Verified ${facts.verifiedAt}` : ''
+  return [source, verified].filter(Boolean).join(' · ')
+}
 
 function Badge({ children, color, subtle = false }) {
   return (
@@ -164,7 +211,7 @@ function SectionLabel({ children, T }) {
   )
 }
 
-function ScrollAwayHeader({ T }) {
+function ScrollAwayHeader({ T, facts = {} }) {
   return (
     <div style={{ padding: '8px 16px 10px' }}>
       <div
@@ -177,7 +224,7 @@ function ScrollAwayHeader({ T }) {
         }}
       >
         <Badge color={T.pr}>Commons</Badge>
-        <Badge color={T.tl} subtle>Lords · live proceedings</Badge>
+        <Badge color={T.tl} subtle>{facts?.officialOppositionParty ? `Opposition · ${facts.officialOppositionParty}` : 'Lords · live proceedings'}</Badge>
       </div>
 
       <div
@@ -209,6 +256,11 @@ function ScrollAwayHeader({ T }) {
         </div>
         <InfoButton id="parliament_overview" T={T} size={20} />
       </div>
+      {getOppositionMetaLine(facts) ? (
+        <div style={{ fontSize: 11.5, fontWeight: 700, color: T.tl, opacity: 0.9, textAlign: 'center', marginTop: 8, lineHeight: 1.45 }}>
+          {getOppositionMetaLine(facts)}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -407,11 +459,13 @@ function VideoCard({ T, video }) {
   )
 }
 
-export default function ParliamentScreen({ T }) {
+export default function ParliamentScreen({ T, parliament = {}, meta = {} }) {
   const [tab, setTab] = useState('howworks')
   const [video, setVideo] = useState(null)
   const [videoError, setVideoError] = useState('')
   const [videoLoading, setVideoLoading] = useState(false)
+  const parliamentData = React.useMemo(() => mergeParliamentData(parliament, meta), [parliament, meta])
+  const facts = parliamentData?.facts || {}
 
   useEffect(() => {
     if (tab !== 'live') return
@@ -457,23 +511,28 @@ export default function ParliamentScreen({ T }) {
         background: T.sf,
       }}
     >
-      <ScrollAwayHeader T={T} />
+      <ScrollAwayHeader T={T} facts={facts} />
       <StickyPillsBar T={T} tab={tab} setTab={setTab} />
 
       <div style={{ padding: '12px 16px 40px' }}>
         {tab === 'howworks' ? (
           <>
             <SectionLabel T={T}>How Parliament works</SectionLabel>
-            {HOW_WORKS.map((item, i) => (
+            {parliamentData.howWorks.map((item, i) => (
               <ExplainerCard key={i} T={T} item={item} />
             ))}
+            {facts?.oppositionSourceUrl ? (
+              <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, lineHeight: 1.5, textAlign: 'center', marginTop: 10 }}>
+                Official Opposition source · {facts.oppositionSourceUrl}
+              </div>
+            ) : null}
           </>
         ) : null}
 
         {tab === 'voting' ? (
           <>
             <SectionLabel T={T}>Voting system</SectionLabel>
-            {VOTING_SYSTEM.map((item, i) => (
+            {parliamentData.votingSystem.map((item, i) => (
               <ExplainerCard key={i} T={T} item={item} />
             ))}
           </>
@@ -483,7 +542,7 @@ export default function ParliamentScreen({ T }) {
           <>
             <SectionLabel T={T}>Political calendar</SectionLabel>
 
-            {KEY_DATES.map((d, i) => {
+            {parliamentData.keyDates.map((d, i) => {
               const days = daysFrom(d.date)
               return (
                 <div
@@ -577,26 +636,19 @@ export default function ParliamentScreen({ T }) {
                 </div>
               </div>
             ) : null}
+            {parliamentData.liveLinks.map((link) => (
+              <LiveLinkCard
+                key={link.title}
+                T={T}
+                title={link.title}
+                desc={link.desc}
+                color={link.color}
+                cta={link.cta}
+                emoji={link.emoji}
+                onClick={() => openExternal(link.url)}
+              />
+            ))}
 
-            <LiveLinkCard
-              T={T}
-              title="Watch House of Commons"
-              desc="Open the official Commons live page in a full browser tab."
-              color="#C8102E"
-              cta="Open Commons"
-              emoji="🏛"
-              onClick={() => openExternal('https://www.parliamentlive.tv/Commons')}
-            />
-
-            <LiveLinkCard
-              T={T}
-              title="Watch UK Parliament on YouTube"
-              desc="Use the official YouTube channel for live streams, replays and clips."
-              color="#E4003B"
-              cta="Open YouTube channel"
-              emoji="▶️"
-              onClick={() => openExternal('https://www.youtube.com/@UKParliament')}
-            />
 
             <div
               style={{
@@ -611,13 +663,7 @@ export default function ParliamentScreen({ T }) {
                 When does Parliament sit?
               </div>
 
-              {[
-                { day: 'Monday', commons: '14:30–22:30' },
-                { day: 'Tuesday', commons: '11:30–19:00' },
-                { day: 'Wednesday', commons: '11:30–19:00 · PMQs 12:00' },
-                { day: 'Thursday', commons: '09:30–17:30' },
-                { day: 'Friday', commons: '09:30–14:30 (when sitting)' },
-              ].map((r, i) => (
+              {parliamentData.sittingPattern.map((r, i) => (
                 <div
                   key={i}
                   style={{

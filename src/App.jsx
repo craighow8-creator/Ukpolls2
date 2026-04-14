@@ -235,6 +235,7 @@ export default function App() {
   const COUNCIL_REGISTRY = appData?.councilRegistry || []
   const COUNCIL_STATUS = appData?.councilStatus || []
   const COUNCIL_EDITORIAL = appData?.councilEditorial || []
+  const PARLIAMENT = appData?.parliament || {}
 
   const latestPoll = POLLS_HISTORY?.[0] || null
   const pollingAverage = POLL_CONTEXT?.pollingAverage || buildPollingAverage(POLLS_HISTORY, { windowDays: 30 })
@@ -438,6 +439,7 @@ export default function App() {
     councilStatus: COUNCIL_STATUS,
     councilEditorial: COUNCIL_EDITORIAL,
     pollContext: POLL_CONTEXT,
+    parliament: PARLIAMENT,
   }
 
   const renderScreen = (s, p = {}) => {

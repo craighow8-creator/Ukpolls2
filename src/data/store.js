@@ -29,6 +29,7 @@ const KEYS = {
   councilRegistry: `PS_councilRegistry_${CACHE_VERSION}`,
   councilStatus: `PS_councilStatus_${CACHE_VERSION}`,
   councilEditorial: `PS_councilEditorial_${CACHE_VERSION}`,
+  parliament: `PS_parliament_${CACHE_VERSION}`,
   councilCachePurge: `PS_councilCachePurge_${CACHE_VERSION}`,
   timestamps: `PS_timestamps_${CACHE_VERSION}`,
   pollsData: `PS_polls_${CACHE_VERSION}`,
@@ -62,6 +63,7 @@ const SECTION_MAP = {
   councilRegistry: 'councilRegistry',
   councilStatus: 'councilStatus',
   councilEditorial: 'councilEditorial',
+  parliament: 'parliament',
 }
 
 const REMOTE_FETCH_TIMEOUT_MS = 8000
@@ -202,6 +204,7 @@ function getDefaultData() {
     councilRegistry: withFallbackArray(DEFAULTS.councilRegistry, []),
     councilStatus: withFallbackArray(DEFAULTS.councilStatus, []),
     councilEditorial: withFallbackArray(DEFAULTS.councilEditorial, []),
+    parliament: withFallbackObject(DEFAULTS.parliament, {}),
   }
 }
 
@@ -409,6 +412,7 @@ function getLocalOverrides(defaults) {
     councilRegistry: withFallbackArray(readJson(KEYS.councilRegistry, null), defaults.councilRegistry),
     councilStatus: withFallbackArray(readJson(KEYS.councilStatus, null), defaults.councilStatus),
     councilEditorial: withFallbackArray(readJson(KEYS.councilEditorial, null), defaults.councilEditorial),
+    parliament: mergeObject(defaults.parliament, readJson(KEYS.parliament, null)),
   }
 }
 
@@ -441,6 +445,7 @@ function normaliseRemote(remote, defaults) {
     councilRegistry: withFallbackArray(remote?.councilRegistry, defaults.councilRegistry),
     councilStatus: withFallbackArray(remote?.councilStatus, defaults.councilStatus),
     councilEditorial: withFallbackArray(remote?.councilEditorial, defaults.councilEditorial),
+    parliament: mergeObject(defaults.parliament, withFallbackObject(remote?.parliament, {})),
   }
 }
 
@@ -632,6 +637,7 @@ export async function getData() {
     councilRegistry: withFallbackArray(normalised.councilRegistry, readJson(KEYS.councilRegistry, null)),
     councilStatus: withFallbackArray(normalised.councilStatus, readJson(KEYS.councilStatus, null)),
     councilEditorial: withFallbackArray(normalised.councilEditorial, readJson(KEYS.councilEditorial, null)),
+    parliament: mergeObject(normalised.parliament, readJson(KEYS.parliament, null)),
   }
 }
 

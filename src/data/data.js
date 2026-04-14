@@ -15,7 +15,8 @@ const POLITISCOPE_DATA = {
     context:       "Reform UK leads on 27% (7-poll avg, 20 Mar 2026). Greens up to 16% as YouGov (15-16 Mar) shows Con and Lab level at 17% for first time. Pollster spread: More in Common 30%, YouGov 25%. Ipsos (5-11 Mar): Starmer approval −53, new record low. 48 days to May 7 local elections. Restore Britain 7% in prompted polls, 110,000+ members. Electoral Calculus MRP: Reform UK 335 seats projected majority.",
     nextElectionDate: "2026-05-07",
     nextElectionLabel: "Local + Devolved Elections",
-    ge2029Date:    "2029-05-02",
+    ge2029Date:    "2029-08-15",
+    nextGeneralElectionDate: "2029-08-15",
     appUrl:        "https://craighow8-creator.github.io/Ukpolls2/",
   },
 
@@ -26,6 +27,137 @@ const POLITISCOPE_DATA = {
     worker:  "https://throbbing-base-05b6.craighow8.workers.dev",
     token:   "afc1e6a1834e52b57a583ad850daeb3e5d41440952946f594b20fb3c9dc96542",
   },
+
+
+/* ─────────────────────────────────────────
+   PARLIAMENT — canonical facts + explainers
+───────────────────────────────────────── */
+parliament: {
+  facts: {
+    verifiedAt: "2026-04-14",
+    sourceType: "Official UK Parliament / Electoral Commission",
+    governmentParty: "Labour",
+    primeMinister: "Keir Starmer",
+    officialOppositionParty: "Conservative",
+    leaderOfOpposition: "Kemi Badenoch",
+    houseOfCommonsSeats: 650,
+    pmqsDay: "Every Wednesday",
+    pmqsTime: "12:00–12:30",
+    oppositionSourceUrl: "https://members.parliament.uk/opposition/cabinet",
+    pmqsSourceUrl: "https://www.parliament.uk/site-information/glossary/prime-ministers-question-time/",
+    nextGeneralElectionDeadline: "2029-08-15",
+    nextGeneralElectionSourceUrl: "https://www.electoralcommission.org.uk/about-us/our-plans-priorities-and-spending/corporate-plan-2025/6-2029/30/our-future-priorities",
+  },
+  keyDates: [
+    {
+      date: "2026-05-07",
+      label: "Local + Devolved Elections",
+      color: "#E4003B",
+      desc: "Major scheduled election day across England, Scotland and Wales.",
+    },
+    {
+      date: "Every Wednesday",
+      label: "PMQs · 12:00–12:30",
+      color: "#012169",
+      desc: "Prime Minister's Questions in the Commons chamber when Parliament is sitting.",
+    },
+    {
+      date: "2029-08-15",
+      label: "Latest possible next General Election",
+      color: "#12B7D4",
+      desc: "The next UK Parliamentary general election must be held no later than 15 August 2029.",
+    },
+  ],
+  howWorks: [
+    {
+      title: "The House of Commons",
+      icon: "🏛",
+      body: "The Commons has 650 elected MPs. The party or coalition that can command a majority in the Commons forms the government. The Prime Minister is the person who can command that majority — not a directly elected president.",
+    },
+    {
+      title: "The House of Lords",
+      icon: "🎩",
+      body: "The Lords is the revising chamber. It can scrutinise, amend and delay legislation, but the Commons has the final say.",
+    },
+    {
+      title: "How a Bill becomes Law",
+      icon: "📜",
+      body: "1. First Reading — introduced, no debate.\n2. Second Reading — main debate.\n3. Committee Stage — line-by-line scrutiny.\n4. Report Stage — further amendments.\n5. Third Reading — final Commons vote.\n6. Same process in the Lords.\n7. Royal Assent — formal approval.",
+    },
+    {
+      title: "PMQs — Prime Minister's Questions",
+      icon: "🎤",
+      body: "PMQs happens every sitting Wednesday at 12:00. The Leader of the Opposition gets six questions. It shapes the media narrative far more than it usually changes policy.",
+    },
+    {
+      title: "The Opposition",
+      icon: "⚔️",
+      body: "The largest party not in government forms His Majesty's Official Opposition. Its leader becomes Leader of the Opposition and leads the Shadow Cabinet.",
+    },
+    {
+      title: "Confidence and Dissolution",
+      icon: "⚠️",
+      body: "If a government loses the confidence of the House of Commons, the Prime Minister may have to resign or seek a general election. Under the Dissolution and Calling of Parliament Act 2022, general elections must be no more than five years apart.",
+    },
+  ],
+  votingSystem: [
+    {
+      title: "First Past the Post (FPTP)",
+      icon: "🗳",
+      body: "Each constituency elects one MP, and the candidate with the most votes wins. There is no proportional correction, so seat totals can diverge sharply from vote share.",
+    },
+    {
+      title: "Why this is controversial",
+      icon: "⚖️",
+      body: "FPTP rewards concentrated support, creates safe seats and encourages tactical voting. It can produce strong Commons majorities from relatively modest national vote shares.",
+    },
+    {
+      title: "Proportional Representation",
+      icon: "📊",
+      body: "PR systems allocate seats more closely in line with votes cast. Westminster does not use PR, but other UK elections do use more proportional systems.",
+    },
+    {
+      title: "How Swing is Calculated",
+      icon: "🔄",
+      body: "Traditional two-party swing is calculated as: (Party A gain + Party B loss) ÷ 2. Modern models often combine polling, demographics and constituency history instead.",
+    },
+    {
+      title: "Tactical Voting",
+      icon: "🎯",
+      body: "In FPTP, voters often back the most viable candidate who can beat the party they most want to stop, rather than simply voting for their first preference.",
+    },
+    {
+      title: "MRP and seat models",
+      icon: "🤖",
+      body: "MRP uses polling plus demographic and geographic data to estimate constituency outcomes. It is usually stronger than a simple uniform national swing model, but it is still probabilistic rather than certain.",
+    },
+  ],
+  sittingPattern: [
+    { day: "Monday", commons: "14:30–22:30" },
+    { day: "Tuesday", commons: "11:30–19:00" },
+    { day: "Wednesday", commons: "11:30–19:00 · PMQs 12:00" },
+    { day: "Thursday", commons: "09:30–17:30" },
+    { day: "Friday", commons: "09:30–14:30 (when sitting)" },
+  ],
+  liveLinks: [
+    {
+      title: "Watch House of Commons",
+      desc: "Open the official Commons live page in a full browser tab.",
+      color: "#C8102E",
+      cta: "Open Commons",
+      emoji: "🏛",
+      url: "https://www.parliamentlive.tv/Commons",
+    },
+    {
+      title: "Watch UK Parliament on YouTube",
+      desc: "Use the official YouTube channel for live streams, replays and clips.",
+      color: "#E4003B",
+      cta: "Open YouTube channel",
+      emoji: "▶️",
+      url: "https://www.youtube.com/@UKParliament",
+    },
+  ],
+},
 
   /* ─────────────────────────────────────────
      PARTIES — polling averages & seats
