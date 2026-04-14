@@ -365,6 +365,16 @@ function getControlInsight(profile, rows) {
 }
 
 
+function getCompositionLink(profile) {
+  return cleanText(
+    profile?.officialCompositionUrl ||
+    profile?.officialElectionsUrl ||
+    profile?.electionsPage ||
+    profile?.officialWebsite ||
+    profile?.website
+  )
+}
+
 function linkRows(profile) {
   const seen = new Set()
   const links = []
@@ -412,10 +422,10 @@ function getCouncilSnapshotMessage(profile) {
 
 function getPoliticalControlRows(profile) {
   return [
-    { label: 'Leader', value: profile?.leader, type: 'leader' },
-    { label: 'Mayor', value: profile?.mayor, type: 'mayor' },
-    { label: 'Administration', value: profile?.administration },
-  ].filter((row) => cleanText(row.value))
+    { label: 'Leader', value: cleanText(profile?.leader) || 'Not currently listed', type: 'leader' },
+    { label: 'Mayor', value: cleanText(profile?.mayor) || 'Not currently listed', type: 'mayor' },
+    { label: 'Administration', value: cleanText(profile?.administration) || 'Not currently listed' },
+  ]
 }
 
 function getPoliticalBriefing(profile) {
@@ -443,18 +453,19 @@ function getPoliticalBriefing(profile) {
 
 function buildPersonDetails(profile, type) {
   const rawValue = cleanText(type === 'leader' ? profile?.leader : profile?.mayor)
-  if (!rawValue) return null
-
   const match = rawValue.match(/^(.*?)\s*\((.*?)\)$/)
-  const name = cleanText(match?.[1] || rawValue)
+  const name = cleanText(match?.[1] || rawValue) || 'Not currently listed'
   const qualifier = cleanText(match?.[2] || '')
   const links = []
 
   const officialProfile = cleanText(profile?.profileUrl)
   const officialWebsite = cleanText(profile?.officialWebsite || profile?.website)
+  const searchQuery = `${name !== 'Not currently listed' ? name + ' ' : ''}${cleanText(profile?.name)} ${type === 'leader' ? 'council leader' : 'mayor'}`
+  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery.trim())}`
 
   if (officialProfile) links.push({ label: 'Official profile', href: officialProfile })
   if (officialWebsite) links.push({ label: 'Council website', href: officialWebsite })
+  if (searchQuery.trim()) links.push({ label: 'Search', href: searchUrl })
 
   return {
     type,
@@ -462,9 +473,11 @@ function buildPersonDetails(profile, type) {
     name,
     qualifier,
     summary:
-      type === 'leader'
-        ? 'Political lead for the council. This panel can expand later when richer profile, biography and contact data is added to the pipeline.'
-        : 'Ceremonial or executive mayoral detail. This panel can expand later when richer profile, biography and contact data is added to the pipeline.',
+      name === 'Not currently listed'
+        ? `No ${type === 'leader' ? 'leader' : 'mayor'} details are currently stored for this council. The panel is still live so richer profile, biography and contact data can be added later without changing the UI.`
+        : type === 'leader'
+          ? `Political lead for ${cleanText(profile?.name) || 'this council'}. This panel is ready for richer biography, contact and profile data when the pipeline is expanded.`
+          : `Mayoral detail for ${cleanText(profile?.name) || 'this council'}. This panel is ready for richer biography, contact and profile data when the pipeline is expanded.`,
     links,
   }
 }
@@ -600,7 +613,7 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
   const politicalComposition = p ? compositionRows(p.composition) : []
   const politicalControlRows = p ? getPoliticalControlRows(p) : []
   const controlInsight = p ? getControlInsight(p, politicalComposition) : { headline: '', subline: '', threshold: null, majorityMargin: null }
-  const compositionLink = cleanText(p?.officialCompositionUrl)
+  const compositionLink = p ? getCompositionLink(p) : ''
   const notes = cleanText(p?.notes)
   const links = p ? linkRows(p) : []
   const statusLabel = p ? electionStatusLabel(p) : ''
@@ -803,6 +816,8 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                           T={T}
                           label={row.label}
                           value={row.value}
+                          infoAction={row.type ? () => setPersonModal(row.type) : null}
+                          infoLabel={row.type ? `More about ${row.value}` : ''}
                         />
                       ))}
                     </div>
