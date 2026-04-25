@@ -307,7 +307,7 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
                     <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.6, marginBottom: 8 }}>
                       {councillor.seatStatus === 'vacant'
                         ? 'This ward seat is currently shown as vacant in the maintained guide.'
-                        : 'Listed in Sheffield City Council&apos;s current councillors-by-ward register.'}
+                        : "Listed in Sheffield City Council's current councillors-by-ward register."}
                     </div>
                     <EntrySourceMeta T={T} entry={councillor} />
                   </SurfaceCard>
@@ -331,7 +331,7 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
                       <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.6, marginBottom: 8 }}>
                         {candidate.sourceAttribution === 'democracy-club'
                           ? 'Shown from Democracy Club\'s current WhoCanIVoteFor candidate feed for this upcoming ballot.'
-                          : 'Listed on Sheffield City Council&apos;s official statement of persons nominated for this ward.'}
+                          : "Listed on Sheffield City Council's official statement of persons nominated for this ward."}
                       </div>
                       <EntrySourceMeta T={T} entry={candidate} />
                     </SurfaceCard>
@@ -375,7 +375,7 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
                           textDecoration: 'none',
                         }}
                       >
-                        Can&apos;t find your candidates? Check Democracy Club / WhoCanIVoteFor →
+                        Can't find your candidates? Check Democracy Club / WhoCanIVoteFor →
                       </a>
                     </div>
                   ) : null}
