@@ -1,0 +1,814 @@
+[
+  {
+    "ward": "Beauchief and Greenhill",
+    "councillors": [
+      {
+        "name": "Simon Clement-Jones",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Sophie Crossthorn",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Richard Shaw",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Beighton",
+    "councillors": [
+      {
+        "name": "Kurtis Crossthorn",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Ian Horner",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Ann Woolhouse",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Birley",
+    "councillors": [
+      {
+        "name": "Matthew Dwyer",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Denise Fox",
+        "party": "Sheffield Community Councillors Group",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Karen McGowan",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Broomhill and Sharrow Vale",
+    "councillors": [
+      {
+        "name": "Angela Argenzio",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Maleiki Haybe",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Brian Holmshaw",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Burngreave",
+    "councillors": [
+      {
+        "name": "Talib Hussain",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Mark Jones",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Safiya Saeed",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "City",
+    "councillors": [
+      {
+        "name": "Douglas Johnson",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Ruth Mersereau",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Martin Phipps",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Crookes and Crosspool",
+    "councillors": [
+      {
+        "name": "Tim Huggan",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Ruth Milsom",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Minesh Parekh",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Darnall",
+    "councillors": [
+      {
+        "name": "Qais Al-Ahdal",
+        "party": "Independent",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Mary Lea",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Zahira Naz",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Dore and Totley",
+    "councillors": [
+      {
+        "name": "Rebecca Atkinson",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Joe Otten",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Martin Smith",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "East Ecclesfield",
+    "councillors": [
+      {
+        "name": "Craig Gamble Pugh",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Robert Reiss",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Alan Woodcock",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Ecclesall",
+    "councillors": [
+      {
+        "name": "Peter Gilbert",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Barbara Masters",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Shaffaq Mohammed",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Firth Park",
+    "councillors": [
+      {
+        "name": "Fran Belbin",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Abdul Khayum",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Nikki Belfield",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Fulwood",
+    "councillors": [
+      {
+        "name": "Sue Alston",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Andrew Sangar (MBE)",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Cliff Woodcraft",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Gleadless Valley",
+    "councillors": [
+      {
+        "name": "Alexi Dimond",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Marieanne Elliot",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Paul Turpin",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Graves Park",
+    "councillors": [
+      {
+        "name": "Steve Ayris",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Rob Bannister",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Mohammed Mahroof",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Hillsborough",
+    "councillors": [
+      {
+        "name": "Christine Gilligan Kubo",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Toby Mallinson",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Henry Nottage",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Manor Castle",
+    "councillors": [
+      {
+        "name": "Elle Dodd",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Terry Fox",
+        "party": "Sheffield Community Councillors Group",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Laura Moynahan",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Mosborough",
+    "councillors": [
+      {
+        "name": "Glynis Chapman",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Tony Downing",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Gail Smith",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Nether Edge and Sharrow",
+    "councillors": [
+      {
+        "name": "Nighat Basharat",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Maroof Raouf",
+        "party": "Green Party",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Ibby Ullah",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Park and Arbourthorne",
+    "councillors": [
+      {
+        "name": "Mia Drazaic",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Ben Miskell",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Nabeela Mowlana",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Richmond",
+    "councillors": [
+      {
+        "name": "David Barker",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Mike Drabble",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Dianne Hurst",
+        "party": "Sheffield Community Councillors Group",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Shiregreen and Brightside",
+    "councillors": [
+      {
+        "name": "Dawn Dale",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Mark Rusling",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Garry Weatherall",
+        "party": "Sheffield Community Councillors Group",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Southey",
+    "councillors": [
+      {
+        "name": "Mike Chaplin",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Jayne Dunn",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Gareth Slater",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Stannington",
+    "councillors": [
+      {
+        "name": "Penny Baker",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "William Sapwell",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Richard Williams",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Stocksbridge and Upper Don",
+    "councillors": [
+      {
+        "name": "John Booker",
+        "party": "Reform UK",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Janet Ridler",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Mark Whittaker",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Walkley",
+    "councillors": [
+      {
+        "name": "Tom Hunt",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Laura McClean",
+        "party": "Labour",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "John Wright",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "West Ecclesfield",
+    "councillors": [
+      {
+        "name": "Alan Hooper",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Mike Levery",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Ann Whitaker",
+        "party": "Liberal Democrat",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  },
+  {
+    "ward": "Woodhouse",
+    "councillors": [
+      {
+        "name": "Willis Marshall",
+        "party": "Independent",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Alison Norris",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      },
+      {
+        "name": "Mick Rooney",
+        "party": "Labour and Co-operative",
+        "sourceLabel": "Sheffield councillors by ward",
+        "sourceUrl": "https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=0&VW=LIST",
+        "lastChecked": "25-04-2026",
+        "verificationStatus": "verified"
+      }
+    ]
+  }
+]

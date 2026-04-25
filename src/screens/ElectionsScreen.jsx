@@ -244,6 +244,23 @@ export default function ElectionsScreen({
     })
   }
 
+  const openLocalVoteGuide = ({ councilSlug, wardSlug, query }) => {
+    haptic(6)
+    updateCurrentParams?.({
+      tab,
+      search,
+      localFilter,
+    })
+    nav('localvoteguide', {
+      councilSlug,
+      wardSlug,
+      query,
+      fromTab: tab,
+      fromSearch: search,
+      fromLocalFilter: localFilter,
+    })
+  }
+
   return (
     <div
       style={{
@@ -281,6 +298,7 @@ export default function ElectionsScreen({
             localFilter={localFilter}
             setLocalFilter={setLocalFilter}
             openCouncil={openCouncil}
+            openLocalVoteGuide={openLocalVoteGuide}
           />
         ) : null}
 

@@ -22,6 +22,7 @@ import DemographicsScreen from './screens/DemographicsScreen'
 import MigrationScreen from './screens/MigrationScreen'
 import ElectionsScreen from './screens/ElectionsScreen'
 import CouncilScreen from './screens/CouncilScreen'
+import LocalVoteGuideScreen from './screens/LocalVoteGuideScreen'
 import PolicyCompareScreen from './screens/PolicyCompareScreen'
 import BettingScreen from './screens/BettingScreen'
 import NewsScreen from './screens/NewsScreen'
@@ -112,7 +113,10 @@ function getRouteResetKey(route, depth = 0) {
     params.idx,
     params.lIdx,
     params.name,
+    params.councilSlug,
+    params.wardSlug,
     params.pollster,
+    params.query,
     params.tab,
     params.search,
     params.localFilter,
@@ -557,6 +561,15 @@ export default function App() {
             councilRegistry={COUNCIL_REGISTRY}
             councilStatus={COUNCIL_STATUS}
             councilEditorial={COUNCIL_EDITORIAL}
+          />
+        )
+      case 'localvoteguide':
+        return (
+          <LocalVoteGuideScreen
+            {...common}
+            councilSlug={p.councilSlug}
+            wardSlug={p.wardSlug}
+            query={p.query}
           />
         )
       case 'betting':
