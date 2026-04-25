@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { ScrollArea, StickyPills } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
+import SectionDataMeta from '../components/SectionDataMeta'
 import { getPartyByName } from '../data/partyRegistry'
 import { POLICY_RECORDS } from '../data/policy/policyRecords'
 import { deriveComparisonBriefing, getComparisonRows } from '../data/policy/policyCompareSelectors'
@@ -657,7 +658,7 @@ function PartyViewCard({ T, party }) {
   )
 }
 
-export default function MigrationScreen({ T, nav, migration, policyRecords = POLICY_RECORDS }) {
+export default function MigrationScreen({ T, nav, migration, policyRecords = POLICY_RECORDS, dataState = {} }) {
   const [tab, setTab] = useState('overview')
   const M = migration || {}
 
@@ -695,6 +696,10 @@ export default function MigrationScreen({ T, nav, migration, policyRecords = POL
           }}
         >
           Net Migration
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
+          <SectionDataMeta T={T} section={dataState.migration || null} />
         </div>
 
         <div

@@ -16,26 +16,10 @@ const ICONS = {
   byelection:   `<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="4" y1="22" x2="4" y2="15" stroke-width="1.5" stroke-linecap="round"/>`,
 }
 
-// FIX #9 — top-right corner, size=70% card height, 8% opacity
-export function CardWatermark({ type='poll', color='#000', size=100 }) {
-  const path = ICONS[type]||ICONS.poll
-  return (
-    <div style={{
-      position:'absolute',
-      top: -size*0.15,        // bleed slightly above card top
-      right: -size*0.15,     // bleed slightly off right edge
-      width:size, height:size,
-      opacity:0.08,
-      pointerEvents:'none',
-      zIndex:0,
-    }}>
-      <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-        stroke={color} xmlns="http://www.w3.org/2000/svg"
-        style={{ display:'block' }}
-        dangerouslySetInnerHTML={{ __html:path }}
-      />
-    </div>
-  )
+// Decorative watermark layer removed.
+// Keep the export in place so any stale imports fail safe by rendering nothing.
+export function CardWatermark() {
+  return null
 }
 
 export default CardWatermark

@@ -77,7 +77,7 @@ async function fetchBuffer(url) {
     redirect: 'follow',
   })
   if (!res.ok) throw new Error(`Request failed ${res.status} for ${url}`)
-  return Buffer.from(await res.arrayBuffer())
+  return await res.arrayBuffer()
 }
 
 function extractLinks(html, baseUrl) {
@@ -386,7 +386,7 @@ async function fetchArticlePoll(articleUrl) {
 
   if (workbookUrl) {
     try {
-      const workbook = XLSX.read(await fetchBuffer(workbookUrl), { type: 'buffer' })
+      const workbook = XLSX.read(await fetchBuffer(workbookUrl), { type: 'array' })
       values = extractCombinedVotingIntentionValues(workbook)
       fieldwork = extractWorkbookMetadata(workbook, publishedAt)
     } catch (err) {

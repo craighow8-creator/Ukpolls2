@@ -1129,6 +1129,58 @@ export default function HomeScreen({
             </div>
           </LargeCard>
 
+          <LargeCard T={T} onClick={() => nav('simulator')}>
+            <div style={pL}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <Lbl T={T}>The Mandate</Lbl>
+                <Chip color="#36d6cf">Simulator</Chip>
+              </div>
+
+              <div
+                style={{
+                  background: 'linear-gradient(180deg, #111b42 0%, #071026 100%)',
+                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                  borderRadius: 14,
+                  padding: '18px 16px',
+                  textAlign: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 40,
+                    fontWeight: 800,
+                    letterSpacing: '-0.06em',
+                    color: '#F0C956',
+                    textTransform: 'uppercase',
+                    lineHeight: 0.95,
+                    textShadow: '2px 2px rgba(2,4,11,0.8)',
+                  }}
+                >
+                  The Mandate
+                </div>
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: '0.18em',
+                    color: '#8BE9DD',
+                    textTransform: 'uppercase',
+                    marginTop: 8,
+                  }}
+                >
+                  Government Simulator
+                </div>
+              </div>
+
+              <Sub T={T} size={15}>
+                Run the country for ten turns. Make policy choices, manage voters, survive Parliament.
+              </Sub>
+
+              <Divider T={T} />
+              <Cta T={T}>Open simulator →</Cta>
+            </div>
+          </LargeCard>
+
           <SmallPair>
             <SmallCard T={T} onClick={() => nav('quotematch')}>
               <div style={pS}>

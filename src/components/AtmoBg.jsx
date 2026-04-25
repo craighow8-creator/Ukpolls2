@@ -38,35 +38,7 @@ export default function AtmoBg({ T }) {
         willChange: 'opacity',
       }}/>
 
-      {/* Atmospheric orbs — depth to sky */}
-      <div style={{
-        position: 'absolute',
-        top: '-15%', left: '10%',
-        width: '40%', height: '60%',
-        borderRadius: '50%',
-        background: `radial-gradient(circle, ${T.orb1} 0%, transparent 70%)`,
-        transition: `opacity 1.2s ${EZ}`,
-        willChange: 'opacity',
-      }}/>
-      <div style={{
-        position: 'absolute',
-        top: '-10%', right: '5%',
-        width: '45%', height: '55%',
-        borderRadius: '50%',
-        background: `radial-gradient(circle, ${T.orb2} 0%, transparent 68%)`,
-        transition: `opacity 1.2s ${EZ}`,
-        willChange: 'opacity',
-      }}/>
-      <div style={{
-        position: 'absolute',
-        top: '5%', left: '25%',
-        width: '50%', height: '50%',
-        borderRadius: '50%',
-        background: `radial-gradient(circle, ${T.orb1} 0%, transparent 65%)`,
-        transition: `opacity 1.2s ${EZ}`,
-        willChange: 'opacity',
-        opacity: 0.7,
-      }}/>
+      {/* Keep the background clean and non-directional; avoid visible orb bleed. */}
     </div>
   )
 }

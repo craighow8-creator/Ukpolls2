@@ -499,6 +499,7 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
     [trends],
   )
   const scrollRef = useRef(null)
+  const svgRef = useRef(null)
 
   const filteredTrends = orderedTrends
 
@@ -519,12 +520,27 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
 
   const latestIndex = Math.max(0, filteredTrends.length - 1)
   const [tooltip, setTooltip] = useState(latestIndex)
+  const [hoverX, setHoverX] = useState(null)
   const [selectedPartyKey, setSelectedPartyKey] = useState(null)
 
   useEffect(() => {
     setTooltip(latestIndex)
+    setHoverX(null)
     setSelectedPartyKey(null)
   }, [latestIndex])
+
+  const setHoverFromEvent = (event) => {
+    const svg = svgRef.current
+    if (!svg || !filteredTrends.length) return
+
+    const rect = svg.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const clampedX = Math.max(chartStartX, Math.min(chartEndX, x))
+    const rawIndex = (clampedX - chartStartX) / Math.max(1, COL)
+    const nextIndex = Math.max(0, Math.min(filteredTrends.length - 1, rawIndex))
+    setHoverX(clampedX)
+    setTooltip(Math.round(nextIndex))
+  }
 
   useLayoutEffect(() => {
     const el = scrollRef.current
@@ -569,11 +585,46 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
 
   const xPos = (i) => i * COL + 28
   const yPos = (v) => PT + CH - ((v - minV) / range) * CH
+  const clampY = (value) => Math.max(PT, Math.min(H - PB, value))
   const trendStartMs = toDate(filteredTrends[0]?.date)?.getTime() || 0
   const trendEndMs = toDate(filteredTrends[filteredTrends.length - 1]?.date)?.getTime() || trendStartMs
   const trendSpanMs = Math.max(1, trendEndMs - trendStartMs)
   const chartStartX = xPos(0)
   const chartEndX = xPos(Math.max(0, smoothedTrends.length - 1))
+  const hoverIndex = hoverX == null
+    ? tooltip
+    : Math.max(0, Math.min(filteredTrends.length - 1, (hoverX - chartStartX) / Math.max(1, COL)))
+  const hoverLower = Math.floor(hoverIndex)
+  const hoverUpper = Math.min(filteredTrends.length - 1, Math.ceil(hoverIndex))
+  const hoverMix = hoverUpper === hoverLower ? 0 : hoverIndex - hoverLower
+  const hoverCursorX = hoverX == null ? xPos(tooltip) : hoverX
+
+  const interpolateValue = (partyKey) => {
+    const a = smoothedTrends[hoverLower]?.[partyKey]
+    const b = smoothedTrends[hoverUpper]?.[partyKey]
+    if (a == null && b == null) return null
+    if (a == null) return b
+    if (b == null) return a
+    return a + (b - a) * hoverMix
+  }
+
+  const hoveredValues = useMemo(() => {
+    return chartPartyKeys
+      .filter((party) => !hardHidden[party.key])
+      .map((party) => {
+        const value = interpolateValue(party.key)
+        return value == null
+          ? null
+          : {
+              key: party.key,
+              abbr: party.abbr,
+              color: party.color,
+              value,
+            }
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.value - a.value)
+  }, [chartPartyKeys, hardHidden, hoverLower, hoverUpper, hoverMix, interpolateValue])
 
   const focusedPartyKey = useMemo(() => {
     const visibleKeys = chartPartyKeys.filter((party) => !hardHidden[party.key] && !hidden[party.key]).map((party) => party.key)
@@ -603,47 +654,11 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
   const axisTextColor = T.th === '#ffffff' ? 'rgba(255,255,255,0.45)' : '#7A7A7A'
   const guideColor = T.th === '#ffffff' ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.20)'
   const hasFocusedSubset = !!focusedPartyKey
-  const latestLabelYs = (() => {
-    if (tooltip !== latestIndex) return new Map()
-
+  const labelYs = (() => {
     const labels = chartPartyKeys
       .filter((party) => !hardHidden[party.key])
       .map((party) => {
-        const latest = smoothedTrends[latestIndex]
-        const value = latest?.[party.key]
-        if (value == null) return null
-        return {
-          key: party.key,
-          y: yPos(value),
-        }
-      })
-      .filter(Boolean)
-      .sort((a, b) => a.y - b.y)
-
-    const minGap = 16
-    const top = PT + 12
-    const bottom = H - PB - 10
-
-    labels.forEach((label, index) => {
-      const prevY = index > 0 ? labels[index - 1].labelY : top - minGap
-      label.labelY = Math.max(label.y, prevY + minGap)
-    })
-
-    for (let index = labels.length - 1; index >= 0; index -= 1) {
-      const nextY = index < labels.length - 1 ? labels[index + 1].labelY : bottom + minGap
-      labels[index].labelY = Math.min(labels[index].labelY, nextY - minGap, bottom)
-    }
-
-    return new Map(labels.map((label) => [label.key, label.labelY]))
-  })()
-  const activeLabelYs = (() => {
-    if (tooltip == null || tooltip === latestIndex) return new Map()
-
-    const labels = chartPartyKeys
-      .filter((party) => !hardHidden[party.key])
-      .map((party) => {
-        const active = smoothedTrends[tooltip]
-        const value = active?.[party.key]
+        const value = interpolateValue(party.key)
         if (value == null) return null
         return {
           key: party.key,
@@ -691,6 +706,8 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
 
     const selected = pts.find((pt) => pt.i === tooltip)
     const latest = pts[pts.length - 1]
+    const hoverValue = interpolateValue(party.key)
+    const hoverPoint = hoverValue == null ? null : { x: hoverCursorX, y: yPos(hoverValue) }
     const pathD = buildCurvedPath(pts)
 
     return (
@@ -705,39 +722,10 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
           opacity={isDimmed ? 0.2 : 0.98}
         />
 
-        {pts.map((pt) => {
-          const isActive = pt.i === tooltip
-          return (
-            <g key={`${party.key}-${pt.i}`}>
-              <circle
-                cx={pt.x}
-                cy={pt.y}
-                r={isActive ? 5.5 : 3.25}
-                fill={isActive || !isDimmed ? party.color : T.c0}
-                stroke={party.color}
-                strokeWidth={2}
-                opacity={isDimmed ? 0.35 : 1}
-              />
-              <circle
-                cx={pt.x}
-                cy={pt.y}
-                r={18}
-                fill="transparent"
-                style={{ cursor: 'pointer' }}
-                onPointerDown={() => {
-                  haptic(4)
-                  setTooltip(pt.i)
-                  setSelectedPartyKey(party.key)
-                }}
-              />
-            </g>
-          )
-        })}
-
-        {selected && tooltip !== latestIndex ? (
+        {selected && hoverX == null ? (
           <text
             x={Math.min(selected.x + 12, W - 70)}
-            y={activeLabelYs.get(party.key) || selected.y - 10}
+            y={labelYs.get(party.key) || selected.y - 10}
             fontSize={11}
             fontWeight={900}
             fill={party.color}
@@ -751,10 +739,10 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
           </text>
         ) : null}
 
-        {tooltip === latestIndex && latest ? (
+        {hoverX == null && tooltip === latestIndex && latest ? (
           <text
             x={Math.min(latest.x + 14, W - 82)}
-            y={latestLabelYs.get(party.key) || latest.y + 14}
+            y={labelYs.get(party.key) || latest.y + 14}
             fontSize={11.5}
             fontWeight={900}
             fill={party.color}
@@ -766,6 +754,34 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
           >
             {party.abbr} {Math.round(latest.raw ?? latest.smoothed)}%
           </text>
+        ) : null}
+
+        {hoverPoint && hoverX != null ? (
+          <g>
+            <circle
+              cx={hoverPoint.x}
+              cy={hoverPoint.y}
+              r={hoverPoint ? 5.5 : 0}
+              fill={party.color}
+              stroke={T.c0}
+              strokeWidth={2}
+              opacity={isDimmed ? 0.45 : 1}
+            />
+            <text
+              x={Math.min(hoverPoint.x + 10, W - 64)}
+              y={labelYs.get(party.key) || hoverPoint.y - 8}
+              fontSize={11.5}
+              fontWeight={900}
+              fill={party.color}
+              opacity={isDimmed ? 0.45 : 1}
+              stroke={T.c0}
+              strokeWidth={3}
+              paintOrder="stroke"
+              strokeLinejoin="round"
+            >
+              {party.abbr} {hoverValue.toFixed(1)}%
+            </text>
+          </g>
         ) : null}
       </g>
     )
@@ -787,77 +803,172 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
           style={{
             overflowX: 'auto',
             flex: 1,
+            position: 'relative',
             scrollbarWidth: 'none',
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} style={{ display: 'block', overflow: 'visible', paddingRight: 40 }}>
-            {gridVals.map((v) => (
-              <line key={v} x1={0} y1={yPos(v)} x2={W} y2={yPos(v)} stroke={gridColor} strokeWidth={0.8} />
-            ))}
+          <div style={{ position: 'relative', width: W, height: H }}>
+            <svg
+              ref={svgRef}
+              viewBox={`0 0 ${W} ${H}`}
+              width={W}
+              height={H}
+              style={{ display: 'block', overflow: 'visible', paddingRight: 40, touchAction: 'none' }}
+              onPointerMove={(event) => {
+                if (event.pointerType === 'mouse' || event.pointerType === 'pen' || event.pointerType === 'touch') {
+                  setHoverFromEvent(event)
+                }
+              }}
+              onPointerDown={(event) => {
+                setHoverFromEvent(event)
+              }}
+              onPointerLeave={() => {
+                setHoverX(null)
+                setTooltip(latestIndex)
+                setSelectedPartyKey(null)
+              }}
+            >
+              <defs>
+                <linearGradient id="trendGlow" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor={T.pr} stopOpacity="0.08" />
+                  <stop offset="100%" stopColor={T.pr} stopOpacity="0" />
+                </linearGradient>
+              </defs>
 
-            <g aria-label="Raw poll observations">
-              {rawPollLayer.dots.map((dot) => (
-                <circle
-                  key={dot.key}
-                  cx={dot.x}
-                  cy={dot.y}
-                  r={dot.muted ? 1.65 : 2}
-                  fill={dot.color}
-                  opacity={dot.muted ? 0.1 : 0.24}
-                />
+              {gridVals.map((v) => (
+                <line key={v} x1={0} y1={yPos(v)} x2={W} y2={yPos(v)} stroke={gridColor} strokeWidth={0.8} />
               ))}
-            </g>
 
-            <g aria-label="Trend lines">
-              {smoothedTrends.map((row, index) => {
-                const prev = smoothedTrends[index - 1]
-                const showYear = !prev || prev.yearShort !== row.yearShort
-                return (
+              <rect x={chartStartX} y={PT} width={Math.max(1, chartEndX - chartStartX)} height={H - PT - PB} fill="url(#trendGlow)" opacity={hoverX == null ? 0.55 : 0.28} />
+
+              <g aria-label="Raw poll observations">
+                {rawPollLayer.dots.map((dot) => (
+                  <circle
+                    key={dot.key}
+                    cx={dot.x}
+                    cy={dot.y}
+                    r={dot.muted ? 1.3 : 1.75}
+                    fill={dot.color}
+                    opacity={hoverX == null ? (dot.muted ? 0.06 : 0.16) : (dot.muted ? 0.04 : 0.1)}
+                  />
+                ))}
+              </g>
+
+              <g aria-label="Trend lines">
+                {smoothedTrends.map((row, index) => {
+                  const prev = smoothedTrends[index - 1]
+                  const showYear = !prev || prev.yearShort !== row.yearShort
+                  return (
+                    <text
+                      key={index}
+                      x={xPos(index)}
+                      y={H - 10}
+                      textAnchor="middle"
+                      fontSize={10}
+                      fill={axisTextColor}
+                      fontFamily="Outfit,sans-serif"
+                    >
+                      {showYear ? `${row.month} ${row.yearShort}` : row.month}
+                    </text>
+                  )
+                })}
+
+                {hoverCursorX != null ? (
+                  <>
+                    <line
+                      x1={hoverCursorX}
+                      y1={PT}
+                      x2={hoverCursorX}
+                      y2={H - PB}
+                      stroke={guideColor}
+                      strokeWidth={1.4}
+                      opacity={0.95}
+                      strokeDasharray="4,3"
+                    />
+                    <circle cx={hoverCursorX} cy={PT + 2} r={4.25} fill={T.c0} stroke={guideColor} strokeWidth={1.5} />
+                  </>
+                ) : null}
+
+                {hoverX == null && tooltip === latestIndex ? (
                   <text
-                    key={index}
-                    x={xPos(index)}
-                    y={H - 10}
+                    x={xPos(tooltip)}
+                    y={PT - 6}
                     textAnchor="middle"
                     fontSize={10}
+                    fontWeight={800}
                     fill={axisTextColor}
                     fontFamily="Outfit,sans-serif"
                   >
-                    {showYear ? `${row.month} ${row.yearShort}` : row.month}
+                    Latest
                   </text>
-                )
-              })}
+                ) : null}
 
-              {tooltip !== null ? (
-                <line
-                  x1={xPos(tooltip)}
-                  y1={PT}
-                  x2={xPos(tooltip)}
-                  y2={H - PB}
-                  stroke={guideColor}
-                  strokeWidth={1.3}
-                  opacity={0.9}
-                  strokeDasharray="4,3"
+                {lines}
+
+                <rect
+                  x={chartStartX}
+                  y={PT}
+                  width={Math.max(1, chartEndX - chartStartX)}
+                  height={H - PT - PB}
+                  fill="transparent"
+                  style={{ cursor: 'crosshair', touchAction: 'none' }}
+                  onPointerEnter={(event) => {
+                    setHoverFromEvent(event)
+                  }}
+                  onPointerMove={(event) => {
+                    setHoverFromEvent(event)
+                  }}
+                  onPointerDown={(event) => {
+                    setHoverFromEvent(event)
+                  }}
+                  onPointerLeave={() => {
+                    setHoverX(null)
+                    setTooltip(latestIndex)
+                  }}
                 />
-              ) : null}
+              </g>
+            </svg>
 
-              {tooltip === latestIndex ? (
-                <text
-                  x={xPos(tooltip)}
-                  y={PT - 6}
-                  textAnchor="middle"
-                  fontSize={10}
-                  fontWeight={800}
-                  fill={axisTextColor}
-                  fontFamily="Outfit,sans-serif"
-                >
-                  Latest
-                </text>
-              ) : null}
-
-              {lines}
-            </g>
-          </svg>
+            {hoverX != null ? (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: Math.max(8, Math.min(W - 220, hoverCursorX + 16)),
+                  top: 18,
+                  width: 200,
+                  borderRadius: 14,
+                  padding: '10px 12px 9px',
+                  background: T.sf,
+                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                  boxShadow: '0 12px 34px rgba(0,0,0,0.10)',
+                  pointerEvents: 'none',
+                }}
+              >
+                <div style={{ fontSize: 12, fontWeight: 900, color: T.th, lineHeight: 1.1, marginBottom: 3 }}>
+                  {filteredTrends[hoverLower]?.fullDate || filteredTrends[tooltip]?.fullDate}
+                </div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.tl, marginBottom: 8 }}>
+                  Live slice
+                </div>
+                <div style={{ display: 'grid', gap: 6 }}>
+                  {hoveredValues.slice(0, 5).map((item) => (
+                    <div key={item.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: T.tm, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.abbr}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 13.5, fontWeight: 900, color: item.color }}>
+                        {item.value.toFixed(1)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 

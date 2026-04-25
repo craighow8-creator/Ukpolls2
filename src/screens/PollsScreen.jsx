@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { StickyPills, haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
+import SectionDataMeta from '../components/SectionDataMeta'
 import { getPartyByName } from '../data/partyRegistry'
 import { buildPollSpreadInsights } from '../utils/pollSpread'
 import { buildPollHouseEffectsInsights } from '../utils/pollHouseEffects'
@@ -1986,7 +1987,7 @@ function StickyPillsBar({ T, tab, setTab }) {
   )
 }
 
-export default function PollsScreen({ T, parties, polls, meta, nav, pollContext = {} }) {
+export default function PollsScreen({ T, parties, polls, meta, nav, pollContext = {}, dataState = {} }) {
   const [tab, setTab] = useState('snapshot')
   const [trendHidden, setTrendHidden] = useState({})
   const [trendFocused, setTrendFocused] = useState(null)
@@ -2045,6 +2046,9 @@ export default function PollsScreen({ T, parties, polls, meta, nav, pollContext 
       <StickyPillsBar T={T} tab={tab} setTab={setTab} />
 
         <div style={{ padding: '12px 16px 40px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+            <SectionDataMeta T={T} section={dataState.polls || dataState.trends || null} />
+          </div>
             {tab === 'snapshot' ? (
               <>
                 <PollBriefingCard

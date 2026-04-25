@@ -115,7 +115,9 @@ function extractDateFromCard(text) {
 function rowsToLabelMap(rows) {
   const map = new Map()
   for (const row of rows) {
-    const key = norm(row?.[1] || row?.[0])
+    const first = String(row?.[0] || '').trim()
+    const second = String(row?.[1] || '').trim()
+    const key = first && !/^[\d.-]+$/.test(first) ? norm(first) : norm(second)
     if (key) map.set(key, row)
   }
   return map
@@ -143,10 +145,21 @@ function isValidVISheet(rows) {
 }
 
 function findWholeSampleColumn(rows) {
+  const candidateLabels = [
+    'whole sample',
+    'total',
+    'all',
+    'all voters',
+    'all adults',
+    'base',
+    'weighted',
+  ]
+
   for (const row of rows.slice(0, 12)) {
     for (let i = 1; i < row.length; i += 1) {
-      if (norm(row[i]) === 'whole sample') return i
-      if (norm(row[i]) === 'total') return i
+      const cell = norm(row[i])
+      if (candidateLabels.includes(cell)) return i
+      if (candidateLabels.some((label) => cell.includes(label))) return i
     }
   }
   return null
@@ -270,15 +283,35 @@ function parseFromWorkbook(buffer, sourceUrl, publishedAt) {
     if (!isValidVISheet(rows)) continue
 
     const labelMap = rowsToLabelMap(rows)
-    const wholeSampleCol = findWholeSampleColumn(rows)
-    if (wholeSampleCol == null) continue
+    const candidateColumns = []
+    const headerRows = rows.slice(0, 12)
+    for (const row of headerRows) {
+      for (let i = 1; i < row.length; i += 1) {
+        const cell = norm(row[i])
+        if (!cell) continue
+        if (
+          cell === 'whole sample' ||
+          cell === 'total' ||
+          cell === 'all' ||
+          cell === 'all voters' ||
+          cell === 'all adults' ||
+          cell === 'base' ||
+          cell === 'weighted'
+        ) {
+          candidateColumns.push(i)
+        }
+      }
+    }
 
-    const values = buildValuesForColumn(labelMap, wholeSampleCol)
-    const score = scoreColumn(values)
-    if (score < 0) continue
+    const columnsToTry = candidateColumns.length ? [...new Set(candidateColumns)] : [...Array(rows[0]?.length || 0).keys()].filter((i) => i > 0)
+    for (const col of columnsToTry) {
+      const values = buildValuesForColumn(labelMap, col)
+      const score = scoreColumn(values)
+      if (score < 0) continue
 
-    if (!best || score > best.score) {
-      best = { sheetName: name, col: wholeSampleCol, values, score }
+      if (!best || score > best.score) {
+        best = { sheetName: name, col, values, score }
+      }
     }
   }
 

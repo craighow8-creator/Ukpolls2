@@ -32,6 +32,7 @@ import ParliamentScreen from './screens/ParliamentScreen'
 import QuoteMatchScreen from './screens/QuoteMatchScreen'
 import SeatBuilderScreen from './screens/SeatBuilderScreen'
 import PollPredictorScreen from './screens/PollPredictorScreen'
+import GovernmentSimulatorScreen from './screens/GovernmentSimulatorScreen'
 import { getData } from './data/store.js'
 import { buildPollingAverage } from './utils/pollAverage'
 
@@ -150,6 +151,8 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const toastRef = useRef()
+  const historyDepthRef = useRef(0)
+  const skipPopRef = useRef(0)
   // Tracks whether the initial data load has completed.
   // Background refreshes (focus/storage/visibility) update appData but must NOT
   // reset themeKey — doing so would clobber any leader/party-specific theme the
@@ -221,6 +224,7 @@ export default function App() {
   const BY_ELEC = appData?.byElections || { upcoming: [], recent: [] }
   const ELECTIONS = appData?.elections || {}
   const BETTING = appData?.betting || { odds: [] }
+  const PREDICTION_MARKETS = appData?.predictionMarkets || { markets: [] }
   const NEWS =
     appData?.news && typeof appData.news === 'object' && !Array.isArray(appData.news)
       ? appData.news
@@ -268,12 +272,24 @@ export default function App() {
       ) || null,
   }))
 
-  const closeExpanded = useCallback(() => {
+  const collapseExpanded = useCallback(() => {
     setExpanded(null)
     setNavStack([])
     const top = [...PARTIES].sort((a, b) => (b.pct || 0) - (a.pct || 0))[0]
     if (top) setThemeKey(partyTheme(top.name))
   }, [PARTIES])
+
+  const closeExpanded = useCallback(() => {
+    const historyDepth = historyDepthRef.current
+    if (historyDepth > 0) {
+      skipPopRef.current = historyDepth
+      historyDepthRef.current = 0
+      collapseExpanded()
+      window.history.go(-historyDepth)
+      return
+    }
+    collapseExpanded()
+  }, [collapseExpanded])
 
   const nav = useCallback(
     (screen, params = {}) => {
@@ -298,9 +314,14 @@ export default function App() {
   )
 
   const goBack = useCallback(() => {
+    if (!expanded) return
+    if (historyDepthRef.current > 0) {
+      window.history.back()
+      return
+    }
     if (navStack.length > 0) setNavStack((s) => s.slice(0, -1))
-    else setExpanded(null)
-  }, [navStack])
+    else collapseExpanded()
+  }, [expanded, navStack.length, collapseExpanded])
 
   const updateCurrentParams = useCallback(
     (patch = {}) => {
@@ -332,18 +353,41 @@ export default function App() {
 
   useEffect(() => {
     const onPop = () => {
+      if (skipPopRef.current > 0) {
+        skipPopRef.current -= 1
+        return
+      }
+
       if (expanded) {
-        if (navStack.length > 0) setNavStack((s) => s.slice(0, -1))
-        else closeExpanded()
+        if (navStack.length > 0) {
+          historyDepthRef.current = Math.max(historyDepthRef.current - 1, 0)
+          setNavStack((s) => s.slice(0, -1))
+        } else {
+          historyDepthRef.current = 0
+          collapseExpanded()
+        }
       }
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
-  }, [expanded, navStack, closeExpanded])
+  }, [expanded, navStack.length, collapseExpanded])
 
   useEffect(() => {
-    if (expanded) window.history.pushState({ expanded: true }, '')
-  }, [expanded])
+    const targetDepth = expanded ? navStack.length + 1 : 0
+    const currentDepth = historyDepthRef.current
+
+    if (targetDepth > currentDepth) {
+      for (let depth = currentDepth + 1; depth <= targetDepth; depth += 1) {
+        window.history.pushState({ expanded: true, depth }, '')
+      }
+      historyDepthRef.current = targetDepth
+      return
+    }
+
+    if (targetDepth === 0) {
+      historyDepthRef.current = 0
+    }
+  }, [expanded, navStack.length])
 
   const T = getTheme(themeKey === 'reform' ? 'Reform UK' : themeKey, dark)
   const currentNav = navStack.length > 0 ? navStack[navStack.length - 1] : expanded
@@ -440,6 +484,7 @@ export default function App() {
     councilEditorial: COUNCIL_EDITORIAL,
     pollContext: POLL_CONTEXT,
     parliament: PARLIAMENT,
+    dataState: appData?.dataState || {},
   }
 
   const renderScreen = (s, p = {}) => {
@@ -515,7 +560,7 @@ export default function App() {
           />
         )
       case 'betting':
-        return <BettingScreen {...common} betting={BETTING} />
+        return <BettingScreen {...common} betting={BETTING} predictionMarkets={PREDICTION_MARKETS} />
       case 'news':
         return <NewsScreen {...common} news={NEWS} />
       case 'vote':
@@ -546,6 +591,8 @@ export default function App() {
         return <SeatBuilderScreen {...common} parties={PARTIES_WITH_LEADERS} />
       case 'pollpredictor':
         return <PollPredictorScreen {...common} />
+      case 'simulator':
+        return <GovernmentSimulatorScreen {...common} />
       default:
         return null
     }
@@ -616,7 +663,14 @@ export default function App() {
 
       <AnimatePresence mode="wait">
         {expanded && currentNav && (
-          <ExpandedCard key={expanded.layoutId} layoutId={expanded.layoutId} T={T} onClose={closeExpanded} resetKey={navResetKey}>
+          <ExpandedCard
+            key={expanded.layoutId}
+            layoutId={expanded.layoutId}
+            T={T}
+            onClose={closeExpanded}
+            onSwipeBack={goBack}
+            resetKey={navResetKey}
+          >
             {renderScreen(currentNav.screen, currentNav.params || {})}
           </ExpandedCard>
         )}

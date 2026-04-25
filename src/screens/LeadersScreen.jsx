@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react'
+import { getData } from '../data/store'
+import React, { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { haptic } from '../components/ui'
 import { PortraitAvatar } from '../utils/portraits'
@@ -186,17 +187,17 @@ function HeroBriefing({ T, summary, isDark }) {
           {summary.body}
         </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-          gap: 9,
-        }}
-      >
-        <BriefingStat label="Top leader" value={summary.topLabel} tone="good" T={T} surface={statSurface} />
-        <BriefingStat label="Under pressure" value={summary.pressureLabel} tone="bad" T={T} surface={statSurface} />
-        <BriefingStat label="Leader-party gap" value={summary.mismatchLabel} tone="neutral" T={T} surface={statSurface} />
-      </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+            gap: 9,
+          }}
+        >
+          <BriefingStat label="Top leader" value={summary.topLabel} tone="good" T={T} surface={statSurface} />
+          <BriefingStat label="Under pressure" value={summary.pressureLabel} tone="bad" T={T} surface={statSurface} />
+          <BriefingStat label="Leader-party gap" value={summary.mismatchLabel} tone="neutral" T={T} surface={statSurface} />
+        </div>
 
         <div
           style={{
@@ -237,7 +238,26 @@ function LeaderSignal({ text, border, T }) {
   )
 }
 
-export default function LeadersScreen({ T, nav, leaders, parties }) {
+export default function LeadersScreen({ T, nav }) {
+  const [data, setData] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.resolve(getData())
+      .then((next) => {
+        if (!cancelled) setData(next)
+      })
+      .catch((err) => {
+        console.warn('LeadersScreen: failed to load data', err)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const leaders = data?.leaders || []
+  const parties = data?.polls || []
   const sorted = useMemo(() => [...(leaders || [])].sort((a, b) => b.net - a.net), [leaders])
 
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
@@ -257,115 +277,115 @@ export default function LeadersScreen({ T, nav, leaders, parties }) {
     const second = sorted[1]
     const bottom = sorted[sorted.length - 1]
 
-    if (!top) {
-      return {
-        headline: 'Leader approval data is not available yet.',
-        body: 'Once approval figures are loaded, this screen will highlight who is leading, who is under pressure, and where leadership is helping or hurting party performance.',
-        topLabel: '—',
-        pressureLabel: '—',
-        mismatchLabel: '—',
-      }
-    }
-
-    const mismatchCandidates = sorted
-      .map((leader) => {
-        const party = leaderPartyMap[leader.party]
-        const partyChange = typeof party?.change === 'number' ? party.change : null
-        if (partyChange == null) return null
-        return {
-          leader,
-          party,
-          partyChange,
-          score: Math.abs(leader.net - partyChange * 10),
-        }
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.score - a.score)
-
-    const mismatchEntry = mismatchCandidates[0] || null
-    const mismatch = mismatchEntry?.leader || bottom
-    const mismatchParty = mismatchEntry?.party || leaderPartyMap[mismatch?.party]
-    const mismatchPartyChange = typeof mismatchEntry?.partyChange === 'number' ? mismatchEntry.partyChange : null
-
-    // Derived signals:
-    // - topGap: separation at the top of the approval table
-    // - bottomSeverity: how far underwater the weakest leader is
-    // - mismatchScore: distance between leader standing and party momentum
-    // - spreadAcrossField: whether the table is compressed or stretched
-    // These signals feed a narrative mode chooser so the hero leads with the
-    // most meaningful approval story rather than always defaulting to top vs bottom.
-    const topGap = second ? top.net - second.net : null
-    const third = sorted[2] || null
-    const spreadAcrossField = top.net - bottom.net
-    const bottomSeverity = Math.abs(Math.min(bottom.net, 0))
-    const mismatchScore = mismatchEntry?.score ?? 0
-    const topSeparated = topGap != null && topGap >= 6
-    const topRaceTight = topGap != null && topGap <= 2
-    const pressureSevere = bottom.net <= -25
-    const mismatchSevere = mismatchScore >= 14
-    const fieldCompressed = spreadAcrossField <= 12
-
-    // Narrative priority:
-    // 1. Mismatch if leadership/party disconnect is especially stark
-    // 2. Crisis if one leader is deeply underwater and that dominates the table
-    // 3. Tight top race if the leaders are closely bunched
-    // 4. Dominance if the leader is clearly separated
-    // 5. Fragmented/flat field as the fallback when no single signal dominates
-    let mode = 'fragmented'
-    if (mismatchSevere && mismatch?.name !== top.name && mismatch?.name !== bottom.name) {
-      mode = 'mismatch'
-    } else if (pressureSevere && bottomSeverity >= (topGap ?? 0) + 12) {
-      mode = 'pressure'
-    } else if (topRaceTight) {
-      mode = 'tightTop'
-    } else if (topSeparated) {
-      mode = 'dominance'
-    } else if (fieldCompressed || (third && top.net - third.net <= 5)) {
-      mode = 'fragmented'
-    }
-
-    let headline = `${top.name} leads the approval table`
-    let body = `${top.name} is still the strongest-rated leader, but the wider field remains open.`
-
-    if (mode === 'dominance') {
-      headline = `${top.name} has opened a clear approval lead`
-      body = second
-        ? `${top.name} is ${topGap} points clear of ${second.name}, giving them the cleanest leadership cushion in the field.`
-        : `${top.name} is clearly ahead on leader ratings, with no close challenger in view.`
-    } else if (mode === 'tightTop') {
-      headline = 'The race at the top is tightening'
-      body = second
-        ? `${top.name} and ${second.name} are separated by only ${topGap} points, so the leadership order still looks contestable.`
-        : `${top.name} remains in front, but the approval lead is too narrow to feel settled.`
-    } else if (mode === 'pressure') {
-      headline = `${bottom.name} remains deep underwater`
-      body = `${bottom.name} is carrying the heaviest approval pressure in the table, and that level of weakness is now the defining signal in the field.`
-    } else if (mode === 'mismatch') {
-      headline = `${mismatch.name} is the clearest approval mismatch`
-      body = `${mismatch.name}'s personal standing is the sharpest disconnect with party momentum, making that leadership gap harder to ignore.`
-    } else {
-      headline = 'Leader ratings remain unsettled across the field'
-      body = second && third
-        ? `${top.name} still leads, but the gaps behind are narrow enough that the approval order can still shift quickly.`
-        : `${top.name} remains ahead, but the table is not yet producing one dominant approval story.`
-    }
-
+  if (!top) {
     return {
-      headline,
-      body,
-      topLabel: `${top.name} ${top.net >= 0 ? '+' : ''}${top.net}`,
-      pressureLabel: `${bottom.name} ${bottom.net >= 0 ? '+' : ''}${bottom.net}`,
-      mismatchLabel:
-        mismatch && mismatchParty
-          ? mismatchPartyChange != null && mismatchPartyChange > 0 && mismatch.net < 0
-            ? `${shortLeaderRef(mismatch.name)} trails ${mismatchParty.name}`
-            : mismatchPartyChange != null && mismatchPartyChange < 0 && mismatch.net >= 0
-              ? `${shortLeaderRef(mismatch.name)} runs ahead of ${mismatchParty.name}`
-              : mismatch.net < 0
-                ? `${shortLeaderRef(mismatch.name)} lags the party`
-                : `${shortLeaderRef(mismatch.name)} is out of sync`
-          : 'No clear split',
+      headline: 'Leader approval data is not available yet.',
+      body: 'Once approval figures are loaded, this screen will highlight who is leading, who is under pressure, and where leadership is helping or hurting party performance.',
+      topLabel: '—',
+      pressureLabel: '—',
+      mismatchLabel: '—',
     }
+  }
+
+  const mismatchCandidates = sorted
+    .map((leader) => {
+      const party = leaderPartyMap[leader.party]
+      const partyChange = typeof party?.change === 'number' ? party.change : null
+      if (partyChange == null) return null
+      return {
+        leader,
+        party,
+        partyChange,
+        score: Math.abs(leader.net - partyChange * 10),
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score)
+
+  const mismatchEntry = mismatchCandidates[0] || null
+  const mismatch = mismatchEntry?.leader || bottom
+  const mismatchParty = mismatchEntry?.party || leaderPartyMap[mismatch?.party]
+  const mismatchPartyChange = typeof mismatchEntry?.partyChange === 'number' ? mismatchEntry.partyChange : null
+
+  // Derived signals:
+  // - topGap: separation at the top of the approval table
+  // - bottomSeverity: how far underwater the weakest leader is
+  // - mismatchScore: distance between leader standing and party momentum
+  // - spreadAcrossField: whether the table is compressed or stretched
+  // These signals feed a narrative mode chooser so the hero leads with the
+  // most meaningful approval story rather than always defaulting to top vs bottom.
+  const topGap = second ? top.net - second.net : null
+  const third = sorted[2] || null
+  const spreadAcrossField = top.net - bottom.net
+  const bottomSeverity = Math.abs(Math.min(bottom.net, 0))
+  const mismatchScore = mismatchEntry?.score ?? 0
+  const topSeparated = topGap != null && topGap >= 6
+  const topRaceTight = topGap != null && topGap <= 2
+  const pressureSevere = bottom.net <= -25
+  const mismatchSevere = mismatchScore >= 14
+  const fieldCompressed = spreadAcrossField <= 12
+
+  // Narrative priority:
+  // 1. Mismatch if leadership/party disconnect is especially stark
+  // 2. Crisis if one leader is deeply underwater and that dominates the table
+  // 3. Tight top race if the leaders are closely bunched
+  // 4. Dominance if the leader is clearly separated
+  // 5. Fragmented/flat field as the fallback when no single signal dominates
+  let mode = 'fragmented'
+  if (mismatchSevere && mismatch?.name !== top.name && mismatch?.name !== bottom.name) {
+    mode = 'mismatch'
+  } else if (pressureSevere && bottomSeverity >= (topGap ?? 0) + 12) {
+    mode = 'pressure'
+  } else if (topRaceTight) {
+    mode = 'tightTop'
+  } else if (topSeparated) {
+    mode = 'dominance'
+  } else if (fieldCompressed || (third && top.net - third.net <= 5)) {
+    mode = 'fragmented'
+  }
+
+  let headline = `${top.name} leads the approval table`
+  let body = `${top.name} is still the strongest-rated leader, but the wider field remains open.`
+
+  if (mode === 'dominance') {
+    headline = `${top.name} has opened a clear approval lead`
+    body = second
+      ? `${top.name} is ${topGap} points clear of ${second.name}, giving them the cleanest leadership cushion in the field.`
+      : `${top.name} is clearly ahead on leader ratings, with no close challenger in view.`
+  } else if (mode === 'tightTop') {
+    headline = 'The race at the top is tightening'
+    body = second
+      ? `${top.name} and ${second.name} are separated by only ${topGap} points, so the leadership order still looks contestable.`
+      : `${top.name} remains in front, but the approval lead is too narrow to feel settled.`
+  } else if (mode === 'pressure') {
+    headline = `${bottom.name} remains deep underwater`
+    body = `${bottom.name} is carrying the heaviest approval pressure in the table, and that level of weakness is now the defining signal in the field.`
+  } else if (mode === 'mismatch') {
+    headline = `${mismatch.name} is the clearest approval mismatch`
+    body = `${mismatch.name}'s personal standing is the sharpest disconnect with party momentum, making that leadership gap harder to ignore.`
+  } else {
+    headline = 'Leader ratings remain unsettled across the field'
+    body = second && third
+      ? `${top.name} still leads, but the gaps behind are narrow enough that the approval order can still shift quickly.`
+      : `${top.name} remains ahead, but the table is not yet producing one dominant approval story.`
+  }
+
+  return {
+    headline,
+    body,
+    topLabel: `${top.name} ${top.net >= 0 ? '+' : ''}${top.net}`,
+    pressureLabel: `${bottom.name} ${bottom.net >= 0 ? '+' : ''}${bottom.net}`,
+    mismatchLabel:
+      mismatch && mismatchParty
+        ? mismatchPartyChange != null && mismatchPartyChange > 0 && mismatch.net < 0
+          ? `${shortLeaderRef(mismatch.name)} trails ${mismatchParty.name}`
+          : mismatchPartyChange != null && mismatchPartyChange < 0 && mismatch.net >= 0
+            ? `${shortLeaderRef(mismatch.name)} runs ahead of ${mismatchParty.name}`
+            : mismatch.net < 0
+              ? `${shortLeaderRef(mismatch.name)} lags the party`
+              : `${shortLeaderRef(mismatch.name)} is out of sync`
+        : 'No clear split',
+  }
   }, [sorted, leaderPartyMap])
 
   return (

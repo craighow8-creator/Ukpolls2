@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
+import SectionDataMeta from '../components/SectionDataMeta'
 import { API_BASE } from '../constants'
 import { parseJsonResponse } from '../utils/http'
 import {
@@ -141,20 +142,6 @@ function NewsHero({ T, meta, heroItem, loading }) {
         border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          top: -56,
-          right: -30,
-          width: 180,
-          height: 180,
-          borderRadius: '50%',
-          background: `${liveColor}16`,
-          filter: 'blur(8px)',
-          pointerEvents: 'none',
-        }}
-      />
-
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div
           style={{
@@ -405,7 +392,7 @@ function NewsCard({ T, item, big = false }) {
   )
 }
 
-export function NewsScreen({ T, news }) {
+export function NewsScreen({ T, news, dataState = {} }) {
   const initialPayload = useMemo(() => normaliseNewsPayload(news), [news])
   const [payload, setPayload] = useState(initialPayload)
   const [loading, setLoading] = useState(true)
@@ -469,6 +456,9 @@ export function NewsScreen({ T, news }) {
     >
       <div style={{ padding: '12px 16px 40px' }}>
         <NewsHero T={T} meta={meta} heroItem={heroItem} loading={loading} />
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
+          <SectionDataMeta T={T} section={dataState.newsItems || dataState.news || null} />
+        </div>
 
         {loading && !items.length ? (
           <div style={{ marginTop: 14 }}>

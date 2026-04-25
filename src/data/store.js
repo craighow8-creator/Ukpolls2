@@ -15,6 +15,7 @@ const KEYS = {
   leaders: `PS_leaders_${CACHE_VERSION}`,
   meta: `PS_meta_${CACHE_VERSION}`,
   betting: `PS_betting_${CACHE_VERSION}`,
+  predictionMarkets: `PS_predictionMarkets_${CACHE_VERSION}`,
   elections: `PS_elections_${CACHE_VERSION}`,
   byElections: `PS_byElections_${CACHE_VERSION}`,
   migration: `PS_migration_${CACHE_VERSION}`,
@@ -38,7 +39,7 @@ const KEYS = {
 
 // legacy keys that may still contain poisoned trend/poll cache rows
 const LEGACY_KEYS = [
-  'PS_parties', 'PS_trends', 'PS_leaders', 'PS_meta', 'PS_betting', 'PS_elections',
+  'PS_parties', 'PS_trends', 'PS_leaders', 'PS_meta', 'PS_betting', 'PS_predictionMarkets', 'PS_elections',
   'PS_byElections', 'PS_migration', 'PS_milestones', 'PS_polls', 'PS_demographics',
   'PS_newsItems', 'PS_policyRecords', 'PS_policyTaxonomy', 'PS_policyDelivery', 'PS_councilRegistry', 'PS_councilStatus', 'PS_councilEditorial', 'PS_timestamps',
 ]
@@ -50,6 +51,7 @@ const SECTION_MAP = {
   elections: 'elections',
   trends: 'trends',
   betting: 'betting',
+  predictionMarkets: 'predictionMarkets',
   byElections: 'byElections',
   migration: 'migration',
   milestones: 'milestones',
@@ -64,6 +66,23 @@ const SECTION_MAP = {
   councilStatus: 'councilStatus',
   councilEditorial: 'councilEditorial',
   parliament: 'parliament',
+}
+
+const SECTION_STATE_MAP = {
+  polls: { label: 'Live', tone: 'live' },
+  trends: { label: 'Derived', tone: 'derived' },
+  leaders: { label: 'Maintained', tone: 'maintained' },
+  betting: { label: 'Static', tone: 'static' },
+  predictionMarkets: { label: 'Live', tone: 'live' },
+  elections: { label: 'Live / maintained', tone: 'semi-live' },
+  byElections: { label: 'Maintained', tone: 'maintained' },
+  migration: { label: 'Static', tone: 'static' },
+  demographics: { label: 'Static', tone: 'static' },
+  newsItems: { label: 'Live', tone: 'live' },
+  councilRegistry: { label: 'Maintained', tone: 'maintained' },
+  councilStatus: { label: 'Maintained', tone: 'maintained' },
+  councilEditorial: { label: 'Maintained', tone: 'maintained' },
+  parliament: { label: 'Semi-live', tone: 'semi-live' },
 }
 
 const REMOTE_FETCH_TIMEOUT_MS = 8000
@@ -183,6 +202,19 @@ function safeCacheSection(key, value, options) {
   }
 }
 
+function makeSectionState(section, { updatedAt = null, source = null, mode = null, fallback = false, maintained = false } = {}) {
+  const base = SECTION_STATE_MAP[section] || { label: 'Unknown', tone: 'quiet' }
+  return {
+    section,
+    label: base.label,
+    tone: mode || base.tone,
+    updatedAt: updatedAt || null,
+    source: source || null,
+    fallback: !!fallback,
+    maintained: !!maintained,
+  }
+}
+
 function getDefaultData() {
   return {
     meta: withFallbackObject(DEFAULTS.meta, {}),
@@ -190,6 +222,7 @@ function getDefaultData() {
     trends: withFallbackArray(DEFAULTS.trends, []),
     leaders: withFallbackArray(DEFAULTS.leaders, []),
     betting: withFallbackObject(DEFAULTS.betting, { odds: [] }),
+    predictionMarkets: withFallbackObject(DEFAULTS.predictionMarkets, { markets: [] }),
     elections: withFallbackObject(DEFAULTS.elections, {}),
     byElections: withFallbackObject(DEFAULTS.byElections, { upcoming: [], recent: [] }),
     migration: withFallbackObject(DEFAULTS.migration, {}),
@@ -455,6 +488,73 @@ async function fetchLatestPolls() {
   return normalisePollArray(data?.polls, [])
 }
 
+function buildDefaultSectionState(defaults) {
+  return {
+    polls: makeSectionState('polls', { updatedAt: defaults?.meta?.fetchDate || null, source: 'Cron ingest to D1', fallback: true }),
+    trends: makeSectionState('trends', { updatedAt: defaults?.meta?.fetchDate || null, source: 'Derived from polls', fallback: true }),
+    leaders: makeSectionState('leaders', { source: 'Maintained editorial data', maintained: true, fallback: true }),
+    betting: makeSectionState('betting', { source: 'Maintained editorial data', maintained: true, fallback: true }),
+    predictionMarkets: makeSectionState('predictionMarkets', { source: 'Polymarket', fallback: true }),
+    elections: makeSectionState('elections', { source: 'Maintained election intelligence', maintained: true, fallback: true }),
+    byElections: makeSectionState('byElections', { source: 'Maintained tracker', maintained: true, fallback: true }),
+    migration: makeSectionState('migration', { source: 'Static reference data', fallback: true }),
+    demographics: makeSectionState('demographics', { source: 'Static reference data', fallback: true }),
+    newsItems: makeSectionState('newsItems', { source: 'Worker live fetch', fallback: true }),
+    councilRegistry: makeSectionState('councilRegistry', { source: 'Maintained council registry', maintained: true, fallback: true }),
+    councilStatus: makeSectionState('councilStatus', { source: 'Maintained council status', maintained: true, fallback: true }),
+    councilEditorial: makeSectionState('councilEditorial', { source: 'Maintained council editorial', maintained: true, fallback: true }),
+    parliament: makeSectionState('parliament', { source: 'Official Parliament / YouTube', fallback: true }),
+  }
+}
+
+function buildRemoteSectionState(remote) {
+  const ingestState = remote?.ingestStatus && typeof remote.ingestStatus === 'object' ? remote.ingestStatus : {}
+  const electionsIntelligence = remote?.elections?.intelligence && typeof remote.elections.intelligence === 'object' ? remote.elections.intelligence : {}
+  const parliament = remote?.parliament && typeof remote.parliament === 'object' ? remote.parliament : {}
+
+  return {
+    polls: makeSectionState('polls', {
+      updatedAt: ingestState.lastRunAt || ingestState.updatedAt || remote?.meta?.fetchDate || null,
+      source: ingestState.status === 'success' ? 'Cloudflare cron ingest to D1' : 'D1 poll store',
+      fallback: ingestState.status !== 'success',
+    }),
+    trends: makeSectionState('trends', {
+      updatedAt: remote?.meta?.fetchDate || ingestState.lastRunAt || null,
+      source: 'Derived from D1 polls',
+      fallback: false,
+    }),
+    leaders: makeSectionState('leaders', { source: 'D1 leaders table', maintained: true }),
+    betting: makeSectionState('betting', { source: remote?.betting?.source || 'Maintained editorial odds', maintained: true }),
+    predictionMarkets: makeSectionState('predictionMarkets', {
+      updatedAt: remote?.predictionMarkets?.updatedAt || remote?.predictionMarkets?.meta?.updatedAt || null,
+      source: remote?.predictionMarkets?.source || 'Polymarket',
+      fallback: false,
+    }),
+    elections: makeSectionState('elections', { source: 'D1 election intelligence', maintained: true }),
+    byElections: makeSectionState('byElections', { updatedAt: remote?.byElections?.meta?.updatedAt || null, source: 'D1 by-election tracker', maintained: true }),
+    migration: makeSectionState('migration', { source: 'Static reference data', fallback: true }),
+    demographics: makeSectionState('demographics', { source: 'Static reference data', fallback: true }),
+    newsItems: makeSectionState('newsItems', {
+      updatedAt: remote?.newsItems?.meta?.updatedAt || remote?.news?.meta?.updatedAt || remote?.news?.fetchedAt || null,
+      source: 'Worker live fetch',
+      fallback: false,
+    }),
+    councilRegistry: makeSectionState('councilRegistry', { updatedAt: remote?.councilRegistry?.meta?.updatedAt || null, source: 'D1 council registry', maintained: true }),
+    councilStatus: makeSectionState('councilStatus', { updatedAt: remote?.councilStatus?.meta?.updatedAt || null, source: 'D1 council status', maintained: true }),
+    councilEditorial: makeSectionState('councilEditorial', { updatedAt: remote?.councilEditorial?.meta?.updatedAt || null, source: 'D1 council editorial', maintained: true }),
+    parliament: makeSectionState('parliament', {
+      updatedAt: parliament.updatedAt || parliament.facts?.verifiedAt || null,
+      source: 'Official Parliament / YouTube',
+      fallback: false,
+    }),
+    electionsIntelligence: makeSectionState('electionsIntelligence', {
+      updatedAt: electionsIntelligence?.mayors?.meta?.updatedAt || electionsIntelligence?.devolved?.meta?.updatedAt || null,
+      source: 'D1-maintained election intelligence',
+      maintained: true,
+    }),
+  }
+}
+
 export function loadTimestamps() {
   return readJson(KEYS.timestamps, {})
 }
@@ -571,7 +671,10 @@ export async function getData() {
     livePolls = normalisePollArray(latest, []).filter(isDisplaySafePoll)
   } catch (e) {
     console.warn('Store: remote load failed, using local/default fallback', e)
-    return local
+    return {
+      ...local,
+      dataState: buildDefaultSectionState(defaults),
+    }
   }
 
   const normalised = normaliseRemote(remote, defaults)
@@ -621,6 +724,7 @@ export async function getData() {
     trends: finalTrends,
     leaders: finalLeaders,
     betting: mergeObject(normalised.betting, readJson(KEYS.betting, null)),
+    predictionMarkets: mergeObject(normalised.predictionMarkets, readJson(KEYS.predictionMarkets, null)),
     elections: mergeObject(normalised.elections, readJson(KEYS.elections, null)),
     byElections: mergeObject(normalised.byElections, readJson(KEYS.byElections, null)),
     migration: mergeObject(normalised.migration, readJson(KEYS.migration, null)),
@@ -638,6 +742,59 @@ export async function getData() {
     councilStatus: withFallbackArray(normalised.councilStatus, readJson(KEYS.councilStatus, null)),
     councilEditorial: withFallbackArray(normalised.councilEditorial, readJson(KEYS.councilEditorial, null)),
     parliament: mergeObject(normalised.parliament, readJson(KEYS.parliament, null)),
+    dataState: {
+      ...buildDefaultSectionState(defaults),
+      ...buildRemoteSectionState(remote),
+      polls: makeSectionState('polls', {
+        updatedAt: normalised.ingestStatus?.lastRunAt || normalised.ingestStatus?.updatedAt || remote?.meta?.fetchDate || null,
+        source: normalised.ingestStatus?.status === 'success' ? 'Cloudflare cron ingest to D1' : 'D1 poll store',
+        fallback: normalised.ingestStatus?.status !== 'success' && !mergedPolls.length,
+      }),
+      trends: makeSectionState('trends', {
+        updatedAt: normalised.ingestStatus?.lastRunAt || remote?.meta?.fetchDate || null,
+        source: 'Derived from D1 polls',
+      }),
+      newsItems: makeSectionState('newsItems', {
+        updatedAt: normalised.newsItems?.updatedAt || remote?.newsItems?.meta?.updatedAt || remote?.news?.fetchedAt || null,
+        source: 'Worker live fetch',
+      }),
+      byElections: makeSectionState('byElections', {
+        updatedAt: normalised.byElections?.meta?.updatedAt || null,
+        source: 'D1 by-election tracker',
+        maintained: true,
+      }),
+      councilRegistry: makeSectionState('councilRegistry', {
+        updatedAt: normalised.councilRegistry?.meta?.updatedAt || null,
+        source: 'D1 council registry',
+        maintained: true,
+      }),
+      councilStatus: makeSectionState('councilStatus', {
+        updatedAt: normalised.councilStatus?.meta?.updatedAt || null,
+        source: 'D1 council status',
+        maintained: true,
+      }),
+      councilEditorial: makeSectionState('councilEditorial', {
+        updatedAt: normalised.councilEditorial?.meta?.updatedAt || null,
+        source: 'D1 council editorial',
+        maintained: true,
+      }),
+      parliament: makeSectionState('parliament', {
+        updatedAt: normalised.parliament?.updatedAt || normalised.parliament?.facts?.verifiedAt || null,
+        source: 'Official Parliament / YouTube',
+      }),
+      electionsIntelligence: makeSectionState('electionsIntelligence', {
+        updatedAt: remote?.elections?.intelligence?.mayors?.meta?.updatedAt || remote?.elections?.intelligence?.devolved?.meta?.updatedAt || null,
+        source: 'D1-maintained election intelligence',
+        maintained: true,
+      }),
+      betting: makeSectionState('betting', { source: 'Maintained editorial odds', maintained: true }),
+      predictionMarkets: makeSectionState('predictionMarkets', {
+        updatedAt: normalised.predictionMarkets?.updatedAt || normalised.predictionMarkets?.meta?.updatedAt || null,
+        source: 'Polymarket',
+      }),
+      migration: makeSectionState('migration', { source: 'Static reference data', fallback: true }),
+      demographics: makeSectionState('demographics', { source: 'Static reference data', fallback: true }),
+    },
   }
 }
 

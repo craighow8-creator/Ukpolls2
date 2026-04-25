@@ -169,7 +169,7 @@ function BrandHeader({ T, onClose }) {
   )
 }
 
-export function ExpandedCard({ layoutId, T, children, onClose, resetKey }) {
+export function ExpandedCard({ layoutId, T, children, onClose, onSwipeBack = onClose, resetKey }) {
   const y = useMotionValue(0)
   const bgOpacity = useTransform(y, [0, 180], [1, 0])
   const contentRef = useRef(null)
@@ -203,7 +203,7 @@ export function ExpandedCard({ layoutId, T, children, onClose, resetKey }) {
   }
 
   const { onTouchStart, onTouchMove, onTouchEnd } = useSwipeNav({
-    onSwipeRight: onClose,
+    onSwipeRight: onSwipeBack,
     onSwipeLeft: undefined,
   })
 

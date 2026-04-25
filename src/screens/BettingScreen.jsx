@@ -1,6 +1,7 @@
 import React from 'react'
 import { ScrollArea } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
+import SectionDataMeta from '../components/SectionDataMeta'
 
 function impliedProb(odds) {
   if (!odds) return 0
@@ -114,8 +115,96 @@ function OddsCard({ T, odd, rank }) {
   )
 }
 
-export default function BettingScreen({ T, nav, betting }) {
+function PredictionMarketCard({ T, market }) {
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        padding: 16,
+        background: T.c0,
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: T.th, lineHeight: 1.35 }}>{market.title}</div>
+          {market.subtitle ? (
+            <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, lineHeight: 1.45, marginTop: 4 }}>
+              {market.subtitle}
+            </div>
+          ) : null}
+        </div>
+
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            color: '#12B7D4',
+            background: '#12B7D412',
+            border: '1px solid #12B7D42A',
+            borderRadius: 999,
+            padding: '4px 8px',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}
+        >
+          {market.status || 'active'}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+        {Array.isArray(market.outcomes)
+          ? market.outcomes.map((outcome, index) => (
+              <div
+                key={`${market.id}-${index}`}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: '8px 10px',
+                  borderRadius: 12,
+                  background: T.sf,
+                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.06)'}`,
+                }}
+              >
+                <div style={{ minWidth: 0, flex: 1, fontSize: 13.5, fontWeight: 600, color: T.th }}>
+                  {outcome.label}
+                </div>
+                <div style={{ fontSize: 13.5, fontWeight: 800, color: '#12B7D4' }}>
+                  {outcome.displayPct || '—'}
+                </div>
+              </div>
+            ))
+          : null}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginTop: 12 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: T.tl }}>
+          {market.category || 'Polymarket'}
+        </div>
+        {market.url ? (
+          <a
+            href={market.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: 12, fontWeight: 700, color: T.pr, textDecoration: 'none' }}
+          >
+            View market →
+          </a>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+export default function BettingScreen({ T, nav, betting, predictionMarkets, dataState = {} }) {
   const odds = betting?.odds || []
+  const predictionMarketsList = Array.isArray(predictionMarkets?.markets) ? predictionMarkets.markets.slice(0, 5) : []
   const totalProb = odds.reduce((s, o) => s + impliedProb(o.odds), 0)
 
   return (
@@ -155,6 +244,10 @@ export default function BettingScreen({ T, nav, betting }) {
           </div>
 
           <InfoButton id="betting_odds" T={T} size={18} />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
+          <SectionDataMeta T={T} section={dataState.betting || null} />
         </div>
       </div>
 
@@ -215,6 +308,61 @@ export default function BettingScreen({ T, nav, betting }) {
           ))}
         </div>
 
+        <div style={{ marginTop: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.5, color: T.th, lineHeight: 1 }}>
+                Prediction Markets (Live)
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>
+                Live Polymarket pricing for UK politics
+              </div>
+            </div>
+            <InfoButton id="prediction_markets" T={T} size={18} />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10, marginBottom: 10 }}>
+            <SectionDataMeta T={T} section={dataState.predictionMarkets || null} />
+          </div>
+
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#E4003B',
+              marginBottom: 10,
+              textAlign: 'center',
+            }}
+          >
+            PREDICTION MARKETS TEST
+          </div>
+
+          {predictionMarketsList.length ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {predictionMarketsList.map((market, i) => (
+                <PredictionMarketCard key={market.id || i} T={T} market={market} />
+              ))}
+            </div>
+          ) : (
+            <div
+              style={{
+                borderRadius: 14,
+                padding: '16px',
+                background: T.c0,
+                border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                color: T.tl,
+                fontSize: 13,
+                fontWeight: 600,
+                textAlign: 'center',
+              }}
+            >
+              No active UK prediction markets right now.
+            </div>
+          )}
+        </div>
+
         <div
           style={{
             borderRadius: 14,
@@ -253,4 +401,3 @@ export default function BettingScreen({ T, nav, betting }) {
     </div>
   )
 }
-

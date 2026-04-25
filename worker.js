@@ -1,4 +1,6 @@
 import { buildElectionsIntelligencePayload, buildMayorsIntelligencePayload, buildDevolvedIntelligencePayload } from './src/data/electionsIntelligence.js'
+import { runPollIngestForWorker } from './src/shared/pollIngestCore.js'
+import { runPolymarketPredictionRefresh } from './src/shared/predictionMarketsCore.js'
 
 export default {
   async fetch(request, env) {
@@ -365,6 +367,12 @@ export default {
       }
     }
 
+    async function loadPredictionMarkets() {
+      const data = await loadContentSection('predictionMarkets')
+      if (data && typeof data === 'object' && !Array.isArray(data)) return data
+      return null
+    }
+
     // Loads mayor enrichments from D1 (stored via POST /api/elections/mayors-enrich).
     // Returns the stored object when present, or null to signal that
     // buildMayorsIntelligencePayload should fall back to DEFAULT_MAYOR_ENRICHMENTS.
@@ -467,6 +475,8 @@ export default {
         control: row.control || '',
         leader: row.leader || '',
         mayor: row.mayor || '',
+        administration: row.administration || '',
+        composition: Array.isArray(row.composition) ? row.composition : [],
         governanceModel: row.governanceModel || '',
         verificationStatus: row.verificationStatus || 'unverified',
         verificationSourceType: row.verificationSourceType || '',
@@ -1473,7 +1483,18 @@ export default {
       }
       if (request.method === 'GET' && url.pathname === '/api/news') {
         const items = await getNewsItems()
-        return jsonResponse({ items })
+        const updatedAt = items[0]?.publishedAt || new Date().toISOString()
+        return jsonResponse({
+          items,
+          meta: {
+            updatedAt,
+            fetchedAt: updatedAt,
+            storyCount: items.length,
+            sourceCount: new Set(items.map((item) => item.source).filter(Boolean)).size,
+            sources: [...new Set(items.map((item) => item.source).filter(Boolean))],
+            sourceType: 'live-fetch',
+          },
+        })
       }
 
       if (request.method === 'GET' && url.pathname === '/api/parliament-video') {
@@ -1517,6 +1538,11 @@ export default {
           youtubeUrl: `https://www.youtube.com/watch?v=${video.videoId}`,
           channelUrl: 'https://www.youtube.com/@UKParliament',
           commonsUrl: 'https://www.parliamentlive.tv/Commons',
+          meta: {
+            updatedAt: new Date().toISOString(),
+            sourceType: video.isLive ? 'live-stream' : 'latest-upload',
+            maintained: false,
+          },
         })
       }
 
@@ -2063,6 +2089,7 @@ export default {
 
         const trends = await loadContentSection('trends')
         const betting = await loadContentSection('betting')
+        const predictionMarkets = await loadContentSection('predictionMarkets')
         const byElections = await loadContentSection('byElections')
         const migration = await loadContentSection('migration')
         const milestones = await loadContentSection('milestones')
@@ -2093,6 +2120,7 @@ export default {
           meta: metaObj,
           trends: trends || [],
           betting: betting || null,
+          predictionMarkets: predictionMarkets || null,
           byElections: byElections || null,
           migration: migration || null,
           milestones: milestones || [],
@@ -2104,6 +2132,123 @@ export default {
           councilStatus: mergedCouncilData.status || [],
           councilEditorial: mergedCouncilData.editorial || [],
           electionsIntelligence,
+          dataState: {
+            polls: {
+              section: 'polls',
+              label: ingestStatus?.status === 'success' ? 'Live' : 'Cached',
+              tone: ingestStatus?.status === 'success' ? 'live' : 'cached',
+              updatedAt: ingestStatus?.lastRunAt || metaObj?.fetchDate || null,
+              source: ingestStatus?.status === 'success' ? 'Cloudflare cron ingest to D1' : 'D1 poll store',
+              fallback: ingestStatus?.status !== 'success',
+            },
+            trends: {
+              section: 'trends',
+              label: 'Derived',
+              tone: 'derived',
+              updatedAt: ingestStatus?.lastRunAt || metaObj?.fetchDate || null,
+              source: 'Derived from D1 polls',
+              fallback: false,
+            },
+            leaders: {
+              section: 'leaders',
+              label: 'Maintained',
+              tone: 'maintained',
+              source: 'D1 leaders table',
+              fallback: false,
+              maintained: true,
+            },
+            betting: {
+              section: 'betting',
+              label: 'Static',
+              tone: 'static',
+              source: 'Maintained editorial odds',
+              fallback: true,
+              maintained: true,
+            },
+            predictionMarkets: {
+              section: 'predictionMarkets',
+              label: 'Live',
+              tone: 'live',
+              source: 'Polymarket',
+              fallback: true,
+            },
+            elections: {
+              section: 'elections',
+              label: 'Semi-live',
+              tone: 'semi-live',
+              updatedAt: electionsIntelligence?.mayors?.meta?.updatedAt || electionsIntelligence?.devolved?.meta?.updatedAt || null,
+              source: 'D1 election intelligence',
+              maintained: true,
+            },
+            byElections: {
+              section: 'byElections',
+              label: byElections?.meta?.updatedAt ? 'Maintained' : 'Static',
+              tone: byElections?.meta?.updatedAt ? 'maintained' : 'static',
+              updatedAt: byElections?.meta?.updatedAt || null,
+              source: byElections?.meta?.source || 'D1 by-election tracker',
+              maintained: true,
+            },
+            migration: {
+              section: 'migration',
+              label: 'Static',
+              tone: 'static',
+              source: 'Static reference data',
+              fallback: true,
+            },
+            demographics: {
+              section: 'demographics',
+              label: 'Static',
+              tone: 'static',
+              source: 'Static reference data',
+              fallback: true,
+            },
+            newsItems: {
+              section: 'newsItems',
+              label: 'Live',
+              tone: 'live',
+              updatedAt: newsItems?.meta?.updatedAt || newsItems?.[0]?.publishedAt || null,
+              source: 'Worker live fetch',
+            },
+            councilRegistry: {
+              section: 'councilRegistry',
+              label: 'Maintained',
+              tone: 'maintained',
+              updatedAt: mergedCouncilData.registry?.meta?.updatedAt || null,
+              source: 'D1 council registry',
+              maintained: true,
+            },
+            councilStatus: {
+              section: 'councilStatus',
+              label: 'Maintained',
+              tone: 'maintained',
+              updatedAt: mergedCouncilData.status?.meta?.updatedAt || null,
+              source: 'D1 council status',
+              maintained: true,
+            },
+            councilEditorial: {
+              section: 'councilEditorial',
+              label: 'Maintained',
+              tone: 'maintained',
+              updatedAt: mergedCouncilData.editorial?.meta?.updatedAt || null,
+              source: 'D1 council editorial',
+              maintained: true,
+            },
+            parliament: {
+              section: 'parliament',
+              label: 'Semi-live',
+              tone: 'semi-live',
+              updatedAt: metaObj?.parliamentUpdatedAt || null,
+              source: 'Official Parliament / YouTube',
+            },
+            electionsIntelligence: {
+              section: 'electionsIntelligence',
+              label: 'Maintained',
+              tone: 'maintained',
+              updatedAt: electionsIntelligence?.mayors?.meta?.updatedAt || electionsIntelligence?.devolved?.meta?.updatedAt || null,
+              source: 'D1-maintained election intelligence',
+              maintained: true,
+            },
+          },
         })
       }
 
@@ -2185,6 +2330,7 @@ export default {
           [
             'trends',
             'betting',
+            'predictionMarkets',
             'byElections',
             'electionsIntelligence',
             'migration',
@@ -2196,6 +2342,7 @@ export default {
             'councilRegistry',
             'councilStatus',
             'councilEditorial',
+            'parliament',
           ].includes(section)
         ) {
           await saveContentSection(section, payload)
@@ -2204,93 +2351,73 @@ export default {
 
         return new Response('Unknown section', { status: 400, headers: corsHeaders })
       }
-
-      if (request.method === 'POST' && url.pathname === '/api/seed') {
-        const body = await request.json()
-
-        await env.DB.prepare('DELETE FROM polls').run()
-        await env.DB.prepare('DELETE FROM leaders').run()
-        await env.DB.prepare('DELETE FROM elections').run()
-        await env.DB.prepare('DELETE FROM meta').run()
-
-        if (await tableExists('content')) {
-          await env.DB.prepare('DELETE FROM content').run()
+      if (request.method === 'GET' && url.pathname === '/api/predictions') {
+        const refresh = url.searchParams.get('refresh') === '1'
+        const existing = await loadPredictionMarkets()
+        if (existing && !refresh) {
+          return jsonResponse(existing)
         }
 
-        for (const p of body.parties || []) {
-          await env.DB.prepare(
-            'INSERT INTO polls (id, name, pct, change, seats, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-          ).bind(
-            p.id ?? null,
-            p.name ?? '',
-            p.pct ?? 0,
-            p.change ?? 0,
-            p.seats ?? 0,
-            new Date().toISOString()
-          ).run()
-        }
-
-        for (const leader of body.leaders || []) {
-          await env.DB.prepare(
-            'INSERT INTO leaders (id, name, net, role, bio, party) VALUES (?, ?, ?, ?, ?, ?)'
-          ).bind(
-            leader.id ?? null,
-            leader.name ?? '',
-            leader.net ?? 0,
-            leader.role ?? '',
-            leader.bio ?? '',
-            leader.party ?? ''
-          ).run()
-        }
-
-        await env.DB.prepare(
-          'INSERT INTO elections (id, name, date, data) VALUES (?, ?, ?, ?)'
-        ).bind(1, 'main', '', JSON.stringify(body.elections ?? {})).run()
-
-        for (const [key, value] of Object.entries(body.meta || {})) {
-          await env.DB.prepare('INSERT INTO meta (key, value) VALUES (?, ?)').bind(key, String(value ?? '')).run()
-        }
-
-        if (await tableExists('content')) {
-          const contentSections = {
-            trends: body.trends || [],
-            betting: body.betting || null,
-            byElections: body.byElections || null,
-            electionsIntelligence: body.electionsIntelligence || null,
-            migration: body.migration || null,
-            milestones: body.milestones || [],
-            pollsData: body.polls || [],
-            ingestStatus: body.ingestStatus || null,
-            demographics: body.demographics || null,
-            newsItems: body.newsItems || [],
-            councilRegistry: body.councilRegistry || [],
-            councilStatus: body.councilStatus || [],
-            councilEditorial: body.councilEditorial || [],
-          }
-
-          for (const [section, data] of Object.entries(contentSections)) {
-            await env.DB.prepare(
-              `INSERT INTO content (section, data, updated_at)
-               VALUES (?, ?, ?)
-               ON CONFLICT(section) DO UPDATE SET
-                 data = excluded.data,
-                 updated_at = excluded.updated_at`
-            ).bind(section, JSON.stringify(data), new Date().toISOString()).run()
-          }
-        }
-
-        return new Response('seeded', { headers: corsHeaders })
+        const payload = await runPolymarketPredictionRefresh({ logger: console })
+        await saveContentSection('predictionMarkets', payload)
+        return jsonResponse(payload)
       }
 
-      return new Response('Not found', { status: 404, headers: corsHeaders })
+        if (request.method === 'GET' && url.pathname.startsWith('/api/debug/council/')) {
+          const slug = decodeURIComponent(url.pathname.split('/').pop() || '').trim().toLowerCase()
+
+          const rawStatus = await loadContentSection('councilStatus')
+          const rawRow = Array.isArray(rawStatus)
+            ? rawStatus.find((item) => String(item?.slug || '').toLowerCase() === slug) || null
+            : null
+
+          const normalizedStatus = await loadCouncilStatus()
+          const normalizedRow = normalizedStatus.find((item) => String(item?.slug || '').toLowerCase() === slug) || null
+
+          const merged = await loadMergedCouncilData()
+          const mergedRow = merged.councils.find((item) => String(item?.slug || '').toLowerCase() === slug) || null
+
+          return jsonResponse({
+            slug,
+            rawRow,
+            normalizedRow,
+            mergedRow,
+          })
+        }
+
+        return new Response('Not found', { status: 404, headers: corsHeaders })
+      } catch (err) {
+        return jsonResponse(
+          {
+            error: 'Worker failed',
+            message: err instanceof Error ? err.message : String(err),
+          },
+          { status: 500 }
+        )
+      }
+  },
+  async scheduled(controller, env, ctx) {
+    console.log(`[worker] scheduled trigger fired: ${controller?.cron || 'unknown cron'}`)
+    try {
+      await runPollIngestForWorker(env, ctx, console)
+      console.log('[worker] poll ingest completed')
     } catch (err) {
-      return jsonResponse(
-        {
-          error: 'Worker failed',
-          message: err instanceof Error ? err.message : String(err),
-        },
-        { status: 500 }
-      )
+      console.error('[worker] poll ingest failed:', err)
+    }
+    try {
+      const payload = await runPolymarketPredictionRefresh({ logger: console })
+      if (payload) {
+        await env.DB.prepare(
+          `INSERT INTO content (section, data, updated_at)
+           VALUES (?, ?, ?)
+           ON CONFLICT(section) DO UPDATE SET
+             data = excluded.data,
+             updated_at = excluded.updated_at`
+        ).bind('predictionMarkets', JSON.stringify(payload), new Date().toISOString()).run()
+      }
+      console.log('[worker] prediction markets refresh completed')
+    } catch (err) {
+      console.error('[worker] prediction markets refresh failed:', err)
     }
   },
 }

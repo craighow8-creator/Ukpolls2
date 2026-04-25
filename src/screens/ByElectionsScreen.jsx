@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import SectionDataMeta from '../components/SectionDataMeta'
 
 const PARTY_COLORS = {
   Conservative: '#0087DC',
@@ -337,7 +338,7 @@ function RecentResultCard({ T, contest }) {
   )
 }
 
-export default function ByElectionsScreen({ T, byElections }) {
+export default function ByElectionsScreen({ T, byElections, dataState = {} }) {
   const meta = byElections?.meta && typeof byElections.meta === 'object' ? byElections.meta : null
 
   const upcoming = useMemo(
@@ -421,6 +422,9 @@ export default function ByElectionsScreen({ T, byElections }) {
       </div>
 
       <div style={{ padding: '12px 16px 40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+          <SectionDataMeta T={T} section={dataState.byElections || null} />
+        </div>
         <Card T={T} borderColor={`${T.pr || '#12B7D4'}28`} style={{ marginBottom: 12 }}>
           <SectionTitle T={T}>By-election picture</SectionTitle>
           <div style={{ fontSize: 14, fontWeight: 600, color: T.th, lineHeight: 1.65, textAlign: 'center' }}>

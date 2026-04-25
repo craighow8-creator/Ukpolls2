@@ -122,6 +122,15 @@ Because bookmakers build in a profit margin, the implied probabilities across al
 Betting markets can reflect information not captured in polls — including political intelligence, market positioning, and punter sentiment.`,
     source: 'Oddschecker · Updated daily',
   },
+  prediction_markets: {
+    title: 'Prediction Markets',
+    body: `Prediction markets show how traders are pricing an outcome on an exchange-style market.
+
+These are not bookmaker odds. The prices are public market prices and can move quickly as new information arrives.
+
+Politiscope surfaces them separately so you can compare exchange pricing with the bookmaker market without mixing the two together.`,
+    source: 'Polymarket · public read data',
+  },
   fptp: {
     title: 'Why Votes ≠ Seats',
     body: `The UK uses First Past The Post (FPTP) voting. In each of the 650 constituencies, the candidate with the most votes wins — even if that's just 30% of local votes. The total national vote share is irrelevant to who wins.

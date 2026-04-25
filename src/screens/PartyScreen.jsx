@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { StickyPills, haptic } from '../components/ui'
 import SharedTrendChart, { buildDisplayTrendRows, makeTrendPartyKeys } from '../components/charts/SharedTrendChart'
 import { PortraitAvatar } from '../utils/portraits'
-import { CardWatermark } from '../components/CardWatermark'
 import { POLICY_AREAS, POLICY_RECORDS } from '../data/policy/policyRecords'
 import { POLICY_AREA_LABELS } from '../data/policy/policyTaxonomy'
 import { getAvailablePolicyAreasForParty, getPartyPolicies } from '../data/policy/policySelectors'
@@ -13,7 +12,8 @@ import CompareLauncherSheet from '../components/CompareLauncherSheet'
 const bCard = (T, color, extra = {}) => ({
   borderRadius: 14,
   padding: '14px 16px',
-  background: T.c0,
+  // Keep this fully opaque so the ambient background cannot bleed into cards.
+  background: T.sf,
   border: `1px solid ${color ? color + '28' : T.cardBorder || 'rgba(0,0,0,0.08)'}`,
   position: 'relative',
   overflow: 'hidden',
@@ -813,7 +813,6 @@ export default function PartyScreen({
 
         {tab === 'funding' && funding ? (
           <div style={{ ...bCard(T, p.color, { marginBottom: 16 }) }}>
-            <CardWatermark type="betting" color={p.color} size={90} />
             <div
               style={{
                 fontSize: 16,

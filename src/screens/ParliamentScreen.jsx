@@ -3,6 +3,7 @@ import { StickyPills, haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
 import { API_BASE } from '../constants'
 import { parseJsonResponse } from '../utils/http'
+import SectionDataMeta from '../components/SectionDataMeta'
 
 const TABS = [
   { key: 'howworks', label: 'How it Works' },
@@ -459,7 +460,7 @@ function VideoCard({ T, video }) {
   )
 }
 
-export default function ParliamentScreen({ T, parliament = {}, meta = {} }) {
+export default function ParliamentScreen({ T, parliament = {}, meta = {}, dataState = {} }) {
   const [tab, setTab] = useState('howworks')
   const [video, setVideo] = useState(null)
   const [videoError, setVideoError] = useState('')
@@ -515,6 +516,9 @@ export default function ParliamentScreen({ T, parliament = {}, meta = {} }) {
       <StickyPillsBar T={T} tab={tab} setTab={setTab} />
 
       <div style={{ padding: '12px 16px 40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+          <SectionDataMeta T={T} section={dataState.parliament || null} />
+        </div>
         {tab === 'howworks' ? (
           <>
             <SectionLabel T={T}>How Parliament works</SectionLabel>
@@ -685,5 +689,4 @@ export default function ParliamentScreen({ T, parliament = {}, meta = {} }) {
     </div>
   )
 }
-
 
