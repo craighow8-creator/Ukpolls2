@@ -1,4 +1,5 @@
-import sheffieldCouncillorsByWard from './sheffieldCouncillorsByWard.json'
+import { API_BASE } from '../constants.js'
+import sheffieldCouncillorsByWard from './sheffieldCouncillorsByWard.json' with { type: 'json' }
 
 const SHEFFIELD_COUNCIL_SLUG = 'sheffield-city-council'
 const SHEFFIELD_LAST_CHECKED = '25-04-2026'
@@ -6,6 +7,7 @@ const SHEFFIELD_CANDIDATE_NOTICE_DATE = '10-04-2026'
 const SHEFFIELD_NEXT_ELECTION_DATE = '07-05-2026'
 const DEMOCRACY_CLUB_API_BASE = 'https://developers.democracyclub.org.uk/api/v1'
 const DEMOCRACY_CLUB_SOURCE_LABEL = 'Democracy Club / WhoCanIVoteFor'
+const LOCAL_VOTE_FETCH_TIMEOUT_MS = 5000
 
 const SHEFFIELD_SOURCE_URLS = {
   electionsHub: 'https://www.sheffield.gov.uk/your-city-council/elections',
@@ -154,6 +156,40 @@ function createWard({
     ],
     councillors,
     candidates,
+  }
+}
+
+function createLocalVoteGuideCouncil({
+  councilSlug,
+  councilName,
+  supportedAreaLabel,
+  nextElectionDate,
+  updatedAt,
+  fetchedAt,
+  sourceNote,
+  controls,
+  sources,
+  wards,
+  lookup = {},
+}) {
+  return {
+    councilSlug,
+    councilName,
+    supportedAreaLabel,
+    nextElectionDate,
+    updatedAt,
+    fetchedAt,
+    sourceNote,
+    controls,
+    sources,
+    wards,
+    lookup: {
+      areaQueries: lookup.areaQueries || [],
+      postcodeLookupDocsUrl: lookup.postcodeLookupDocsUrl || '',
+      isSupportedPostcode: lookup.isSupportedPostcode || (() => false),
+      resolvePostcodeMatch: lookup.resolvePostcodeMatch || null,
+      fetchCandidates: lookup.fetchCandidates || null,
+    },
   }
 }
 
@@ -601,67 +637,6 @@ const SHEFFIELD_WARDS = [
   }),
 ]
 
-const LOCAL_VOTE_GUIDES = {
-  [SHEFFIELD_COUNCIL_SLUG]: {
-    councilSlug: SHEFFIELD_COUNCIL_SLUG,
-    councilName: 'Sheffield City Council',
-    supportedAreaLabel: 'Sheffield',
-    nextElectionDate: '07-05-2026',
-    democracyClubDocsUrl: SHEFFIELD_SOURCE_URLS.democracyClubDocs,
-    updatedAt: SHEFFIELD_LAST_CHECKED,
-    fetchedAt: SHEFFIELD_LAST_CHECKED,
-    sourceNote: 'Maintained local election guide · sources linked where available',
-    controls: [
-      'Council tax, budget priorities and neighbourhood services',
-      'Bins, street cleaning, local environmental services and parks',
-      'Planning, housing strategy and some local regeneration decisions',
-      'Road safety, local transport priorities and active travel schemes',
-      'Social care, libraries and a wide range of day-to-day council services',
-    ],
-    sources: [
-      {
-        label: 'Sheffield elections hub',
-        url: SHEFFIELD_SOURCE_URLS.electionsHub,
-        updatedAt: SHEFFIELD_LAST_CHECKED,
-      },
-      {
-        label: 'Electoral wards overview',
-        url: SHEFFIELD_SOURCE_URLS.electoralWards,
-        updatedAt: SHEFFIELD_LAST_CHECKED,
-      },
-      {
-        label: 'Election notices',
-        url: SHEFFIELD_SOURCE_URLS.electionNotices,
-        updatedAt: SHEFFIELD_CANDIDATE_NOTICE_DATE,
-      },
-      {
-        label: 'Statement of persons nominated',
-        url: SHEFFIELD_SOURCE_URLS.statementOfPersonsNominated,
-        updatedAt: SHEFFIELD_CANDIDATE_NOTICE_DATE,
-      },
-      {
-        label: 'Current councillors by ward',
-        url: SHEFFIELD_SOURCE_URLS.councillorsByWardTable,
-        updatedAt: SHEFFIELD_LAST_CHECKED,
-      },
-      {
-        label: 'Council overview',
-        url: SHEFFIELD_SOURCE_URLS.councilOverview,
-        updatedAt: SHEFFIELD_LAST_CHECKED,
-      },
-      {
-        label: 'Postcode lookup API',
-        url: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
-      },
-      {
-        label: 'Democracy Club developer API',
-        url: SHEFFIELD_SOURCE_URLS.democracyClubDocs,
-      },
-    ],
-    wards: SHEFFIELD_WARDS,
-  },
-}
-
 export function isSheffieldPostcode(value) {
   return /^S\d{1,2}[A-Z]?\s*\d[A-Z]{2}$/i.test(String(value || '').trim())
 }
@@ -676,6 +651,177 @@ function buildWardAliasMap(council) {
   })
 }
 
+function findWardMatchForCouncil(council, query) {
+  const wardAliasMap = buildWardAliasMap(council)
+  const wardKey = slugify(query)
+  return wardAliasMap.find((entry) => entry.alias === wardKey) || null
+}
+
+function supportsCouncilAreaQuery(council, query) {
+  const normalisedQuery = String(query || '').trim().toLowerCase()
+  return (council?.lookup?.areaQueries || []).some((value) => value === normalisedQuery)
+}
+
+function findCouncilForSupportedPostcode(query) {
+  return LOCAL_VOTE_GUIDE_COUNCIL_LIST.find((council) => council.lookup.isSupportedPostcode(query)) || null
+}
+
+function createGuideMatch(council, wardSlug = '') {
+  if (!council) return null
+
+  return {
+    councilSlug: council.councilSlug,
+    wardSlug,
+    query: wardSlug
+      ? `${council.supportedAreaLabel} · ${getLocalVoteGuideWard(council.councilSlug, wardSlug)?.name || ''}`
+      : council.supportedAreaLabel,
+  }
+}
+
+async function fetchSheffieldLiveCandidates({ ward, query }) {
+  const postcode = normalisePostcodeInput(query)
+  const apiKey = getDemocracyClubApiKey()
+
+  if (!isSheffieldPostcode(postcode)) return null
+
+  const payload = await requestDemocracyClubPostcode(postcode, apiKey)
+  const liveCandidates = extractDemocracyClubWardCandidates(payload, ward)
+
+  if (!liveCandidates.length) return null
+
+  return {
+    candidates: liveCandidates,
+    sourceLabel: DEMOCRACY_CLUB_SOURCE_LABEL,
+    sourceUrl: SHEFFIELD_SOURCE_URLS.democracyClubDocs,
+    status: 'verified',
+  }
+}
+
+async function resolveSheffieldPostcodeMatch(query, council) {
+  try {
+    const response = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(query)}`)
+    const payload = await response.json().catch(() => null)
+    const result = payload?.result
+
+    if (!response.ok || !result) {
+      return {
+        status: 'manual',
+        ...createGuideMatch(council),
+        query,
+        lookupSourceUrl: council.lookup.postcodeLookupDocsUrl,
+      }
+    }
+
+    if (String(result.admin_district || '').trim().toLowerCase() !== 'sheffield') {
+      return null
+    }
+
+    const resolvedWardName = String(result.admin_ward || '').trim()
+    const matchedWard = findWardMatchForCouncil(council, resolvedWardName)
+
+    if (matchedWard) {
+      return {
+        status: 'matched',
+        councilSlug: council.councilSlug,
+        wardSlug: matchedWard.wardSlug,
+        query,
+        resolvedWardName,
+        lookupSourceUrl: council.lookup.postcodeLookupDocsUrl,
+      }
+    }
+
+    return {
+      status: 'manual',
+      ...createGuideMatch(council),
+      query,
+      resolvedWardName,
+      lookupSourceUrl: council.lookup.postcodeLookupDocsUrl,
+    }
+  } catch {
+    return {
+      status: 'manual',
+      ...createGuideMatch(council),
+      query,
+      lookupSourceUrl: council.lookup.postcodeLookupDocsUrl,
+    }
+  }
+}
+
+const SHEFFIELD_COUNCIL = createLocalVoteGuideCouncil({
+  councilSlug: SHEFFIELD_COUNCIL_SLUG,
+  councilName: 'Sheffield City Council',
+  supportedAreaLabel: 'Sheffield',
+  nextElectionDate: '07-05-2026',
+  updatedAt: SHEFFIELD_LAST_CHECKED,
+  fetchedAt: SHEFFIELD_LAST_CHECKED,
+  sourceNote: 'Maintained local election guide · sources linked where available',
+  controls: [
+    'Council tax, budget priorities and neighbourhood services',
+    'Bins, street cleaning, local environmental services and parks',
+    'Planning, housing strategy and some local regeneration decisions',
+    'Road safety, local transport priorities and active travel schemes',
+    'Social care, libraries and a wide range of day-to-day council services',
+  ],
+  sources: [
+    {
+      label: 'Sheffield elections hub',
+      url: SHEFFIELD_SOURCE_URLS.electionsHub,
+      updatedAt: SHEFFIELD_LAST_CHECKED,
+    },
+    {
+      label: 'Electoral wards overview',
+      url: SHEFFIELD_SOURCE_URLS.electoralWards,
+      updatedAt: SHEFFIELD_LAST_CHECKED,
+    },
+    {
+      label: 'Election notices',
+      url: SHEFFIELD_SOURCE_URLS.electionNotices,
+      updatedAt: SHEFFIELD_CANDIDATE_NOTICE_DATE,
+    },
+    {
+      label: 'Statement of persons nominated',
+      url: SHEFFIELD_SOURCE_URLS.statementOfPersonsNominated,
+      updatedAt: SHEFFIELD_CANDIDATE_NOTICE_DATE,
+    },
+    {
+      label: 'Current councillors by ward',
+      url: SHEFFIELD_SOURCE_URLS.councillorsByWardTable,
+      updatedAt: SHEFFIELD_LAST_CHECKED,
+    },
+    {
+      label: 'Council overview',
+      url: SHEFFIELD_SOURCE_URLS.councilOverview,
+      updatedAt: SHEFFIELD_LAST_CHECKED,
+    },
+    {
+      label: 'Postcode lookup API',
+      url: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
+    },
+    {
+      label: 'Democracy Club developer API',
+      url: SHEFFIELD_SOURCE_URLS.democracyClubDocs,
+    },
+  ],
+  wards: SHEFFIELD_WARDS,
+  lookup: {
+    areaQueries: ['sheffield'],
+    postcodeLookupDocsUrl: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
+    isSupportedPostcode: isSheffieldPostcode,
+    resolvePostcodeMatch: resolveSheffieldPostcodeMatch,
+    fetchCandidates: fetchSheffieldLiveCandidates,
+  },
+})
+
+const LOCAL_VOTE_GUIDE_COUNCIL_LIST = [SHEFFIELD_COUNCIL]
+
+const LOCAL_VOTE_GUIDES = Object.fromEntries(
+  LOCAL_VOTE_GUIDE_COUNCIL_LIST.map((council) => [council.councilSlug, council]),
+)
+
+const LOCAL_VOTE_ROUTE_SLUGS = {
+  [SHEFFIELD_COUNCIL_SLUG]: 'sheffield',
+}
+
 export function normalisePostcodeInput(value) {
   return String(value || '')
     .trim()
@@ -686,6 +832,38 @@ export function normalisePostcodeInput(value) {
 export function getLocalVoteGuideCouncil(councilSlug) {
   if (!councilSlug) return null
   return LOCAL_VOTE_GUIDES[councilSlug] || null
+}
+
+async function fetchLocalVoteGuideJson(path) {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
+  const timeoutId = controller ? setTimeout(() => controller.abort(), LOCAL_VOTE_FETCH_TIMEOUT_MS) : null
+
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      cache: 'no-store',
+      signal: controller?.signal,
+    })
+
+    if (!response.ok) return null
+
+    const contentType = response.headers.get('content-type') || ''
+    if (!contentType.includes('application/json')) return null
+
+    return await response.json().catch(() => null)
+  } catch {
+    return null
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId)
+  }
+}
+
+export async function fetchLocalVoteGuideCouncilData(councilSlug) {
+  const routeSlug = LOCAL_VOTE_ROUTE_SLUGS[councilSlug]
+  if (!routeSlug) return null
+
+  const payload = await fetchLocalVoteGuideJson(`/api/local-vote/councils/${routeSlug}`)
+  if (!payload || payload.councilSlug !== councilSlug || !Array.isArray(payload.wards)) return null
+  return payload
 }
 
 export function getLocalVoteGuideWard(councilSlug, wardSlug) {
@@ -705,33 +883,31 @@ export function getLocalVoteGuideRecord(councilSlug, wardSlug) {
 }
 
 export function getSheffieldGuideMatch(wardSlug = '') {
-  return {
-    councilSlug: SHEFFIELD_COUNCIL_SLUG,
-    wardSlug,
-    query: wardSlug ? `Sheffield · ${getLocalVoteGuideWard(SHEFFIELD_COUNCIL_SLUG, wardSlug)?.name || ''}` : 'Sheffield',
-  }
+  return createGuideMatch(SHEFFIELD_COUNCIL, wardSlug)
 }
 
 export function findLocalVoteGuideMatch(rawQuery) {
   const query = normalisePostcodeInput(rawQuery)
   if (!query) return null
 
-  const sheffield = getLocalVoteGuideCouncil(SHEFFIELD_COUNCIL_SLUG)
-  const wardAliasMap = buildWardAliasMap(sheffield)
-  const wardKey = slugify(query)
-  const matchedWard = wardAliasMap.find((entry) => entry.alias === wardKey)
-
-  if (matchedWard) {
-    return {
-      councilSlug: SHEFFIELD_COUNCIL_SLUG,
-      wardSlug: matchedWard.wardSlug,
-      query,
+  for (const council of LOCAL_VOTE_GUIDE_COUNCIL_LIST) {
+    const matchedWard = findWardMatchForCouncil(council, query)
+    if (matchedWard) {
+      return {
+        councilSlug: council.councilSlug,
+        wardSlug: matchedWard.wardSlug,
+        query,
+      }
     }
   }
 
-  if (query.toLowerCase() === 'sheffield' || isSheffieldPostcode(query)) {
+  const matchedCouncil =
+    LOCAL_VOTE_GUIDE_COUNCIL_LIST.find((council) => supportsCouncilAreaQuery(council, query)) ||
+    findCouncilForSupportedPostcode(query)
+
+  if (matchedCouncil) {
     return {
-      councilSlug: SHEFFIELD_COUNCIL_SLUG,
+      councilSlug: matchedCouncil.councilSlug,
       wardSlug: '',
       query,
     }
@@ -825,21 +1001,9 @@ export async function fetchLocalVoteGuideCandidates({ councilSlug, wardSlug, que
     }
   }
 
-  const postcode = normalisePostcodeInput(query)
-  const apiKey = getDemocracyClubApiKey()
-
-  if (isSheffieldPostcode(postcode)) {
-    const payload = await requestDemocracyClubPostcode(postcode, apiKey)
-    const liveCandidates = extractDemocracyClubWardCandidates(payload, ward)
-
-    if (liveCandidates.length) {
-      return {
-        candidates: liveCandidates,
-        sourceLabel: DEMOCRACY_CLUB_SOURCE_LABEL,
-        sourceUrl: SHEFFIELD_SOURCE_URLS.democracyClubDocs,
-        status: 'verified',
-      }
-    }
+  const liveResult = await council.lookup.fetchCandidates?.({ council, ward, query })
+  if (liveResult?.candidates?.length) {
+    return liveResult
   }
 
   return {
@@ -862,69 +1026,22 @@ export async function resolveLocalVoteGuideMatch(rawQuery) {
     }
   }
 
-  if (query.toLowerCase() === 'sheffield') {
+  const matchedCouncil = LOCAL_VOTE_GUIDE_COUNCIL_LIST.find((council) => supportsCouncilAreaQuery(council, query))
+  if (matchedCouncil) {
     return {
       status: 'manual',
-      ...getSheffieldGuideMatch(),
+      ...createGuideMatch(matchedCouncil),
       query,
-      lookupSourceUrl: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
+      lookupSourceUrl: matchedCouncil.lookup.postcodeLookupDocsUrl,
     }
   }
 
-  if (!isSheffieldPostcode(query)) {
+  const postcodeCouncil = findCouncilForSupportedPostcode(query)
+  if (!postcodeCouncil) {
     return null
   }
 
-  try {
-    const response = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(query)}`)
-    const payload = await response.json().catch(() => null)
-    const result = payload?.result
-
-    if (!response.ok || !result) {
-      return {
-        status: 'manual',
-        ...getSheffieldGuideMatch(),
-        query,
-        lookupSourceUrl: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
-      }
-    }
-
-    if (String(result.admin_district || '').trim().toLowerCase() !== 'sheffield') {
-      return null
-    }
-
-    const sheffield = getLocalVoteGuideCouncil(SHEFFIELD_COUNCIL_SLUG)
-    const wardAliasMap = buildWardAliasMap(sheffield)
-    const resolvedWardName = String(result.admin_ward || '').trim()
-    const wardKey = slugify(resolvedWardName)
-    const matchedWard = wardAliasMap.find((entry) => entry.alias === wardKey)
-
-    if (matchedWard) {
-      return {
-        status: 'matched',
-        councilSlug: SHEFFIELD_COUNCIL_SLUG,
-        wardSlug: matchedWard.wardSlug,
-        query,
-        resolvedWardName,
-        lookupSourceUrl: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
-      }
-    }
-
-    return {
-      status: 'manual',
-      ...getSheffieldGuideMatch(),
-      query,
-      resolvedWardName,
-      lookupSourceUrl: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
-    }
-  } catch {
-    return {
-      status: 'manual',
-      ...getSheffieldGuideMatch(),
-      query,
-      lookupSourceUrl: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
-    }
-  }
+  return postcodeCouncil.lookup.resolvePostcodeMatch?.(query, postcodeCouncil) || null
 }
 
 export const SHEFFIELD_WARD_COUNT = SHEFFIELD_WARDS.length

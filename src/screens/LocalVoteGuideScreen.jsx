@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { ScrollArea } from '../components/ui'
 import { formatUKDate } from '../utils/date'
 import {
+  fetchLocalVoteGuideCouncilData,
   fetchLocalVoteGuideCandidates,
   getLocalVoteGuideCouncil,
-  getLocalVoteGuideWard,
   isSheffieldPostcode,
   LOCAL_VOTE_ISSUE_AREAS,
 } from '../data/localVoteGuide'
@@ -112,7 +112,7 @@ function buildUniqueSources(council, ward) {
 }
 
 export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query = '' }) {
-  const council = getLocalVoteGuideCouncil(councilSlug)
+  const [council, setCouncil] = useState(() => getLocalVoteGuideCouncil(councilSlug))
   const [selectedWardSlug, setSelectedWardSlug] = useState(wardSlug || '')
   const [wardSearch, setWardSearch] = useState('')
   const [candidateState, setCandidateState] = useState({
@@ -131,9 +131,25 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
     setWardSearch('')
   }, [wardSlug, councilSlug])
 
+  useEffect(() => {
+    let cancelled = false
+
+    setCouncil(getLocalVoteGuideCouncil(councilSlug))
+
+    ;(async () => {
+      const remoteCouncil = await fetchLocalVoteGuideCouncilData(councilSlug)
+      if (cancelled || !remoteCouncil) return
+      setCouncil(remoteCouncil)
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [councilSlug])
+
   const selectedWard = useMemo(
-    () => getLocalVoteGuideWard(councilSlug, selectedWardSlug),
-    [councilSlug, selectedWardSlug],
+    () => (council?.wards || []).find((ward) => ward.slug === selectedWardSlug) || null,
+    [council, selectedWardSlug],
   )
 
   const sources = useMemo(

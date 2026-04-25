@@ -2053,6 +2053,719 @@ export default {
         })
       }
 
+      const LOCAL_VOTE_ROUTE_MAP = {
+        sheffield: 'sheffield-city-council',
+      }
+      const LOCAL_VOTE_BATCH_SIZE = 20
+      const LOCAL_VOTE_ID_DELETE_CHUNK_SIZE = 50
+
+      function slugifyLocalVote(value) {
+        return String(value || '')
+          .trim()
+          .toLowerCase()
+          .replace(/&/g, ' and ')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '')
+      }
+
+      function parseJsonText(value, fallback) {
+        if (!value) return fallback
+        try {
+          return JSON.parse(value)
+        } catch {
+          return fallback
+        }
+      }
+
+      function routeSlugToCouncilSlug(routeSlug = '') {
+        return LOCAL_VOTE_ROUTE_MAP[String(routeSlug || '').trim().toLowerCase()] || ''
+      }
+
+      function makeLocalVoteSourceId(label, url) {
+        return `source_${slugifyLocalVote(label)}_${slugifyLocalVote(url)}`
+      }
+
+      function makeLocalVoteEntitySourceId(entityType, entityId, sourceId, fieldScope = 'record') {
+        return `${entityType}_${entityId}_${fieldScope}_${sourceId}`
+      }
+
+      function toArray(value) {
+        return Array.isArray(value) ? value : []
+      }
+
+      function chunkArray(values, size) {
+        const chunks = []
+        for (let i = 0; i < values.length; i += size) {
+          chunks.push(values.slice(i, i + size))
+        }
+        return chunks
+      }
+
+      function validateLocalVoteCouncilPayload(council) {
+        const errors = []
+        if (!council || typeof council !== 'object') {
+          errors.push('Missing council payload.')
+          return errors
+        }
+
+        if (String(council.councilSlug || '').trim() !== 'sheffield-city-council') {
+          errors.push('Expected Sheffield council slug.')
+        }
+
+        const wards = toArray(council.wards)
+        if (wards.length !== 28) {
+          errors.push(`Expected 28 wards, found ${wards.length}.`)
+        }
+
+        for (const ward of wards) {
+          if (!toArray(ward.councillors).length) {
+            errors.push(`Ward "${ward.name}" is missing councillors.`)
+          }
+          if (!toArray(ward.candidates).length) {
+            errors.push(`Ward "${ward.name}" is missing candidates.`)
+          }
+          if (!toArray(ward.sources).length) {
+            errors.push(`Ward "${ward.name}" is missing ward sources.`)
+          }
+
+          for (const councillor of toArray(ward.councillors)) {
+            for (const field of ['name', 'party', 'sourceLabel', 'sourceUrl', 'lastChecked', 'verificationStatus']) {
+              if (!councillor?.[field]) {
+                errors.push(`Councillor "${councillor?.name || '(unknown)'}" in "${ward.name}" is missing ${field}.`)
+              }
+            }
+          }
+
+          for (const candidate of toArray(ward.candidates)) {
+            for (const field of ['name', 'party', 'sourceLabel', 'sourceUrl', 'lastChecked', 'verificationStatus']) {
+              if (!candidate?.[field]) {
+                errors.push(`Candidate "${candidate?.name || '(unknown)'}" in "${ward.name}" is missing ${field}.`)
+              }
+            }
+          }
+        }
+
+        if (!toArray(council.sources).length) {
+          errors.push('Council-level sources are missing.')
+        }
+
+        return errors
+      }
+
+      function createLocalVoteBatchRunner() {
+        const statements = []
+
+        return {
+          async push(statement) {
+            statements.push(statement)
+            if (statements.length >= LOCAL_VOTE_BATCH_SIZE) {
+              await env.DB.batch(statements.splice(0, statements.length))
+            }
+          },
+          async flush() {
+            if (!statements.length) return
+            await env.DB.batch(statements.splice(0, statements.length))
+          },
+        }
+      }
+
+      async function upsertLocalSource(source = {}, sourceType = 'reference', batchRunner) {
+        const label = String(source.label || source.sourceLabel || '').trim()
+        const url = String(source.url || source.sourceUrl || '').trim()
+        if (!label || !url) return null
+
+        const sourceId = makeLocalVoteSourceId(label, url)
+        await batchRunner.push(env.DB.prepare(
+          `INSERT INTO local_sources (id, label, url, publisher, source_type, published_at, retrieved_at, checksum)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             label = excluded.label,
+             url = excluded.url,
+             publisher = excluded.publisher,
+             source_type = excluded.source_type,
+             published_at = excluded.published_at,
+             retrieved_at = excluded.retrieved_at,
+             checksum = excluded.checksum`
+        ).bind(
+          sourceId,
+          label,
+          url,
+          source.publisher || 'Politiscope maintained source',
+          source.sourceType || sourceType,
+          source.publishedAt || source.updatedAt || null,
+          source.retrievedAt || source.lastChecked || source.updatedAt || null,
+          `${label}|${url}`,
+        ))
+
+        return sourceId
+      }
+
+      async function linkEntitySource(entityType, entityId, sourceId, verificationStatus, lastChecked, fieldScope = 'record', batchRunner) {
+        if (!entityId || !sourceId) return
+        const linkId = makeLocalVoteEntitySourceId(entityType, entityId, sourceId, fieldScope)
+        await batchRunner.push(env.DB.prepare(
+          `INSERT INTO local_entity_sources (id, entity_type, entity_id, source_id, field_scope, verification_status, last_checked)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             verification_status = excluded.verification_status,
+             last_checked = excluded.last_checked`
+        ).bind(
+          linkId,
+          entityType,
+          entityId,
+          sourceId,
+          fieldScope,
+          verificationStatus || 'verified',
+          lastChecked || null,
+        ))
+      }
+
+      async function loadLocalVoteEntitySources(entityType, entityIds = []) {
+        if (!entityIds.length) return new Map()
+
+        const placeholders = entityIds.map(() => '?').join(', ')
+        const rows = await env.DB.prepare(
+          `SELECT
+             les.entity_id,
+             les.field_scope,
+             les.verification_status,
+             les.last_checked,
+             ls.label,
+             ls.url,
+             ls.source_type,
+             ls.published_at,
+             ls.retrieved_at
+           FROM local_entity_sources les
+           JOIN local_sources ls ON ls.id = les.source_id
+           WHERE les.entity_type = ?
+             AND les.entity_id IN (${placeholders})
+           ORDER BY ls.label ASC`
+        ).bind(entityType, ...entityIds).all()
+
+        const grouped = new Map()
+        for (const row of rows.results || []) {
+          const list = grouped.get(row.entity_id) || []
+          list.push({
+            label: row.label,
+            url: row.url,
+            updatedAt: row.last_checked || row.retrieved_at || row.published_at || null,
+            verificationStatus: row.verification_status,
+            sourceType: row.source_type,
+            fieldScope: row.field_scope,
+          })
+          grouped.set(row.entity_id, list)
+        }
+        return grouped
+      }
+
+      async function loadLocalVoteCouncilPayload(councilSlug) {
+        const councilRow = await env.DB.prepare(
+          `SELECT
+             id, slug, name, supported_area_label, next_election_date, source_note,
+             controls_json, updated_at, fetched_at
+           FROM local_councils
+           WHERE slug = ? AND active = 1
+           LIMIT 1`
+        ).bind(councilSlug).first()
+
+        if (!councilRow) return null
+
+        const wardRows = await env.DB.prepare(
+          `SELECT
+             id, slug, name, aliases_json, notes, candidate_list_status, updated_at, fetched_at
+           FROM local_wards
+           WHERE council_id = ? AND active = 1
+           ORDER BY name ASC`
+        ).bind(councilRow.id).all()
+
+        const wards = wardRows.results || []
+        const wardIds = wards.map((ward) => ward.id)
+
+        const councilSourceMap = await loadLocalVoteEntitySources('council', [councilRow.id])
+        const wardSourceMap = await loadLocalVoteEntitySources('ward', wardIds)
+
+        const officeholderRows = await env.DB.prepare(
+          `SELECT
+             o.id, o.ward_id, o.name, o.party, o.seat_status, o.source_attribution,
+             o.verification_status, o.last_checked, s.label AS source_label, s.url AS source_url
+           FROM local_officeholders o
+           LEFT JOIN local_sources s ON s.id = o.primary_source_id
+           WHERE o.council_id = ? AND o.is_current = 1
+           ORDER BY o.ward_id ASC, o.name ASC`
+        ).bind(councilRow.id).all()
+
+        const candidateRows = await env.DB.prepare(
+          `SELECT
+             c.id, c.ward_id, c.name, c.party, c.election_date, c.source_attribution,
+             c.issue_statements_json, c.verification_status, c.last_checked,
+             s.label AS source_label, s.url AS source_url
+           FROM local_candidates c
+           LEFT JOIN local_sources s ON s.id = c.primary_source_id
+           WHERE c.council_id = ?
+           ORDER BY c.ward_id ASC, c.name ASC`
+        ).bind(councilRow.id).all()
+
+        const officeholdersByWard = new Map()
+        for (const row of officeholderRows.results || []) {
+          const list = officeholdersByWard.get(row.ward_id) || []
+          list.push({
+            id: row.id,
+            ward: '',
+            name: row.name,
+            party: row.party,
+            sourceUrl: row.source_url || '',
+            sourceLabel: row.source_label || '',
+            lastChecked: row.last_checked || '',
+            verificationStatus: row.verification_status || 'verified',
+            seatStatus: row.seat_status || 'occupied',
+            sourceAttribution: row.source_attribution || 'official',
+          })
+          officeholdersByWard.set(row.ward_id, list)
+        }
+
+        const candidatesByWard = new Map()
+        for (const row of candidateRows.results || []) {
+          const list = candidatesByWard.get(row.ward_id) || []
+          list.push({
+            id: row.id,
+            ward: '',
+            name: row.name,
+            party: row.party,
+            electionDate: row.election_date,
+            sourceUrl: row.source_url || '',
+            sourceLabel: row.source_label || '',
+            lastChecked: row.last_checked || '',
+            verificationStatus: row.verification_status || 'verified',
+            sourceAttribution: row.source_attribution || 'official',
+            issueStatements: parseJsonText(row.issue_statements_json, {}),
+          })
+          candidatesByWard.set(row.ward_id, list)
+        }
+
+        const wardPayloads = wards.map((ward) => {
+          const councillors = officeholdersByWard.get(ward.id) || []
+          const candidates = candidatesByWard.get(ward.id) || []
+          const wardName = ward.name
+
+          return {
+            slug: ward.slug,
+            name: wardName,
+            aliases: parseJsonText(ward.aliases_json, []),
+            notes: ward.notes || '',
+            updatedAt: ward.updated_at,
+            fetchedAt: ward.fetched_at || ward.updated_at,
+            candidateListStatus:
+              ward.candidate_list_status || (candidates.length ? 'Verified candidate list' : 'No verified candidate list yet'),
+            sources: wardSourceMap.get(ward.id) || [],
+            councillors: councillors.map((item) => ({ ...item, ward: wardName })),
+            candidates: candidates.map((item) => ({ ...item, ward: wardName })),
+          }
+        })
+
+        return {
+          councilSlug: councilRow.slug,
+          councilName: councilRow.name,
+          supportedAreaLabel: councilRow.supported_area_label || councilRow.name,
+          nextElectionDate: councilRow.next_election_date,
+          updatedAt: councilRow.updated_at,
+          fetchedAt: councilRow.fetched_at || councilRow.updated_at,
+          sourceNote: councilRow.source_note || '',
+          controls: parseJsonText(councilRow.controls_json, []),
+          sources: councilSourceMap.get(councilRow.id) || [],
+          wards: wardPayloads,
+        }
+      }
+
+      async function deleteExistingLocalVoteCouncil(councilSlug) {
+        const council = await env.DB.prepare(
+          'SELECT id FROM local_councils WHERE slug = ? LIMIT 1'
+        ).bind(councilSlug).first()
+
+        if (!council?.id) return
+
+        const wardRows = await env.DB.prepare(
+          'SELECT id FROM local_wards WHERE council_id = ?'
+        ).bind(council.id).all()
+        const wardIds = (wardRows.results || []).map((row) => row.id)
+
+        const officeholderRows = await env.DB.prepare(
+          'SELECT id FROM local_officeholders WHERE council_id = ?'
+        ).bind(council.id).all()
+        const officeholderIds = (officeholderRows.results || []).map((row) => row.id)
+
+        const ballotRows = await env.DB.prepare(
+          'SELECT id FROM local_ballots WHERE council_id = ?'
+        ).bind(council.id).all()
+        const ballotIds = (ballotRows.results || []).map((row) => row.id)
+
+        const candidateRows = await env.DB.prepare(
+          'SELECT id FROM local_candidates WHERE council_id = ?'
+        ).bind(council.id).all()
+        const candidateIds = (candidateRows.results || []).map((row) => row.id)
+
+        const eventRows = await env.DB.prepare(
+          'SELECT id FROM local_election_events WHERE council_id = ?'
+        ).bind(council.id).all()
+        const eventIds = (eventRows.results || []).map((row) => row.id)
+
+        const deleteStatements = []
+        const addDelete = (statement) => {
+          deleteStatements.push(statement)
+        }
+
+        const deleteEntitySources = (entityType, ids) => {
+          if (!ids.length) return
+          for (const idChunk of chunkArray(ids, LOCAL_VOTE_ID_DELETE_CHUNK_SIZE)) {
+            const placeholders = idChunk.map(() => '?').join(', ')
+            addDelete(env.DB.prepare(
+              `DELETE FROM local_entity_sources
+               WHERE entity_type = ? AND entity_id IN (${placeholders})`
+            ).bind(entityType, ...idChunk))
+          }
+        }
+
+        deleteEntitySources('candidate', candidateIds)
+        deleteEntitySources('officeholder', officeholderIds)
+        deleteEntitySources('ward', wardIds)
+        deleteEntitySources('ballot', ballotIds)
+        deleteEntitySources('election_event', eventIds)
+        deleteEntitySources('council', [council.id])
+
+        addDelete(env.DB.prepare('DELETE FROM local_candidates WHERE council_id = ?').bind(council.id))
+        addDelete(env.DB.prepare('DELETE FROM local_officeholders WHERE council_id = ?').bind(council.id))
+        addDelete(env.DB.prepare('DELETE FROM local_ballots WHERE council_id = ?').bind(council.id))
+        addDelete(env.DB.prepare('DELETE FROM local_election_events WHERE council_id = ?').bind(council.id))
+        addDelete(env.DB.prepare('DELETE FROM local_wards WHERE council_id = ?').bind(council.id))
+        addDelete(env.DB.prepare('DELETE FROM local_councils WHERE id = ?').bind(council.id))
+
+        while (deleteStatements.length) {
+          await env.DB.batch(deleteStatements.splice(0, LOCAL_VOTE_BATCH_SIZE))
+        }
+      }
+
+      async function saveLocalVoteCouncilPayload(council) {
+        const councilId = `council_${slugifyLocalVote(council.councilSlug)}`
+        let rowsUpserted = 0
+        const batchRunner = createLocalVoteBatchRunner()
+
+        await deleteExistingLocalVoteCouncil(council.councilSlug)
+
+        await batchRunner.push(env.DB.prepare(
+          `INSERT INTO local_councils (
+             id, slug, name, supported_area_label, nation, tier, gss_code, official_website,
+             governance_model, election_model, next_election_date, source_note, controls_json,
+             active, updated_at, fetched_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          councilId,
+          council.councilSlug,
+          council.councilName,
+          council.supportedAreaLabel || council.councilName,
+          'England',
+          'Metropolitan Borough',
+          null,
+          'https://www.sheffield.gov.uk',
+          null,
+          null,
+          council.nextElectionDate || null,
+          council.sourceNote || '',
+          JSON.stringify(council.controls || []),
+          1,
+          council.updatedAt || new Date().toISOString(),
+          council.fetchedAt || council.updatedAt || new Date().toISOString(),
+        ))
+        rowsUpserted += 1
+
+        for (const source of toArray(council.sources)) {
+          const sourceId = await upsertLocalSource(source, 'council', batchRunner)
+          await linkEntitySource('council', councilId, sourceId, source.verificationStatus || 'verified', source.updatedAt || source.lastChecked || null, 'metadata', batchRunner)
+          rowsUpserted += 1
+        }
+
+        const eventId = `election_event_${slugifyLocalVote(council.councilSlug)}_${slugifyLocalVote(council.nextElectionDate || 'undated')}`
+        await batchRunner.push(env.DB.prepare(
+          `INSERT INTO local_election_events (id, council_id, election_date, label, source_system, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?)`
+        ).bind(
+          eventId,
+          councilId,
+          council.nextElectionDate || null,
+          `${council.councilName} local election`,
+          'static-sheffield-seed',
+          council.updatedAt || new Date().toISOString(),
+        ))
+        rowsUpserted += 1
+
+        for (const ward of toArray(council.wards)) {
+          const wardId = `ward_${slugifyLocalVote(council.councilSlug)}_${slugifyLocalVote(ward.slug)}`
+          await batchRunner.push(env.DB.prepare(
+            `INSERT INTO local_wards (
+               id, council_id, slug, name, gss_code, mapit_area_id, aliases_json, notes,
+               candidate_list_status, active, updated_at, fetched_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          ).bind(
+            wardId,
+            councilId,
+            ward.slug,
+            ward.name,
+            null,
+            null,
+            JSON.stringify(ward.aliases || []),
+            ward.notes || '',
+            ward.candidateListStatus || (toArray(ward.candidates).length ? 'Verified candidate list' : 'No verified candidate list yet'),
+            1,
+            ward.updatedAt || council.updatedAt || new Date().toISOString(),
+            ward.fetchedAt || ward.updatedAt || council.updatedAt || new Date().toISOString(),
+          ))
+          rowsUpserted += 1
+
+          for (const source of toArray(ward.sources)) {
+            const sourceId = await upsertLocalSource(source, 'ward', batchRunner)
+            await linkEntitySource('ward', wardId, sourceId, source.verificationStatus || 'verified', source.updatedAt || source.lastChecked || null, 'metadata', batchRunner)
+            rowsUpserted += 1
+          }
+
+          const ballotId = `ballot_${slugifyLocalVote(council.councilSlug)}_${slugifyLocalVote(ward.slug)}_${slugifyLocalVote(council.nextElectionDate || 'undated')}`
+          await batchRunner.push(env.DB.prepare(
+            `INSERT INTO local_ballots (id, election_event_id, council_id, ward_id, ballot_paper_id, ballot_name, status, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+          ).bind(
+            ballotId,
+            eventId,
+            councilId,
+            wardId,
+            ballotId,
+            `${council.councilName} local election ${ward.name}`,
+            toArray(ward.candidates).length ? 'verified' : 'unavailable',
+            ward.updatedAt || council.updatedAt || new Date().toISOString(),
+          ))
+          rowsUpserted += 1
+
+          for (const councillor of toArray(ward.councillors)) {
+            const officeholderId = `officeholder_${slugifyLocalVote(council.councilSlug)}_${slugifyLocalVote(ward.slug)}_${slugifyLocalVote(councillor.name)}_${slugifyLocalVote(councillor.party)}`
+            const sourceId = await upsertLocalSource(
+              {
+                label: councillor.sourceLabel,
+                url: councillor.sourceUrl,
+                updatedAt: councillor.lastChecked,
+              },
+              'officeholder',
+              batchRunner,
+            )
+
+            await batchRunner.push(env.DB.prepare(
+              `INSERT INTO local_officeholders (
+                 id, council_id, ward_id, name, party, seat_status, role, is_current,
+                 source_attribution, primary_source_id, verification_status, last_checked, updated_at
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            ).bind(
+              officeholderId,
+              councilId,
+              wardId,
+              councillor.name,
+              councillor.party,
+              councillor.seatStatus || 'occupied',
+              'Councillor',
+              1,
+              councillor.sourceAttribution || 'official',
+              sourceId,
+              councillor.verificationStatus || 'verified',
+              councillor.lastChecked || null,
+              ward.updatedAt || council.updatedAt || new Date().toISOString(),
+            ))
+            await linkEntitySource(
+              'officeholder',
+              officeholderId,
+              sourceId,
+              councillor.verificationStatus || 'verified',
+              councillor.lastChecked || null,
+              'record',
+              batchRunner,
+            )
+            rowsUpserted += 1
+          }
+
+          for (const candidate of toArray(ward.candidates)) {
+            const candidateId = `candidate_${slugifyLocalVote(council.councilSlug)}_${slugifyLocalVote(ward.slug)}_${slugifyLocalVote(candidate.name)}_${slugifyLocalVote(candidate.party)}`
+            const sourceId = await upsertLocalSource(
+              {
+                label: candidate.sourceLabel,
+                url: candidate.sourceUrl,
+                updatedAt: candidate.lastChecked,
+              },
+              candidate.sourceAttribution || 'candidate',
+              batchRunner,
+            )
+
+            await batchRunner.push(env.DB.prepare(
+              `INSERT INTO local_candidates (
+                 id, ballot_id, council_id, ward_id, name, party, election_date,
+                 democracy_club_person_url, source_attribution, issue_statements_json,
+                 primary_source_id, verification_status, last_checked, updated_at
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            ).bind(
+              candidateId,
+              ballotId,
+              councilId,
+              wardId,
+              candidate.name,
+              candidate.party,
+              candidate.electionDate || council.nextElectionDate || null,
+              candidate.democracyClubPersonUrl || null,
+              candidate.sourceAttribution || 'official',
+              JSON.stringify(candidate.issueStatements || {}),
+              sourceId,
+              candidate.verificationStatus || 'verified',
+              candidate.lastChecked || null,
+              ward.updatedAt || council.updatedAt || new Date().toISOString(),
+            ))
+            await linkEntitySource(
+              'candidate',
+              candidateId,
+              sourceId,
+              candidate.verificationStatus || 'verified',
+              candidate.lastChecked || null,
+              'record',
+              batchRunner,
+            )
+            rowsUpserted += 1
+          }
+        }
+
+        await batchRunner.flush()
+
+        return { councilId, rowsUpserted }
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/local-vote/ingest/sheffield') {
+        const startedAt = new Date().toISOString()
+        const runId = `local_vote_ingest_sheffield_${Date.now()}`
+        await env.DB.prepare(
+          `INSERT INTO local_ingest_runs (id, pipeline, status, started_at, finished_at, rows_upserted, error_summary, meta_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(runId, 'local-vote-sheffield-seed', 'running', startedAt, null, 0, null, null).run()
+
+        try {
+          const body = await request.json()
+          const council = body?.council || null
+          const errors = validateLocalVoteCouncilPayload(council)
+
+          if (errors.length) {
+            await env.DB.prepare(
+              `UPDATE local_ingest_runs
+               SET status = ?, finished_at = ?, error_summary = ?, meta_json = ?
+               WHERE id = ?`
+            ).bind('failed', new Date().toISOString(), errors.join(' | '), JSON.stringify({ errors }), runId).run()
+
+            return jsonResponse({
+              ok: false,
+              errors,
+            }, { status: 400 })
+          }
+
+          const saved = await saveLocalVoteCouncilPayload(council)
+          const payload = await loadLocalVoteCouncilPayload(council.councilSlug)
+
+          const wardCount = payload?.wards?.length || 0
+          const councillorCount = (payload?.wards || []).reduce((total, ward) => total + (ward.councillors?.length || 0), 0)
+          const candidateCount = (payload?.wards || []).reduce((total, ward) => total + (ward.candidates?.length || 0), 0)
+
+          await env.DB.prepare(
+            `UPDATE local_ingest_runs
+             SET status = ?, finished_at = ?, rows_upserted = ?, meta_json = ?
+             WHERE id = ?`
+          ).bind(
+            'success',
+            new Date().toISOString(),
+            saved.rowsUpserted,
+            JSON.stringify({ wardCount, councillorCount, candidateCount }),
+            runId,
+          ).run()
+
+          return jsonResponse({
+            ok: true,
+            councilSlug: council.councilSlug,
+            wardCount,
+            councillorCount,
+            candidateCount,
+            rowsUpserted: saved.rowsUpserted,
+            validation: {
+              wards: wardCount === 28,
+              councillorsPresent: councillorCount > 0,
+              candidatesPresent: candidateCount > 0,
+              sourcesPresent: (payload?.sources?.length || 0) > 0,
+            },
+          })
+        } catch (error) {
+          await env.DB.prepare(
+            `UPDATE local_ingest_runs
+             SET status = ?, finished_at = ?, error_summary = ?
+             WHERE id = ?`
+          ).bind(
+            'failed',
+            new Date().toISOString(),
+            error instanceof Error ? error.message : String(error),
+            runId,
+          ).run()
+
+          return jsonResponse(
+            {
+              ok: false,
+              error: error instanceof Error ? error.message : String(error),
+            },
+            { status: 500 },
+          )
+        }
+      }
+
+      const localVoteCouncilMatch = url.pathname.match(/^\/api\/local-vote\/councils\/([^/]+)$/)
+      const localVoteWardsMatch = url.pathname.match(/^\/api\/local-vote\/councils\/([^/]+)\/wards$/)
+      const localVoteWardMatch = url.pathname.match(/^\/api\/local-vote\/councils\/([^/]+)\/wards\/([^/]+)$/)
+
+      if (request.method === 'GET' && localVoteCouncilMatch) {
+        const councilSlug = routeSlugToCouncilSlug(decodeURIComponent(localVoteCouncilMatch[1] || ''))
+        if (!councilSlug) {
+          return jsonResponse({ error: 'Unknown local vote guide council' }, { status: 404 })
+        }
+
+        const council = await loadLocalVoteCouncilPayload(councilSlug)
+        if (!council) {
+          return jsonResponse({ error: 'Local vote guide council not found' }, { status: 404 })
+        }
+
+        return jsonResponse(council)
+      }
+
+      if (request.method === 'GET' && localVoteWardsMatch) {
+        const councilSlug = routeSlugToCouncilSlug(decodeURIComponent(localVoteWardsMatch[1] || ''))
+        if (!councilSlug) {
+          return jsonResponse({ error: 'Unknown local vote guide council' }, { status: 404 })
+        }
+
+        const council = await loadLocalVoteCouncilPayload(councilSlug)
+        if (!council) {
+          return jsonResponse({ error: 'Local vote guide council not found' }, { status: 404 })
+        }
+
+        return jsonResponse(council.wards || [])
+      }
+
+      if (request.method === 'GET' && localVoteWardMatch) {
+        const councilSlug = routeSlugToCouncilSlug(decodeURIComponent(localVoteWardMatch[1] || ''))
+        const wardSlug = decodeURIComponent(localVoteWardMatch[2] || '')
+        if (!councilSlug || !wardSlug) {
+          return jsonResponse({ error: 'Unknown local vote guide ward' }, { status: 404 })
+        }
+
+        const council = await loadLocalVoteCouncilPayload(councilSlug)
+        const ward = council?.wards?.find((entry) => entry.slug === wardSlug) || null
+        if (!ward) {
+          return jsonResponse({ error: 'Local vote guide ward not found' }, { status: 404 })
+        }
+
+        return jsonResponse(ward)
+      }
+
       if (request.method === 'POST' && url.pathname === '/api/elections/refresh-status') {
         const existing = await loadCouncilStatus()
         const refreshed = existing.map((row) => ({
