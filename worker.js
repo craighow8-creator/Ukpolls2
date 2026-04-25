@@ -26,6 +26,21 @@ export default {
         status: init.status || 200,
       })
 
+    async function cachedJsonResponse(request, buildResponse, ttlSeconds = 600) {
+      const cache = caches.default
+      const cacheKey = new Request(request.url, request)
+      const cached = await cache.match(cacheKey)
+      if (cached) return cached
+
+      const response = await buildResponse()
+      if (response?.ok) {
+        response.headers.set('Cache-Control', `public, max-age=${ttlSeconds}`)
+        await cache.put(cacheKey, response.clone())
+      }
+
+      return response
+    }
+
     function decodeHtmlEntities(value) {
       return String(value || '')
         .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
@@ -2724,46 +2739,52 @@ export default {
 
       if (request.method === 'GET' && localVoteCouncilMatch) {
         const councilSlug = routeSlugToCouncilSlug(decodeURIComponent(localVoteCouncilMatch[1] || ''))
-        if (!councilSlug) {
-          return jsonResponse({ error: 'Unknown local vote guide council' }, { status: 404 })
-        }
+        return cachedJsonResponse(request, async () => {
+          if (!councilSlug) {
+            return jsonResponse({ error: 'Unknown local vote guide council' }, { status: 404 })
+          }
 
-        const council = await loadLocalVoteCouncilPayload(councilSlug)
-        if (!council) {
-          return jsonResponse({ error: 'Local vote guide council not found' }, { status: 404 })
-        }
+          const council = await loadLocalVoteCouncilPayload(councilSlug)
+          if (!council) {
+            return jsonResponse({ error: 'Local vote guide council not found' }, { status: 404 })
+          }
 
-        return jsonResponse(council)
+          return jsonResponse(council)
+        })
       }
 
       if (request.method === 'GET' && localVoteWardsMatch) {
         const councilSlug = routeSlugToCouncilSlug(decodeURIComponent(localVoteWardsMatch[1] || ''))
-        if (!councilSlug) {
-          return jsonResponse({ error: 'Unknown local vote guide council' }, { status: 404 })
-        }
+        return cachedJsonResponse(request, async () => {
+          if (!councilSlug) {
+            return jsonResponse({ error: 'Unknown local vote guide council' }, { status: 404 })
+          }
 
-        const council = await loadLocalVoteCouncilPayload(councilSlug)
-        if (!council) {
-          return jsonResponse({ error: 'Local vote guide council not found' }, { status: 404 })
-        }
+          const council = await loadLocalVoteCouncilPayload(councilSlug)
+          if (!council) {
+            return jsonResponse({ error: 'Local vote guide council not found' }, { status: 404 })
+          }
 
-        return jsonResponse(council.wards || [])
+          return jsonResponse(council.wards || [])
+        })
       }
 
       if (request.method === 'GET' && localVoteWardMatch) {
         const councilSlug = routeSlugToCouncilSlug(decodeURIComponent(localVoteWardMatch[1] || ''))
         const wardSlug = decodeURIComponent(localVoteWardMatch[2] || '')
-        if (!councilSlug || !wardSlug) {
-          return jsonResponse({ error: 'Unknown local vote guide ward' }, { status: 404 })
-        }
+        return cachedJsonResponse(request, async () => {
+          if (!councilSlug || !wardSlug) {
+            return jsonResponse({ error: 'Unknown local vote guide ward' }, { status: 404 })
+          }
 
-        const council = await loadLocalVoteCouncilPayload(councilSlug)
-        const ward = council?.wards?.find((entry) => entry.slug === wardSlug) || null
-        if (!ward) {
-          return jsonResponse({ error: 'Local vote guide ward not found' }, { status: 404 })
-        }
+          const council = await loadLocalVoteCouncilPayload(councilSlug)
+          const ward = council?.wards?.find((entry) => entry.slug === wardSlug) || null
+          if (!ward) {
+            return jsonResponse({ error: 'Local vote guide ward not found' }, { status: 404 })
+          }
 
-        return jsonResponse(ward)
+          return jsonResponse(ward)
+        })
       }
 
       if (request.method === 'POST' && url.pathname === '/api/elections/refresh-status') {
