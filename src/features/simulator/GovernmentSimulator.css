@@ -18,6 +18,11 @@
 .mandate-header {
   text-align: center;
   margin-bottom: 16px;
+  padding: 14px 16px 6px;
+  border: 1px solid var(--mandate-header-border, transparent);
+  border-radius: 20px;
+  background: var(--mandate-header-bg, transparent);
+  box-shadow: var(--mandate-header-shadow, none);
 }
 
 .mandate-kicker {
@@ -35,9 +40,9 @@
   line-height: 0.98;
   font-weight: 900;
   letter-spacing: -0.05em;
-  color: var(--mandate-gold, #f0c956);
+  color: var(--mandate-title-color, var(--mandate-gold, #f0c956));
   text-transform: uppercase;
-  text-shadow: 3px 3px #02030a;
+  text-shadow: var(--mandate-title-shadow, 3px 3px #02030a);
 }
 
 .mandate-subtitle {
@@ -45,7 +50,7 @@
   max-width: 760px;
   font-size: 14px;
   line-height: 1.5;
-  color: rgba(240, 234, 211, 0.82);
+  color: var(--mandate-subtitle-color, rgba(240, 234, 211, 0.82));
 }
 
 .mandate-top-actions {

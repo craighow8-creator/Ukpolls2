@@ -51,11 +51,19 @@ export default function GovernmentSimulatorScreen({ T }) {
 
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
   const screenStyle = {
-    '--mandate-shell-bg': T.sf,
+    '--mandate-shell-bg': isDark
+      ? T.sf
+      : 'radial-gradient(circle at top, rgba(93, 177, 195, 0.16), transparent 26rem), linear-gradient(180deg, #eef6fa 0%, #ddebf3 48%, #d8e7f0 100%)',
     '--mandate-line': isDark ? '#53679e' : '#465f98',
     '--mandate-gold': '#f0c956',
-    '--mandate-cyan': '#36d6cf',
+    '--mandate-cyan': isDark ? '#36d6cf' : '#138d98',
     '--mandate-cream': '#f0ead3',
+    '--mandate-title-color': '#f0c956',
+    '--mandate-title-shadow': isDark ? '3px 3px #02030a' : '3px 3px rgba(9, 24, 40, 0.92)',
+    '--mandate-subtitle-color': isDark ? 'rgba(240, 234, 211, 0.82)' : 'rgba(11, 36, 56, 0.66)',
+    '--mandate-header-bg': isDark ? 'transparent' : 'linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.48))',
+    '--mandate-header-border': isDark ? 'transparent' : 'rgba(12, 64, 96, 0.08)',
+    '--mandate-header-shadow': isDark ? 'none' : '0 16px 40px rgba(120, 146, 168, 0.14)',
   }
 
   const scrollToTop = () => {
