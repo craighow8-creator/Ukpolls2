@@ -2,6 +2,7 @@ import { API_BASE } from '../constants.js'
 import sheffieldCouncillorsByWard from './sheffieldCouncillorsByWard.json' with { type: 'json' }
 
 const SHEFFIELD_COUNCIL_SLUG = 'sheffield-city-council'
+export const EXTERNAL_LOCAL_VOTE_GUIDE_SLUG = 'postcode-fallback'
 const SHEFFIELD_LAST_CHECKED = '25-04-2026'
 const SHEFFIELD_CANDIDATE_NOTICE_DATE = '10-04-2026'
 const SHEFFIELD_NEXT_ELECTION_DATE = '07-05-2026'
@@ -52,6 +53,14 @@ function titleCaseName(value) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
+}
+
+function buildTodayStamp() {
+  const now = new Date()
+  const day = String(now.getDate()).padStart(2, '0')
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const year = now.getFullYear()
+  return `${day}-${month}-${year}`
 }
 
 function normaliseWardKey(value) {
@@ -641,6 +650,10 @@ export function isSheffieldPostcode(value) {
   return /^S\d{1,2}[A-Z]?\s*\d[A-Z]{2}$/i.test(String(value || '').trim())
 }
 
+export function isUkPostcode(value) {
+  return /^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(String(value || '').trim())
+}
+
 function buildWardAliasMap(council) {
   return (council?.wards || []).flatMap((ward) => {
     const aliases = [ward.name, ward.slug, ...(ward.aliases || [])]
@@ -684,7 +697,8 @@ async function fetchSheffieldLiveCandidates({ ward, query }) {
 
   if (!isSheffieldPostcode(postcode)) return null
 
-  const payload = await requestDemocracyClubPostcode(postcode, apiKey)
+  const democracyClubResponse = await requestDemocracyClubPostcode(postcode, apiKey)
+  const payload = democracyClubResponse?.payload || null
   const liveCandidates = extractDemocracyClubWardCandidates(payload, ward)
 
   if (!liveCandidates.length) return null
@@ -921,7 +935,7 @@ function getDemocracyClubApiKey() {
 }
 
 async function requestDemocracyClubPostcode(postcode, apiKey) {
-  if (!postcode) return null
+  if (!postcode) return { ok: false, status: 0, payload: null, requestUrl: '' }
 
   const url = new URL(`${DEMOCRACY_CLUB_API_BASE}/postcode/${encodeURIComponent(postcode)}`)
   if (apiKey) {
@@ -930,8 +944,31 @@ async function requestDemocracyClubPostcode(postcode, apiKey) {
 
   try {
     const response = await fetch(url.toString())
+    const payload = await response.json().catch(() => null)
+    return {
+      ok: response.ok,
+      status: response.status,
+      payload,
+      requestUrl: url.toString(),
+    }
+  } catch {
+    return {
+      ok: false,
+      status: 0,
+      payload: null,
+      requestUrl: url.toString(),
+    }
+  }
+}
+
+async function requestPostcodeContext(postcode) {
+  if (!postcode) return null
+
+  try {
+    const response = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(postcode)}`)
+    const payload = await response.json().catch(() => null)
     if (!response.ok) return null
-    return await response.json().catch(() => null)
+    return payload?.result || null
   } catch {
     return null
   }
@@ -988,6 +1025,93 @@ function extractDemocracyClubWardCandidates(payload, ward) {
   return []
 }
 
+function extractExternalAreaName(payload) {
+  const dates = Array.isArray(payload?.dates) ? payload.dates : []
+  const firstBallot = dates.flatMap((entry) => entry?.ballots || []).find(Boolean)
+  return (
+    String(firstBallot?.post_name || '').trim() ||
+    String(firstBallot?.election_name || '').trim() ||
+    String(payload?.electoral_services?.name || '').trim() ||
+    ''
+  )
+}
+
+function extractExternalWhoCanIVoteForUrl(payload) {
+  const dates = Array.isArray(payload?.dates) ? payload.dates : []
+  const firstBallot = dates.flatMap((entry) => entry?.ballots || []).find(Boolean)
+  return String(firstBallot?.wcivf_url || '').trim() || SHEFFIELD_SOURCE_URLS.whoCanIVoteFor
+}
+
+function extractExternalCandidates(payload) {
+  const dates = Array.isArray(payload?.dates) ? payload.dates : []
+  const candidates = []
+
+  for (const dateEntry of dates) {
+    const ballots = Array.isArray(dateEntry?.ballots) ? dateEntry.ballots : []
+
+    for (const ballot of ballots) {
+      const areaName = String(ballot?.post_name || ballot?.election_name || '').trim() || 'Local area'
+      const ballotCandidates = Array.isArray(ballot?.candidates) ? ballot.candidates : []
+
+      for (const candidate of ballotCandidates) {
+        const mapped = mapDemocracyClubCandidate(ballot, candidate, areaName)
+        if (!mapped) continue
+        candidates.push({
+          ...mapped,
+          ward: areaName,
+          areaName,
+        })
+      }
+    }
+  }
+
+  return candidates
+}
+
+export async function fetchExternalLocalVoteGuide(query = '') {
+  const postcode = normalisePostcodeInput(query)
+  if (!isUkPostcode(postcode) || isSheffieldPostcode(postcode)) return null
+
+  const democracyClubResponse = await requestDemocracyClubPostcode(postcode, getDemocracyClubApiKey())
+  const payload = democracyClubResponse?.payload || null
+  const postcodeContext = await requestPostcodeContext(postcode)
+  const contextLastChecked = buildTodayStamp()
+  const areaName =
+    extractExternalAreaName(payload) ||
+    String(postcodeContext?.admin_ward || '').trim() ||
+    String(postcodeContext?.parliamentary_constituency || '').trim() ||
+    String(postcodeContext?.admin_district || '').trim() ||
+    ''
+  const candidates = extractExternalCandidates(payload)
+
+  return {
+    query: postcode,
+    areaName,
+    candidates,
+    postcodeContext: {
+      councilName: String(postcodeContext?.admin_district || '').trim(),
+      wardName: String(postcodeContext?.admin_ward || '').trim(),
+      constituencyName: String(postcodeContext?.parliamentary_constituency || '').trim(),
+      regionName: String(postcodeContext?.region || '').trim(),
+      countryName: String(postcodeContext?.country || '').trim(),
+      lastChecked: contextLastChecked,
+      sourceLabel: 'Postcodes.io postcode lookup',
+      sourceUrl: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
+    },
+    sourceLabel: DEMOCRACY_CLUB_SOURCE_LABEL,
+    sourceUrl: payload ? SHEFFIELD_SOURCE_URLS.democracyClubDocs : SHEFFIELD_SOURCE_URLS.whoCanIVoteFor,
+    whoCanIVoteForUrl: extractExternalWhoCanIVoteForUrl(payload),
+    status: payload?.address_picker
+      ? 'address-picker'
+      : candidates.length
+        ? 'ok'
+        : democracyClubResponse?.status === 401
+          ? 'api-auth-required'
+          : 'unavailable',
+    message: 'Full Politiscope guide coming soon for this area',
+  }
+}
+
 export async function fetchLocalVoteGuideCandidates({ councilSlug, wardSlug, query = '' }) {
   const council = getLocalVoteGuideCouncil(councilSlug)
   const ward = getLocalVoteGuideWard(councilSlug, wardSlug)
@@ -1038,6 +1162,14 @@ export async function resolveLocalVoteGuideMatch(rawQuery) {
 
   const postcodeCouncil = findCouncilForSupportedPostcode(query)
   if (!postcodeCouncil) {
+    if (isUkPostcode(query)) {
+      return {
+        status: 'external',
+        councilSlug: EXTERNAL_LOCAL_VOTE_GUIDE_SLUG,
+        wardSlug: '',
+        query,
+      }
+    }
     return null
   }
 

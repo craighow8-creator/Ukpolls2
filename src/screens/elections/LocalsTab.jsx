@@ -3,8 +3,11 @@ import { motion } from 'framer-motion'
 import { InfoButton } from '../../components/InfoGlyph'
 import { LOCAL_ELECTIONS, LOCAL_REGIONS } from '../../data/elections'
 import {
+  EXTERNAL_LOCAL_VOTE_GUIDE_SLUG,
   findLocalVoteGuideMatch,
   getSheffieldGuideMatch,
+  isSheffieldPostcode,
+  isUkPostcode,
   normalisePostcodeInput,
   resolveLocalVoteGuideMatch,
 } from '../../data/localVoteGuide'
@@ -66,6 +69,7 @@ export default function LocalsTab({
   const handleOpenLocalVoteGuide = async () => {
     setVoteGuideBusy(true)
     try {
+      const normalizedQuery = normalisePostcodeInput(voteGuideQuery)
       const directMatch = findLocalVoteGuideMatch(voteGuideQuery)
       const result = directMatch?.wardSlug ? { status: 'matched', ...directMatch } : await resolveLocalVoteGuideMatch(voteGuideQuery)
 
@@ -74,12 +78,22 @@ export default function LocalsTab({
         openLocalVoteGuide({
           councilSlug: result.councilSlug,
           wardSlug: result.wardSlug || '',
-          query: result.query || normalisePostcodeInput(voteGuideQuery),
+          query: result.query || normalizedQuery,
         })
         return
       }
 
-      setVoteGuideMessage("We're starting with Sheffield. More councils coming soon.")
+      if (isUkPostcode(normalizedQuery) && !isSheffieldPostcode(normalizedQuery)) {
+        setVoteGuideMessage('')
+        openLocalVoteGuide({
+          councilSlug: EXTERNAL_LOCAL_VOTE_GUIDE_SLUG,
+          wardSlug: '',
+          query: normalizedQuery,
+        })
+        return
+      }
+
+      setVoteGuideMessage('Enter a valid UK postcode or Sheffield ward name to open the local battleground briefing.')
     } finally {
       setVoteGuideBusy(false)
     }
@@ -88,7 +102,7 @@ export default function LocalsTab({
   return (
     <>
       <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-        <SectionLabel T={T}>Find your local vote</SectionLabel>
+          <SectionLabel T={T}>Find your local vote</SectionLabel>
 
         <div
           style={{
@@ -100,7 +114,7 @@ export default function LocalsTab({
             marginBottom: 12,
           }}
         >
-          Enter a postcode or Sheffield ward name to open the local vote guide.
+            Enter a UK postcode or Sheffield ward name to open a local battleground briefing.
         </div>
 
         <div style={{ position: 'relative', marginBottom: 10 }}>
@@ -116,7 +130,7 @@ export default function LocalsTab({
             type="text"
             inputMode="text"
             autoCapitalize="characters"
-            placeholder="Enter postcode, e.g. S1 1AA"
+              placeholder="Enter postcode, e.g. S1 1AA or SW1A 1AA"
             value={voteGuideQuery}
             onChange={(e) => {
               setVoteGuideQuery(e.target.value)
@@ -183,13 +197,13 @@ export default function LocalsTab({
               cursor: 'pointer',
             }}
           >
-            Open Sheffield guide
-          </motion.button>
-        </div>
+              Open Sheffield guide
+            </motion.button>
+          </div>
 
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, textAlign: 'center', marginTop: 10 }}>
-          Sheffield opens the full Politiscope guide. Other UK postcodes open a simple Democracy Club candidate view.
-        </div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, textAlign: 'center', marginTop: 10 }}>
+            Sheffield opens the full Politiscope guide. Other UK postcodes open a local battleground briefing with external candidate lookup.
+          </div>
 
         {voteGuideMessage ? (
           <div

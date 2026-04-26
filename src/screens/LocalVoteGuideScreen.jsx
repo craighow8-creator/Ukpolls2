@@ -1,13 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { ScrollArea } from '../components/ui'
+import { LOCAL_ELECTIONS } from '../data/elections'
 import { formatUKDate } from '../utils/date'
 import {
+  EXTERNAL_LOCAL_VOTE_GUIDE_SLUG,
+  fetchExternalLocalVoteGuide,
   fetchLocalVoteGuideCouncilData,
   fetchLocalVoteGuideCandidates,
   getLocalVoteGuideCouncil,
   isSheffieldPostcode,
   LOCAL_VOTE_ISSUE_AREAS,
 } from '../data/localVoteGuide'
+import { cleanText, formatElectionDate, mergeCouncilLayers, slugifyCouncilName } from '../utils/electionsHelpers'
 import {
   Chip,
   CONTROL_COLORS,
@@ -138,10 +142,90 @@ function FactPill({ T, label, value }) {
   )
 }
 
-export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query = '' }) {
+function normaliseAreaQuery(value) {
+  return String(value || 'UK postcode').trim() || 'UK postcode'
+}
+
+function simplifyCouncilKey(value) {
+  return cleanText(value)
+    .toLowerCase()
+    .replace(/^city of /, '')
+    .replace(/\bcity council\b/g, '')
+    .replace(/\bcouncil\b/g, '')
+    .replace(/\bborough\b/g, '')
+    .replace(/\blondon borough of\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function findCouncilIntelligenceRecord(councils = [], councilName = '') {
+  const cleanCouncilName = cleanText(councilName)
+  if (!cleanCouncilName) return null
+
+  const exactSlug = slugifyCouncilName(cleanCouncilName)
+  const simplifiedKey = simplifyCouncilKey(cleanCouncilName)
+
+  return (
+    councils.find((row) => slugifyCouncilName(row.slug || row.name) === exactSlug) ||
+    councils.find((row) => simplifyCouncilKey(row.name) === simplifiedKey) ||
+    councils.find((row) => simplifyCouncilKey(row.name).includes(simplifiedKey) || simplifiedKey.includes(simplifyCouncilKey(row.name))) ||
+    null
+  )
+}
+
+function deriveBriefingTag(council = null) {
+  if (!council) return { label: 'Coming soon', tone: 'neutral' }
+
+  const difficulty = cleanText(council.difficulty).toLowerCase()
+  const verdict = cleanText(council.verdict).toLowerCase()
+  const watchFor = cleanText(council.watchFor).toLowerCase()
+
+  if (
+    difficulty === 'very hard' ||
+    difficulty === 'hard' ||
+    /toss-up|target|marginal|battleground|prime target/.test(verdict) ||
+    /target|surge|three-way|marginal|toss-up/.test(watchFor)
+  ) {
+    return { label: 'Battleground', tone: 'warning' }
+  }
+
+  return { label: 'Tracked', tone: 'info' }
+}
+
+function resolveElectionDateForBriefing(council = null) {
+  if (council?.nextElectionDate) return formatUKDate(council.nextElectionDate)
+  if (council?.nextElection) return formatElectionDate(council.nextElection)
+  if (council?.electionDate) return formatElectionDate(council.electionDate)
+  if (council?.electionStatus && /2026|scheduled/i.test(cleanText(council.electionStatus))) {
+    return formatElectionDate(LOCAL_ELECTIONS?.date)
+  }
+  return 'Date not confirmed'
+}
+
+export default function LocalVoteGuideScreen({
+  T,
+  councilSlug,
+  wardSlug,
+  query = '',
+  councilRegistry = [],
+  councilStatus = [],
+  councilEditorial = [],
+}) {
+  const isExternalFallback = councilSlug === EXTERNAL_LOCAL_VOTE_GUIDE_SLUG
   const [council, setCouncil] = useState(() => getLocalVoteGuideCouncil(councilSlug))
   const [selectedWardSlug, setSelectedWardSlug] = useState(wardSlug || '')
   const [wardSearch, setWardSearch] = useState('')
+  const [externalGuide, setExternalGuide] = useState({
+    loading: false,
+    areaName: '',
+    candidates: [],
+    sourceLabel: '',
+    sourceUrl: '',
+    whoCanIVoteForUrl: 'https://whocanivotefor.co.uk/',
+    postcodeContext: null,
+    message: '',
+    status: '',
+  })
   const [candidateState, setCandidateState] = useState({
     loading: false,
     candidates: [],
@@ -161,6 +245,13 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
   useEffect(() => {
     let cancelled = false
 
+    if (isExternalFallback) {
+      setCouncil(null)
+      return () => {
+        cancelled = true
+      }
+    }
+
     setCouncil(getLocalVoteGuideCouncil(councilSlug))
 
     ;(async () => {
@@ -172,7 +263,7 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
     return () => {
       cancelled = true
     }
-  }, [councilSlug])
+  }, [councilSlug, isExternalFallback])
 
   const selectedWard = useMemo(
     () => (council?.wards || []).find((ward) => ward.slug === selectedWardSlug) || null,
@@ -189,6 +280,65 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
     if (!search) return council?.wards || []
     return (council?.wards || []).filter((ward) => ward.name.toLowerCase().includes(search))
   }, [council, wardSearch])
+
+  useEffect(() => {
+    let cancelled = false
+
+    if (!isExternalFallback) {
+      setExternalGuide({
+        loading: false,
+        areaName: '',
+        candidates: [],
+        sourceLabel: '',
+        sourceUrl: '',
+        whoCanIVoteForUrl: 'https://whocanivotefor.co.uk/',
+        postcodeContext: null,
+        message: '',
+        status: '',
+      })
+      return () => {
+        cancelled = true
+      }
+    }
+
+    setExternalGuide((current) => ({
+      ...current,
+      loading: true,
+    }))
+
+    ;(async () => {
+      const result = await fetchExternalLocalVoteGuide(query).catch(() => null)
+      if (cancelled) return
+
+      setExternalGuide({
+        loading: false,
+        areaName: result?.areaName || '',
+        candidates: result?.candidates || [],
+        sourceLabel: result?.sourceLabel || '',
+        sourceUrl: result?.sourceUrl || '',
+        whoCanIVoteForUrl: result?.whoCanIVoteForUrl || 'https://whocanivotefor.co.uk/',
+        postcodeContext: result?.postcodeContext || null,
+        message: result?.message || 'Full Politiscope guide coming soon for this area',
+        status: result?.status || 'unavailable',
+      })
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isExternalFallback, query])
+
+  const mergedCouncilIntelligence = useMemo(
+    () => mergeCouncilLayers(LOCAL_ELECTIONS?.councils || [], councilRegistry, councilStatus, councilEditorial),
+    [councilRegistry, councilStatus, councilEditorial],
+  )
+
+  const externalCouncil = useMemo(
+    () => findCouncilIntelligenceRecord(mergedCouncilIntelligence, externalGuide.postcodeContext?.councilName || ''),
+    [mergedCouncilIntelligence, externalGuide.postcodeContext?.councilName],
+  )
+
+  const externalBriefingTag = useMemo(() => deriveBriefingTag(externalCouncil), [externalCouncil])
 
   useEffect(() => {
     let cancelled = false
@@ -254,6 +404,206 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
         { label: 'Sources', value: `${sources.length}` },
       ]
     : []
+  const externalKeyFacts = [
+    { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
+    { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
+    { label: 'Election', value: resolveElectionDateForBriefing(externalCouncil) },
+    { label: 'Status', value: externalBriefingTag.label },
+  ]
+  const externalSources = [
+    externalGuide.postcodeContext?.sourceLabel
+      ? {
+          label: externalGuide.postcodeContext.sourceLabel,
+          url: externalGuide.postcodeContext.sourceUrl,
+          updatedAt: externalGuide.postcodeContext.lastChecked,
+        }
+      : null,
+    {
+      label: 'WhoCanIVoteFor candidate lookup',
+      url: externalGuide.whoCanIVoteForUrl || 'https://whocanivotefor.co.uk/',
+      updatedAt: externalGuide.candidates.length ? externalGuide.candidates[0]?.lastChecked || '' : '',
+    },
+  ].filter(Boolean)
+
+  if (isExternalFallback) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: T.sf }}>
+        <div style={{ padding: '16px 18px 0', flexShrink: 0 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl, textAlign: 'center' }}>
+            Local battleground briefing
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: T.th, lineHeight: 1.05, textAlign: 'center', marginTop: 6 }}>
+            {externalCouncil?.name || externalGuide.postcodeContext?.councilName || externalGuide.areaName || normaliseAreaQuery(query)}
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: T.th, textAlign: 'center', lineHeight: 1.55, maxWidth: 520, margin: '6px auto 0' }}>
+            {externalGuide.postcodeContext?.wardName
+              ? `${externalGuide.postcodeContext.wardName} ward`
+              : externalGuide.areaName || 'UK postcode lookup'}
+          </div>
+        </div>
+
+        <ScrollArea>
+          <div style={{ padding: '12px 16px 32px' }}>
+            <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>Key facts</SectionLabel>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8, marginBottom: 12 }}>
+                {externalKeyFacts.map((fact) => (
+                  <FactPill key={fact.label} T={T} label={fact.label} value={fact.value} />
+                ))}
+              </div>
+              <InfoRow T={T} label="Lookup" value={query || 'UK postcode'} />
+              <InfoRow T={T} label="Council control" value={externalCouncil?.control || 'Control not available'} />
+              <InfoRow T={T} label="Constituency" value={externalGuide.postcodeContext?.constituencyName || 'Not available'} />
+              <InfoRow
+                T={T}
+                label="Candidate data"
+                value={
+                  externalGuide.loading
+                    ? 'Checking external lookup...'
+                    : externalGuide.candidates.length
+                      ? `${externalGuide.candidates.length} candidates returned`
+                      : 'Full candidate guide coming soon for this area.'
+                }
+              />
+            </SurfaceCard>
+
+            <SurfaceCard T={T} style={{ marginBottom: 12, textAlign: 'center' }}>
+              <SectionLabel T={T}>What this area looks like</SectionLabel>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+                <Chip
+                  color={
+                    externalBriefingTag.tone === 'warning'
+                      ? '#F59E0B'
+                      : externalBriefingTag.tone === 'info'
+                        ? T.pr
+                        : TONE_NEUTRAL
+                  }
+                >
+                  {externalBriefingTag.label}
+                </Chip>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.7 }}>
+                {externalCouncil?.watchFor ||
+                  externalCouncil?.electionMessage ||
+                  externalGuide.message ||
+                  'Full candidate guide coming soon for this area.'}
+              </div>
+            </SurfaceCard>
+
+            <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>Briefing status</SectionLabel>
+              <div style={{ display: 'grid', gap: 8 }}>
+                <InfoRow T={T} label="Coverage" value={externalCouncil ? 'Tracked in Politiscope local elections' : 'Briefing view only for now'} />
+                <InfoRow T={T} label="Verdict" value={externalCouncil?.verdict || 'Full candidate guide coming soon for this area.'} />
+                <InfoRow T={T} label="Freshness" value={externalGuide.postcodeContext?.lastChecked ? `Postcode context checked ${externalGuide.postcodeContext.lastChecked}` : 'Freshness not available'} />
+              </div>
+            </SurfaceCard>
+
+            <SectionLabel T={T}>Candidate lookup</SectionLabel>
+            {externalGuide.loading ? (
+              <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
+                  Checking Democracy Club / WhoCanIVoteFor...
+                </div>
+              </SurfaceCard>
+            ) : externalGuide.candidates.length ? (
+              <>
+                {externalGuide.candidates.map((candidate) => {
+                  const accent = partyColor(candidate.party, T.pr)
+                  return (
+                    <SurfaceCard key={candidate.id} T={T} borderColor={`${accent}28`} style={{ marginBottom: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+                        <div>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: T.th }}>{candidate.name}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginTop: 4 }}>{candidate.party}</div>
+                        </div>
+                        <Chip color={accent}>Candidate</Chip>
+                      </div>
+                      {candidate.areaName ? (
+                        <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.6, marginBottom: 8 }}>
+                          {candidate.areaName}
+                        </div>
+                      ) : null}
+                    </SurfaceCard>
+                  )
+                })}
+
+                <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, textAlign: 'center', marginBottom: 10 }}>
+                  {externalGuide.sourceUrl ? (
+                    <a
+                      href={externalGuide.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: T.pr, textDecoration: 'none' }}
+                    >
+                      Source: Democracy Club / WhoCanIVoteFor
+                    </a>
+                  ) : (
+                    'Source: Democracy Club / WhoCanIVoteFor'
+                  )}
+                </div>
+              </>
+            ) : (
+              <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
+                  Full candidate guide coming soon for this area.
+                </div>
+              </SurfaceCard>
+            )}
+
+            <SurfaceCard T={T} style={{ marginTop: 4 }}>
+              <SectionLabel T={T}>Sources</SectionLabel>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginBottom: 12 }}>
+                Maintained local battleground briefing · sources linked where available
+              </div>
+              <div style={{ display: 'grid', gap: 8, marginBottom: 12 }}>
+                {externalSources.map((source) => (
+                  <a
+                    key={`${source.label}-${source.url}`}
+                    href={source.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'block',
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      background: T.c1 || 'rgba(0,0,0,0.04)',
+                      color: T.pr,
+                      fontSize: 14,
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {source.label}
+                    {source.updatedAt ? ` · ${source.updatedAt}` : ''}
+                    {' →'}
+                  </a>
+                ))}
+              </div>
+              <a
+                href={externalGuide.whoCanIVoteForUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  display: 'block',
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  background: T.c1 || 'rgba(0,0,0,0.04)',
+                  color: T.pr,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  textAlign: 'center',
+                }}
+              >
+                Open WhoCanIVoteFor for full candidate details →
+              </a>
+            </SurfaceCard>
+          </div>
+        </ScrollArea>
+      </div>
+    )
+  }
 
   if (!council) {
     return (
