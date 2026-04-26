@@ -362,6 +362,7 @@ export default function LocalVoteGuideScreen({
   const externalDisplayedCandidates = externalGuide.d1Candidates.length ? externalGuide.d1Candidates : []
   const externalHasResolvedWard = Boolean(externalGuide.d1Match?.councilSlug && externalGuide.d1Match?.wardSlug)
   const externalHasCandidateList = externalDisplayedCandidates.length > 0
+  const externalNoElectionThisCycle = externalHasResolvedWard && !externalHasCandidateList
   const externalNoElectionHeadline = 'No local election in this ward on 07-05-2026.'
   const externalNoElectionBody = 'This area is not voting in this local election cycle.'
   const externalCandidateFallbackText = externalHasResolvedWard
@@ -432,21 +433,19 @@ export default function LocalVoteGuideScreen({
         { label: 'Sources', value: `${sources.length}` },
       ]
     : []
-  const externalKeyFacts = [
-    { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
-    { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
-    { label: 'Election', value: resolveElectionDateForBriefing(externalCouncil) },
-    { label: 'Status', value: externalBriefingTag.label },
-  ]
-  const externalSources = [
-    externalGuide.postcodeContext?.sourceLabel
-      ? {
-          label: externalGuide.postcodeContext.sourceLabel,
-          url: externalGuide.postcodeContext.sourceUrl,
-          updatedAt: externalGuide.postcodeContext.lastChecked,
-        }
-      : null,
-  ].filter(Boolean)
+  const externalKeyFacts = externalNoElectionThisCycle
+    ? [
+        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
+        { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
+        { label: 'Election status', value: externalNoElectionHeadline },
+        { label: 'Candidate list', value: 'Not applicable this year' },
+      ]
+    : [
+        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
+        { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
+        { label: 'Election', value: resolveElectionDateForBriefing(externalCouncil) },
+        { label: 'Status', value: externalBriefingTag.label },
+      ]
 
   if (isExternalFallback) {
     return (
@@ -495,14 +494,16 @@ export default function LocalVoteGuideScreen({
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
                 <Chip
                   color={
-                    externalBriefingTag.tone === 'warning'
+                    externalNoElectionThisCycle
+                      ? TONE_NEUTRAL
+                      : externalBriefingTag.tone === 'warning'
                       ? '#F59E0B'
                       : externalBriefingTag.tone === 'info'
                         ? T.pr
                         : TONE_NEUTRAL
                   }
                 >
-                  {externalBriefingTag.label}
+                  {externalNoElectionThisCycle ? 'No local vote this cycle' : externalBriefingTag.label}
                 </Chip>
               </div>
               <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.7 }}>
@@ -589,31 +590,24 @@ export default function LocalVoteGuideScreen({
               <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginBottom: 12 }}>
                 Maintained local battleground briefing · sources linked where available
               </div>
-              <div style={{ display: 'grid', gap: 8, marginBottom: 12 }}>
-                {externalSources.map((source) => (
-                  <a
-                    key={`${source.label}-${source.url}`}
-                    href={source.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: 'block',
-                      padding: '10px 12px',
-                      borderRadius: 10,
-                      background: T.c1 || 'rgba(0,0,0,0.04)',
-                      color: T.pr,
-                      fontSize: 14,
-                      fontWeight: 700,
-                      textDecoration: 'none',
-                    }}
-                  >
-                    {source.label}
-                    {source.updatedAt ? ` · ${source.updatedAt}` : ''}
-                    {' →'}
-                  </a>
-                ))}
-              </div>
-              {externalHasCandidateList ? (
+              {externalGuide.postcodeContext?.lastChecked ? (
+                <div
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    background: T.c1 || 'rgba(0,0,0,0.04)',
+                    color: T.tl,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    lineHeight: 1.6,
+                    marginBottom: 12,
+                  }}
+                >
+                  {`Postcode checked using Postcodes.io · ${externalGuide.postcodeContext.lastChecked}`}
+                </div>
+              ) : null}
+              {externalHasCandidateList || externalNoElectionThisCycle ? (
                 <div style={{ textAlign: 'center' }}>
                   <a
                     href={externalGuide.whoCanIVoteForUrl}
