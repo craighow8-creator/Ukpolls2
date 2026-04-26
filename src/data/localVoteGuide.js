@@ -880,6 +880,73 @@ export async function fetchLocalVoteGuideCouncilData(councilSlug) {
   return payload
 }
 
+function simplifyCouncilLookupKey(value) {
+  return slugify(
+    String(value || '')
+      .replace(/^city of /i, '')
+      .replace(/\bcity council\b/gi, '')
+      .replace(/\bcouncil\b/gi, '')
+      .replace(/\bborough\b/gi, '')
+      .replace(/\blondon borough of\b/gi, '')
+      .replace(/\s+/g, ' '),
+  )
+}
+
+let localVoteLookupIndexPromise = null
+
+export async function fetchLocalVoteGuideLookupIndex() {
+  if (!localVoteLookupIndexPromise) {
+    localVoteLookupIndexPromise = fetchLocalVoteGuideJson('/api/local-vote/lookup-index').then((payload) => {
+      if (!payload || !Array.isArray(payload.councils) || !Array.isArray(payload.wards)) return null
+      return payload
+    })
+  }
+
+  return localVoteLookupIndexPromise
+}
+
+export async function resolveExternalLocalVoteGuideMatch({ councilName = '', wardName = '' } = {}) {
+  const lookup = await fetchLocalVoteGuideLookupIndex()
+  if (!lookup) return null
+
+  const simplifiedCouncil = simplifyCouncilLookupKey(councilName)
+  const wardKey = slugify(String(wardName || '').replace(/\bward\b/gi, ''))
+  if (!simplifiedCouncil || !wardKey) return null
+
+  const matchedCouncil =
+    (lookup.councils || []).find((council) => simplifyCouncilLookupKey(council.name) === simplifiedCouncil) ||
+    (lookup.councils || []).find((council) => simplifyCouncilLookupKey(council.supportedAreaLabel) === simplifiedCouncil) ||
+    null
+
+  if (!matchedCouncil) return null
+
+  const matchedWard =
+    (lookup.wards || []).find((ward) => ward.councilId === matchedCouncil.id && slugify(ward.name.replace(/\bward\b/gi, '')) === wardKey) ||
+    (lookup.wards || []).find((ward) => ward.councilId === matchedCouncil.id && slugify(ward.slug) === wardKey) ||
+    (lookup.wards || []).find((ward) => ward.councilId === matchedCouncil.id && (ward.aliases || []).some((alias) => slugify(alias.replace(/\bward\b/gi, '')) === wardKey)) ||
+    null
+
+  if (!matchedWard) return null
+
+  return {
+    councilSlug: matchedCouncil.slug,
+    councilName: matchedCouncil.name,
+    wardSlug: matchedWard.slug,
+    wardName: matchedWard.name,
+  }
+}
+
+export async function fetchLocalVoteGuideD1Candidates({ councilSlug = '', wardSlug = '' } = {}) {
+  if (!councilSlug || !wardSlug) return null
+
+  const payload = await fetchLocalVoteGuideJson(
+    `/api/local-vote/candidates?councilSlug=${encodeURIComponent(councilSlug)}&wardSlug=${encodeURIComponent(wardSlug)}`,
+  )
+
+  if (!payload || !Array.isArray(payload.candidates)) return null
+  return payload
+}
+
 export function getLocalVoteGuideWard(councilSlug, wardSlug) {
   const council = getLocalVoteGuideCouncil(councilSlug)
   if (!council || !wardSlug) return null

@@ -2727,6 +2727,65 @@ export default {
         }
       }
 
+      async function loadLocalVoteWardCandidates(councilSlug, wardSlug) {
+        const councilRow = await env.DB.prepare(
+          `SELECT id, slug, name
+           FROM local_councils
+           WHERE slug = ? AND active = 1
+           LIMIT 1`
+        ).bind(councilSlug).first()
+
+        if (!councilRow?.id) return null
+
+        const wardRow = await env.DB.prepare(
+          `SELECT id, slug, name
+           FROM local_wards
+           WHERE council_id = ? AND slug = ? AND active = 1
+           LIMIT 1`
+        ).bind(councilRow.id, wardSlug).first()
+
+        if (!wardRow?.id) return null
+
+        const candidateRows = await env.DB.prepare(
+          `SELECT
+             c.id,
+             c.name,
+             c.party,
+             c.election_date,
+             c.democracy_club_person_url,
+             c.source_attribution,
+             c.verification_status,
+             c.last_checked,
+             s.label AS source_label,
+             s.url AS source_url
+           FROM local_candidates c
+           LEFT JOIN local_sources s ON s.id = c.primary_source_id
+           WHERE c.council_id = ? AND c.ward_id = ?
+           ORDER BY c.name ASC`
+        ).bind(councilRow.id, wardRow.id).all()
+
+        return {
+          councilSlug: councilRow.slug,
+          councilName: councilRow.name,
+          wardSlug: wardRow.slug,
+          wardName: wardRow.name,
+          candidates: (candidateRows.results || []).map((row) => ({
+            id: row.id,
+            ward: wardRow.name,
+            name: row.name,
+            party: row.party,
+            electionDate: row.election_date,
+            sourceUrl: row.source_url || '',
+            sourceLabel: row.source_label || '',
+            lastChecked: row.last_checked || '',
+            verificationStatus: row.verification_status || 'verified',
+            sourceAttribution: row.source_attribution || 'official',
+            democracyClubPersonUrl: row.democracy_club_person_url || '',
+            issueStatements: {},
+          })),
+        }
+      }
+
       async function upsertLocalVoteDemocracyClubChunk({
         electionDate,
         csvUrl,
@@ -3564,6 +3623,7 @@ export default {
       const localVoteWardsMatch = url.pathname.match(/^\/api\/local-vote\/councils\/([^/]+)\/wards$/)
       const localVoteWardMatch = url.pathname.match(/^\/api\/local-vote\/councils\/([^/]+)\/wards\/([^/]+)$/)
       const localVoteLookupIndexMatch = url.pathname === '/api/local-vote/lookup-index'
+      const localVoteCandidatesMatch = url.pathname === '/api/local-vote/candidates'
 
       if (request.method === 'GET' && localVoteCouncilMatch) {
         const councilSlug = routeSlugToCouncilSlug(decodeURIComponent(localVoteCouncilMatch[1] || ''))
@@ -3618,6 +3678,24 @@ export default {
       if (request.method === 'GET' && localVoteLookupIndexMatch) {
         return cachedJsonResponse(request, async () => {
           const payload = await loadLocalVoteLookupIndex()
+          return jsonResponse(payload)
+        })
+      }
+
+      if (request.method === 'GET' && localVoteCandidatesMatch) {
+        return cachedJsonResponse(request, async () => {
+          const councilSlug = String(url.searchParams.get('councilSlug') || '').trim()
+          const wardSlug = String(url.searchParams.get('wardSlug') || '').trim()
+
+          if (!councilSlug || !wardSlug) {
+            return jsonResponse({ error: 'Missing councilSlug or wardSlug' }, { status: 400 })
+          }
+
+          const payload = await loadLocalVoteWardCandidates(councilSlug, wardSlug)
+          if (!payload) {
+            return jsonResponse({ error: 'Local vote candidates not found' }, { status: 404 })
+          }
+
           return jsonResponse(payload)
         })
       }

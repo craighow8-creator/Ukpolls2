@@ -5,11 +5,13 @@ import { formatUKDate } from '../utils/date'
 import {
   EXTERNAL_LOCAL_VOTE_GUIDE_SLUG,
   fetchExternalLocalVoteGuide,
+  fetchLocalVoteGuideD1Candidates,
   fetchLocalVoteGuideCouncilData,
   fetchLocalVoteGuideCandidates,
   getLocalVoteGuideCouncil,
   isSheffieldPostcode,
   LOCAL_VOTE_ISSUE_AREAS,
+  resolveExternalLocalVoteGuideMatch,
 } from '../data/localVoteGuide'
 import { cleanText, formatElectionDate, mergeCouncilLayers, slugifyCouncilName } from '../utils/electionsHelpers'
 import {
@@ -219,6 +221,8 @@ export default function LocalVoteGuideScreen({
     loading: false,
     areaName: '',
     candidates: [],
+    d1Candidates: [],
+    d1Match: null,
     sourceLabel: '',
     sourceUrl: '',
     whoCanIVoteForUrl: 'https://whocanivotefor.co.uk/',
@@ -289,6 +293,8 @@ export default function LocalVoteGuideScreen({
         loading: false,
         areaName: '',
         candidates: [],
+        d1Candidates: [],
+        d1Match: null,
         sourceLabel: '',
         sourceUrl: '',
         whoCanIVoteForUrl: 'https://whocanivotefor.co.uk/',
@@ -310,10 +316,24 @@ export default function LocalVoteGuideScreen({
       const result = await fetchExternalLocalVoteGuide(query).catch(() => null)
       if (cancelled) return
 
+       const d1Match = await resolveExternalLocalVoteGuideMatch({
+        councilName: result?.postcodeContext?.councilName || '',
+        wardName: result?.postcodeContext?.wardName || '',
+      }).catch(() => null)
+
+      const d1Payload = d1Match
+        ? await fetchLocalVoteGuideD1Candidates({
+            councilSlug: d1Match.councilSlug,
+            wardSlug: d1Match.wardSlug,
+          }).catch(() => null)
+        : null
+
       setExternalGuide({
         loading: false,
         areaName: result?.areaName || '',
         candidates: result?.candidates || [],
+        d1Candidates: d1Payload?.candidates || [],
+        d1Match,
         sourceLabel: result?.sourceLabel || '',
         sourceUrl: result?.sourceUrl || '',
         whoCanIVoteForUrl: result?.whoCanIVoteForUrl || 'https://whocanivotefor.co.uk/',
@@ -339,6 +359,7 @@ export default function LocalVoteGuideScreen({
   )
 
   const externalBriefingTag = useMemo(() => deriveBriefingTag(externalCouncil), [externalCouncil])
+  const externalDisplayedCandidates = externalGuide.d1Candidates.length ? externalGuide.d1Candidates : []
 
   useEffect(() => {
     let cancelled = false
@@ -460,8 +481,8 @@ export default function LocalVoteGuideScreen({
                 value={
                   externalGuide.loading
                     ? 'Checking external lookup...'
-                    : externalGuide.candidates.length
-                      ? `${externalGuide.candidates.length} candidates returned`
+                    : externalDisplayedCandidates.length
+                      ? `${externalDisplayedCandidates.length} candidates listed`
                       : 'Full candidate guide coming soon for this area.'
                 }
               />
@@ -503,12 +524,12 @@ export default function LocalVoteGuideScreen({
             {externalGuide.loading ? (
               <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
-                  Checking Democracy Club / WhoCanIVoteFor...
+                  Checking local candidate data...
                 </div>
               </SurfaceCard>
-            ) : externalGuide.candidates.length ? (
+            ) : externalDisplayedCandidates.length ? (
               <>
-                {externalGuide.candidates.map((candidate) => {
+                {externalDisplayedCandidates.map((candidate) => {
                   const accent = partyColor(candidate.party, T.pr)
                   return (
                     <SurfaceCard key={candidate.id} T={T} borderColor={`${accent}28`} style={{ marginBottom: 10 }}>
@@ -519,9 +540,9 @@ export default function LocalVoteGuideScreen({
                         </div>
                         <Chip color={accent}>Candidate</Chip>
                       </div>
-                      {candidate.areaName ? (
+                      {candidate.ward ? (
                         <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.6, marginBottom: 8 }}>
-                          {candidate.areaName}
+                          {candidate.ward}
                         </div>
                       ) : null}
                     </SurfaceCard>
@@ -529,25 +550,14 @@ export default function LocalVoteGuideScreen({
                 })}
 
                 <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, textAlign: 'center', marginBottom: 10 }}>
-                  {externalGuide.sourceUrl ? (
-                    <a
-                      href={externalGuide.sourceUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ color: T.pr, textDecoration: 'none' }}
-                    >
-                      Source: Democracy Club / WhoCanIVoteFor
-                    </a>
-                  ) : (
-                    'Source: Democracy Club / WhoCanIVoteFor'
-                  )}
+                  Source: Democracy Club
                 </div>
               </>
             ) : (
               <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
-                  Full candidate guide coming soon for this area.
-                </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
+                    Full candidate guide coming soon for this area.
+                  </div>
               </SurfaceCard>
             )}
 
