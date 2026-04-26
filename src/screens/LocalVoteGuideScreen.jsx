@@ -362,9 +362,12 @@ export default function LocalVoteGuideScreen({
   const externalDisplayedCandidates = externalGuide.d1Candidates.length ? externalGuide.d1Candidates : []
   const externalHasResolvedWard = Boolean(externalGuide.d1Match?.councilSlug && externalGuide.d1Match?.wardSlug)
   const externalHasCandidateList = externalDisplayedCandidates.length > 0
-  const externalNoElectionThisCycle = externalHasResolvedWard && !externalHasCandidateList
+  const externalHasActiveElection = externalHasCandidateList
+  const externalNoElectionThisCycle = externalHasResolvedWard && !externalHasActiveElection
   const externalNoElectionHeadline = 'No local election in this ward on 07-05-2026.'
   const externalNoElectionBody = 'This area is not voting in this local election cycle.'
+  const externalActiveElectionDate = formatUKDate(LOCAL_ELECTIONS?.date || '2026-05-07')
+  const externalActiveElectionStatus = 'Election taking place'
   const externalCandidateFallbackText = externalHasResolvedWard
     ? externalNoElectionHeadline
     : 'Candidate details are available via WhoCanIVoteFor.'
@@ -433,14 +436,21 @@ export default function LocalVoteGuideScreen({
         { label: 'Sources', value: `${sources.length}` },
       ]
     : []
-  const externalKeyFacts = externalNoElectionThisCycle
+  const externalKeyFacts = externalHasActiveElection
     ? [
+        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
+        { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
+        { label: 'Election', value: externalActiveElectionDate },
+        { label: 'Status', value: externalActiveElectionStatus },
+      ]
+    : externalNoElectionThisCycle
+      ? [
         { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
         { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
         { label: 'Election status', value: externalNoElectionHeadline },
         { label: 'Candidate list', value: 'Not applicable this year' },
       ]
-    : [
+      : [
         { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
         { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
         { label: 'Election', value: resolveElectionDateForBriefing(externalCouncil) },
@@ -494,7 +504,9 @@ export default function LocalVoteGuideScreen({
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
                 <Chip
                   color={
-                    externalNoElectionThisCycle
+                    externalHasActiveElection
+                      ? T.pr
+                      : externalNoElectionThisCycle
                       ? TONE_NEUTRAL
                       : externalBriefingTag.tone === 'warning'
                       ? '#F59E0B'
@@ -503,15 +515,23 @@ export default function LocalVoteGuideScreen({
                         : TONE_NEUTRAL
                   }
                 >
-                  {externalNoElectionThisCycle ? 'No local vote this cycle' : externalBriefingTag.label}
+                  {externalHasActiveElection
+                    ? externalActiveElectionStatus
+                    : externalNoElectionThisCycle
+                      ? 'No local vote this cycle'
+                      : externalBriefingTag.label}
                 </Chip>
               </div>
               <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.7 }}>
-                {externalHasResolvedWard
-                  ? externalNoElectionBody
-                  : externalCouncil?.watchFor ||
+                {externalHasActiveElection
+                  ? externalCouncil?.watchFor ||
                     externalCouncil?.electionMessage ||
-                    externalCandidateFallbackText}
+                    'Candidate list available for this ward in the current local election cycle.'
+                  : externalNoElectionThisCycle
+                    ? externalNoElectionBody
+                    : externalCouncil?.watchFor ||
+                      externalCouncil?.electionMessage ||
+                      externalCandidateFallbackText}
               </div>
             </SurfaceCard>
 
@@ -519,7 +539,17 @@ export default function LocalVoteGuideScreen({
               <SectionLabel T={T}>Briefing status</SectionLabel>
               <div style={{ display: 'grid', gap: 8 }}>
                 <InfoRow T={T} label="Coverage" value={externalCouncil ? 'Tracked in Politiscope local elections' : 'Briefing view only for now'} />
-                <InfoRow T={T} label="Verdict" value={externalHasResolvedWard ? externalNoElectionBody : externalCouncil?.verdict || externalCandidateFallbackText} />
+                <InfoRow
+                  T={T}
+                  label="Verdict"
+                  value={
+                    externalHasActiveElection
+                      ? externalCouncil?.verdict || externalActiveElectionStatus
+                      : externalNoElectionThisCycle
+                        ? externalNoElectionBody
+                        : externalCouncil?.verdict || externalCandidateFallbackText
+                  }
+                />
                 <InfoRow T={T} label="Freshness" value={externalGuide.postcodeContext?.lastChecked ? `Postcode context checked ${externalGuide.postcodeContext.lastChecked}` : 'Freshness not available'} />
               </div>
             </SurfaceCard>
