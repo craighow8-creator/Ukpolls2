@@ -1137,7 +1137,7 @@ function extractExternalCandidates(payload) {
 
 export async function fetchExternalLocalVoteGuide(query = '') {
   const postcode = normalisePostcodeInput(query)
-  if (!isUkPostcode(postcode) || isSheffieldPostcode(postcode)) return null
+  if (!isUkPostcode(postcode)) return null
 
   const democracyClubResponse = await requestDemocracyClubPostcode(postcode, getDemocracyClubApiKey())
   const payload = democracyClubResponse?.payload || null
@@ -1240,7 +1240,21 @@ export async function resolveLocalVoteGuideMatch(rawQuery) {
     return null
   }
 
-  return postcodeCouncil.lookup.resolvePostcodeMatch?.(query, postcodeCouncil) || null
+  const postcodeMatch = await postcodeCouncil.lookup.resolvePostcodeMatch?.(query, postcodeCouncil)
+  if (postcodeMatch) {
+    return postcodeMatch
+  }
+
+  if (isUkPostcode(query)) {
+    return {
+      status: 'external',
+      councilSlug: EXTERNAL_LOCAL_VOTE_GUIDE_SLUG,
+      wardSlug: '',
+      query,
+    }
+  }
+
+  return null
 }
 
 export const SHEFFIELD_WARD_COUNT = SHEFFIELD_WARDS.length
