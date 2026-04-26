@@ -111,6 +111,33 @@ function buildUniqueSources(council, ward) {
   })
 }
 
+function FactPill({ T, label, value }) {
+  return (
+    <div
+      style={{
+        padding: '10px 12px',
+        borderRadius: 12,
+        background: T.c1 || 'rgba(0,0,0,0.04)',
+        minWidth: 0,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: T.tl,
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.5 }}>{value}</div>
+    </div>
+  )
+}
+
 export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query = '' }) {
   const [council, setCouncil] = useState(() => getLocalVoteGuideCouncil(councilSlug))
   const [selectedWardSlug, setSelectedWardSlug] = useState(wardSlug || '')
@@ -216,6 +243,17 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
       return !!(issueStatement?.text && issueStatement?.sourceUrl)
     }),
   )
+  const keyFacts = selectedWard
+    ? [
+        { label: 'Election', value: formatUKDate(council.nextElectionDate) },
+        { label: 'Current seats', value: `${selectedWard.councillors.length}` },
+        {
+          label: 'Candidates listed',
+          value: displayedCandidates.length ? `${displayedCandidates.length}` : 'Unavailable',
+        },
+        { label: 'Sources', value: `${sources.length}` },
+      ]
+    : []
 
   if (!council) {
     return (
@@ -395,6 +433,23 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
 
           {selectedWard ? (
             <>
+              <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+                <SectionLabel T={T}>Key facts</SectionLabel>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+                  {keyFacts.map((fact) => (
+                    <FactPill key={fact.label} T={T} label={fact.label} value={fact.value} />
+                  ))}
+                </div>
+              </SurfaceCard>
+
+              <SurfaceCard T={T} style={{ marginBottom: 12, textAlign: 'center' }}>
+                <SectionLabel T={T}>What this election means</SectionLabel>
+                <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.7 }}>
+                  Voters in {selectedWard.name} are choosing who will represent the ward on Sheffield City Council at the next local election.
+                  Use the verified candidate list, current councillor record, and source links below to understand who is standing and what this council controls.
+                </div>
+              </SurfaceCard>
+
               <SectionLabel T={T}>Current ward councillors</SectionLabel>
               <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginBottom: 10 }}>
                 These are the councillors who currently represent {selectedWard.name}.
@@ -491,6 +546,37 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
                 </SurfaceCard>
               )}
 
+              {displayedCandidates.length ? (
+                <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+                  <SectionLabel T={T}>Quick read candidates</SectionLabel>
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {displayedCandidates.map((candidate) => {
+                      const accent = partyColor(candidate.party, T.pr)
+                      return (
+                        <div
+                          key={`${candidate.id}-quick-read`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 10,
+                            padding: '10px 12px',
+                            borderRadius: 12,
+                            background: T.c1 || 'rgba(0,0,0,0.04)',
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 800, color: T.th }}>{candidate.name}</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, marginTop: 2 }}>{candidate.party}</div>
+                          </div>
+                          <Chip color={accent}>Candidate</Chip>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </SurfaceCard>
+              ) : null}
+
               {displayedCandidates.length && hasVerifiedIssueStatements ? (
                 <>
                   <SectionLabel T={T}>Compare by issue</SectionLabel>
@@ -542,6 +628,32 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
                   </div>
                 </SurfaceCard>
               ) : null}
+
+              <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+                <SectionLabel T={T}>How to choose</SectionLabel>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {[
+                    'Start with the verified candidate list to confirm who is actually standing in this ward.',
+                    'Use the source links to check any official candidate material or election notice yourself.',
+                    'Compare what the council controls with the local issues you care about most.',
+                  ].map((line) => (
+                    <div
+                      key={line}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        background: T.c1 || 'rgba(0,0,0,0.04)',
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: T.th,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              </SurfaceCard>
 
               {selectedWard.notes ? (
                 <SurfaceCard T={T} style={{ marginTop: 4, marginBottom: 12 }}>
