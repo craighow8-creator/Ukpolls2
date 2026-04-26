@@ -69,7 +69,7 @@ export default function LocalsTab({
       const directMatch = findLocalVoteGuideMatch(voteGuideQuery)
       const result = directMatch?.wardSlug ? { status: 'matched', ...directMatch } : await resolveLocalVoteGuideMatch(voteGuideQuery)
 
-      if (result?.status === 'matched' || result?.status === 'manual') {
+      if (result?.status === 'matched' || result?.status === 'manual' || result?.status === 'external') {
         setVoteGuideMessage('')
         openLocalVoteGuide({
           councilSlug: result.councilSlug,
@@ -87,6 +87,129 @@ export default function LocalsTab({
 
   return (
     <>
+      <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+        <SectionLabel T={T}>Find your local vote</SectionLabel>
+
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: T.th,
+            lineHeight: 1.6,
+            textAlign: 'center',
+            marginBottom: 12,
+          }}
+        >
+          Enter a postcode or Sheffield ward name to open the local vote guide.
+        </div>
+
+        <div style={{ position: 'relative', marginBottom: 10 }}>
+          <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.tl} strokeWidth="2" strokeLinecap="round">
+              <path d="M4 11h16" />
+              <path d="M4 7h10" />
+              <path d="M4 15h8" />
+            </svg>
+          </div>
+
+          <input
+            type="text"
+            inputMode="text"
+            autoCapitalize="characters"
+            placeholder="Enter postcode, e.g. S1 1AA"
+            value={voteGuideQuery}
+            onChange={(e) => {
+              setVoteGuideQuery(e.target.value)
+              if (voteGuideMessage) setVoteGuideMessage('')
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter') return
+              handleOpenLocalVoteGuide()
+            }}
+            style={{
+              width: '100%',
+              padding: '13px 14px 13px 38px',
+              background: T.c0,
+              border: `1.5px solid ${voteGuideQuery ? T.pr : T.cardBorder || 'rgba(0,0,0,0.1)'}`,
+              borderRadius: 12,
+              fontSize: 15,
+              color: T.th,
+              fontFamily: "'Outfit', sans-serif",
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+          <motion.button
+            {...TAP}
+            onClick={handleOpenLocalVoteGuide}
+            style={{
+              width: '100%',
+              border: `1px solid ${T.pr}`,
+              background: `${T.pr}18`,
+              color: T.pr,
+              borderRadius: 12,
+              padding: '12px 14px',
+              fontSize: 14,
+              fontWeight: 800,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              opacity: voteGuideBusy ? 0.75 : 1,
+            }}
+            disabled={voteGuideBusy}
+          >
+            {voteGuideBusy ? 'Checking postcode…' : 'Find your local vote'}
+          </motion.button>
+
+          <motion.button
+            {...TAP}
+            onClick={() => {
+              setVoteGuideQuery('S1 1AA')
+              setVoteGuideMessage('')
+              openLocalVoteGuide(getSheffieldGuideMatch())
+            }}
+            style={{
+              width: '100%',
+              border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
+              background: T.c0,
+              color: T.th,
+              borderRadius: 12,
+              padding: '11px 14px',
+              fontSize: 13,
+              fontWeight: 800,
+              cursor: 'pointer',
+            }}
+          >
+            Open Sheffield guide
+          </motion.button>
+        </div>
+
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, textAlign: 'center', marginTop: 10 }}>
+          Sheffield opens the full Politiscope guide. Other UK postcodes open a simple Democracy Club candidate view.
+        </div>
+
+        {voteGuideMessage ? (
+          <div
+            style={{
+              marginTop: 10,
+              padding: '10px 12px',
+              borderRadius: 10,
+              background: T.c1 || 'rgba(0,0,0,0.04)',
+              fontSize: 14,
+              fontWeight: 600,
+              color: T.th,
+              textAlign: 'center',
+              lineHeight: 1.55,
+            }}
+          >
+            {voteGuideMessage}
+          </div>
+        ) : null}
+      </SurfaceCard>
+
       <SurfaceCard T={T} style={{ marginBottom: 12 }}>
         <SectionLabel T={T}>Local elections overview</SectionLabel>
 
@@ -207,129 +330,6 @@ export default function LocalsTab({
               ))}
             </div>
           </>
-        ) : null}
-      </SurfaceCard>
-
-      <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-        <SectionLabel T={T}>Find your local vote</SectionLabel>
-
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: T.th,
-            lineHeight: 1.6,
-            textAlign: 'center',
-            marginBottom: 12,
-          }}
-        >
-          Enter a Sheffield postcode or ward name to open the local vote guide.
-        </div>
-
-        <div style={{ position: 'relative', marginBottom: 10 }}>
-          <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.tl} strokeWidth="2" strokeLinecap="round">
-              <path d="M4 11h16" />
-              <path d="M4 7h10" />
-              <path d="M4 15h8" />
-            </svg>
-          </div>
-
-          <input
-            type="text"
-            inputMode="text"
-            autoCapitalize="characters"
-            placeholder="Enter postcode, e.g. S1 1AA"
-            value={voteGuideQuery}
-            onChange={(e) => {
-              setVoteGuideQuery(e.target.value)
-              if (voteGuideMessage) setVoteGuideMessage('')
-            }}
-            onKeyDown={(e) => {
-              if (e.key !== 'Enter') return
-              handleOpenLocalVoteGuide()
-            }}
-            style={{
-              width: '100%',
-              padding: '13px 14px 13px 38px',
-              background: T.c0,
-              border: `1.5px solid ${voteGuideQuery ? T.pr : T.cardBorder || 'rgba(0,0,0,0.1)'}`,
-              borderRadius: 12,
-              fontSize: 15,
-              color: T.th,
-              fontFamily: "'Outfit', sans-serif",
-              outline: 'none',
-              boxSizing: 'border-box',
-            }}
-          />
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-          <motion.button
-            {...TAP}
-            onClick={handleOpenLocalVoteGuide}
-            style={{
-              width: '100%',
-              border: `1px solid ${T.pr}`,
-              background: `${T.pr}18`,
-              color: T.pr,
-              borderRadius: 12,
-              padding: '12px 14px',
-              fontSize: 14,
-              fontWeight: 800,
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              opacity: voteGuideBusy ? 0.75 : 1,
-            }}
-            disabled={voteGuideBusy}
-          >
-            {voteGuideBusy ? 'Checking postcode…' : 'Find your local vote'}
-          </motion.button>
-
-          <motion.button
-            {...TAP}
-            onClick={() => {
-              setVoteGuideQuery('S1 1AA')
-              setVoteGuideMessage('')
-              openLocalVoteGuide(getSheffieldGuideMatch())
-            }}
-            style={{
-              width: '100%',
-              border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
-              background: T.c0,
-              color: T.th,
-              borderRadius: 12,
-              padding: '11px 14px',
-              fontSize: 13,
-              fontWeight: 800,
-              cursor: 'pointer',
-            }}
-          >
-            Open Sheffield guide
-          </motion.button>
-        </div>
-
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, textAlign: 'center', marginTop: 10 }}>
-          Sheffield-first guide supports postcodes such as {normalisePostcodeInput('s1 1aa')}.
-        </div>
-
-        {voteGuideMessage ? (
-          <div
-            style={{
-              marginTop: 10,
-              padding: '10px 12px',
-              borderRadius: 10,
-              background: T.c1 || 'rgba(0,0,0,0.04)',
-              fontSize: 14,
-              fontWeight: 600,
-              color: T.th,
-              textAlign: 'center',
-              lineHeight: 1.55,
-            }}
-          >
-            {voteGuideMessage}
-          </div>
         ) : null}
       </SurfaceCard>
 
