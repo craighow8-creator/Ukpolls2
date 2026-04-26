@@ -360,6 +360,13 @@ export default function LocalVoteGuideScreen({
 
   const externalBriefingTag = useMemo(() => deriveBriefingTag(externalCouncil), [externalCouncil])
   const externalDisplayedCandidates = externalGuide.d1Candidates.length ? externalGuide.d1Candidates : []
+  const externalHasResolvedWard = Boolean(externalGuide.d1Match?.councilSlug && externalGuide.d1Match?.wardSlug)
+  const externalHasCandidateList = externalDisplayedCandidates.length > 0
+  const externalNoElectionHeadline = 'No local election in this ward on 07-05-2026.'
+  const externalNoElectionBody = 'This area is not voting in this local election cycle.'
+  const externalCandidateFallbackText = externalHasResolvedWard
+    ? externalNoElectionHeadline
+    : 'Candidate details are available via WhoCanIVoteFor.'
 
   useEffect(() => {
     let cancelled = false
@@ -439,11 +446,6 @@ export default function LocalVoteGuideScreen({
           updatedAt: externalGuide.postcodeContext.lastChecked,
         }
       : null,
-    {
-      label: 'WhoCanIVoteFor candidate lookup',
-      url: externalGuide.whoCanIVoteForUrl || 'https://whocanivotefor.co.uk/',
-      updatedAt: externalGuide.candidates.length ? externalGuide.candidates[0]?.lastChecked || '' : '',
-    },
   ].filter(Boolean)
 
   if (isExternalFallback) {
@@ -481,9 +483,9 @@ export default function LocalVoteGuideScreen({
                 value={
                   externalGuide.loading
                     ? 'Checking external lookup...'
-                    : externalDisplayedCandidates.length
+                    : externalHasCandidateList
                       ? `${externalDisplayedCandidates.length} candidates listed`
-                      : 'Full candidate guide coming soon for this area.'
+                      : externalCandidateFallbackText
                 }
               />
             </SurfaceCard>
@@ -504,10 +506,11 @@ export default function LocalVoteGuideScreen({
                 </Chip>
               </div>
               <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.7 }}>
-                {externalCouncil?.watchFor ||
-                  externalCouncil?.electionMessage ||
-                  externalGuide.message ||
-                  'Full candidate guide coming soon for this area.'}
+                {externalHasResolvedWard
+                  ? externalNoElectionBody
+                  : externalCouncil?.watchFor ||
+                    externalCouncil?.electionMessage ||
+                    externalCandidateFallbackText}
               </div>
             </SurfaceCard>
 
@@ -515,7 +518,7 @@ export default function LocalVoteGuideScreen({
               <SectionLabel T={T}>Briefing status</SectionLabel>
               <div style={{ display: 'grid', gap: 8 }}>
                 <InfoRow T={T} label="Coverage" value={externalCouncil ? 'Tracked in Politiscope local elections' : 'Briefing view only for now'} />
-                <InfoRow T={T} label="Verdict" value={externalCouncil?.verdict || 'Full candidate guide coming soon for this area.'} />
+                <InfoRow T={T} label="Verdict" value={externalHasResolvedWard ? externalNoElectionBody : externalCouncil?.verdict || externalCandidateFallbackText} />
                 <InfoRow T={T} label="Freshness" value={externalGuide.postcodeContext?.lastChecked ? `Postcode context checked ${externalGuide.postcodeContext.lastChecked}` : 'Freshness not available'} />
               </div>
             </SurfaceCard>
@@ -527,7 +530,7 @@ export default function LocalVoteGuideScreen({
                   Checking local candidate data...
                 </div>
               </SurfaceCard>
-            ) : externalDisplayedCandidates.length ? (
+            ) : externalHasCandidateList ? (
               <>
                 {externalDisplayedCandidates.map((candidate) => {
                   const accent = partyColor(candidate.party, T.pr)
@@ -555,9 +558,29 @@ export default function LocalVoteGuideScreen({
               </>
             ) : (
               <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
-                    Full candidate guide coming soon for this area.
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
+                  {externalCandidateFallbackText}
+                </div>
+                {externalHasResolvedWard ? (
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, lineHeight: 1.6, marginTop: 6 }}>
+                    {externalNoElectionBody}
                   </div>
+                ) : null}
+                <div style={{ marginTop: 8 }}>
+                  <a
+                    href={externalGuide.whoCanIVoteForUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: T.pr,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    Verify via WhoCanIVoteFor →
+                  </a>
+                </div>
               </SurfaceCard>
             )}
 
@@ -590,24 +613,23 @@ export default function LocalVoteGuideScreen({
                   </a>
                 ))}
               </div>
-              <a
-                href={externalGuide.whoCanIVoteForUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  display: 'block',
-                  padding: '10px 12px',
-                  borderRadius: 10,
-                  background: T.c1 || 'rgba(0,0,0,0.04)',
-                  color: T.pr,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  textAlign: 'center',
-                }}
-              >
-                Open WhoCanIVoteFor for full candidate details →
-              </a>
+              {externalHasCandidateList ? (
+                <div style={{ textAlign: 'center' }}>
+                  <a
+                    href={externalGuide.whoCanIVoteForUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: T.pr,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    Verify via WhoCanIVoteFor →
+                  </a>
+                </div>
+              ) : null}
             </SurfaceCard>
           </div>
         </ScrollArea>
