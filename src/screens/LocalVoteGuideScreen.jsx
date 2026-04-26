@@ -210,6 +210,12 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
     : []
   const candidateSourceLabel = candidateState.sourceLabel || (displayedCandidates.length ? 'Sheffield City Council statement of persons nominated' : '')
   const candidateSourceUrl = candidateState.sourceUrl || (displayedCandidates.length ? selectedWard?.candidates?.[0]?.sourceUrl || '' : '')
+  const hasVerifiedIssueStatements = displayedCandidates.some((candidate) =>
+    LOCAL_VOTE_ISSUE_AREAS.some((area) => {
+      const issueStatement = candidate?.issueStatements?.[area.key]
+      return !!(issueStatement?.text && issueStatement?.sourceUrl)
+    }),
+  )
 
   if (!council) {
     return (
@@ -485,7 +491,7 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
                 </SurfaceCard>
               )}
 
-              {displayedCandidates.length ? (
+              {displayedCandidates.length && hasVerifiedIssueStatements ? (
                 <>
                   <SectionLabel T={T}>Compare by issue</SectionLabel>
                   {LOCAL_VOTE_ISSUE_AREAS.map((area) => (
@@ -529,6 +535,12 @@ export default function LocalVoteGuideScreen({ T, councilSlug, wardSlug, query =
                     </SurfaceCard>
                   ))}
                 </>
+              ) : displayedCandidates.length ? (
+                <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, lineHeight: 1.6 }}>
+                    Issue comparison will appear here when candidates publish verified local pledges.
+                  </div>
+                </SurfaceCard>
               ) : null}
 
               {selectedWard.notes ? (
