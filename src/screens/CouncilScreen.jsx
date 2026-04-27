@@ -451,6 +451,33 @@ function getPoliticalBriefing(profile) {
 
 
 
+function buildPersonSummary(profile, type, name) {
+  const roleLabel = type === 'leader' ? 'leader' : 'mayor'
+
+  if (name === 'Not currently listed') {
+    return `No ${roleLabel} details are currently stored for this council yet.`
+  }
+
+  const summaryParts = uniqueValues([
+    profile?.controlNarrative,
+    profile?.keyIssue,
+    profile?.prediction,
+    profile?.lastElection,
+  ]).filter((part) => {
+    const value = cleanText(part).toLowerCase()
+    return value && !value.includes('this panel is ready') && !value.includes('pipeline is expanded')
+  })
+
+  if (summaryParts.length) {
+    return formatDatesInText(summaryParts.slice(0, 2).join(' '))
+  }
+
+  const councilName = cleanText(profile?.name) || 'this council'
+  return type === 'leader'
+    ? `Political lead for ${councilName}.`
+    : `Mayoral lead for ${councilName}.`
+}
+
 function buildPersonDetails(profile, type) {
   const rawValue = cleanText(type === 'leader' ? profile?.leader : profile?.mayor)
   const match = rawValue.match(/^(.*?)\s*\((.*?)\)$/)
@@ -460,7 +487,8 @@ function buildPersonDetails(profile, type) {
 
   const officialProfile = cleanText(profile?.profileUrl)
   const officialWebsite = cleanText(profile?.officialWebsite || profile?.website)
-  const searchQuery = `${name !== 'Not currently listed' ? name + ' ' : ''}${cleanText(profile?.name)} ${type === 'leader' ? 'council leader' : 'mayor'}`
+  const isNamedMayor = /^mayor\b/i.test(name)
+  const searchQuery = `${name !== 'Not currently listed' ? name + ' ' : ''}${cleanText(profile?.name)} ${isNamedMayor || type === 'mayor' ? 'mayor' : 'council leader'}`
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery.trim())}`
 
   if (officialProfile) links.push({ label: 'Official profile', href: officialProfile })
@@ -469,15 +497,10 @@ function buildPersonDetails(profile, type) {
 
   return {
     type,
-    title: type === 'leader' ? 'Council leader' : 'Mayor',
+    title: isNamedMayor || type === 'mayor' ? 'Mayor' : 'Council leader',
     name,
     qualifier,
-    summary:
-      name === 'Not currently listed'
-        ? `No ${type === 'leader' ? 'leader' : 'mayor'} details are currently stored for this council. The panel is still live so richer profile, biography and contact data can be added later without changing the UI.`
-        : type === 'leader'
-          ? `Political lead for ${cleanText(profile?.name) || 'this council'}. This panel is ready for richer biography, contact and profile data when the pipeline is expanded.`
-          : `Mayoral detail for ${cleanText(profile?.name) || 'this council'}. This panel is ready for richer biography, contact and profile data when the pipeline is expanded.`,
+    summary: buildPersonSummary(profile, type, name),
     links,
   }
 }
@@ -626,7 +649,6 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
   const dominantShare = dominant && totalSeats ? Math.max(4, Math.round((Number(dominant.seats) / totalSeats) * 100)) : 0
   const dominantColor = dominant ? partyColorFromText(dominant.party, controlColor) : controlColor
   const personDetails = personModal && p ? buildPersonDetails(p, personModal) : null
-  const personSheetBackground = T?.bg || T?.sfSolid || '#ffffff'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: T.sf }}>
@@ -1021,52 +1043,29 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 500,
-            background: 'rgba(2, 12, 20, 0.42)',
+            background: 'rgba(15,23,42,0.38)',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            zIndex: 1200,
+            padding: 12,
           }}
           onClick={() => setPersonModal(null)}
         >
           <div
             style={{
-              position: 'fixed',
-              left: '50%',
-              bottom: 0,
-              transform: 'translateX(-50%)',
               width: '100%',
-              maxWidth: 560,
-              maxHeight: '82dvh',
-              zIndex: 502,
-              background: personSheetBackground,
-              borderRadius: '24px 24px 0 0',
+              maxWidth: 760,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              background: T.c0 || '#fff',
               border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-              boxShadow: '0 -18px 56px rgba(2,12,20,0.24)',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
+              boxShadow: '0 -16px 40px rgba(15,23,42,0.18)',
+              padding: '18px 18px 22px',
             }}
             onClick={(event) => event.stopPropagation()}
           >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: 32,
-                paddingTop: 12,
-                paddingBottom: 8,
-                flexShrink: 0,
-              }}
-            >
-              <div style={{ width: 36, height: 4, borderRadius: 999, background: T.tl, opacity: 0.25 }} />
-            </div>
-            <div
-              style={{
-                overflowY: 'auto',
-                WebkitOverflowScrolling: 'touch',
-                padding: '0 24px 32px',
-                flex: 1,
-              }}
-            >
+            <div style={{ width: 44, height: 5, borderRadius: 999, background: T.c1 || 'rgba(0,0,0,0.08)', margin: '0 auto 14px' }} />
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
@@ -1131,7 +1130,6 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                 ))}
               </div>
             ) : null}
-            </div>
           </div>
         </div>
       ) : null}
