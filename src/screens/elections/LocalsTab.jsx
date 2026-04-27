@@ -212,8 +212,15 @@ export default function LocalsTab({
                 return
               }
 
+              const scrollX = window.scrollX
+              const scrollY = window.scrollY
+
               setSearch(nextValue)
               if (localFilter !== 'all') setLocalFilter('all')
+
+              window.requestAnimationFrame(() => {
+                window.scrollTo(scrollX, scrollY)
+              })
             }}
             onKeyDown={(e) => {
               if (e.key !== 'Enter') return
