@@ -66,14 +66,14 @@ export default function LocalsTab({
   )
 
   const detailedProfileCount = Object.keys(COUNCIL_PROFILES || {}).length
-  const officialLocalBriefing = `${ENGLISH_LOCAL_AUTHORITIES_VOTING} English councils vote on 7 May 2026. Politiscope currently covers ${trackedLaunchCouncils.length}, with ${detailedProfileCount} detailed profiles.`
+  const officialLocalBriefing = `${ENGLISH_LOCAL_AUTHORITIES_VOTING} English councils vote on 7 May 2026, with ${detailedProfileCount} detailed Politiscope profiles and wider coverage expanding as verified data is added.`
 
   const scrollToLocalResults = () => {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        resultsAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      })
-    })
+    const scroll = () => resultsAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+    window.requestAnimationFrame(scroll)
+    window.setTimeout(scroll, 80)
+    window.setTimeout(scroll, 220)
   }
 
   const applyOverviewFilter = (nextFilter = 'all') => {
@@ -305,7 +305,7 @@ export default function LocalsTab({
             marginBottom: 12,
           }}
         >
-          English local council totals are kept separate from Scotland and Wales; coverage depth expands as verified data is added.
+          English local council totals are kept separate from Scotland and Wales. Detailed profiles and ward data are separate depth layers.
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
@@ -329,19 +329,19 @@ export default function LocalsTab({
           />
           <InteractiveStatCard
             T={T}
-            label="Councils covered"
-            value={trackedLaunchCouncils.length}
-            color="#0087DC"
-            sub="Politiscope coverage"
-            active={localSummaryFilter === 'tracked'}
-            onClick={() => applyOverviewFilter('all')}
-          />
-          <InteractiveStatCard
-            T={T}
             label="Detailed profiles"
             value={detailedProfileCount}
             color="#7C3AED"
             sub="Curated depth"
+            active={false}
+            onClick={() => applyOverviewFilter('all')}
+          />
+          <InteractiveStatCard
+            T={T}
+            label="Ward data"
+            value="Building"
+            color="#02A95B"
+            sub="Verified sources"
             active={false}
             onClick={() => applyOverviewFilter('all')}
           />
