@@ -9,7 +9,6 @@ import {
   fetchLocalVoteGuideCouncilData,
   fetchLocalVoteGuideCandidates,
   getLocalVoteGuideCouncil,
-  isSheffieldPostcode,
   LOCAL_VOTE_ISSUE_AREAS,
   resolveExternalLocalVoteGuideMatch,
 } from '../data/localVoteGuide'
@@ -204,40 +203,6 @@ function resolveElectionDateForBriefing(council = null) {
   return 'Date not confirmed'
 }
 
-function hasMay2026Election(council = null) {
-  if (!council) return false
-  const status = cleanText(council.electionStatus).toLowerCase()
-  const electionText = [council.electionMessage, council.verdict, council.watchFor, council.type]
-    .map((value) => cleanText(value).toLowerCase())
-    .filter(Boolean)
-    .join(' ')
-  const seatsUp = Number(council.seatsUp ?? council.seats ?? 0)
-  const nextElectionYear = Number(council.nextElectionYear)
-
-  if (status === 'not-voting-2026') return false
-  if (Number.isFinite(seatsUp) && seatsUp <= 0) return false
-  if (Number.isFinite(nextElectionYear) && nextElectionYear > 2026) return false
-  if (/\b(no scheduled|not voting|does not vote|no vote in 2026|not vote in 2026)\b/i.test(electionText)) return false
-  return true
-}
-
-function formatCouncilName(value = '', fallback = 'Council not matched yet') {
-  const name = cleanText(value)
-  if (!name) return fallback
-  if (/\bcouncil\b/i.test(name)) return name
-  return `${name} Council`
-}
-
-function formatLayerStatus({ council, fallback = 'Not confirmed yet' } = {}) {
-  if (!council) return fallback
-  if (hasMay2026Election(council)) {
-    const seatsUp = Number(council.seatsUp ?? council.seats ?? 0)
-    const seatLabel = seatsUp > 0 ? `${seatsUp} seats up` : 'Seats up'
-    return `${seatLabel} on ${resolveElectionDateForBriefing(council)}`
-  }
-  return council.electionMessage || 'No scheduled vote in this layer on 07-05-2026.'
-}
-
 export default function LocalVoteGuideScreen({
   T,
   councilSlug,
@@ -270,7 +235,6 @@ export default function LocalVoteGuideScreen({
     sourceLabel: '',
     sourceUrl: '',
   })
-  const queriedSheffieldPostcode = isSheffieldPostcode(query)
 
   useEffect(() => {
     setSelectedWardSlug(wardSlug || '')
@@ -387,44 +351,24 @@ export default function LocalVoteGuideScreen({
     [councilRegistry, councilStatus, councilEditorial],
   )
 
-  const externalDistrictCouncil = useMemo(
+  const externalCouncil = useMemo(
     () => findCouncilIntelligenceRecord(mergedCouncilIntelligence, externalGuide.postcodeContext?.councilName || ''),
     [mergedCouncilIntelligence, externalGuide.postcodeContext?.councilName],
   )
 
-  const externalCountyCouncil = useMemo(
-    () => findCouncilIntelligenceRecord(mergedCouncilIntelligence, externalGuide.postcodeContext?.countyName || ''),
-    [mergedCouncilIntelligence, externalGuide.postcodeContext?.countyName],
-  )
-
-  const externalCouncil = externalCountyCouncil || externalDistrictCouncil
   const externalBriefingTag = useMemo(() => deriveBriefingTag(externalCouncil), [externalCouncil])
   const externalDisplayedCandidates = externalGuide.d1Candidates.length ? externalGuide.d1Candidates : externalGuide.candidates
   const externalHasResolvedWard = Boolean(externalGuide.d1Match?.councilSlug && externalGuide.d1Match?.wardSlug)
   const externalHasCandidateList = externalDisplayedCandidates.length > 0
-  const externalHasCountyElection = hasMay2026Election(externalCountyCouncil)
-  const externalHasDistrictElection = hasMay2026Election(externalDistrictCouncil)
-  const externalHasActiveElection = externalHasCandidateList || externalHasCountyElection || externalHasDistrictElection
+  const externalHasActiveElection = externalHasCandidateList
   const externalNoElectionThisCycle = externalHasResolvedWard && !externalHasActiveElection
-  const externalDistrictName = externalGuide.postcodeContext?.councilName || ''
-  const externalCountyName = externalGuide.postcodeContext?.countyName || ''
-  const externalWardName = externalGuide.postcodeContext?.wardName || ''
-  const externalNoDistrictElectionHeadline = externalDistrictName
-    ? `No ${externalDistrictName} ward election here on 07-05-2026.`
-    : 'No ward-level election found here on 07-05-2026.'
-  const externalNoElectionHeadline = externalHasCountyElection
-    ? `${formatCouncilName(externalCountyCouncil?.name || externalCountyName)} has an election on 07-05-2026.`
-    : externalNoDistrictElectionHeadline
-  const externalNoElectionBody = externalHasCountyElection
-    ? `${externalWardName ? `${externalWardName} ward` : 'This postcode'} sits in ${externalDistrictName || 'this district'}${externalCountyName ? `, within ${externalCountyName}` : ''}. The county council election may still affect this area even if the district ward is not voting.`
-    : 'This area is not voting in this local election cycle.'
+  const externalNoElectionHeadline = 'No verified ward-level election found here on 07-05-2026.'
+  const externalNoElectionBody = 'This postcode has baseline ward and council context. Candidate data appears when verified data has been loaded.'
   const externalActiveElectionDate = formatUKDate(LOCAL_ELECTIONS?.date || '2026-05-07')
-  const externalActiveElectionStatus = externalHasCountyElection || externalHasDistrictElection ? 'Election applies here' : 'Election taking place'
-  const externalCandidateFallbackText = externalHasCountyElection
-    ? 'County candidate data is building. District ward candidate data is not applicable if this ward is not voting this cycle.'
-    : externalHasResolvedWard
-      ? externalNoDistrictElectionHeadline
-      : 'Candidate details are available via WhoCanIVoteFor.'
+  const externalActiveElectionStatus = 'Election taking place'
+  const externalCandidateFallbackText = externalHasResolvedWard
+    ? externalNoElectionHeadline
+    : 'Verified candidate data is not loaded for this area yet.'
 
   useEffect(() => {
     let cancelled = false
@@ -443,7 +387,7 @@ export default function LocalVoteGuideScreen({
 
     setCandidateState((current) => ({
       ...current,
-      loading: queriedSheffieldPostcode,
+      loading: false,
     }))
 
     ;(async () => {
@@ -466,12 +410,12 @@ export default function LocalVoteGuideScreen({
     return () => {
       cancelled = true
     }
-  }, [councilSlug, selectedWard, query, queriedSheffieldPostcode])
+  }, [councilSlug, selectedWard, query])
 
   const displayedCandidates = selectedWard
     ? (candidateState.candidates.length ? candidateState.candidates : selectedWard.candidates)
     : []
-  const candidateSourceLabel = candidateState.sourceLabel || (displayedCandidates.length ? 'Sheffield City Council statement of persons nominated' : '')
+  const candidateSourceLabel = candidateState.sourceLabel || (displayedCandidates.length ? 'Official statement of persons nominated' : '')
   const candidateSourceUrl = candidateState.sourceUrl || (displayedCandidates.length ? selectedWard?.candidates?.[0]?.sourceUrl || '' : '')
   const hasVerifiedIssueStatements = displayedCandidates.some((candidate) =>
     LOCAL_VOTE_ISSUE_AREAS.some((area) => {
@@ -490,32 +434,26 @@ export default function LocalVoteGuideScreen({
         { label: 'Sources', value: `${sources.length}` },
       ]
     : []
-  const externalKeyFacts = [
-    {
-      label: 'Where you are',
-      value: [externalWardName ? `${externalWardName} ward` : '', externalDistrictName, externalCountyName]
-        .filter(Boolean)
-        .join(' · ') || externalGuide.areaName || 'UK postcode',
-    },
-    {
-      label: 'Main election layer',
-      value: externalHasCountyElection
-        ? `${formatCouncilName(externalCountyCouncil?.name || externalCountyName)} · ${formatLayerStatus({ council: externalCountyCouncil })}`
-        : externalHasDistrictElection
-          ? `${formatCouncilName(externalDistrictCouncil?.name || externalDistrictName)} · ${formatLayerStatus({ council: externalDistrictCouncil })}`
-          : 'No matched council election layer yet',
-    },
-    {
-      label: 'Ward layer',
-      value: externalHasCandidateList
-        ? `${externalDisplayedCandidates.length} candidates listed`
-        : externalNoDistrictElectionHeadline,
-    },
-    {
-      label: 'Status',
-      value: externalHasActiveElection ? externalActiveElectionStatus : externalBriefingTag.label,
-    },
-  ]
+  const externalKeyFacts = externalHasActiveElection
+    ? [
+        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
+        { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
+        { label: 'Election', value: externalActiveElectionDate },
+        { label: 'Status', value: externalActiveElectionStatus },
+      ]
+    : externalNoElectionThisCycle
+      ? [
+        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
+        { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
+        { label: 'Election status', value: externalNoElectionHeadline },
+        { label: 'Candidate list', value: 'Not applicable this year' },
+      ]
+      : [
+        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
+        { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
+        { label: 'Election', value: resolveElectionDateForBriefing(externalCouncil) },
+        { label: 'Status', value: externalBriefingTag.label },
+      ]
 
   if (isExternalFallback) {
     return (
@@ -525,10 +463,12 @@ export default function LocalVoteGuideScreen({
             Local battleground briefing
           </div>
           <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: T.th, lineHeight: 1.05, textAlign: 'center', marginTop: 6 }}>
-            {externalWardName || externalDistrictName || externalCountyName || externalGuide.areaName || normaliseAreaQuery(query)}
+            {externalCouncil?.name || externalGuide.postcodeContext?.councilName || externalGuide.areaName || normaliseAreaQuery(query)}
           </div>
           <div style={{ fontSize: 14, fontWeight: 600, color: T.th, textAlign: 'center', lineHeight: 1.55, maxWidth: 520, margin: '6px auto 0' }}>
-            {[externalWardName ? 'ward' : '', externalDistrictName, externalCountyName].filter(Boolean).join(' · ') || externalGuide.areaName || 'UK postcode lookup'}
+            {externalGuide.postcodeContext?.wardName
+              ? `${externalGuide.postcodeContext.wardName} ward`
+              : externalGuide.areaName || 'UK postcode lookup'}
           </div>
         </div>
 
@@ -542,7 +482,7 @@ export default function LocalVoteGuideScreen({
                 ))}
               </div>
               <InfoRow T={T} label="Lookup" value={query || 'UK postcode'} />
-              <InfoRow T={T} label="Main council control" value={externalCouncil?.control || 'Control not available'} />
+              <InfoRow T={T} label="Council control" value={externalCouncil?.control || 'Control not available'} />
               <InfoRow T={T} label="Constituency" value={externalGuide.postcodeContext?.constituencyName || 'Not available'} />
               <InfoRow
                 T={T}
@@ -555,37 +495,6 @@ export default function LocalVoteGuideScreen({
                       : externalCandidateFallbackText
                 }
               />
-            </SurfaceCard>
-
-            <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-              <SectionLabel T={T}>Elections affecting this postcode</SectionLabel>
-              <div style={{ display: 'grid', gap: 8 }}>
-                {externalCountyName ? (
-                  <InfoRow
-                    T={T}
-                    label="County layer"
-                    value={externalCountyCouncil
-                      ? `${formatCouncilName(externalCountyCouncil.name)}: ${formatLayerStatus({ council: externalCountyCouncil })}`
-                      : `${formatCouncilName(externalCountyName)}: checking coverage`}
-                  />
-                ) : null}
-                <InfoRow
-                  T={T}
-                  label="District / ward layer"
-                  value={externalHasCandidateList
-                    ? `${externalDisplayedCandidates.length} candidates listed for the current ballot.`
-                    : externalNoDistrictElectionHeadline}
-                />
-                <InfoRow
-                  T={T}
-                  label="Plain English"
-                  value={externalHasCountyElection
-                    ? `${formatCouncilName(externalCountyCouncil?.name || externalCountyName)} is the main matched May 2026 election layer for this postcode. ${externalNoDistrictElectionHeadline}`
-                    : externalHasDistrictElection
-                      ? `${formatCouncilName(externalDistrictCouncil?.name || externalDistrictName)} is the matched May 2026 election layer for this postcode.`
-                      : externalCandidateFallbackText}
-                />
-              </div>
             </SurfaceCard>
 
             <SurfaceCard T={T} style={{ marginBottom: 12, textAlign: 'center' }}>
@@ -607,7 +516,7 @@ export default function LocalVoteGuideScreen({
                   {externalHasActiveElection
                     ? externalActiveElectionStatus
                     : externalNoElectionThisCycle
-                      ? 'No ward vote this cycle'
+                      ? 'No local vote this cycle'
                       : externalBriefingTag.label}
                 </Chip>
               </div>
@@ -627,7 +536,7 @@ export default function LocalVoteGuideScreen({
             <SurfaceCard T={T} style={{ marginBottom: 12 }}>
               <SectionLabel T={T}>Briefing status</SectionLabel>
               <div style={{ display: 'grid', gap: 8 }}>
-                <InfoRow T={T} label="Coverage" value={externalCouncil ? 'Matched to Politiscope council intelligence' : 'Postcode briefing view only for now'} />
+                <InfoRow T={T} label="Coverage" value={externalCouncil ? 'Tracked in Politiscope local elections' : 'Briefing view only for now'} />
                 <InfoRow
                   T={T}
                   label="Verdict"
@@ -673,7 +582,7 @@ export default function LocalVoteGuideScreen({
                 })}
 
                 <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, textAlign: 'center', marginBottom: 10 }}>
-                  Source: Democracy Club
+                  Source: verified external candidate data
                 </div>
               </>
             ) : (
@@ -698,7 +607,7 @@ export default function LocalVoteGuideScreen({
                       textDecoration: 'none',
                     }}
                   >
-                    Verify via WhoCanIVoteFor →
+                    Verify external candidate source →
                   </a>
                 </div>
               </SurfaceCard>
@@ -739,7 +648,7 @@ export default function LocalVoteGuideScreen({
                       textDecoration: 'none',
                     }}
                   >
-                    Verify via WhoCanIVoteFor →
+                    Verify external candidate source →
                   </a>
                 </div>
               ) : null}
@@ -755,7 +664,7 @@ export default function LocalVoteGuideScreen({
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: T.sf }}>
         <div style={{ padding: '16px 18px 0', flexShrink: 0 }}>
           <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: T.th, lineHeight: 1 }}>Local vote guide</div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>Sheffield-first coverage in this phase.</div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>Ward-level coverage appears where verified data exists.</div>
         </div>
 
         <ScrollArea>
@@ -781,7 +690,7 @@ export default function LocalVoteGuideScreen({
           {council.councilName}
         </div>
         <div style={{ fontSize: 14, fontWeight: 600, color: T.th, textAlign: 'center', lineHeight: 1.55, maxWidth: 520, margin: '6px auto 0' }}>
-          {selectedWard ? selectedWard.name : 'Choose a Sheffield ward to see verified councillors and candidates.'}
+          {selectedWard ? selectedWard.name : 'Choose a ward to see verified councillors and candidates where available.'}
         </div>
       </div>
 
@@ -798,13 +707,11 @@ export default function LocalVoteGuideScreen({
                 Your lookup
               </div>
               <div style={{ fontSize: 14, fontWeight: 600, color: T.th, lineHeight: 1.6 }}>
-                {query || 'Sheffield'}
+                {query || council.councilName}
               </div>
               {!selectedWard ? (
                 <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, lineHeight: 1.6, marginTop: 8 }}>
-                  {queriedSheffieldPostcode
-                    ? "We couldn't verify a ward for this postcode yet. Choose your ward manually below."
-                    : 'Ward selection stays manual in this Sheffield-first phase unless you open the guide from a supported ward name.'}
+Choose a ward manually if the postcode or search did not resolve directly to one.
                 </div>
               ) : null}
             </div>
@@ -816,7 +723,7 @@ export default function LocalVoteGuideScreen({
               {[
                 {
                   label: 'Current councillors',
-                  text: 'Who currently represents the ward on Sheffield City Council.',
+                  text: 'Who currently represents the ward on this council.',
                 },
                 {
                   label: '2026 candidates',
@@ -828,7 +735,7 @@ export default function LocalVoteGuideScreen({
                 },
                 {
                   label: 'Council responsibilities',
-                  text: 'The services Sheffield City Council controls locally, such as housing, transport, and waste.',
+                  text: 'The services this council controls locally, such as housing, transport, and waste.',
                 },
               ].map((item) => (
                 <div
@@ -849,7 +756,7 @@ export default function LocalVoteGuideScreen({
           <SurfaceCard T={T} style={{ marginBottom: 12 }}>
             <SectionLabel T={T}>Choose ward</SectionLabel>
             <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginBottom: 10 }}>
-              Search Sheffield wards, then open the one you want to compare.
+              Search wards, then open the one you want to compare.
             </div>
             <div style={{ position: 'relative', marginBottom: 12 }}>
               <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
@@ -899,7 +806,7 @@ export default function LocalVoteGuideScreen({
             </div>
             {!filteredWards.length ? (
               <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginTop: 12 }}>
-                No Sheffield ward matched that search. Try another ward name.
+                No ward matched that search. Try another ward name.
               </div>
             ) : null}
           </SurfaceCard>
@@ -940,7 +847,7 @@ export default function LocalVoteGuideScreen({
               <SurfaceCard T={T} style={{ marginBottom: 12, textAlign: 'center' }}>
                 <SectionLabel T={T}>What this election means</SectionLabel>
                 <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.7 }}>
-                  Voters in {selectedWard.name} are choosing who will represent the ward on Sheffield City Council at the next local election.
+                  Voters in {selectedWard.name} are choosing who will represent the ward on {council.councilName} at the next local election.
                   Use the verified candidate list, current councillor record, and source links below to understand who is standing and what this council controls.
                 </div>
               </SurfaceCard>
@@ -963,7 +870,7 @@ export default function LocalVoteGuideScreen({
                     <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.6, marginBottom: 8 }}>
                       {councillor.seatStatus === 'vacant'
                         ? 'This ward seat is currently shown as vacant in the maintained guide.'
-                        : "Listed in Sheffield City Council's current councillors-by-ward register."}
+                        : "Listed in this council's current councillors-by-ward register."}
                     </div>
                     <EntrySourceMeta T={T} entry={councillor} />
                   </SurfaceCard>
@@ -989,8 +896,8 @@ export default function LocalVoteGuideScreen({
                       </div>
                       <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.6, marginBottom: 8 }}>
                         {candidate.sourceAttribution === 'democracy-club'
-                          ? 'Shown from Democracy Club\'s current WhoCanIVoteFor candidate feed for this upcoming ballot.'
-                          : "Listed on Sheffield City Council's official statement of persons nominated for this ward."}
+                          ? 'Shown from the current verified candidate feed for this upcoming ballot.'
+                          : "Listed on the official statement of persons nominated for this ward."}
                       </div>
                       <EntrySourceMeta T={T} entry={candidate} />
                     </SurfaceCard>
@@ -1018,7 +925,7 @@ export default function LocalVoteGuideScreen({
                 <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
                     {candidateState.loading
-                      ? 'Checking Democracy Club / WhoCanIVoteFor...'
+                      ? 'Checking verified candidate data...'
                       : selectedWard.candidateListStatus || 'No verified candidate list yet'}
                   </div>
                   {!candidateState.loading ? (
@@ -1034,7 +941,7 @@ export default function LocalVoteGuideScreen({
                           textDecoration: 'none',
                         }}
                       >
-                        Can't find your candidates? Check Democracy Club / WhoCanIVoteFor →
+                        Candidate data missing? Check the official council election source →
                       </a>
                     </div>
                   ) : null}

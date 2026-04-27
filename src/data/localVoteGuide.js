@@ -7,7 +7,7 @@ const SHEFFIELD_LAST_CHECKED = '25-04-2026'
 const SHEFFIELD_CANDIDATE_NOTICE_DATE = '10-04-2026'
 const SHEFFIELD_NEXT_ELECTION_DATE = '07-05-2026'
 const DEMOCRACY_CLUB_API_BASE = 'https://developers.democracyclub.org.uk/api/v1'
-const DEMOCRACY_CLUB_SOURCE_LABEL = 'Democracy Club / WhoCanIVoteFor'
+const DEMOCRACY_CLUB_SOURCE_LABEL = 'External candidate source'
 const LOCAL_VOTE_FETCH_TIMEOUT_MS = 5000
 
 const SHEFFIELD_SOURCE_URLS = {
@@ -20,8 +20,8 @@ const SHEFFIELD_SOURCE_URLS = {
   councillorsByWardTable: 'https://democracy.sheffield.gov.uk/mgMemberIndex.aspx?FN=WARD&PIC=1&VW=TABLE',
   councilOverview: 'https://www.sheffield.gov.uk/your-city-council',
   postcodeLookupDocs: 'https://postcodes.io/docs/postcode/lookup/',
-  democracyClubDocs: 'https://developers.democracyclub.org.uk/api/v1/',
-  whoCanIVoteFor: 'https://whocanivotefor.co.uk/',
+  democracyClubDocs: '',
+  whoCanIVoteFor: '',
 }
 
 export const LOCAL_VOTE_ISSUE_AREAS = [
@@ -691,24 +691,8 @@ function createGuideMatch(council, wardSlug = '') {
   }
 }
 
-async function fetchSheffieldLiveCandidates({ ward, query }) {
-  const postcode = normalisePostcodeInput(query)
-  const apiKey = getDemocracyClubApiKey()
-
-  if (!isSheffieldPostcode(postcode)) return null
-
-  const democracyClubResponse = await requestDemocracyClubPostcode(postcode, apiKey)
-  const payload = democracyClubResponse?.payload || null
-  const liveCandidates = extractDemocracyClubWardCandidates(payload, ward)
-
-  if (!liveCandidates.length) return null
-
-  return {
-    candidates: liveCandidates,
-    sourceLabel: DEMOCRACY_CLUB_SOURCE_LABEL,
-    sourceUrl: SHEFFIELD_SOURCE_URLS.democracyClubDocs,
-    status: 'verified',
-  }
+async function fetchSheffieldLiveCandidates() {
+  return null
 }
 
 async function resolveSheffieldPostcodeMatch(query, council) {
@@ -812,7 +796,7 @@ const SHEFFIELD_COUNCIL = createLocalVoteGuideCouncil({
       url: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
     },
     {
-      label: 'Democracy Club developer API',
+      label: 'External candidate data source',
       url: SHEFFIELD_SOURCE_URLS.democracyClubDocs,
     },
   ],
@@ -1139,22 +1123,18 @@ export async function fetchExternalLocalVoteGuide(query = '') {
   const postcode = normalisePostcodeInput(query)
   if (!isUkPostcode(postcode)) return null
 
-  const democracyClubResponse = await requestDemocracyClubPostcode(postcode, getDemocracyClubApiKey())
-  const payload = democracyClubResponse?.payload || null
   const postcodeContext = await requestPostcodeContext(postcode)
   const contextLastChecked = buildTodayStamp()
   const areaName =
-    extractExternalAreaName(payload) ||
     String(postcodeContext?.admin_ward || '').trim() ||
     String(postcodeContext?.parliamentary_constituency || '').trim() ||
     String(postcodeContext?.admin_district || '').trim() ||
     ''
-  const candidates = extractExternalCandidates(payload)
 
   return {
     query: postcode,
     areaName,
-    candidates,
+    candidates: [],
     postcodeContext: {
       councilName: String(postcodeContext?.admin_district || '').trim(),
       countyName: String(postcodeContext?.admin_county || '').trim(),
@@ -1166,17 +1146,11 @@ export async function fetchExternalLocalVoteGuide(query = '') {
       sourceLabel: 'Postcodes.io postcode lookup',
       sourceUrl: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
     },
-    sourceLabel: DEMOCRACY_CLUB_SOURCE_LABEL,
-    sourceUrl: payload ? SHEFFIELD_SOURCE_URLS.democracyClubDocs : SHEFFIELD_SOURCE_URLS.whoCanIVoteFor,
-    whoCanIVoteForUrl: extractExternalWhoCanIVoteForUrl(payload),
-    status: payload?.address_picker
-      ? 'address-picker'
-      : candidates.length
-        ? 'ok'
-        : democracyClubResponse?.status === 401
-          ? 'api-auth-required'
-          : 'unavailable',
-    message: 'Full Politiscope guide coming soon for this area',
+    sourceLabel: 'Postcodes.io postcode lookup',
+    sourceUrl: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
+    whoCanIVoteForUrl: '',
+    status: postcodeContext ? 'baseline' : 'unavailable',
+    message: 'Politiscope postcode baseline matched. Ward and candidate detail appears where verified data exists.',
   }
 }
 
