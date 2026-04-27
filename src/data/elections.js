@@ -607,13 +607,13 @@ export const COUNCIL_PROFILES = {
     electionMessage:'No scheduled local council election here on 7 May 2026. Doncaster next elects all city councillors in May 2029.',
     type:'Mayoral city council — not voting in 2026',
     website:'https://www.doncaster.gov.uk',
-    prediction:'Doncaster should still be viewable because it remains politically important even without a scheduled council election in 2026. Reform now dominates the council chamber, while Labour still holds the elected mayoralty through Ros Jones.',
+    prediction:'Doncaster remains politically important even without a scheduled council election in 2026. Reform now dominates the council chamber, while Labour still holds the elected mayoralty through Ros Jones.',
     keyIssue:'The key political question is not an immediate May 2026 council contest, but whether Reform can entrench its 2025 council breakthrough before the next all-out city council election in 2029.',
     controlNarrative:'Doncaster uses a directly elected mayoral system. Ros Jones is the elected Mayor, but the council chamber itself shifted dramatically in the 2025 local elections, with Reform taking a clear majority of councillor seats.',
     storylines:[
       'This is a major Reform success story in local government even though there is no scheduled 2026 city council election.',
       'Doncaster has split political authority: a Labour elected mayor and a Reform-dominated council chamber.',
-      'Anyone searching for Doncaster should see that context, not a blank page.'
+      'Doncaster needs to be read as a split-power local authority, not as an empty no-election result.'
     ],
     mainContests:[
       'Reform council majority versus Labour mayoral leadership',
@@ -635,13 +635,13 @@ export const COUNCIL_PROFILES = {
     electionMessage:'No scheduled local council election here on 7 May 2026. Rotherham next holds all-out borough elections in May 2028.',
     type:'Metropolitan borough — not voting in 2026',
     website:'https://www.rotherham.gov.uk',
-    prediction:'Rotherham should still appear as a council profile even though there is no borough election in May 2026. Labour remains in control, but the borough is politically important because of longer-term pressure from Reform and a history of anti-establishment voting.',
+    prediction:'Rotherham remains politically important even though there is no borough election in May 2026. Labour remains in control, but the borough is worth tracking because of longer-term pressure from Reform and a history of anti-establishment voting.',
     keyIssue:'The immediate story is that there is no scheduled borough vote in 2026. The bigger question is whether Labour can hold its base intact before the next all-out borough election in 2028.',
     controlNarrative:'Rotherham Metropolitan Borough Council currently has 59 councillors and is Labour-run under leader Chris Read. It does not return to the polls for a full borough election until May 2028.',
     storylines:[
       'Rotherham still matters politically even when it is not voting this year.',
       'Labour remains the governing force locally, but Reform pressure and independent politics still matter to the medium-term picture.',
-      'Users searching Rotherham need a clear “not voting this time” message rather than an empty result.'
+      'Rotherham should be read as a medium-term pressure point, not as an empty no-election result.'
     ],
     mainContests:[
       'Labour durability ahead of the 2028 all-out election',
