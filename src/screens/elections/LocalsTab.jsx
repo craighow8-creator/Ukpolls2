@@ -196,24 +196,8 @@ export default function LocalsTab({
             value={voteGuideQuery}
             onChange={(e) => {
               const nextValue = e.target.value
-              const normalizedValue = normalisePostcodeInput(nextValue)
               setVoteGuideQuery(nextValue)
               if (voteGuideMessage) setVoteGuideMessage('')
-
-              if (!nextValue.trim()) {
-                setSearch('')
-                setLocalFilter('all')
-                return
-              }
-
-              if (isUkPostcode(normalizedValue)) {
-                setSearch('')
-                setLocalFilter('all')
-                return
-              }
-
-              setSearch(nextValue)
-              if (localFilter !== 'all') setLocalFilter('all')
             }}
             onKeyDown={(e) => {
               if (e.key !== 'Enter') return
