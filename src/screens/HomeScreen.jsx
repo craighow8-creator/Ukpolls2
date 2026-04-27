@@ -401,6 +401,10 @@ export default function HomeScreen({
   const qualitativeGap =
     gap <= 2 ? 'neck and neck' : gap <= 5 ? 'still competitive' : 'clearer than it was'
 
+  const hasClearLeader = gap > 5
+  const hasRisingNonLeader = risingParty && risingParty.name !== leader.name
+  const thirdWithinTouchingDistance = third?.name && third?.pct >= (second?.pct || 0) - 2
+
   const topLineItem = {
     key: 'top-line',
     kicker: 'Top line',
@@ -408,48 +412,51 @@ export default function HomeScreen({
       gap <= 2
         ? `${leader.name} and ${second.name} are still in a tight race`
         : gap <= 5
-          ? `${leader.name} are ahead, but the race is still live`
-          : `${leader.name} have opened a clearer lead`,
+          ? `${leader.name} lead, but not by enough to settle the race`
+          : `${leader.name} remain the clearest national leader`,
     body:
       gap <= 2
-        ? `${leader.name} remain only narrowly ahead of ${second.name}, so the national picture is still open and sensitive to fresh polling.`
+        ? `${leader.name} are only ${gap}pt ahead of ${second.name}, so the national picture is still open and sensitive to fresh polling.`
         : gap <= 5
-          ? `${leader.name} have moved into first place and look more settled there, but ${second.name} are still close enough to keep the race competitive.`
-          : `${leader.name} now look ${qualitativeGap}, with ${second.name} chasing and the rest of the field trying to change the shape of the contest.`,
+          ? `${leader.name} are ${gap}pt ahead of ${second.name}. That is a real lead, but still close enough for movement elsewhere to change the shape of the contest.`
+          : `${leader.name} lead the current national picture by ${gap}pt over ${second.name}. That makes them the party setting the race, while ${second.name}${thirdWithinTouchingDistance ? ` and ${third.name}` : ''} fight to become the clearest alternative.`,
     accent: leader.color,
   }
 
-  const pressureItem = risingParty
+  const pressureItem = hasRisingNonLeader
     ? {
         key: 'pressure-point',
         kicker: 'Pressure point',
-        title: `${risingParty.name} are shaping the direction of travel`,
+        title: `${risingParty.name} are the main challenger signal`,
         body:
-          fallingParty
-            ? `${risingParty.name} are the clearest riser in the visible trend picture, while ${fallingParty.name} are under the most pressure. The main question now is whether that movement settles into a lasting shift.`
-            : `${risingParty.name} are the clearest riser in the visible trend picture. The main question now is whether that movement settles into a lasting shift.`,
+          hasClearLeader
+            ? `${leader.name} still lead the race, but ${risingParty.name}'s rise matters because it changes who benefits from voter dissatisfaction. The test is whether that rise becomes a durable bloc, or stays as pressure around the edges of a ${leader.name}-led contest.`
+            : `${risingParty.name} are the clearest riser in a race that is not fully settled. The test is whether that movement consolidates into a durable bloc or simply makes the field more fragmented.`,
         accent: risingParty.color,
       }
-    : fallingParty
+    : risingParty
       ? {
           key: 'pressure-point',
           kicker: 'Pressure point',
-          title: `${fallingParty.name} are under the most pressure`,
-          body: `${fallingParty.name} are the weakest mover in the visible trend picture. The main question now is whether that slide stabilises or turns into a firmer decline.`,
-          accent: fallingParty.color,
+          title: `${leader.name} need to turn polling into durability`,
+          body: `${leader.name} are not just leading; they are also carrying the clearest upward pressure. The next test is organisational: whether that polling position turns into candidates, ground game and real election results.`,
+          accent: risingParty.color,
         }
-      : {
-          key: 'pressure-point',
-          kicker: 'Pressure point',
-          title: 'The picture is stable, not settled',
-          body: 'The visible trend picture is not yet producing one dominant mover, which usually means the next round of polling matters more than any single reading.',
-          accent: T.pr,
-        }
-
-  const briefingItems = [topLineItem, pressureItem].filter(Boolean)
-
-  return (
-    <div style={{ position: 'relative', minHeight: '100%', background: T.sf }}>
+      : fallingParty
+        ? {
+            key: 'pressure-point',
+            kicker: 'Pressure point',
+            title: `${fallingParty.name} are the weak point in the picture`,
+            body: `${fallingParty.name} are the softest mover in the visible trend picture. The question is whether that drift stabilises, or whether voters keep moving to more credible alternatives.`,
+            accent: fallingParty.color,
+          }
+        : {
+            key: 'pressure-point',
+            kicker: 'Pressure point',
+            title: 'The picture is stable, not settled',
+            body: `The race looks ${qualitativeGap}, but the visible trend picture is not producing one dominant new mover. That makes the next round of polling more important than any single reading.`,
+            accent: T.pr,
+          }
       <div
         style={{
           display: 'flex',
