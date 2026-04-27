@@ -87,6 +87,8 @@ export default function LocalsTab({
 
   return (
     <>
+      <SectionLabel T={T}>Local elections finder</SectionLabel>
+
       <SurfaceCard T={T} style={{ marginBottom: 12 }}>
         <SectionLabel T={T}>Find your local vote</SectionLabel>
 
@@ -182,6 +184,65 @@ export default function LocalsTab({
             {voteGuideMessage}
           </div>
         ) : null}
+      </SurfaceCard>
+
+      <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+        <SectionLabel T={T}>Search and filters</SectionLabel>
+
+        <div style={{ position: 'relative', marginBottom: 10 }}>
+          <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.tl} strokeWidth="2" strokeLinecap="round">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+          </div>
+
+          <input
+            type="search"
+            placeholder="Search councils, regions, parties…"
+            value={search}
+            onChange={(e) => {
+              const nextValue = e.target.value
+              setSearch(nextValue)
+              if (nextValue.trim() && localFilter !== 'all') {
+                setLocalFilter('all')
+              }
+            }}
+            style={{
+              width: '100%',
+              padding: '13px 14px 13px 38px',
+              background: T.c0,
+              border: `1.5px solid ${search ? T.pr : T.cardBorder || 'rgba(0,0,0,0.1)'}`,
+              borderRadius: 12,
+              fontSize: 15,
+              color: T.th,
+              fontFamily: "'Outfit', sans-serif",
+              outline: 'none',
+              boxSizing: 'border-box',
+              transition: 'border-color 0.15s',
+            }}
+          />
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            overflowX: 'auto',
+            paddingBottom: 6,
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {LOCAL_FILTERS.map((item) => (
+            <FilterChip
+              key={item.key}
+              label={item.label}
+              active={localFilter === item.key}
+              onClick={() => setLocalFilter(item.key)}
+              T={T}
+            />
+          ))}
+        </div>
       </SurfaceCard>
 
       <SurfaceCard T={T} style={{ marginBottom: 12 }}>
@@ -306,65 +367,6 @@ export default function LocalsTab({
           </>
         ) : null}
       </SurfaceCard>
-
-      <SectionLabel T={T}>Search and filters</SectionLabel>
-
-      <div style={{ position: 'relative', marginBottom: 10 }}>
-        <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.tl} strokeWidth="2" strokeLinecap="round">
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-        </div>
-
-        <input
-          type="search"
-          placeholder="Search councils, regions, parties…"
-          value={search}
-          onChange={(e) => {
-            const nextValue = e.target.value
-            setSearch(nextValue)
-            if (nextValue.trim() && localFilter !== 'all') {
-              setLocalFilter('all')
-            }
-          }}
-          style={{
-            width: '100%',
-            padding: '13px 14px 13px 38px',
-            background: T.c0,
-            border: `1.5px solid ${search ? T.pr : T.cardBorder || 'rgba(0,0,0,0.1)'}`,
-            borderRadius: 12,
-            fontSize: 15,
-            color: T.th,
-            fontFamily: "'Outfit', sans-serif",
-            outline: 'none',
-            boxSizing: 'border-box',
-            transition: 'border-color 0.15s',
-            marginBottom: 10,
-          }}
-        />
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          gap: 8,
-          overflowX: 'auto',
-          paddingBottom: 6,
-          marginBottom: 12,
-          WebkitOverflowScrolling: 'touch',
-        }}
-      >
-        {LOCAL_FILTERS.map((item) => (
-          <FilterChip
-            key={item.key}
-            label={item.label}
-            active={localFilter === item.key}
-            onClick={() => setLocalFilter(item.key)}
-            T={T}
-          />
-        ))}
-      </div>
 
       {hasLocalRefinement ? (
         <>

@@ -3310,10 +3310,40 @@ export default {
            WHERE council_id = ?`
         ).bind('council_sheffield-city-council').first()
 
+        const northEastDerbyshireRow = await env.DB.prepare(
+          `SELECT id, slug, name, gss_code
+           FROM local_councils
+           WHERE active = 1
+             AND (slug = ? OR gss_code = ? OR name = ?)
+           LIMIT 1`
+        ).bind('north-east-derbyshire', 'E07000038', 'North East Derbyshire').first()
+
+        const dronfieldNorthRow = await env.DB.prepare(
+          `SELECT w.id, w.slug, w.name, w.gss_code
+           FROM local_wards w
+           JOIN local_councils c ON c.id = w.council_id
+           WHERE w.active = 1
+             AND c.active = 1
+             AND (
+               w.gss_code = ?
+               OR (
+                 c.slug = ?
+                 AND w.slug = ?
+               )
+             )
+           LIMIT 1`
+        ).bind('E05012046', 'north-east-derbyshire', 'dronfield-north').first()
+
         return {
           councilCount: Number(councilRow?.count || 0),
           wardCount: Number(wardRow?.count || 0),
           sheffieldWardCount: Number(sheffieldRow?.count || 0),
+          northEastDerbyshireExists: Boolean(northEastDerbyshireRow?.id),
+          northEastDerbyshireSlug: northEastDerbyshireRow?.slug || '',
+          northEastDerbyshireGssCode: northEastDerbyshireRow?.gss_code || '',
+          dronfieldNorthExists: Boolean(dronfieldNorthRow?.id),
+          dronfieldNorthSlug: dronfieldNorthRow?.slug || '',
+          dronfieldNorthGssCode: dronfieldNorthRow?.gss_code || '',
         }
       }
 
@@ -3465,7 +3495,12 @@ export default {
 
           if (action === 'finish') {
             const validation = await validateLocalVoteBaselineImport()
-            const failed = validation.councilCount <= 0 || validation.wardCount <= 0 || validation.sheffieldWardCount < 28
+            const failed =
+              validation.councilCount <= 0 ||
+              validation.wardCount <= 0 ||
+              validation.sheffieldWardCount < 28 ||
+              !validation.northEastDerbyshireExists ||
+              !validation.dronfieldNorthExists
 
             await env.DB.prepare(
               `UPDATE local_ingest_runs
