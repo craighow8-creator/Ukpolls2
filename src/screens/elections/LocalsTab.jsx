@@ -3,8 +3,7 @@ import { motion } from 'framer-motion'
 import { InfoButton } from '../../components/InfoGlyph'
 import { COUNCIL_PROFILES, LOCAL_ELECTIONS, LOCAL_REGIONS } from '../../data/elections'
 import {
-  fetchLocalVoteGuideLookupIndex,
-  isUkPostcode,
+  findLocalVoteGuideMatch,
   normalisePostcodeInput,
   resolveLocalVoteGuideMatch,
 } from '../../data/localVoteGuide'
@@ -24,36 +23,6 @@ import { LOCAL_FILTERS, selectLocalElectionModel } from './electionsSelectors'
 const ENGLISH_LOCAL_AUTHORITIES_VOTING = 136
 const ENGLISH_LOCAL_SEATS_UP_LABEL = '~5,000'
 const ENGLISH_LOCAL_SEATS_UP_DETAIL = '5,013–5,066 English council seats'
-
-function simplifyLookupValue(value = '') {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(/^city of /i, '')
-    .replace(/&/g, ' and ')
-    .replace(/\b(city council|county council|district council|borough council|metropolitan borough council|london borough|council)\b/gi, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-}
-
-function findBestCouncilSearchMatch(query = '', councils = [], lookupCouncils = []) {
-  const q = simplifyLookupValue(query)
-  if (!q) return null
-
-  const localPool = (councils || []).map((council) => ({ name: council.name, slug: council.slug }))
-  const d1Pool = (lookupCouncils || []).map((council) => ({
-    name: council.name || council.supportedAreaLabel,
-    slug: council.slug,
-  }))
-  const pool = [...localPool, ...d1Pool].filter((council) => council.name || council.slug)
-
-  return (
-    pool.find((council) => simplifyLookupValue(council.name) === q || simplifyLookupValue(council.slug) === q) ||
-    pool.find((council) => simplifyLookupValue(council.name).includes(q)) ||
-    null
-  )
-}
-
 
 export default function LocalsTab({
   T,
@@ -97,7 +66,17 @@ export default function LocalsTab({
   )
 
   const detailedProfileCount = Object.keys(COUNCIL_PROFILES || {}).length
-  const officialLocalBriefing = `${ENGLISH_LOCAL_AUTHORITIES_VOTING} English councils vote on 7 May 2026. Politiscope also tracks important local authorities that are not voting this cycle.`
+  const officialLocalBriefing = `${ENGLISH_LOCAL_AUTHORITIES_VOTING} English councils vote on 7 May 2026, with ${detailedProfileCount} detailed Politiscope profiles and wider coverage expanding as verified data is added.`
+
+  const keepCurrentScrollPosition = () => {
+    if (typeof window === 'undefined') return
+    const y = window.scrollY
+    const restore = () => window.scrollTo({ top: y, left: 0, behavior: 'auto' })
+
+    window.requestAnimationFrame(restore)
+    window.setTimeout(restore, 40)
+    window.setTimeout(restore, 120)
+  }
 
   const scrollToLocalResults = () => {
     const scroll = () => resultsAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -114,46 +93,23 @@ export default function LocalsTab({
   }
 
   const handleOpenLocalVoteGuide = async () => {
-    const trimmedQuery = voteGuideQuery.trim()
-    if (!trimmedQuery) {
-      setVoteGuideMessage('Enter a postcode, council, ward, region or party pressure point.')
-      return
-    }
-
     setVoteGuideBusy(true)
     try {
-      const normalizedQuery = normalisePostcodeInput(trimmedQuery)
+      const normalizedQuery = normalisePostcodeInput(voteGuideQuery)
+      const directMatch = findLocalVoteGuideMatch(voteGuideQuery)
+      const result = directMatch?.wardSlug ? { status: 'matched', ...directMatch } : await resolveLocalVoteGuideMatch(voteGuideQuery)
 
-      if (isUkPostcode(normalizedQuery)) {
-        const result = await resolveLocalVoteGuideMatch(normalizedQuery)
-
-        if (result?.status === 'matched' || result?.status === 'manual' || result?.status === 'external') {
-          setVoteGuideMessage('')
-          openLocalVoteGuide({
-            councilSlug: result.councilSlug,
-            wardSlug: result.wardSlug || '',
-            query: result.query || normalizedQuery,
-          })
-          return
-        }
-
-        setVoteGuideMessage('That postcode could not be matched yet. Try the council or ward name instead.')
-        return
-      }
-
-      const lookup = await fetchLocalVoteGuideLookupIndex().catch(() => null)
-      const councilMatch = findBestCouncilSearchMatch(trimmedQuery, councils, lookup?.councils || [])
-
-      if (councilMatch?.name) {
+      if (result?.status === 'matched' || result?.status === 'manual' || result?.status === 'external') {
         setVoteGuideMessage('')
-        openCouncil(councilMatch.name)
+        openLocalVoteGuide({
+          councilSlug: result.councilSlug,
+          wardSlug: result.wardSlug || '',
+          query: result.query || normalizedQuery,
+        })
         return
       }
 
-      setSearch(trimmedQuery)
-      setLocalFilter('all')
-      setVoteGuideMessage('No exact authority match yet. Showing matching councils below.')
-      scrollToLocalResults()
+      setVoteGuideMessage("We're starting with Sheffield. More councils coming soon.")
     } finally {
       setVoteGuideBusy(false)
     }
@@ -161,10 +117,10 @@ export default function LocalsTab({
 
   return (
     <>
-      <SectionLabel T={T}>Local authorities</SectionLabel>
+      <SectionLabel T={T}>Local elections finder</SectionLabel>
 
       <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-        <SectionLabel T={T}>Search or browse</SectionLabel>
+        <SectionLabel T={T}>Find your local vote</SectionLabel>
 
         <div
           style={{
@@ -176,7 +132,7 @@ export default function LocalsTab({
             marginBottom: 12,
           }}
         >
-          Search by postcode, council, ward, region or political pressure point. One search handles local election lookup and council browsing.
+          Enter any UK postcode for a local briefing. Full ward-level guides appear where verified data exists.
         </div>
 
         <div style={{ position: 'relative', marginBottom: 10 }}>
@@ -192,28 +148,11 @@ export default function LocalsTab({
             type="text"
             inputMode="text"
             autoCapitalize="characters"
-            placeholder="Enter postcode, council, ward, region or party"
+            placeholder="Enter postcode, e.g. S1 1AA or SW1A 1AA"
             value={voteGuideQuery}
             onChange={(e) => {
-              const nextValue = e.target.value
-              const normalizedValue = normalisePostcodeInput(nextValue)
-              setVoteGuideQuery(nextValue)
+              setVoteGuideQuery(e.target.value)
               if (voteGuideMessage) setVoteGuideMessage('')
-
-              if (!nextValue.trim()) {
-                setSearch('')
-                setLocalFilter('all')
-                return
-              }
-
-              if (isUkPostcode(normalizedValue)) {
-                setSearch('')
-                setLocalFilter('all')
-                return
-              }
-
-              setSearch(nextValue)
-              if (localFilter !== 'all') setLocalFilter('all')
             }}
             onKeyDown={(e) => {
               if (e.key !== 'Enter') return
@@ -254,32 +193,8 @@ export default function LocalsTab({
             }}
             disabled={voteGuideBusy}
           >
-            {voteGuideBusy ? 'Checking…' : 'Search'}
+            {voteGuideBusy ? 'Checking postcode…' : 'Find your local vote'}
           </motion.button>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            gap: 8,
-            overflowX: 'auto',
-            paddingTop: 10,
-            paddingBottom: 4,
-            WebkitOverflowScrolling: 'touch',
-          }}
-        >
-          {LOCAL_FILTERS.map((item) => (
-            <FilterChip
-              key={item.key}
-              label={item.label}
-              active={localFilter === item.key}
-              onClick={() => {
-                setLocalFilter(item.key)
-                if (item.key !== 'all') scrollToLocalResults()
-              }}
-              T={T}
-            />
-          ))}
         </div>
 
         {voteGuideMessage ? (
@@ -302,7 +217,67 @@ export default function LocalsTab({
       </SurfaceCard>
 
       <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-        <SectionLabel T={T}>Local authority picture</SectionLabel>
+        <SectionLabel T={T}>Search and filters</SectionLabel>
+
+        <div style={{ position: 'relative', marginBottom: 10 }}>
+          <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.tl} strokeWidth="2" strokeLinecap="round">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+          </div>
+
+          <input
+            type="search"
+            placeholder="Search councils, regions, parties…"
+            value={search}
+            onChange={(e) => {
+              const nextValue = e.target.value
+              keepCurrentScrollPosition()
+              setSearch(nextValue)
+              if (nextValue.trim() && localFilter !== 'all') {
+                setLocalFilter('all')
+              }
+            }}
+            style={{
+              width: '100%',
+              padding: '13px 14px 13px 38px',
+              background: T.c0,
+              border: `1.5px solid ${search ? T.pr : T.cardBorder || 'rgba(0,0,0,0.1)'}`,
+              borderRadius: 12,
+              fontSize: 15,
+              color: T.th,
+              fontFamily: "'Outfit', sans-serif",
+              outline: 'none',
+              boxSizing: 'border-box',
+              transition: 'border-color 0.15s',
+            }}
+          />
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            overflowX: 'auto',
+            paddingBottom: 6,
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {LOCAL_FILTERS.map((item) => (
+            <FilterChip
+              key={item.key}
+              label={item.label}
+              active={localFilter === item.key}
+              onClick={() => setLocalFilter(item.key)}
+              T={T}
+            />
+          ))}
+        </div>
+      </SurfaceCard>
+
+      <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+        <SectionLabel T={T}>Local elections overview</SectionLabel>
 
         <div
           style={{
@@ -457,7 +432,7 @@ export default function LocalsTab({
               },
             }}
           >
-            Search results
+            Filtered councils
           </SectionLabel>
 
           <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginBottom: 8, textAlign: 'center' }}>
@@ -548,10 +523,10 @@ export default function LocalsTab({
             </SurfaceCard>
           ))}
 
-          <SectionLabel T={T}>Authority directory</SectionLabel>
+          <SectionLabel T={T}>Council directory</SectionLabel>
 
           <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginBottom: 8 }}>
-            {localFilteredCouncils.length} of {councils.length} authorities · tap for full profile
+            {localFilteredCouncils.length} of {councils.length} councils · tap for full profile
           </div>
 
           {localFilteredCouncils.map((council, i) => (
