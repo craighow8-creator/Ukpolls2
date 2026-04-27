@@ -121,7 +121,7 @@ export function selectTopCouncilsToWatch(trackedLaunchCouncils = []) {
 }
 
 export function buildLocalLiveBriefing(trackedLaunchCouncils = [], topCouncilsToWatch = []) {
-  if (!trackedLaunchCouncils.length) return 'Politiscope is building its launch council tracking set.'
+  if (!trackedLaunchCouncils.length) return 'Politiscope is building its May 2026 council coverage set.'
   const names = topCouncilsToWatch.map((council) => council.name).slice(0, 3)
   const joined =
     names.length === 1
@@ -129,7 +129,7 @@ export function buildLocalLiveBriefing(trackedLaunchCouncils = [], topCouncilsTo
       : names.length === 2
       ? `${names[0]} and ${names[1]}`
       : `${names[0]}, ${names[1]} and ${names[2]}`
-  return `${trackedLaunchCouncils.length} tracked councils for May 2026. ${joined} are among the key places to watch.`
+  return `${trackedLaunchCouncils.length} councils covered for May 2026. ${joined} are among the key places to watch.`
 }
 
 export function selectLocalSummaryFilter(localFilter = 'all', search = '') {

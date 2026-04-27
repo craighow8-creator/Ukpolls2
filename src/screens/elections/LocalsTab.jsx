@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { InfoButton } from '../../components/InfoGlyph'
-import { LOCAL_ELECTIONS, LOCAL_REGIONS } from '../../data/elections'
+import { COUNCIL_PROFILES, LOCAL_ELECTIONS, LOCAL_REGIONS } from '../../data/elections'
 import {
   findLocalVoteGuideMatch,
   normalisePostcodeInput,
@@ -61,6 +61,8 @@ export default function LocalsTab({
       }),
     [regions, councilRegistry, councilStatus, councilEditorial, search, localFilter],
   )
+
+  const detailedProfileCount = Object.keys(COUNCIL_PROFILES || {}).length
 
   const handleOpenLocalVoteGuide = async () => {
     setVoteGuideBusy(true)
@@ -275,13 +277,26 @@ export default function LocalsTab({
           <InfoButton id="elections_overview" T={T} size={18} />
         </div>
 
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 650,
+            color: T.tl,
+            lineHeight: 1.55,
+            textAlign: 'center',
+            marginBottom: 12,
+          }}
+        >
+          Detailed profiles are curated; ward and candidate data expands as verified sources are added.
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
           <InteractiveStatCard
             T={T}
-            label="Tracked councils"
+            label="Councils covered"
             value={trackedLaunchCouncils.length}
             color={T.pr || '#12B7D4'}
-            sub="Tap to view"
+            sub="May 2026 overview"
             active={localSummaryFilter === 'tracked'}
             onClick={() => {
               setSearch('')
@@ -293,8 +308,32 @@ export default function LocalsTab({
             label="Seats up"
             value={`${trackedLaunchSeatsUp.toLocaleString()}+`}
             color={T.pr || '#12B7D4'}
-            sub="Across tracked councils"
+            sub="Across covered councils"
             active={localSummaryFilter === 'tracked'}
+            onClick={() => {
+              setSearch('')
+              setLocalFilter('all')
+            }}
+          />
+          <InteractiveStatCard
+            T={T}
+            label="Detailed profiles"
+            value={detailedProfileCount}
+            color="#7C3AED"
+            sub="Curated depth"
+            active={false}
+            onClick={() => {
+              setSearch('')
+              setLocalFilter('all')
+            }}
+          />
+          <InteractiveStatCard
+            T={T}
+            label="Ward data"
+            value="Building"
+            color="#02A95B"
+            sub="Verified sources"
+            active={false}
             onClick={() => {
               setSearch('')
               setLocalFilter('all')
