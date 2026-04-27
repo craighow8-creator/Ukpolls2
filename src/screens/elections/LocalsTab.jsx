@@ -20,6 +20,10 @@ import {
 import CouncilRow from './CouncilRow'
 import { LOCAL_FILTERS, selectLocalElectionModel } from './electionsSelectors'
 
+const ENGLISH_LOCAL_AUTHORITIES_VOTING = 136
+const ENGLISH_LOCAL_SEATS_UP_LABEL = '~5,000'
+const ENGLISH_LOCAL_SEATS_UP_DETAIL = '5,013–5,066 English council seats'
+
 export default function LocalsTab({
   T,
   councilRegistry,
@@ -40,11 +44,9 @@ export default function LocalsTab({
   const {
     councils,
     trackedLaunchCouncils,
-    trackedLaunchSeatsUp,
     veryContested,
     hardToCall,
     topCouncilsToWatch,
-    liveBriefing,
     localSummaryFilter,
     localFilteredCouncils,
     hasLocalRefinement,
@@ -64,6 +66,7 @@ export default function LocalsTab({
   )
 
   const detailedProfileCount = Object.keys(COUNCIL_PROFILES || {}).length
+  const officialLocalBriefing = `${ENGLISH_LOCAL_AUTHORITIES_VOTING} English councils vote on 7 May 2026. Politiscope currently covers ${trackedLaunchCouncils.length}, with ${detailedProfileCount} detailed profiles.`
 
   const scrollToLocalResults = () => {
     window.requestAnimationFrame(() => {
@@ -287,7 +290,7 @@ export default function LocalsTab({
             }}
           />
           <div style={{ fontSize: 14, fontWeight: 600, color: T.th, lineHeight: 1.6 }}>
-            {liveBriefing}
+            {officialLocalBriefing}
           </div>
           <InfoButton id="elections_overview" T={T} size={18} />
         </div>
@@ -302,25 +305,34 @@ export default function LocalsTab({
             marginBottom: 12,
           }}
         >
-          Detailed profiles are curated; ward and candidate data expands as verified sources are added.
+          English local council totals are kept separate from Scotland and Wales; coverage depth expands as verified data is added.
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
           <InteractiveStatCard
             T={T}
-            label="Councils covered"
-            value={trackedLaunchCouncils.length}
+            label="English councils"
+            value={ENGLISH_LOCAL_AUTHORITIES_VOTING}
             color={T.pr || '#12B7D4'}
-            sub="May 2026 overview"
-            active={localSummaryFilter === 'tracked'}
+            sub="Voting on 7 May"
+            active={false}
             onClick={() => applyOverviewFilter('all')}
           />
           <InteractiveStatCard
             T={T}
             label="Seats up"
-            value={`${trackedLaunchSeatsUp.toLocaleString()}+`}
+            value={ENGLISH_LOCAL_SEATS_UP_LABEL}
             color={T.pr || '#12B7D4'}
-            sub="Across covered councils"
+            sub={ENGLISH_LOCAL_SEATS_UP_DETAIL}
+            active={false}
+            onClick={() => applyOverviewFilter('all')}
+          />
+          <InteractiveStatCard
+            T={T}
+            label="Councils covered"
+            value={trackedLaunchCouncils.length}
+            color="#0087DC"
+            sub="Politiscope coverage"
             active={localSummaryFilter === 'tracked'}
             onClick={() => applyOverviewFilter('all')}
           />
@@ -330,15 +342,6 @@ export default function LocalsTab({
             value={detailedProfileCount}
             color="#7C3AED"
             sub="Curated depth"
-            active={false}
-            onClick={() => applyOverviewFilter('all')}
-          />
-          <InteractiveStatCard
-            T={T}
-            label="Ward data"
-            value="Building"
-            color="#02A95B"
-            sub="Verified sources"
             active={false}
             onClick={() => applyOverviewFilter('all')}
           />
