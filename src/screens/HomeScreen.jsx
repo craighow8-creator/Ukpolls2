@@ -361,11 +361,11 @@ export default function HomeScreen({
     signals: [
       {
         id: 'english-local-footprint',
-        text: 'The homepage is showing the national election event: English local contests, Holyrood, the Senedd and mayoralties on the same day.',
+        text: "England's local contests, Holyrood, the Senedd and mayoral races all land on the same election day.",
       },
       {
         id: 'tracked-versus-event',
-        text: 'The Locals tab can stay narrower as Politiscope’s tracked council intelligence; this card is the wider 7 May election footprint.',
+        text: 'The local results will test party organisation on the ground, while Scotland and Wales show the wider national mood.',
       },
       {
         id: 'seats-up-footprint',
