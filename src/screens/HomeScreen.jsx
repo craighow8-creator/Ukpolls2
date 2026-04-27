@@ -348,9 +348,35 @@ export default function HomeScreen({
         : T.pr
   const leaderWeeklyChange = Number(leader.change || 0)
   const secondWeeklyChange = Number(second.change || 0)
+  const homeElectionBriefing = React.useMemo(() => ({
+    headline: 'The next political test is approaching',
+    summary: '136 English councils, Scotland, Wales, mayoralties and by-election watchpoints are in play.',
+    chips: [
+      { id: 'english-councils', label: '136 English councils', color: '#12B7D4' },
+      { id: 'council-seats', label: '~5,000 seats', color: '#0087DC' },
+      { id: 'scotland', label: 'Scottish Parliament', color: '#C4922A' },
+      { id: 'senedd', label: 'Senedd', color: '#C8102E' },
+      { id: 'mayoral-contests', label: 'Mayoral contests', color: '#FAA61A' },
+    ],
+    signals: [
+      {
+        id: 'english-local-footprint',
+        text: 'The homepage is showing the national election event: English local contests, Holyrood, the Senedd and mayoralties on the same day.',
+      },
+      {
+        id: 'tracked-versus-event',
+        text: 'The Locals tab can stay narrower as Politiscope’s tracked council intelligence; this card is the wider 7 May election footprint.',
+      },
+      {
+        id: 'seats-up-footprint',
+        text: 'Around 5,000 English council seats are due, alongside devolved elections that could reshape the wider UK political story.',
+      },
+    ],
+  }), [])
+
   const activeElectionSignal =
-    electionsBriefing.signals[electionSignalIndex] || electionsBriefing.signals[0] || null
-  const electionsHeadline = electionsBriefing.headline || 'The next political test is approaching'
+    homeElectionBriefing.signals[electionSignalIndex % homeElectionBriefing.signals.length] || homeElectionBriefing.signals[0] || null
+  const electionsHeadline = homeElectionBriefing.headline
 
   const risingParty = [...main]
     .map((p) => ({ ...p, _recentDelta: recentDeltaFor(p) }))
@@ -756,11 +782,11 @@ export default function HomeScreen({
               </div>
 
               <div style={{ fontSize: 14, fontWeight: 500, color: T.tm, lineHeight: 1.55, textAlign: 'center', marginBottom: 14 }}>
-                {electionsBriefing.summary}
+                {homeElectionBriefing.summary}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 7, marginBottom: 14 }}>
-                {electionsBriefing.chips.map((chip) => (
+                {homeElectionBriefing.chips.map((chip) => (
                   <Chip
                     key={chip.id}
                     color={chip.color}
