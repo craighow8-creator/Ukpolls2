@@ -52,13 +52,34 @@ export function selectFilteredCouncils(councils = [], searchableCouncils = [], s
   )
 }
 
+function hasScheduledMay2026Election(council = {}) {
+  const status = cleanText(council.electionStatus).toLowerCase()
+  const seatsUp = Number(council.seatsUp)
+  const nextElectionYear = Number(council.nextElectionYear)
+
+  const electionText = [
+    council.electionMessage,
+    council.verdict,
+    council.watchFor,
+    council.type,
+  ]
+    .map((value) => cleanText(value).toLowerCase())
+    .filter(Boolean)
+    .join(' ')
+
+  if (status === 'not-voting-2026') return false
+  if (Number.isFinite(seatsUp) && seatsUp <= 0) return false
+  if (Number.isFinite(nextElectionYear) && nextElectionYear > 2026) return false
+  if (/\b(no scheduled|not voting|does not vote|no vote in 2026|not vote in 2026)\b/i.test(electionText)) {
+    return false
+  }
+
+  if (!status) return true
+  return status === 'scheduled-2026' || /^scheduled(?:-|$)/i.test(status)
+}
+
 export function selectLaunchCouncils(councils = []) {
-  return councils.filter((council) => {
-    const status = cleanText(council.electionStatus)
-    if (!status) return true
-    if (status === 'not-voting-2026') return false
-    return status === 'scheduled-2026' || /^scheduled(?:-|$)/i.test(status)
-  })
+  return councils.filter(hasScheduledMay2026Election)
 }
 
 export function selectTrackedLaunchCouncils(launchCouncils = []) {
