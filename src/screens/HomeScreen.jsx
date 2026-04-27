@@ -457,6 +457,11 @@ export default function HomeScreen({
             body: `The race looks ${qualitativeGap}, but the visible trend picture is not producing one dominant new mover. That makes the next round of polling more important than any single reading.`,
             accent: T.pr,
           }
+
+  const briefingItems = [topLineItem, pressureItem].filter(Boolean)
+
+  return (
+    <div style={{ position: 'relative', minHeight: '100%', background: T.sf }}>
       <div
         style={{
           display: 'flex',
