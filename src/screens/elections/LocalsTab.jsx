@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { InfoButton } from '../../components/InfoGlyph'
 import { COUNCIL_PROFILES, LOCAL_ELECTIONS, LOCAL_REGIONS } from '../../data/elections'
@@ -35,6 +35,7 @@ export default function LocalsTab({
   const [voteGuideQuery, setVoteGuideQuery] = useState('')
   const [voteGuideMessage, setVoteGuideMessage] = useState('')
   const [voteGuideBusy, setVoteGuideBusy] = useState(false)
+  const resultsAnchorRef = useRef(null)
   const regions = LOCAL_REGIONS || []
   const {
     councils,
@@ -63,6 +64,20 @@ export default function LocalsTab({
   )
 
   const detailedProfileCount = Object.keys(COUNCIL_PROFILES || {}).length
+
+  const scrollToLocalResults = () => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        resultsAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    })
+  }
+
+  const applyOverviewFilter = (nextFilter = 'all') => {
+    setSearch('')
+    setLocalFilter(nextFilter)
+    scrollToLocalResults()
+  }
 
   const handleOpenLocalVoteGuide = async () => {
     setVoteGuideBusy(true)
@@ -298,10 +313,7 @@ export default function LocalsTab({
             color={T.pr || '#12B7D4'}
             sub="May 2026 overview"
             active={localSummaryFilter === 'tracked'}
-            onClick={() => {
-              setSearch('')
-              setLocalFilter('all')
-            }}
+            onClick={() => applyOverviewFilter('all')}
           />
           <InteractiveStatCard
             T={T}
@@ -310,10 +322,7 @@ export default function LocalsTab({
             color={T.pr || '#12B7D4'}
             sub="Across covered councils"
             active={localSummaryFilter === 'tracked'}
-            onClick={() => {
-              setSearch('')
-              setLocalFilter('all')
-            }}
+            onClick={() => applyOverviewFilter('all')}
           />
           <InteractiveStatCard
             T={T}
@@ -322,10 +331,7 @@ export default function LocalsTab({
             color="#7C3AED"
             sub="Curated depth"
             active={false}
-            onClick={() => {
-              setSearch('')
-              setLocalFilter('all')
-            }}
+            onClick={() => applyOverviewFilter('all')}
           />
           <InteractiveStatCard
             T={T}
@@ -334,10 +340,7 @@ export default function LocalsTab({
             color="#02A95B"
             sub="Verified sources"
             active={false}
-            onClick={() => {
-              setSearch('')
-              setLocalFilter('all')
-            }}
+            onClick={() => applyOverviewFilter('all')}
           />
           <InteractiveStatCard
             T={T}
@@ -346,10 +349,7 @@ export default function LocalsTab({
             color="#E4003B"
             sub="Tap to filter"
             active={localSummaryFilter === 'tossups'}
-            onClick={() => {
-              setSearch('')
-              setLocalFilter('veryhard')
-            }}
+            onClick={() => applyOverviewFilter('veryhard')}
           />
           <InteractiveStatCard
             T={T}
@@ -358,10 +358,7 @@ export default function LocalsTab({
             color="#F97316"
             sub="Tap to filter"
             active={localSummaryFilter === 'competitive'}
-            onClick={() => {
-              setSearch('')
-              setLocalFilter('hard')
-            }}
+            onClick={() => applyOverviewFilter('hard')}
           />
         </div>
 
@@ -406,6 +403,8 @@ export default function LocalsTab({
           </>
         ) : null}
       </SurfaceCard>
+
+      <div ref={resultsAnchorRef} style={{ scrollMarginTop: 128 }} />
 
       {hasLocalRefinement ? (
         <>
