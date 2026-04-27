@@ -56,7 +56,8 @@ export function selectLaunchCouncils(councils = []) {
   return councils.filter((council) => {
     const status = cleanText(council.electionStatus)
     if (!status) return true
-    return status === 'scheduled-2026' || /2026|scheduled/i.test(status)
+    if (status === 'not-voting-2026') return false
+    return status === 'scheduled-2026' || /^scheduled(?:-|$)/i.test(status)
   })
 }
 
