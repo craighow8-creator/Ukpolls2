@@ -208,6 +208,8 @@ The Runcorn & Helsby by-election in May 2025 recorded a 19.8-point swing from La
 }
 
 function InfoSheet({ info, T, onClose }) {
+  const solidSheetBackground = T?.bg || T?.sfSolid || '#ffffff'
+  const sourceBackground = T?.c1 || 'rgba(14, 165, 233, 0.10)'
   const [dragging, setDragging] = useState(false)
   const [dragY, setDragY] = useState(0)
   const [dismissed, setDismissed] = useState(false)
@@ -278,7 +280,7 @@ function InfoSheet({ info, T, onClose }) {
     <>
       <div
         onClick={onClose}
-        style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(0,0,0,0.12)' }}
+        style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(2, 12, 20, 0.42)' }}
       />
 
       <div
@@ -292,12 +294,10 @@ function InfoSheet({ info, T, onClose }) {
           maxWidth: 560,
           maxHeight: '82dvh',
           zIndex: 502,
-          background: T.sf,
-          backdropFilter: 'blur(60px)',
-          WebkitBackdropFilter: 'blur(60px)',
+          background: solidSheetBackground,
           borderRadius: '24px 24px 0 0',
-          border: `1px solid ${T.cardBorder || 'rgba(255,255,255,0.3)'}`,
-          boxShadow: '0 -8px 40px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.5)',
+          border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+          boxShadow: '0 -18px 56px rgba(2,12,20,0.24)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -356,7 +356,7 @@ function InfoSheet({ info, T, onClose }) {
               fontWeight: 600,
               color: T.tl,
               padding: '10px 14px',
-              background: T.c1,
+              background: sourceBackground,
               borderRadius: 12,
               display: 'inline-block',
             }}
