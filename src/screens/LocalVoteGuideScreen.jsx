@@ -9,6 +9,7 @@ import {
   fetchLocalVoteGuideCouncilData,
   fetchLocalVoteGuideCandidates,
   getLocalVoteGuideCouncil,
+  isSheffieldPostcode,
   LOCAL_VOTE_ISSUE_AREAS,
   resolveExternalLocalVoteGuideMatch,
 } from '../data/localVoteGuide'
@@ -235,6 +236,7 @@ export default function LocalVoteGuideScreen({
     sourceLabel: '',
     sourceUrl: '',
   })
+  const queriedSheffieldPostcode = isSheffieldPostcode(query)
 
   useEffect(() => {
     setSelectedWardSlug(wardSlug || '')
@@ -357,18 +359,18 @@ export default function LocalVoteGuideScreen({
   )
 
   const externalBriefingTag = useMemo(() => deriveBriefingTag(externalCouncil), [externalCouncil])
-  const externalDisplayedCandidates = externalGuide.d1Candidates.length ? externalGuide.d1Candidates : externalGuide.candidates
+  const externalDisplayedCandidates = externalGuide.d1Candidates.length ? externalGuide.d1Candidates : []
   const externalHasResolvedWard = Boolean(externalGuide.d1Match?.councilSlug && externalGuide.d1Match?.wardSlug)
   const externalHasCandidateList = externalDisplayedCandidates.length > 0
   const externalHasActiveElection = externalHasCandidateList
   const externalNoElectionThisCycle = externalHasResolvedWard && !externalHasActiveElection
-  const externalNoElectionHeadline = 'No verified ward-level election found here on 07-05-2026.'
-  const externalNoElectionBody = 'This postcode has baseline ward and council context. Candidate data appears when verified data has been loaded.'
+  const externalNoElectionHeadline = 'No local election in this ward on 07-05-2026.'
+  const externalNoElectionBody = 'This area is not voting in this local election cycle.'
   const externalActiveElectionDate = formatUKDate(LOCAL_ELECTIONS?.date || '2026-05-07')
   const externalActiveElectionStatus = 'Election taking place'
   const externalCandidateFallbackText = externalHasResolvedWard
     ? externalNoElectionHeadline
-    : 'Verified candidate data is not loaded for this area yet.'
+    : 'Candidate data is building for this area.'
 
   useEffect(() => {
     let cancelled = false
@@ -387,7 +389,7 @@ export default function LocalVoteGuideScreen({
 
     setCandidateState((current) => ({
       ...current,
-      loading: false,
+      loading: queriedSheffieldPostcode,
     }))
 
     ;(async () => {
@@ -410,12 +412,12 @@ export default function LocalVoteGuideScreen({
     return () => {
       cancelled = true
     }
-  }, [councilSlug, selectedWard, query])
+  }, [councilSlug, selectedWard, query, queriedSheffieldPostcode])
 
   const displayedCandidates = selectedWard
     ? (candidateState.candidates.length ? candidateState.candidates : selectedWard.candidates)
     : []
-  const candidateSourceLabel = candidateState.sourceLabel || (displayedCandidates.length ? 'Official statement of persons nominated' : '')
+  const candidateSourceLabel = candidateState.sourceLabel || (displayedCandidates.length ? 'Sheffield City Council statement of persons nominated' : '')
   const candidateSourceUrl = candidateState.sourceUrl || (displayedCandidates.length ? selectedWard?.candidates?.[0]?.sourceUrl || '' : '')
   const hasVerifiedIssueStatements = displayedCandidates.some((candidate) =>
     LOCAL_VOTE_ISSUE_AREAS.some((area) => {
@@ -582,7 +584,7 @@ export default function LocalVoteGuideScreen({
                 })}
 
                 <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, textAlign: 'center', marginBottom: 10 }}>
-                  Source: verified external candidate data
+                  Source: Verified local data
                 </div>
               </>
             ) : (
@@ -607,7 +609,7 @@ export default function LocalVoteGuideScreen({
                       textDecoration: 'none',
                     }}
                   >
-                    Verify external candidate source →
+                    Check public candidate lookup →
                   </a>
                 </div>
               </SurfaceCard>
@@ -648,7 +650,7 @@ export default function LocalVoteGuideScreen({
                       textDecoration: 'none',
                     }}
                   >
-                    Verify external candidate source →
+                    Check public candidate lookup →
                   </a>
                 </div>
               ) : null}
@@ -664,7 +666,7 @@ export default function LocalVoteGuideScreen({
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: T.sf }}>
         <div style={{ padding: '16px 18px 0', flexShrink: 0 }}>
           <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: T.th, lineHeight: 1 }}>Local vote guide</div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>Ward-level coverage appears where verified data exists.</div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>Ward-level guide data is not available for that council yet.</div>
         </div>
 
         <ScrollArea>
@@ -682,156 +684,19 @@ export default function LocalVoteGuideScreen({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: T.sf }}>
-      <div style={{ padding: '16px 18px 0', flexShrink: 0 }}>
-        <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl, textAlign: 'center' }}>
-          Local vote guide
-        </div>
-        <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: T.th, lineHeight: 1.05, textAlign: 'center', marginTop: 6 }}>
-          {council.councilName}
-        </div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: T.th, textAlign: 'center', lineHeight: 1.55, maxWidth: 520, margin: '6px auto 0' }}>
-          {selectedWard ? selectedWard.name : 'Choose a ward to see verified councillors and candidates where available.'}
-        </div>
-      </div>
-
       <ScrollArea>
-        <div style={{ padding: '12px 16px 32px' }}>
-          <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-            <SectionLabel T={T}>Guide overview</SectionLabel>
-
-            <InfoRow T={T} label="Council" value={council.councilName} />
-            <InfoRow T={T} label="Ward" value={selectedWard ? selectedWard.name : 'Select a ward below'} />
-            <InfoRow T={T} label="Election" value={formatUKDate(council.nextElectionDate)} />
-            <div style={{ paddingTop: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl, marginBottom: 8 }}>
-                Your lookup
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: T.th, lineHeight: 1.6 }}>
-                {query || council.councilName}
-              </div>
-              {!selectedWard ? (
-                <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, lineHeight: 1.6, marginTop: 8 }}>
-Choose a ward manually if the postcode or search did not resolve directly to one.
-                </div>
-              ) : null}
+        <div style={{ padding: '18px 16px 32px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
+              {selectedWard ? 'Your local election' : 'Local vote guide'}
             </div>
-          </SurfaceCard>
-
-          <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-            <SectionLabel T={T}>What this guide shows</SectionLabel>
-            <div style={{ display: 'grid', gap: 8 }}>
-              {[
-                {
-                  label: 'Current councillors',
-                  text: 'Who currently represents the ward on this council.',
-                },
-                {
-                  label: '2026 candidates',
-                  text: 'Who is standing in the next local election where a verified list is available.',
-                },
-                {
-                  label: 'Sources',
-                  text: 'Each entry links to the source used, with the latest checked date shown underneath.',
-                },
-                {
-                  label: 'Council responsibilities',
-                  text: 'The services this council controls locally, such as housing, transport, and waste.',
-                },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: 10,
-                    background: T.c1 || 'rgba(0,0,0,0.04)',
-                  }}
-                >
-                  <div style={{ fontSize: 13, fontWeight: 800, color: T.th, marginBottom: 4 }}>{item.label}</div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: T.tl, lineHeight: 1.6 }}>{item.text}</div>
-                </div>
-              ))}
+            <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: T.th, lineHeight: 1.05, marginTop: 6 }}>
+              {council.councilName}
             </div>
-          </SurfaceCard>
-
-          <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-            <SectionLabel T={T}>Choose ward</SectionLabel>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginBottom: 10 }}>
-              Search wards, then open the one you want to compare.
+            <div style={{ fontSize: 14, fontWeight: 600, color: T.th, lineHeight: 1.55, maxWidth: 520, margin: '6px auto 0' }}>
+              {selectedWard ? selectedWard.name : 'Choose a ward where verified ward data is available.'}
             </div>
-            <div style={{ position: 'relative', marginBottom: 12 }}>
-              <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.tl} strokeWidth="2" strokeLinecap="round">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="M20 20l-3.5-3.5" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                inputMode="search"
-                placeholder="Search ward name"
-                value={wardSearch}
-                onChange={(e) => setWardSearch(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '13px 14px 13px 38px',
-                  background: T.c0,
-                  border: `1.5px solid ${wardSearch ? T.pr : T.cardBorder || 'rgba(0,0,0,0.1)'}`,
-                  borderRadius: 12,
-                  fontSize: 15,
-                  color: T.th,
-                  fontFamily: "'Outfit', sans-serif",
-                  outline: 'none',
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-              {filteredWards.map((ward) => (
-                <button
-                  key={ward.slug}
-                  onClick={() => setSelectedWardSlug(ward.slug)}
-                  style={{
-                    border: `1px solid ${selectedWardSlug === ward.slug ? T.pr : T.cardBorder || 'rgba(0,0,0,0.12)'}`,
-                    background: selectedWardSlug === ward.slug ? `${T.pr}18` : T.c0,
-                    color: selectedWardSlug === ward.slug ? T.pr : T.th,
-                    borderRadius: 999,
-                    padding: '8px 12px',
-                    fontSize: 13,
-                    fontWeight: 800,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {ward.name}
-                </button>
-              ))}
-            </div>
-            {!filteredWards.length ? (
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginTop: 12 }}>
-                No ward matched that search. Try another ward name.
-              </div>
-            ) : null}
-          </SurfaceCard>
-
-          <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-            <SectionLabel T={T}>What this council controls</SectionLabel>
-            <div style={{ display: 'grid', gap: 8 }}>
-              {council.controls.map((item) => (
-                <div
-                  key={item}
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: 10,
-                    background: T.c1 || 'rgba(0,0,0,0.04)',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: T.th,
-                    lineHeight: 1.55,
-                  }}
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </SurfaceCard>
+          </div>
 
           {selectedWard ? (
             <>
@@ -870,7 +735,7 @@ Choose a ward manually if the postcode or search did not resolve directly to one
                     <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.6, marginBottom: 8 }}>
                       {councillor.seatStatus === 'vacant'
                         ? 'This ward seat is currently shown as vacant in the maintained guide.'
-                        : "Listed in this council's current councillors-by-ward register."}
+                        : `Listed in ${council.councilName}'s current councillors-by-ward register.`}
                     </div>
                     <EntrySourceMeta T={T} entry={councillor} />
                   </SurfaceCard>
@@ -884,24 +749,24 @@ Choose a ward manually if the postcode or search did not resolve directly to one
               {displayedCandidates.length ? (
                 <>
                   {displayedCandidates.map((candidate) => {
-                  const accent = partyColor(candidate.party, T.pr)
-                  return (
-                    <SurfaceCard key={candidate.id} T={T} borderColor={`${accent}28`} style={{ marginBottom: 10 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-                        <div>
-                          <div style={{ fontSize: 16, fontWeight: 800, color: T.th }}>{candidate.name}</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginTop: 4 }}>{candidate.party}</div>
+                    const accent = partyColor(candidate.party, T.pr)
+                    return (
+                      <SurfaceCard key={candidate.id} T={T} borderColor={`${accent}28`} style={{ marginBottom: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+                          <div>
+                            <div style={{ fontSize: 16, fontWeight: 800, color: T.th }}>{candidate.name}</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginTop: 4 }}>{candidate.party}</div>
+                          </div>
+                          <Chip color={accent}>Verified</Chip>
                         </div>
-                        <Chip color={accent}>Verified</Chip>
-                      </div>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.6, marginBottom: 8 }}>
-                        {candidate.sourceAttribution === 'democracy-club'
-                          ? 'Shown from the current verified candidate feed for this upcoming ballot.'
-                          : "Listed on the official statement of persons nominated for this ward."}
-                      </div>
-                      <EntrySourceMeta T={T} entry={candidate} />
-                    </SurfaceCard>
-                  )
+                        <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.6, marginBottom: 8 }}>
+                          {candidate.sourceAttribution === 'democracy-club'
+                            ? 'Shown from a verified candidate feed for this upcoming ballot.'
+                            : `Listed on ${council.councilName}'s official statement of persons nominated for this ward.`}
+                        </div>
+                        <EntrySourceMeta T={T} entry={candidate} />
+                      </SurfaceCard>
+                    )
                   })}
 
                   {candidateSourceLabel ? (
@@ -925,59 +790,11 @@ Choose a ward manually if the postcode or search did not resolve directly to one
                 <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
                     {candidateState.loading
-                      ? 'Checking verified candidate data...'
+                      ? 'Checking candidate data...'
                       : selectedWard.candidateListStatus || 'No verified candidate list yet'}
                   </div>
-                  {!candidateState.loading ? (
-                    <div style={{ marginTop: 8 }}>
-                      <a
-                        href="https://whocanivotefor.co.uk/"
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color: T.pr,
-                          textDecoration: 'none',
-                        }}
-                      >
-                        Candidate data missing? Check the official council election source →
-                      </a>
-                    </div>
-                  ) : null}
                 </SurfaceCard>
               )}
-
-              {displayedCandidates.length ? (
-                <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-                  <SectionLabel T={T}>Quick read candidates</SectionLabel>
-                  <div style={{ display: 'grid', gap: 8 }}>
-                    {displayedCandidates.map((candidate) => {
-                      const accent = partyColor(candidate.party, T.pr)
-                      return (
-                        <div
-                          key={`${candidate.id}-quick-read`}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 10,
-                            padding: '10px 12px',
-                            borderRadius: 12,
-                            background: T.c1 || 'rgba(0,0,0,0.04)',
-                          }}
-                        >
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 14, fontWeight: 800, color: T.th }}>{candidate.name}</div>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, marginTop: 2 }}>{candidate.party}</div>
-                          </div>
-                          <Chip color={accent}>Candidate</Chip>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </SurfaceCard>
-              ) : null}
 
               {displayedCandidates.length && hasVerifiedIssueStatements ? (
                 <>
@@ -1023,35 +840,25 @@ Choose a ward manually if the postcode or search did not resolve directly to one
                     </SurfaceCard>
                   ))}
                 </>
-              ) : displayedCandidates.length ? (
-                <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, lineHeight: 1.6 }}>
-                    Issue comparison will appear here when candidates publish verified local pledges.
-                  </div>
-                </SurfaceCard>
               ) : null}
 
               <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-                <SectionLabel T={T}>How to choose</SectionLabel>
+                <SectionLabel T={T}>What this council controls</SectionLabel>
                 <div style={{ display: 'grid', gap: 8 }}>
-                  {[
-                    'Start with the verified candidate list to confirm who is actually standing in this ward.',
-                    'Use the source links to check any official candidate material or election notice yourself.',
-                    'Compare what the council controls with the local issues you care about most.',
-                  ].map((line) => (
+                  {council.controls.map((item) => (
                     <div
-                      key={line}
+                      key={item}
                       style={{
                         padding: '10px 12px',
                         borderRadius: 10,
                         background: T.c1 || 'rgba(0,0,0,0.04)',
                         fontSize: 14,
-                        fontWeight: 500,
+                        fontWeight: 600,
                         color: T.th,
-                        lineHeight: 1.6,
+                        lineHeight: 1.55,
                       }}
                     >
-                      {line}
+                      {item}
                     </div>
                   ))}
                 </div>
@@ -1065,8 +872,126 @@ Choose a ward manually if the postcode or search did not resolve directly to one
                   </div>
                 </SurfaceCard>
               ) : null}
+
+              <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+                <SectionLabel T={T}>Change ward</SectionLabel>
+                <div style={{ position: 'relative', marginBottom: 12 }}>
+                  <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.tl} strokeWidth="2" strokeLinecap="round">
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="M20 20l-3.5-3.5" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="search"
+                    placeholder="Search ward name"
+                    value={wardSearch}
+                    onChange={(e) => setWardSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '13px 14px 13px 38px',
+                      background: T.c0,
+                      border: `1.5px solid ${wardSearch ? T.pr : T.cardBorder || 'rgba(0,0,0,0.1)'}`,
+                      borderRadius: 12,
+                      fontSize: 15,
+                      color: T.th,
+                      fontFamily: "'Outfit', sans-serif",
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {filteredWards.map((ward) => (
+                    <button
+                      key={ward.slug}
+                      onClick={() => setSelectedWardSlug(ward.slug)}
+                      style={{
+                        border: `1px solid ${selectedWardSlug === ward.slug ? T.pr : T.cardBorder || 'rgba(0,0,0,0.12)'}`,
+                        background: selectedWardSlug === ward.slug ? `${T.pr}18` : T.c0,
+                        color: selectedWardSlug === ward.slug ? T.pr : T.th,
+                        borderRadius: 999,
+                        padding: '8px 12px',
+                        fontSize: 13,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {ward.name}
+                    </button>
+                  ))}
+                </div>
+              </SurfaceCard>
             </>
-          ) : null}
+          ) : (
+            <>
+              <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+                <SectionLabel T={T}>Guide overview</SectionLabel>
+                <InfoRow T={T} label="Council" value={council.councilName} />
+                <InfoRow T={T} label="Ward" value="Select a ward below" />
+                <InfoRow T={T} label="Election" value={formatUKDate(council.nextElectionDate)} />
+                <InfoRow T={T} label="Your lookup" value={query || council.councilName} />
+              </SurfaceCard>
+
+              <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+                <SectionLabel T={T}>Choose ward</SectionLabel>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginBottom: 10 }}>
+                  Search wards where verified local guide data is available.
+                </div>
+                <div style={{ position: 'relative', marginBottom: 12 }}>
+                  <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.tl} strokeWidth="2" strokeLinecap="round">
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="M20 20l-3.5-3.5" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="search"
+                    placeholder="Search ward name"
+                    value={wardSearch}
+                    onChange={(e) => setWardSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '13px 14px 13px 38px',
+                      background: T.c0,
+                      border: `1.5px solid ${wardSearch ? T.pr : T.cardBorder || 'rgba(0,0,0,0.1)'}`,
+                      borderRadius: 12,
+                      fontSize: 15,
+                      color: T.th,
+                      fontFamily: "'Outfit', sans-serif",
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {filteredWards.map((ward) => (
+                    <button
+                      key={ward.slug}
+                      onClick={() => setSelectedWardSlug(ward.slug)}
+                      style={{
+                        border: `1px solid ${selectedWardSlug === ward.slug ? T.pr : T.cardBorder || 'rgba(0,0,0,0.12)'}`,
+                        background: selectedWardSlug === ward.slug ? `${T.pr}18` : T.c0,
+                        color: selectedWardSlug === ward.slug ? T.pr : T.th,
+                        borderRadius: 999,
+                        padding: '8px 12px',
+                        fontSize: 13,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {ward.name}
+                    </button>
+                  ))}
+                </div>
+                {!filteredWards.length ? (
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginTop: 12 }}>
+                    No ward matched that search. Try another ward name.
+                  </div>
+                ) : null}
+              </SurfaceCard>
+            </>
+          )}
 
           <SurfaceCard T={T} style={{ marginTop: 4 }}>
             <SectionLabel T={T}>Sources</SectionLabel>
