@@ -204,6 +204,40 @@ function resolveElectionDateForBriefing(council = null) {
   return 'Date not confirmed'
 }
 
+function hasMay2026Election(council = null) {
+  if (!council) return false
+  const status = cleanText(council.electionStatus).toLowerCase()
+  const electionText = [council.electionMessage, council.verdict, council.watchFor, council.type]
+    .map((value) => cleanText(value).toLowerCase())
+    .filter(Boolean)
+    .join(' ')
+  const seatsUp = Number(council.seatsUp ?? council.seats ?? 0)
+  const nextElectionYear = Number(council.nextElectionYear)
+
+  if (status === 'not-voting-2026') return false
+  if (Number.isFinite(seatsUp) && seatsUp <= 0) return false
+  if (Number.isFinite(nextElectionYear) && nextElectionYear > 2026) return false
+  if (/\b(no scheduled|not voting|does not vote|no vote in 2026|not vote in 2026)\b/i.test(electionText)) return false
+  return true
+}
+
+function formatCouncilName(value = '', fallback = 'Council not matched yet') {
+  const name = cleanText(value)
+  if (!name) return fallback
+  if (/\bcouncil\b/i.test(name)) return name
+  return `${name} Council`
+}
+
+function formatLayerStatus({ council, fallback = 'Not confirmed yet' } = {}) {
+  if (!council) return fallback
+  if (hasMay2026Election(council)) {
+    const seatsUp = Number(council.seatsUp ?? council.seats ?? 0)
+    const seatLabel = seatsUp > 0 ? `${seatsUp} seats up` : 'Seats up'
+    return `${seatLabel} on ${resolveElectionDateForBriefing(council)}`
+  }
+  return council.electionMessage || 'No scheduled vote in this layer on 07-05-2026.'
+}
+
 export default function LocalVoteGuideScreen({
   T,
   councilSlug,
@@ -353,24 +387,44 @@ export default function LocalVoteGuideScreen({
     [councilRegistry, councilStatus, councilEditorial],
   )
 
-  const externalCouncil = useMemo(
+  const externalDistrictCouncil = useMemo(
     () => findCouncilIntelligenceRecord(mergedCouncilIntelligence, externalGuide.postcodeContext?.councilName || ''),
     [mergedCouncilIntelligence, externalGuide.postcodeContext?.councilName],
   )
 
+  const externalCountyCouncil = useMemo(
+    () => findCouncilIntelligenceRecord(mergedCouncilIntelligence, externalGuide.postcodeContext?.countyName || ''),
+    [mergedCouncilIntelligence, externalGuide.postcodeContext?.countyName],
+  )
+
+  const externalCouncil = externalCountyCouncil || externalDistrictCouncil
   const externalBriefingTag = useMemo(() => deriveBriefingTag(externalCouncil), [externalCouncil])
-  const externalDisplayedCandidates = externalGuide.d1Candidates.length ? externalGuide.d1Candidates : []
+  const externalDisplayedCandidates = externalGuide.d1Candidates.length ? externalGuide.d1Candidates : externalGuide.candidates
   const externalHasResolvedWard = Boolean(externalGuide.d1Match?.councilSlug && externalGuide.d1Match?.wardSlug)
   const externalHasCandidateList = externalDisplayedCandidates.length > 0
-  const externalHasActiveElection = externalHasCandidateList
+  const externalHasCountyElection = hasMay2026Election(externalCountyCouncil)
+  const externalHasDistrictElection = hasMay2026Election(externalDistrictCouncil)
+  const externalHasActiveElection = externalHasCandidateList || externalHasCountyElection || externalHasDistrictElection
   const externalNoElectionThisCycle = externalHasResolvedWard && !externalHasActiveElection
-  const externalNoElectionHeadline = 'No local election in this ward on 07-05-2026.'
-  const externalNoElectionBody = 'This area is not voting in this local election cycle.'
+  const externalDistrictName = externalGuide.postcodeContext?.councilName || ''
+  const externalCountyName = externalGuide.postcodeContext?.countyName || ''
+  const externalWardName = externalGuide.postcodeContext?.wardName || ''
+  const externalNoDistrictElectionHeadline = externalDistrictName
+    ? `No ${externalDistrictName} ward election here on 07-05-2026.`
+    : 'No ward-level election found here on 07-05-2026.'
+  const externalNoElectionHeadline = externalHasCountyElection
+    ? `${formatCouncilName(externalCountyCouncil?.name || externalCountyName)} has an election on 07-05-2026.`
+    : externalNoDistrictElectionHeadline
+  const externalNoElectionBody = externalHasCountyElection
+    ? `${externalWardName ? `${externalWardName} ward` : 'This postcode'} sits in ${externalDistrictName || 'this district'}${externalCountyName ? `, within ${externalCountyName}` : ''}. The county council election may still affect this area even if the district ward is not voting.`
+    : 'This area is not voting in this local election cycle.'
   const externalActiveElectionDate = formatUKDate(LOCAL_ELECTIONS?.date || '2026-05-07')
-  const externalActiveElectionStatus = 'Election taking place'
-  const externalCandidateFallbackText = externalHasResolvedWard
-    ? externalNoElectionHeadline
-    : 'Candidate details are available via WhoCanIVoteFor.'
+  const externalActiveElectionStatus = externalHasCountyElection || externalHasDistrictElection ? 'Election applies here' : 'Election taking place'
+  const externalCandidateFallbackText = externalHasCountyElection
+    ? 'County candidate data is building. District ward candidate data is not applicable if this ward is not voting this cycle.'
+    : externalHasResolvedWard
+      ? externalNoDistrictElectionHeadline
+      : 'Candidate details are available via WhoCanIVoteFor.'
 
   useEffect(() => {
     let cancelled = false
@@ -436,26 +490,32 @@ export default function LocalVoteGuideScreen({
         { label: 'Sources', value: `${sources.length}` },
       ]
     : []
-  const externalKeyFacts = externalHasActiveElection
-    ? [
-        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
-        { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
-        { label: 'Election', value: externalActiveElectionDate },
-        { label: 'Status', value: externalActiveElectionStatus },
-      ]
-    : externalNoElectionThisCycle
-      ? [
-        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
-        { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
-        { label: 'Election status', value: externalNoElectionHeadline },
-        { label: 'Candidate list', value: 'Not applicable this year' },
-      ]
-      : [
-        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
-        { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
-        { label: 'Election', value: resolveElectionDateForBriefing(externalCouncil) },
-        { label: 'Status', value: externalBriefingTag.label },
-      ]
+  const externalKeyFacts = [
+    {
+      label: 'Where you are',
+      value: [externalWardName ? `${externalWardName} ward` : '', externalDistrictName, externalCountyName]
+        .filter(Boolean)
+        .join(' · ') || externalGuide.areaName || 'UK postcode',
+    },
+    {
+      label: 'Main election layer',
+      value: externalHasCountyElection
+        ? `${formatCouncilName(externalCountyCouncil?.name || externalCountyName)} · ${formatLayerStatus({ council: externalCountyCouncil })}`
+        : externalHasDistrictElection
+          ? `${formatCouncilName(externalDistrictCouncil?.name || externalDistrictName)} · ${formatLayerStatus({ council: externalDistrictCouncil })}`
+          : 'No matched council election layer yet',
+    },
+    {
+      label: 'Ward layer',
+      value: externalHasCandidateList
+        ? `${externalDisplayedCandidates.length} candidates listed`
+        : externalNoDistrictElectionHeadline,
+    },
+    {
+      label: 'Status',
+      value: externalHasActiveElection ? externalActiveElectionStatus : externalBriefingTag.label,
+    },
+  ]
 
   if (isExternalFallback) {
     return (
@@ -465,12 +525,10 @@ export default function LocalVoteGuideScreen({
             Local battleground briefing
           </div>
           <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: T.th, lineHeight: 1.05, textAlign: 'center', marginTop: 6 }}>
-            {externalCouncil?.name || externalGuide.postcodeContext?.councilName || externalGuide.areaName || normaliseAreaQuery(query)}
+            {externalWardName || externalDistrictName || externalCountyName || externalGuide.areaName || normaliseAreaQuery(query)}
           </div>
           <div style={{ fontSize: 14, fontWeight: 600, color: T.th, textAlign: 'center', lineHeight: 1.55, maxWidth: 520, margin: '6px auto 0' }}>
-            {externalGuide.postcodeContext?.wardName
-              ? `${externalGuide.postcodeContext.wardName} ward`
-              : externalGuide.areaName || 'UK postcode lookup'}
+            {[externalWardName ? 'ward' : '', externalDistrictName, externalCountyName].filter(Boolean).join(' · ') || externalGuide.areaName || 'UK postcode lookup'}
           </div>
         </div>
 
@@ -484,7 +542,7 @@ export default function LocalVoteGuideScreen({
                 ))}
               </div>
               <InfoRow T={T} label="Lookup" value={query || 'UK postcode'} />
-              <InfoRow T={T} label="Council control" value={externalCouncil?.control || 'Control not available'} />
+              <InfoRow T={T} label="Main council control" value={externalCouncil?.control || 'Control not available'} />
               <InfoRow T={T} label="Constituency" value={externalGuide.postcodeContext?.constituencyName || 'Not available'} />
               <InfoRow
                 T={T}
@@ -497,6 +555,37 @@ export default function LocalVoteGuideScreen({
                       : externalCandidateFallbackText
                 }
               />
+            </SurfaceCard>
+
+            <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+              <SectionLabel T={T}>Elections affecting this postcode</SectionLabel>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {externalCountyName ? (
+                  <InfoRow
+                    T={T}
+                    label="County layer"
+                    value={externalCountyCouncil
+                      ? `${formatCouncilName(externalCountyCouncil.name)}: ${formatLayerStatus({ council: externalCountyCouncil })}`
+                      : `${formatCouncilName(externalCountyName)}: checking coverage`}
+                  />
+                ) : null}
+                <InfoRow
+                  T={T}
+                  label="District / ward layer"
+                  value={externalHasCandidateList
+                    ? `${externalDisplayedCandidates.length} candidates listed for the current ballot.`
+                    : externalNoDistrictElectionHeadline}
+                />
+                <InfoRow
+                  T={T}
+                  label="Plain English"
+                  value={externalHasCountyElection
+                    ? `${formatCouncilName(externalCountyCouncil?.name || externalCountyName)} is the main matched May 2026 election layer for this postcode. ${externalNoDistrictElectionHeadline}`
+                    : externalHasDistrictElection
+                      ? `${formatCouncilName(externalDistrictCouncil?.name || externalDistrictName)} is the matched May 2026 election layer for this postcode.`
+                      : externalCandidateFallbackText}
+                />
+              </div>
             </SurfaceCard>
 
             <SurfaceCard T={T} style={{ marginBottom: 12, textAlign: 'center' }}>
@@ -518,7 +607,7 @@ export default function LocalVoteGuideScreen({
                   {externalHasActiveElection
                     ? externalActiveElectionStatus
                     : externalNoElectionThisCycle
-                      ? 'No local vote this cycle'
+                      ? 'No ward vote this cycle'
                       : externalBriefingTag.label}
                 </Chip>
               </div>
@@ -538,7 +627,7 @@ export default function LocalVoteGuideScreen({
             <SurfaceCard T={T} style={{ marginBottom: 12 }}>
               <SectionLabel T={T}>Briefing status</SectionLabel>
               <div style={{ display: 'grid', gap: 8 }}>
-                <InfoRow T={T} label="Coverage" value={externalCouncil ? 'Tracked in Politiscope local elections' : 'Briefing view only for now'} />
+                <InfoRow T={T} label="Coverage" value={externalCouncil ? 'Matched to Politiscope council intelligence' : 'Postcode briefing view only for now'} />
                 <InfoRow
                   T={T}
                   label="Verdict"

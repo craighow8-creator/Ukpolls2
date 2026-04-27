@@ -1157,6 +1157,7 @@ export async function fetchExternalLocalVoteGuide(query = '') {
     candidates,
     postcodeContext: {
       councilName: String(postcodeContext?.admin_district || '').trim(),
+      countyName: String(postcodeContext?.admin_county || '').trim(),
       wardName: String(postcodeContext?.admin_ward || '').trim(),
       constituencyName: String(postcodeContext?.parliamentary_constituency || '').trim(),
       regionName: String(postcodeContext?.region || '').trim(),
