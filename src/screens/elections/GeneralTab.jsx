@@ -80,7 +80,11 @@ export default function GeneralTab({ T, nextGeneralDate, generalDays, generalExp
   return (
     <>
       <SurfaceCard T={T} borderColor={`${T.pr || '#12B7D4'}28`} style={{ marginBottom: 12 }}>
-        <SectionLabel T={T}>Next general election</SectionLabel>
+        <SectionLabel T={T}>General election window</SectionLabel>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+          <Chip color={T.pr || '#12B7D4'}>Latest legal deadline</Chip>
+        </div>
 
         <div
           style={{
@@ -91,38 +95,32 @@ export default function GeneralTab({ T, nextGeneralDate, generalDays, generalExp
             lineHeight: 1.05,
           }}
         >
-          {nextGeneralDate ? `${generalDays} days to go` : 'Due by August 2029'}
+          No later than {nextGeneralDate ? formatDate(nextGeneralDate) : '15-08-2029'}
         </div>
 
         <div
           style={{
             fontSize: 14,
             fontWeight: 700,
-            color: T.pr || '#12B7D4',
+            color: T.tl,
             textAlign: 'center',
-            marginTop: 8,
+            lineHeight: 1.55,
+            marginTop: 10,
           }}
         >
-          {nextGeneralDate ? formatDate(nextGeneralDate) : 'The next UK general election must happen by August 2029'}
+          The election can be called earlier. This is the outer edge of the current Parliament, not a fixed polling day.
         </div>
 
         <div
           style={{
-            fontSize: 14,
-            fontWeight: 500,
-            color: T.tl,
-            textAlign: 'center',
-            lineHeight: 1.65,
-            marginTop: 8,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            gap: 10,
+            marginTop: 18,
           }}
         >
-          Election to choose the 650 MPs in the House of Commons. The party that can command a majority forms the government.
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
-          <Chip color={T.pr || '#12B7D4'}>650 constituencies</Chip>
-          <Chip color={T.pr || '#12B7D4'}>650 MPs</Chip>
-          <Chip color={T.pr || '#12B7D4'}>326 for majority</Chip>
+          <StatCard T={T} label="Seats" value="650" color={T.pr || '#12B7D4'} sub="constituencies" />
+          <StatCard T={T} label="Majority line" value="326" color={T.pr || '#12B7D4'} sub="MPs needed" />
         </div>
       </SurfaceCard>
 
