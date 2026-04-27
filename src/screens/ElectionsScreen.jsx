@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { StickyPills, haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
-import SectionDataMeta from '../components/SectionDataMeta'
 import { DEVOLVED_NATIONS, DEVOLVED_OVERVIEW } from '../data/electionsDevolved'
 import { COUNCIL_MAYORS, MAYORS_OVERVIEW, REGIONAL_MAYORS } from '../data/electionsMayors'
 import { daysTo } from '../utils/helpers'
@@ -274,9 +273,6 @@ export default function ElectionsScreen({
       <StickyPillsBar T={T} tab={tab} setTab={handleSetTab} />
 
       <div style={{ padding: '12px 16px 40px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-          <SectionDataMeta T={T} section={dataState.electionsIntelligence || dataState.elections || null} />
-        </div>
         {tab === 'general' ? (
           <GeneralTab
             T={T}
