@@ -70,7 +70,7 @@ function keepLatestPollPerPollster(polls) {
     if (!name) continue
     if (!isWinningPollRow(poll)) continue
     const current = latest.get(name)
-    if (!current || compareLatestPollRows(poll, current) < 0) {
+    if (!current || compareNewestPollRows(poll, current) < 0) {
       latest.set(name, poll)
     }
   }
@@ -435,19 +435,6 @@ function compareLatestPollRows(a, b) {
   return cleanText(a?.id || '').localeCompare(cleanText(b?.id || ''))
 }
 
-function compareNewestPollRows(a, b) {
-  const dateDiff = pollSortTime(b) - pollSortTime(a)
-  if (dateDiff !== 0) return dateDiff
-
-  const dateTextDiff = pollSortScore(b).localeCompare(pollSortScore(a))
-  if (dateTextDiff !== 0) return dateTextDiff
-
-  const priorityDiff = comparePollConflictPriority(a, b)
-  if (priorityDiff !== 0) return priorityDiff
-
-  return cleanText(a?.id || '').localeCompare(cleanText(b?.id || ''))
-}
-
 function groupPollsByPollster(polls) {
   const map = new Map()
 
@@ -461,8 +448,8 @@ function groupPollsByPollster(polls) {
   return [...map.entries()]
     .map(([name, list]) => ({
       name,
-      polls: [...list].sort(compareNewestPollRows),
-      latestPoll: [...list].sort(compareNewestPollRows)[0],
+      polls: [...list].sort(compareLatestPollRows),
+      latestPoll: [...list].filter(isWinningPollRow).sort(compareLatestPollRows)[0] || [...list].sort(compareLatestPollRows)[0],
     }))
     .sort((a, b) => {
       const latestDiff = pollSortTime(b.latestPoll) - pollSortTime(a.latestPoll)
@@ -2125,7 +2112,7 @@ export default function PollsScreen({ T, parties, polls, meta, nav, pollContext 
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <Badge color={T.pr}>{importedPolls.length ? 'Imported-first ordering' : 'Archive view'}</Badge>
+                  <Badge color={T.pr}>{importedPolls.length ? 'Newest per pollster' : 'Archive view'}</Badge>
                   <Badge color={T.tl} subtle>{latestPolls.length} shown</Badge>
                 </div>
                 <div
@@ -2138,7 +2125,7 @@ export default function PollsScreen({ T, parties, polls, meta, nav, pollContext 
                     marginTop: 6,
                   }}
                 >
-                  Direct-source polls are prioritised when available.
+                  Newest poll per pollster shown; direct sources are preferred when dates match.
                 </div>
               </div>
 
