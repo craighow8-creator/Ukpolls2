@@ -422,6 +422,19 @@ function isWinningPollRow(poll) {
   return canWinPollConflict(poll)
 }
 
+function compareNewestPollRows(a, b) {
+  const dateDiff = pollSortTime(b) - pollSortTime(a)
+  if (dateDiff !== 0) return dateDiff
+
+  const dateTextDiff = pollSortScore(b).localeCompare(pollSortScore(a))
+  if (dateTextDiff !== 0) return dateTextDiff
+
+  const priorityDiff = comparePollConflictPriority(a, b)
+  if (priorityDiff !== 0) return priorityDiff
+
+  return cleanText(a?.id || '').localeCompare(cleanText(b?.id || ''))
+}
+
 function compareLatestPollRows(a, b) {
   const priorityDiff = comparePollConflictPriority(a, b)
   if (priorityDiff !== 0) return priorityDiff
