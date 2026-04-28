@@ -11,18 +11,59 @@ const TONE_STYLES = {
   quiet: { labelColor: '#7A7A7A', bg: 'rgba(0,0,0,0.04)', border: 'rgba(0,0,0,0.08)' },
 }
 
+function freshnessText(section, updatedAt) {
+  if (!updatedAt) return null
+
+  if (section.section === 'polls' || section.section === 'trends') {
+    return `Polling data refreshed ${updatedAt}`
+  }
+
+  if (section.section === 'newsItems' || section.section === 'predictionMarkets') {
+    return `Latest data checked ${updatedAt}`
+  }
+
+  return `Updated ${updatedAt}`
+}
+
+function publicSourceLabel(section) {
+  const source = String(section?.source || '').trim()
+  if (!source) return null
+
+  const lower = source.toLowerCase()
+  const isInfrastructure =
+    lower.includes('cloudflare') ||
+    lower.includes('cron') ||
+    lower.includes('d1') ||
+    lower.includes('worker') ||
+    lower.includes('ingest')
+
+  if (!isInfrastructure) return source
+
+  if (section.section === 'polls') return 'Polling feed'
+  if (section.section === 'trends') return 'Polling trend model'
+  if (section.section === 'newsItems') return 'Live news feed'
+  if (section.section === 'byElections') return 'By-election tracker'
+  if (section.section === 'councilRegistry' || section.section === 'councilStatus' || section.section === 'councilEditorial') {
+    return 'Council data'
+  }
+  if (section.section === 'elections' || section.section === 'electionsIntelligence') return 'Election intelligence'
+
+  return 'Politiscope data'
+}
+
 export default function SectionDataMeta({ T, section, style = {} }) {
   if (!section) return null
 
   const tone = TONE_STYLES[section.tone] || TONE_STYLES.quiet
   const updatedAt = section.updatedAt ? formatTs(section.updatedAt) : null
-  const source = section.source || null
+  const updatedText = freshnessText(section, updatedAt)
+  const source = publicSourceLabel(section)
   const parts = []
 
   if (section.label) parts.push(section.label)
-  if (updatedAt) parts.push(updatedAt)
+  if (updatedText) parts.push(updatedText)
   if (source) parts.push(source)
-  if (section.fallback) parts.push('fallback')
+  if (section.fallback) parts.push('cached data')
 
   if (!parts.length) return null
 
@@ -47,9 +88,9 @@ export default function SectionDataMeta({ T, section, style = {} }) {
       <span style={{ color: tone.labelColor, fontWeight: 900, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
         {section.label}
       </span>
-      {updatedAt ? <span style={{ color: T.tl }}>{updatedAt}</span> : null}
+      {updatedText ? <span style={{ color: T.tl }}>{updatedText}</span> : null}
       {source ? <span style={{ color: T.tm }}>{source}</span> : null}
-      {section.fallback ? <span style={{ color: T.tl }}>fallback</span> : null}
+      {section.fallback ? <span style={{ color: T.tl }}>cached data</span> : null}
     </div>
   )
 }

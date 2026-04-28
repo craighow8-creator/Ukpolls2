@@ -515,33 +515,33 @@ function buildRemoteSectionState(remote) {
   return {
     polls: makeSectionState('polls', {
       updatedAt: ingestState.lastRunAt || ingestState.updatedAt || remote?.meta?.fetchDate || null,
-      source: ingestState.status === 'success' ? 'Cloudflare cron ingest to D1' : 'D1 poll store',
+      source: ingestState.status === 'success' ? 'Polling feed' : 'Polling data',
       fallback: ingestState.status !== 'success',
     }),
     trends: makeSectionState('trends', {
       updatedAt: remote?.meta?.fetchDate || ingestState.lastRunAt || null,
-      source: 'Derived from D1 polls',
+      source: 'Polling trend model',
       fallback: false,
     }),
-    leaders: makeSectionState('leaders', { source: 'D1 leaders table', maintained: true }),
+    leaders: makeSectionState('leaders', { source: 'Maintained leader data', maintained: true }),
     betting: makeSectionState('betting', { source: remote?.betting?.source || 'Maintained editorial odds', maintained: true }),
     predictionMarkets: makeSectionState('predictionMarkets', {
       updatedAt: remote?.predictionMarkets?.updatedAt || remote?.predictionMarkets?.meta?.updatedAt || null,
       source: remote?.predictionMarkets?.source || 'Polymarket',
       fallback: false,
     }),
-    elections: makeSectionState('elections', { source: 'D1 election intelligence', maintained: true }),
-    byElections: makeSectionState('byElections', { updatedAt: remote?.byElections?.meta?.updatedAt || null, source: 'D1 by-election tracker', maintained: true }),
+    elections: makeSectionState('elections', { source: 'Election intelligence', maintained: true }),
+    byElections: makeSectionState('byElections', { updatedAt: remote?.byElections?.meta?.updatedAt || null, source: 'By-election tracker', maintained: true }),
     migration: makeSectionState('migration', { source: 'Static reference data', fallback: true }),
     demographics: makeSectionState('demographics', { source: 'Static reference data', fallback: true }),
     newsItems: makeSectionState('newsItems', {
       updatedAt: remote?.newsItems?.meta?.updatedAt || remote?.news?.meta?.updatedAt || remote?.news?.fetchedAt || null,
-      source: 'Worker live fetch',
+      source: 'Live news feed',
       fallback: false,
     }),
-    councilRegistry: makeSectionState('councilRegistry', { updatedAt: remote?.councilRegistry?.meta?.updatedAt || null, source: 'D1 council registry', maintained: true }),
-    councilStatus: makeSectionState('councilStatus', { updatedAt: remote?.councilStatus?.meta?.updatedAt || null, source: 'D1 council status', maintained: true }),
-    councilEditorial: makeSectionState('councilEditorial', { updatedAt: remote?.councilEditorial?.meta?.updatedAt || null, source: 'D1 council editorial', maintained: true }),
+    councilRegistry: makeSectionState('councilRegistry', { updatedAt: remote?.councilRegistry?.meta?.updatedAt || null, source: 'Council registry', maintained: true }),
+    councilStatus: makeSectionState('councilStatus', { updatedAt: remote?.councilStatus?.meta?.updatedAt || null, source: 'Council status', maintained: true }),
+    councilEditorial: makeSectionState('councilEditorial', { updatedAt: remote?.councilEditorial?.meta?.updatedAt || null, source: 'Council intelligence', maintained: true }),
     parliament: makeSectionState('parliament', {
       updatedAt: parliament.updatedAt || parliament.facts?.verifiedAt || null,
       source: 'Official Parliament / YouTube',
@@ -549,7 +549,7 @@ function buildRemoteSectionState(remote) {
     }),
     electionsIntelligence: makeSectionState('electionsIntelligence', {
       updatedAt: electionsIntelligence?.mayors?.meta?.updatedAt || electionsIntelligence?.devolved?.meta?.updatedAt || null,
-      source: 'D1-maintained election intelligence',
+      source: 'Election intelligence',
       maintained: true,
     }),
   }
@@ -747,35 +747,35 @@ export async function getData() {
       ...buildRemoteSectionState(remote),
       polls: makeSectionState('polls', {
         updatedAt: normalised.ingestStatus?.lastRunAt || normalised.ingestStatus?.updatedAt || remote?.meta?.fetchDate || null,
-        source: normalised.ingestStatus?.status === 'success' ? 'Cloudflare cron ingest to D1' : 'D1 poll store',
+        source: normalised.ingestStatus?.status === 'success' ? 'Polling feed' : 'Polling data',
         fallback: normalised.ingestStatus?.status !== 'success' && !mergedPolls.length,
       }),
       trends: makeSectionState('trends', {
         updatedAt: normalised.ingestStatus?.lastRunAt || remote?.meta?.fetchDate || null,
-        source: 'Derived from D1 polls',
+        source: 'Polling trend model',
       }),
       newsItems: makeSectionState('newsItems', {
         updatedAt: normalised.newsItems?.updatedAt || remote?.newsItems?.meta?.updatedAt || remote?.news?.fetchedAt || null,
-        source: 'Worker live fetch',
+        source: 'Live news feed',
       }),
       byElections: makeSectionState('byElections', {
         updatedAt: normalised.byElections?.meta?.updatedAt || null,
-        source: 'D1 by-election tracker',
+        source: 'By-election tracker',
         maintained: true,
       }),
       councilRegistry: makeSectionState('councilRegistry', {
         updatedAt: normalised.councilRegistry?.meta?.updatedAt || null,
-        source: 'D1 council registry',
+        source: 'Council registry',
         maintained: true,
       }),
       councilStatus: makeSectionState('councilStatus', {
         updatedAt: normalised.councilStatus?.meta?.updatedAt || null,
-        source: 'D1 council status',
+        source: 'Council status',
         maintained: true,
       }),
       councilEditorial: makeSectionState('councilEditorial', {
         updatedAt: normalised.councilEditorial?.meta?.updatedAt || null,
-        source: 'D1 council editorial',
+        source: 'Council intelligence',
         maintained: true,
       }),
       parliament: makeSectionState('parliament', {
@@ -784,7 +784,7 @@ export async function getData() {
       }),
       electionsIntelligence: makeSectionState('electionsIntelligence', {
         updatedAt: remote?.elections?.intelligence?.mayors?.meta?.updatedAt || remote?.elections?.intelligence?.devolved?.meta?.updatedAt || null,
-        source: 'D1-maintained election intelligence',
+        source: 'Election intelligence',
         maintained: true,
       }),
       betting: makeSectionState('betting', { source: 'Maintained editorial odds', maintained: true }),
