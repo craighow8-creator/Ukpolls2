@@ -9,7 +9,7 @@
 const BASE         = 'https://www.ipsos.com'
 const ARCHIVE_URL  = `${BASE}/en-uk/political-monitor-archive`
 const TOPIC_URL    = `${BASE}/en-uk/topic/political-monitor`
-const KNOWN_LATEST = `${BASE}/en-uk/reform-uk-holds-7-point-lead-over-labour-greens-5-points`
+const KNOWN_LATEST = `${BASE}/en-uk/reform-hold-6-point-lead-over-labour-and-conservatives`
 
 const HISTORY_LIMIT = 20
 const CONCURRENCY = 4
@@ -158,6 +158,14 @@ function extractSample(text) {
   return m ? safeNumber(m[1]) : null
 }
 
+function daysBetween(startIso, endIso) {
+  if (!startIso || !endIso) return null
+  const start = new Date(`${startIso}T00:00:00Z`)
+  const end = new Date(`${endIso}T00:00:00Z`)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null
+  return Math.round((end - start) / (24 * 60 * 60 * 1000))
+}
+
 function extractPartyValues(text) {
   const result = {}
 
@@ -233,7 +241,16 @@ async function parseArticle(url) {
   }
 
   const publishedAt = extractPublishedDate(html)
-  const { fieldworkStart, fieldworkEnd } = extractFieldwork(text)
+  let { fieldworkStart, fieldworkEnd } = extractFieldwork(text)
+
+  // Ipsos pages include related/latest article teasers in the same HTML. If an
+  // old page appears to have future fieldwork, that date came from page chrome.
+  const fieldworkAfterPublicationDays = daysBetween(publishedAt, fieldworkEnd)
+  if (fieldworkAfterPublicationDays != null && fieldworkAfterPublicationDays > 14) {
+    fieldworkStart = null
+    fieldworkEnd = null
+  }
+
   const sample = extractSample(text)
   const values = extractPartyValues(text)
   const tablesUrl = extractTablesUrl(html)
@@ -274,6 +291,20 @@ async function parseArticle(url) {
   }
 }
 
+function dedupePolls(polls) {
+  const byId = new Map()
+
+  for (const poll of polls || []) {
+    if (!poll?.id) continue
+    const existing = byId.get(poll.id)
+    if (!existing || String(poll?.publishedAt || '') > String(existing?.publishedAt || '')) {
+      byId.set(poll.id, poll)
+    }
+  }
+
+  return [...byId.values()].sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+}
+
 async function mapConcurrent(items, limit, fn) {
   const results = new Array(items.length)
   let i = 0
@@ -306,12 +337,10 @@ export async function fetchIpsosPolls() {
     }
   }
 
-  const targets = articleUrls.slice(0, HISTORY_LIMIT)
+  const targets = [KNOWN_LATEST, ...articleUrls.filter((url) => url !== KNOWN_LATEST)].slice(0, HISTORY_LIMIT)
   const rows = await mapConcurrent(targets, CONCURRENCY, parseArticle)
 
-  const polls = rows
-    .filter(Boolean)
-    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+  const polls = dedupePolls(rows.filter(Boolean))
 
   if (polls.length === 0) {
     throw new Error('[ipsos] fetchIpsosPolls: no valid poll rows recovered')

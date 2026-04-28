@@ -5,9 +5,7 @@ import fetchMoreInCommonPolls from '../../scripts/sources/moreInCommon.mjs'
 import fetchOpiniumPolls from '../../scripts/sources/opinium.mjs'
 import fetchIpsosPolls from '../../scripts/sources/ipsos.mjs'
 import fetchFindOutNowPolls from '../../scripts/sources/findoutnow.mjs'
-import fetchGoodGrowthFoundationPolls from '../../scripts/sources/goodgrowthfoundation.mjs'
 import fetchFocaldataPolls from '../../scripts/sources/focaldata.mjs'
-import fetchJLPartnersPolls from '../../scripts/sources/jlpartners.mjs'
 
 const RELEASE_POLLSTERS = new Set([
   'yougov',
@@ -57,7 +55,7 @@ function normalizePollRecord(poll) {
     ...poll,
     pollster: String(poll.pollster || '').trim(),
     id: String(poll.id || '').trim(),
-    date: poll.date || poll.fieldworkEnd || poll.publishedAt || null,
+    date: poll.date || poll.fieldworkEnd || poll.publishedAt || poll.fieldworkStart || null,
     publishedAt: poll.publishedAt || null,
     fieldworkStart: poll.fieldworkStart || null,
     fieldworkEnd: poll.fieldworkEnd || null,
@@ -126,7 +124,7 @@ function sortNewestFirst(records) {
 }
 
 function logFreshnessCheck(polls, logger = console) {
-  const pollsters = ['YouGov', 'More in Common', 'Find Out Now', 'Opinium', 'Focaldata']
+  const pollsters = ['YouGov', 'More in Common', 'Find Out Now', 'Opinium', 'Ipsos', 'Focaldata']
 
   logger.log('[ingest-polls] Freshness check:')
 
@@ -175,9 +173,7 @@ function buildSourceSpecs() {
     ['Opinium', fetchOpiniumPolls],
     ['Ipsos', fetchIpsosPolls],
     ['Find Out Now', fetchFindOutNowPolls],
-    ['Good Growth Foundation', fetchGoodGrowthFoundationPolls],
     ['Focaldata', fetchFocaldataPolls],
-    ['JL Partners', fetchJLPartnersPolls],
   ]
 }
 
