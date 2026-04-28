@@ -57,6 +57,7 @@ function normalizePollRecord(poll) {
     ...poll,
     pollster: String(poll.pollster || '').trim(),
     id: String(poll.id || '').trim(),
+    date: poll.date || poll.fieldworkEnd || poll.publishedAt || null,
     publishedAt: poll.publishedAt || null,
     fieldworkStart: poll.fieldworkStart || null,
     fieldworkEnd: poll.fieldworkEnd || null,
