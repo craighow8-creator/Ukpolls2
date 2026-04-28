@@ -64,14 +64,14 @@ function pollSortScore(poll) {
 }
 
 function comparePollRows(a, b) {
-  const priorityDiff = comparePollConflictPriority(a, b)
-  if (priorityDiff !== 0) return priorityDiff
-
   const dateDiff = getConflictDateMs(b) - getConflictDateMs(a)
   if (dateDiff !== 0) return dateDiff
 
   const dateTextDiff = pollSortScore(b).localeCompare(pollSortScore(a))
   if (dateTextDiff !== 0) return dateTextDiff
+
+  const priorityDiff = comparePollConflictPriority(a, b)
+  if (priorityDiff !== 0) return priorityDiff
 
   return cleanText(a?.id || '').localeCompare(cleanText(b?.id || ''))
 }
@@ -291,7 +291,7 @@ export default function PollsterScreen({ T, pollster, polls = [], nav }) {
     .filter((p) => cleanText(p.pollster) === cleanText(pollster))
     .sort(comparePollRows)
 
-  const latestPoll = pollsterPolls.find((p) => canWinPollConflict(p)) || pollsterPolls[0] || null
+  const latestPoll = pollsterPolls[0] || null
   const latestLivePoll = pollsterPolls.find((p) => isImportedPoll(p)) || null
   const isBpcMember = latestPoll?.isBpcMember === true
   const importedCount = pollsterPolls.filter((p) => isImportedPoll(p)).length
@@ -309,7 +309,7 @@ export default function PollsterScreen({ T, pollster, polls = [], nav }) {
         T={T}
         pollster={pollster}
         count={pollsterPolls.length}
-        latestPoll={latestLivePoll || latestPoll}
+        latestPoll={latestPoll}
       />
 
       <div style={{ padding: '12px 16px 40px' }}>
