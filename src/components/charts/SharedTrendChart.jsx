@@ -814,14 +814,16 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
               viewBox={`0 0 ${W} ${H}`}
               width={W}
               height={H}
-              style={{ display: 'block', overflow: 'visible', paddingRight: 40, touchAction: 'none' }}
+              style={{ display: 'block', overflow: 'visible', paddingRight: 40, touchAction: 'pan-x pan-y' }}
               onPointerMove={(event) => {
-                if (event.pointerType === 'mouse' || event.pointerType === 'pen' || event.pointerType === 'touch') {
+                if (event.pointerType === 'mouse' || event.pointerType === 'pen') {
                   setHoverFromEvent(event)
                 }
               }}
               onPointerDown={(event) => {
-                setHoverFromEvent(event)
+                if (event.pointerType === 'mouse' || event.pointerType === 'pen' || event.pointerType === 'touch') {
+                  setHoverFromEvent(event)
+                }
               }}
               onPointerLeave={() => {
                 setHoverX(null)
@@ -912,12 +914,16 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
                   width={Math.max(1, chartEndX - chartStartX)}
                   height={H - PT - PB}
                   fill="transparent"
-                  style={{ cursor: 'crosshair', touchAction: 'none' }}
+                  style={{ cursor: 'crosshair', touchAction: 'pan-x pan-y' }}
                   onPointerEnter={(event) => {
-                    setHoverFromEvent(event)
+                    if (event.pointerType === 'mouse' || event.pointerType === 'pen') {
+                      setHoverFromEvent(event)
+                    }
                   }}
                   onPointerMove={(event) => {
-                    setHoverFromEvent(event)
+                    if (event.pointerType === 'mouse' || event.pointerType === 'pen') {
+                      setHoverFromEvent(event)
+                    }
                   }}
                   onPointerDown={(event) => {
                     setHoverFromEvent(event)
