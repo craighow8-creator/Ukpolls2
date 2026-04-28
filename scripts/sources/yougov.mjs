@@ -92,16 +92,31 @@ function htmlToText(html) {
     .trim()
 }
 
-function extractLatestArticleUrl(html) {
-  const matches = [...String(html || '').matchAll(/href=["']([^"']*\/en-gb\/articles\/[^"']*voting-intention[^"']*)["']/gi)]
+function extractLatestArticleUrls(html) {
+  const urls = []
+  const seen = new Set()
+  const matches = [
+    ...String(html || '').matchAll(/href=["']([^"']*\/en-gb\/articles\/[^"']*voting-intention[^"']*)["']/gi),
+    ...String(html || '').matchAll(/https?:\/\/yougov\.com\/en-gb\/articles\/[^"'\s<>]*voting-intention[^"'\s<>]*/gi),
+  ]
+
   for (const match of matches) {
+    const rawUrl = Array.isArray(match) ? match[1] || match[0] : match
     try {
-      return new URL(match[1], 'https://yougov.com').toString()
+      const url = new URL(String(rawUrl || '').replace(/\\\//g, '/'), 'https://yougov.com').toString()
+      if (seen.has(url)) continue
+      seen.add(url)
+      urls.push(url)
     } catch {
       continue
     }
   }
-  return null
+
+  return urls
+}
+
+function extractLatestArticleUrl(html) {
+  return extractLatestArticleUrls(html)[0] || null
 }
 
 function validatePollShape(poll) {
@@ -310,7 +325,65 @@ function extractLatestArticlePoll(html, url) {
   return poll
 }
 
+function dedupeAndSortPolls(polls = []) {
+  const byKey = new Map()
+
+  for (const poll of polls) {
+    if (!poll) continue
+    const key = poll.id || `${poll.pollster || 'YouGov'}-${poll.fieldworkEnd || poll.date || poll.publishedAt || ''}`
+    const existing = byKey.get(key)
+    if (!existing) {
+      byKey.set(key, poll)
+      continue
+    }
+
+    const existingIsWorkbook = String(existing.source || '').includes('workbook')
+    const incomingIsArticle = String(poll.source || '').includes('article')
+    if (existingIsWorkbook && incomingIsArticle) {
+      byKey.set(key, poll)
+    }
+  }
+
+  return [...byKey.values()].sort((a, b) =>
+    String(b?.publishedAt || b?.fieldworkEnd || b?.date || '').localeCompare(
+      String(a?.publishedAt || a?.fieldworkEnd || a?.date || ''),
+    ),
+  )
+}
+
+async function fetchYouGovLatestArticlePoll() {
+  const candidates = []
+
+  for (const sourceUrl of [YOUGOV_TRACKER_URL, YOUGOV_ARTICLES_URL]) {
+    try {
+      const html = await fetchText(sourceUrl)
+      candidates.push(...extractLatestArticleUrls(html))
+    } catch (e) {
+      console.warn(`YouGov article index fetch failed for ${sourceUrl}`, e)
+    }
+  }
+
+  candidates.push(`${YOUGOV_ARTICLES_URL}/54492-voting-intention-6-7-april-2026-ref-24-con-19-lab-16-grn-16-ld-13`)
+
+  const seen = new Set()
+  for (const articleUrl of candidates) {
+    if (!articleUrl || seen.has(articleUrl)) continue
+    seen.add(articleUrl)
+
+    try {
+      const articleHtml = await fetchText(articleUrl)
+      return extractLatestArticlePoll(articleHtml, articleUrl)
+    } catch (e) {
+      console.warn(`YouGov article parse failed for ${articleUrl}`, e)
+    }
+  }
+
+  return null
+}
+
 export async function fetchYouGovPolls() {
+  const polls = []
+
   try {
     const buffer = await fetchWorkbookBuffer()
     const rows = loadRows(buffer)
@@ -324,8 +397,6 @@ export async function fetchYouGovPolls() {
       }
     }
 
-    const polls = []
-
     for (let col = 1; col < headerRow.length; col += 1) {
       const date = parseIsoDate(headerRow[col])
       if (!date) continue
@@ -333,27 +404,30 @@ export async function fetchYouGovPolls() {
       const poll = buildWorkbookPoll(date, rowMap, col)
       if (poll) polls.push(poll)
     }
-
-    return polls.sort((a, b) =>
-      String(b?.publishedAt || b?.fieldworkEnd || '').localeCompare(String(a?.publishedAt || a?.fieldworkEnd || '')),
-    )
   } catch (e) {
     console.warn('YouGov history failed', e)
-    return []
   }
+
+  try {
+    const latestArticlePoll = await fetchYouGovLatestArticlePoll()
+    if (latestArticlePoll) polls.push(latestArticlePoll)
+  } catch (e) {
+    console.warn('YouGov latest article merge failed', e)
+  }
+
+  return dedupeAndSortPolls(polls)
 }
 
 export async function fetchYouGovPoll() {
   try {
-    const trackerHtml = await fetchText(YOUGOV_TRACKER_URL)
-    const articleUrl = extractLatestArticleUrl(trackerHtml) || `${YOUGOV_ARTICLES_URL}/54492-voting-intention-6-7-april-2026-ref-24-con-19-lab-16-grn-16-ld-13`
-    const articleHtml = await fetchText(articleUrl)
-    return extractLatestArticlePoll(articleHtml, articleUrl)
+    const articlePoll = await fetchYouGovLatestArticlePoll()
+    if (articlePoll) return articlePoll
   } catch (e) {
     console.warn('YouGov latest article parse failed, falling back to workbook', e)
-    const polls = await fetchYouGovPolls()
-    return polls[0] || null
   }
+
+  const polls = await fetchYouGovPolls()
+  return polls[0] || null
 }
 
 export default fetchYouGovPolls
