@@ -522,24 +522,51 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
   const [tooltip, setTooltip] = useState(latestIndex)
   const [hoverX, setHoverX] = useState(null)
   const [selectedPartyKey, setSelectedPartyKey] = useState(null)
+  const [pinnedIndex, setPinnedIndex] = useState(null)
 
   useEffect(() => {
     setTooltip(latestIndex)
     setHoverX(null)
     setSelectedPartyKey(null)
+    setPinnedIndex(null)
   }, [latestIndex])
 
-  const setHoverFromEvent = (event) => {
+  const getInteractionPointFromEvent = (event) => {
     const svg = svgRef.current
-    if (!svg || !filteredTrends.length) return
+    if (!svg || !filteredTrends.length) return null
 
     const rect = svg.getBoundingClientRect()
     const x = event.clientX - rect.left
     const clampedX = Math.max(chartStartX, Math.min(chartEndX, x))
     const rawIndex = (clampedX - chartStartX) / Math.max(1, COL)
     const nextIndex = Math.max(0, Math.min(filteredTrends.length - 1, rawIndex))
-    setHoverX(clampedX)
-    setTooltip(Math.round(nextIndex))
+
+    return {
+      x: clampedX,
+      index: Math.round(nextIndex),
+    }
+  }
+
+  const setHoverFromEvent = (event) => {
+    const point = getInteractionPointFromEvent(event)
+    if (!point) return
+
+    setHoverX(point.x)
+    setTooltip(point.index)
+  }
+
+  const pinSelectionFromEvent = (event) => {
+    const point = getInteractionPointFromEvent(event)
+    if (!point) return
+
+    setPinnedIndex(point.index)
+    setTooltip(point.index)
+    setHoverX(null)
+  }
+
+  const restorePinnedOrLatestSelection = () => {
+    setHoverX(null)
+    setTooltip(pinnedIndex ?? latestIndex)
   }
 
   useLayoutEffect(() => {
@@ -821,13 +848,13 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
                 }
               }}
               onPointerDown={(event) => {
-                if (event.pointerType === 'mouse' || event.pointerType === 'pen' || event.pointerType === 'touch') {
+                if (event.pointerType === 'mouse' || event.pointerType === 'pen') {
                   setHoverFromEvent(event)
                 }
               }}
+              onClick={pinSelectionFromEvent}
               onPointerLeave={() => {
-                setHoverX(null)
-                setTooltip(latestIndex)
+                restorePinnedOrLatestSelection()
                 setSelectedPartyKey(null)
               }}
             >
@@ -926,12 +953,12 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
                     }
                   }}
                   onPointerDown={(event) => {
-                    setHoverFromEvent(event)
+                    if (event.pointerType === 'mouse' || event.pointerType === 'pen') {
+                      setHoverFromEvent(event)
+                    }
                   }}
-                  onPointerLeave={() => {
-                    setHoverX(null)
-                    setTooltip(latestIndex)
-                  }}
+                  onClick={pinSelectionFromEvent}
+                  onPointerLeave={restorePinnedOrLatestSelection}
                 />
               </g>
             </svg>
