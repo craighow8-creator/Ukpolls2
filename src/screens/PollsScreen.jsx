@@ -375,6 +375,30 @@ function getSourceBadge(poll, T) {
   return { label: 'Estimated', color: T.tl, subtle: true }
 }
 
+function stripSourceUrl(value) {
+  return cleanText(value)
+    .replace(/https?:\/\/\S+/gi, '')
+    .replace(/[·|–-]\s*$/g, '')
+    .replace(/\s+[·|–-]\s+/g, ' · ')
+    .trim()
+}
+
+function cleanPollSourceLabel(poll) {
+  const source = cleanText(poll?.source)
+  const sourceUrl = cleanText(poll?.sourceUrl)
+  const pollster = cleanText(poll?.pollster)
+
+  if (/wikipedia/i.test(source) || /wikipedia/i.test(sourceUrl)) {
+    return 'Source: Wikipedia national poll tracker'
+  }
+
+  const withoutUrl = stripSourceUrl(source)
+  if (withoutUrl) return `Source: ${withoutUrl}`
+  if (pollster) return `Source: ${pollster}`
+  if (sourceUrl) return 'Source available'
+  return ''
+}
+
 function getConfidenceBadge(poll, T) {
   const confidence = cleanText(poll?.confidence).toLowerCase()
   if (confidence === 'high') return { label: 'High confidence', color: T.ok || T.pr, subtle: true }
@@ -703,7 +727,7 @@ function PollCard({ T, poll, nav, polls = [], pollContext = null, isFeatured = f
   const imported = isImportedPoll(poll)
   const sourceBadge = getSourceBadge(poll, T)
   const confidenceBadge = getConfidenceBadge(poll, T)
-  const sourceText = cleanText(poll?.source)
+  const sourceText = cleanPollSourceLabel(poll)
   const sourceUrl = cleanText(poll?.sourceUrl)
   const takeaway = buildPollTakeaway(poll, polls, pollContext)
 
