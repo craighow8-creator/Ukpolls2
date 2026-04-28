@@ -10,6 +10,8 @@
     "deploy": "npm run build && gh-pages -d dist",
     "polls:import:local": "cross-env POLITISCOPE_API_BASE=http://127.0.0.1:8787 node ./scripts/ingest-polls.mjs",
     "polls:import:remote": "cross-env POLITISCOPE_API_BASE=https://politiscope-api.craighow8.workers.dev node ./scripts/ingest-polls.mjs",
+    "polls:health:local": "node ./scripts/check-poll-health.mjs --api-base=http://127.0.0.1:8787",
+    "polls:health:remote": "node ./scripts/check-poll-health.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "byelections:import:local": "node ./scripts/ingest-byelections.mjs --api-base=http://127.0.0.1:8787",
     "byelections:import:remote": "node ./scripts/ingest-byelections.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "elections:intelligence:refresh:local": "node ./scripts/refresh-elections-intelligence.mjs --api-base=http://127.0.0.1:8787",

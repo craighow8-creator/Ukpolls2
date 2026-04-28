@@ -41,7 +41,7 @@ function safeNumber(value) {
 }
 
 function displayDate(poll) {
-  return formatUKDate(poll?.publishedAt) || formatUKDate(poll?.fieldworkEnd) || formatUKDate(poll?.date) || 'Date unavailable'
+  return formatUKDate(poll?.date) || formatUKDate(poll?.fieldworkEnd) || formatUKDate(poll?.publishedAt) || 'Date unavailable'
 }
 
 function metaLine(poll) {
@@ -60,7 +60,7 @@ function isImportedPoll(poll) {
 }
 
 function pollSortScore(poll) {
-  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
+  return cleanText(poll?.date) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkStart) || ''
 }
 
 function comparePollRows(a, b) {
@@ -409,4 +409,3 @@ export default function PollsterScreen({ T, pollster, polls = [], nav }) {
     </div>
   )
 }
-

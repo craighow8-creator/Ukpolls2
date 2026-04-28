@@ -119,8 +119,8 @@ function filterInvalidPolls(records) {
 
 function sortNewestFirst(records) {
   return [...records].sort((a, b) => {
-    const aScore = a.publishedAt || a.fieldworkEnd || a.fieldworkStart || ''
-    const bScore = b.publishedAt || b.fieldworkEnd || b.fieldworkStart || ''
+    const aScore = getUsablePollDate(a) || ''
+    const bScore = getUsablePollDate(b) || ''
     return bScore.localeCompare(aScore)
   })
 }

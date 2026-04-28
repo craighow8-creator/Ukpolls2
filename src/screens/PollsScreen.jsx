@@ -345,7 +345,7 @@ function buildPollTakeaway(poll, polls = [], pollContext = null) {
 }
 
 function displayDate(poll) {
-  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || 'Date unavailable'
+  return cleanText(poll?.date) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkStart) || 'Date unavailable'
 }
 
 function displaySubMeta(poll) {
@@ -407,14 +407,14 @@ function buildSeries(polls, partyKey) {
 }
 
 function pollSortScore(poll) {
-  const raw = cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
+  const raw = cleanText(poll?.date) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkStart) || ''
   const parsed = parseDateish(raw)
   if (parsed) return parsed.toISOString().slice(0, 10)
   return raw
 }
 
 function pollSortTime(poll) {
-  const raw = cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.fieldworkStart) || cleanText(poll?.date) || ''
+  const raw = cleanText(poll?.date) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkStart) || ''
   return parseDateish(raw)?.getTime() || 0
 }
 
@@ -436,14 +436,14 @@ function compareNewestPollRows(a, b) {
 }
 
 function compareLatestPollRows(a, b) {
-  const priorityDiff = comparePollConflictPriority(a, b)
-  if (priorityDiff !== 0) return priorityDiff
-
   const dateDiff = pollSortTime(b) - pollSortTime(a)
   if (dateDiff !== 0) return dateDiff
 
   const dateTextDiff = pollSortScore(b).localeCompare(pollSortScore(a))
   if (dateTextDiff !== 0) return dateTextDiff
+
+  const priorityDiff = comparePollConflictPriority(a, b)
+  if (priorityDiff !== 0) return priorityDiff
 
   return cleanText(a?.id || '').localeCompare(cleanText(b?.id || ''))
 }

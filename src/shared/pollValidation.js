@@ -35,7 +35,7 @@ function parseDisplayDate(value) {
 }
 
 export function getUsablePollDate(poll) {
-  return cleanText(poll?.publishedAt || poll?.fieldworkEnd || poll?.fieldworkStart || '')
+  return cleanText(poll?.date || poll?.fieldworkEnd || poll?.publishedAt || poll?.fieldworkStart || '')
 }
 
 export function countCorePartyValues(poll) {
@@ -97,10 +97,10 @@ export function canWinPollConflict(poll) {
 
 export function getConflictDateMs(poll) {
   const date =
-    parseIsoDate(cleanText(poll?.publishedAt)) ||
+    parseDisplayDate(cleanText(poll?.date)) ||
     parseIsoDate(cleanText(poll?.fieldworkEnd)) ||
-    parseIsoDate(cleanText(poll?.fieldworkStart)) ||
-    parseDisplayDate(cleanText(poll?.date))
+    parseIsoDate(cleanText(poll?.publishedAt)) ||
+    parseIsoDate(cleanText(poll?.fieldworkStart))
 
   return date?.getTime() || 0
 }
