@@ -169,7 +169,7 @@ export default function AboutModal({ open, onClose, T, dark, onToggleDark }) {
           {[
             { label: 'Polls', source: 'British Polling Council · 7-poll rolling average' },
             { label: 'Seat projection', source: 'Uniform swing model · Electoral Calculus MRP' },
-            { label: 'Leader approval', source: 'Ipsos Political Monitor' },
+            { label: 'Leader favourability', source: 'YouGov political favourability ratings' },
             { label: 'Betting odds', source: 'Betfair / Oddschecker' },
             { label: 'Net migration', source: 'ONS · Year ending June 2025' },
             { label: 'Channel crossings', source: 'Home Office / Migration Observatory 2025' },

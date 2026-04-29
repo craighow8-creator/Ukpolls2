@@ -13,13 +13,13 @@ The projections shown are indicative estimates based on current polling averages
     source: 'Based on BPC polling average',
   },
   net_approval: {
-    title: 'Net Approval Rating',
-    body: `Net approval = % who approve minus % who disapprove.
+    title: 'Net Favourability Rating',
+    body: `Net favourability = % favourable minus % unfavourable.
 
-A score of +6 means 6% more people approve than disapprove. A score of -42 means 42% more disapprove than approve.
+A score of +6 means 6% more people are favourable than unfavourable. A score of -42 means 42% more people are unfavourable than favourable.
 
-These figures come from the Ipsos Political Monitor, which has tracked leader approval monthly since 1977 — making it the longest-running measure of UK leader popularity. A nationally representative sample of ~1,000 adults is surveyed each month.`,
-    source: 'Ipsos Political Monitor · Monthly',
+Politiscope shows one metric at a time here and labels the source clearly. It does not mix favourability with approval, satisfaction, or “best PM” polling.`,
+    source: 'YouGov political favourability ratings',
   },
   poll_average: {
     title: 'Polling Snapshot',
@@ -181,17 +181,17 @@ Average viewing on Parliament TV: 350,000–500,000 live, with highlights reachi
     source: 'UK Parliament',
   },
   approval_ring: {
-    title: 'How the Approval Ring Works',
-    body: `The ring shows net approval as a proportion of the maximum possible score (+100 to -100 scale).
+    title: 'How the Favourability Ring Works',
+    body: `The ring shows net favourability as a proportion of the maximum possible score (+100 to -100 scale).
 
-Green arc = approval portion
-Red arc = disapproval portion  
-Centre number = net (approve% minus disapprove%)
+Green arc = favourable portion
+Red arc = unfavourable portion
+Centre number = net (favourable% minus unfavourable%)
 
-A full green ring would mean 100% net approval — never achieved by any UK politician in the Ipsos record. A full red ring would mean -100 net approval.
+A full green ring would mean 100% net favourability. A full red ring would mean -100 net favourability.
 
-The ring makes it easy to compare leaders at a glance — a mostly-green ring is broadly popular, a mostly-red ring means the public broadly disapprove.`,
-    source: 'Ipsos Political Monitor',
+The ring makes it easy to compare leaders at a glance — a mostly-green ring is broadly favourable, a mostly-red ring means the public is broadly unfavourable.`,
+    source: 'Leader ratings source shown on screen',
   },
   swing: {
     title: 'What is Electoral Swing?',

@@ -238,6 +238,7 @@ function getDefaultData() {
     councilStatus: withFallbackArray(DEFAULTS.councilStatus, []),
     councilEditorial: withFallbackArray(DEFAULTS.councilEditorial, []),
     parliament: withFallbackObject(DEFAULTS.parliament, {}),
+    leaderRatings: null,
   }
 }
 
@@ -302,26 +303,33 @@ function enrichLeaders(liveLeaders, defaultLeaders) {
   if (!live.length) {
     return withFallbackArray(defaultLeaders, []).map((leader) => ({
       ...leader,
-      _hasApprovalSplit: isFiniteNumericValue(leader.approve) && isFiniteNumericValue(leader.disapprove) && !!(leader.approvalSource || leader.approvalSourceUrl || leader.approvalUpdatedAt || leader.sourceUrl || leader.source || leader.updatedAt),
+      metricLabel: leader.metricLabel || 'Maintained profile rating',
+      ratingSource: leader.ratingSource || 'maintained-profile',
+      _hasFavourabilitySplit: isFiniteNumericValue(leader.favourable) && isFiniteNumericValue(leader.unfavourable) && !!(leader.sourceUrl || leader.source || leader.updatedAt),
+      _hasApprovalSplit: false,
     }))
   }
 
   return live.map((leader) => {
     const base = defaultsByName.get(normaliseName(leader.name)) || {}
-    const hasIncomingApprove = Object.prototype.hasOwnProperty.call(leader, 'approve') && isFiniteNumericValue(leader.approve)
-    const hasIncomingDisapprove = Object.prototype.hasOwnProperty.call(leader, 'disapprove') && isFiniteNumericValue(leader.disapprove)
-    const hasApprovalSource = !!(leader.approvalSource || leader.approvalSourceUrl || leader.approvalUpdatedAt || leader.sourceUrl || leader.source || leader.updatedAt)
-    const hasApprovalSplit = hasIncomingApprove && hasIncomingDisapprove && hasApprovalSource
+    const hasIncomingFavourable = Object.prototype.hasOwnProperty.call(leader, 'favourable') && isFiniteNumericValue(leader.favourable)
+    const hasIncomingUnfavourable = Object.prototype.hasOwnProperty.call(leader, 'unfavourable') && isFiniteNumericValue(leader.unfavourable)
+    const hasFavourabilitySource = !!(leader.sourceUrl || leader.source || leader.updatedAt || leader.publishedAt || leader.fieldworkDate)
+    const hasFavourabilitySplit = hasIncomingFavourable && hasIncomingUnfavourable && hasFavourabilitySource
     const merged = { ...base, ...leader }
 
-    if (!hasApprovalSplit) {
+    if (!hasFavourabilitySplit) {
+      delete merged.favourable
+      delete merged.unfavourable
       delete merged.approve
       delete merged.disapprove
     }
 
     return {
       ...merged,
-      _hasApprovalSplit: hasApprovalSplit,
+      metricLabel: merged.metricLabel || (merged.ratingSource === 'sourced' ? 'Net favourability' : 'Maintained profile rating'),
+      _hasFavourabilitySplit: hasFavourabilitySplit,
+      _hasApprovalSplit: false,
     }
   })
 }
@@ -509,6 +517,7 @@ function normaliseRemote(remote, defaults) {
     councilStatus: withFallbackArray(remote?.councilStatus, defaults.councilStatus),
     councilEditorial: withFallbackArray(remote?.councilEditorial, defaults.councilEditorial),
     parliament: mergeObject(defaults.parliament, withFallbackObject(remote?.parliament, {})),
+    leaderRatings: withFallbackObject(remote?.leaderRatings, null),
   }
 }
 
@@ -553,7 +562,13 @@ function buildRemoteSectionState(remote) {
       source: 'Polling trend model',
       fallback: false,
     }),
-    leaders: makeSectionState('leaders', { source: 'Maintained leader data', maintained: true }),
+    leaders: makeSectionState('leaders', {
+      updatedAt: remote?.leaderRatings?.updatedAt || remote?.leaderRatings?.publishedAt || null,
+      source: remote?.leaderRatings?.source || 'Maintained leader profiles',
+      mode: remote?.leaderRatings?.count ? 'live' : 'maintained',
+      maintained: !remote?.leaderRatings?.count,
+      fallback: !remote?.leaderRatings?.count,
+    }),
     betting: makeSectionState('betting', { source: remote?.betting?.source || 'Maintained editorial odds', maintained: true }),
     predictionMarkets: makeSectionState('predictionMarkets', {
       updatedAt: remote?.predictionMarkets?.updatedAt || remote?.predictionMarkets?.meta?.updatedAt || null,
@@ -772,6 +787,7 @@ export async function getData() {
     councilStatus: withFallbackArray(normalised.councilStatus, readJson(KEYS.councilStatus, null)),
     councilEditorial: withFallbackArray(normalised.councilEditorial, readJson(KEYS.councilEditorial, null)),
     parliament: mergeObject(normalised.parliament, readJson(KEYS.parliament, null)),
+    leaderRatings: normalised.leaderRatings || null,
     dataState: {
       ...buildDefaultSectionState(defaults),
       ...buildRemoteSectionState(remote),

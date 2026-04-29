@@ -107,9 +107,25 @@ function shortName(name) {
   return parts.length ? parts[parts.length - 1] : name
 }
 
-function approvalGap(value) {
+function ratingGap(value) {
   const number = Math.round(Math.abs(Number(value || 0)))
   return `${number} pt${number === 1 ? '' : 's'}`
+}
+
+function ratingMetricLabel(leader) {
+  return leader?.metricLabel || (leader?.ratingSource === 'sourced' ? 'Net favourability' : 'Maintained profile rating')
+}
+
+function hasFavourabilitySplit(leader) {
+  if (!leader?._hasFavourabilitySplit) return false
+  return Number.isFinite(Number(leader.favourable)) && Number.isFinite(Number(leader.unfavourable))
+}
+
+function ratingSourceLine(leader) {
+  if (leader?.ratingSource !== 'sourced') return 'Maintained profile rating'
+  const source = leader.source || 'Leader ratings source'
+  const date = leader.publishedAt || leader.fieldworkDate || leader.updatedAt || ''
+  return date ? `${source} · ${date}` : source
 }
 
 function buildLeaderIntelligence({ leader, party, sorted, curRank, prev, next }) {
@@ -135,29 +151,29 @@ function buildLeaderIntelligence({ leader, party, sorted, curRank, prev, next })
     ? leader.net < 0
       ? 'Highest in the table, though still underwater'
       : secondGap <= 3 && next
-        ? `Highest-rated, ${approvalGap(secondGap)} ahead of ${shortName(next.name)}`
+        ? `Highest-rated, ${ratingGap(secondGap)} ahead of ${shortName(next.name)}`
         : 'Highest-rated leader in the field'
     : isBottom
-      ? `Lowest-rated, ${approvalGap(topGap)} behind ${shortName(top?.name)}`
+      ? `Lowest-rated, ${ratingGap(topGap)} behind ${shortName(top?.name)}`
       : curRank === 1
-        ? `Closest challenger, ${approvalGap(topGap)} behind ${shortName(top?.name)}`
-        : `${approvalGap(topGap)} behind ${shortName(top?.name)}`
+        ? `Closest challenger, ${ratingGap(topGap)} behind ${shortName(top?.name)}`
+        : `${ratingGap(topGap)} behind ${shortName(top?.name)}`
 
   const gapLabel = isTop
     ? next
-      ? `${approvalGap(secondGap)} clear`
+      ? `${ratingGap(secondGap)} clear`
       : 'No challenger'
-    : `${approvalGap(topGap)} off top`
+    : `${ratingGap(topGap)} off top`
 
   let whyItMattersTitle = 'Current reading'
-  let whyItMattersBody = 'Approval is useful context, but the political signal depends on the party position around it.'
+  let whyItMattersBody = 'Favourability is useful context, but the political signal depends on the party position around it.'
 
   if (isTop && secondGap <= 3 && next) {
     whyItMattersTitle = 'Top, but not secure'
-    whyItMattersBody = `${leader.name} leads the approval table by only ${secondGap} points, so the personal advantage is real but narrow.`
+    whyItMattersBody = `${leader.name} leads the favourability table by only ${secondGap} points, so the personal advantage is real but narrow.`
   } else if (isTop && leader.net >= 0) {
     whyItMattersTitle = 'Personal advantage at the top'
-    whyItMattersBody = `${leader.name} has the clearest approval position in the field, giving ${party?.name || 'the party'} a visible leadership asset.`
+    whyItMattersBody = `${leader.name} has the clearest favourability position in the field, giving ${party?.name || 'the party'} a visible leadership asset.`
   } else if (leader.net <= -20 && partyChange != null && partyChange > 0) {
     whyItMattersTitle = 'Party stronger than leader'
     whyItMattersBody = `${party?.name || leader.party} is not moving as weakly as the personal rating, making the leader-party gap more important.`
@@ -165,20 +181,20 @@ function buildLeaderIntelligence({ leader, party, sorted, curRank, prev, next })
     whyItMattersTitle = 'Heavy personal drag'
     whyItMattersBody = `${leader.name} is deeply underwater and ranks near the bottom, leaving little personal buffer for the party.`
   } else if (leader.net < 0 && partyChange != null && partyChange > 0) {
-    whyItMattersTitle = 'Approval lags party momentum'
+    whyItMattersTitle = 'Favourability lags party momentum'
     whyItMattersBody = `${party?.name || leader.party} has a better polling signal than the leader's personal standing, which keeps pressure on the leadership.`
   } else if (!isTop && topGap <= 5) {
     whyItMattersTitle = 'Within striking distance'
-    whyItMattersBody = `${leader.name} is close enough to the top of the approval table for small shifts to change the leadership order.`
+    whyItMattersBody = `${leader.name} is close enough to the top of the favourability table for small shifts to change the leadership order.`
   } else if (leader.net >= 0) {
     whyItMattersTitle = 'Positive, not dominant'
     whyItMattersBody = `${leader.name} is above water, but the ranking gap means the rating is helpful rather than commanding.`
   } else if (isBottom) {
     whyItMattersTitle = 'Weakest personal position'
-    whyItMattersBody = `${leader.name} sits at the foot of the table, making leadership approval a clear vulnerability.`
+    whyItMattersBody = `${leader.name} sits at the foot of the table, making leadership favourability a clear vulnerability.`
   } else {
     whyItMattersTitle = 'Pressure remains personal'
-    whyItMattersBody = `${leader.name} remains underwater and behind the leading approval figure, limiting the room for a leadership boost.`
+    whyItMattersBody = `${leader.name} remains underwater and behind the leading favourability figure, limiting the room for a leadership boost.`
   }
 
   return {
@@ -277,7 +293,7 @@ export default function LeaderScreen({ T, lIdx, nav, leaders, parties, initialTa
   const curRank = sorted.findIndex((x) => x.name === l.name)
   const prev = curRank > 0 ? sorted[curRank - 1] : null
   const next = curRank < sorted.length - 1 ? sorted[curRank + 1] : null
-  const rankLabel = curRank >= 0 ? `#${curRank + 1} by net approval` : null
+  const rankLabel = curRank >= 0 ? `#${curRank + 1} by ${ratingMetricLabel(l).toLowerCase()}` : null
 
   const chrome = leaderChrome(T)
   const netColor = l.net >= 0 ? '#02A95B' : '#C8102E'
@@ -373,10 +389,26 @@ export default function LeaderScreen({ T, lIdx, nav, leaders, parties, initialTa
                   {l.net >= 0 ? '+' : ''}{l.net}
                 </div>
                 <div style={{ fontSize: 11.5, fontWeight: 700, color: chrome.muted, lineHeight: 1.34, paddingBottom: 3 }}>
-                  {l.approve}% approve<br />{l.disapprove}% disapprove
+                  {hasFavourabilitySplit(l) ? (
+                    <>
+                      {l.favourable}% favourable<br />{l.unfavourable}% unfavourable
+                    </>
+                  ) : (
+                    ratingMetricLabel(l)
+                  )}
                 </div>
               </div>
             </div>
+          </div>
+
+          <div style={{ fontSize: 12, fontWeight: 650, color: chrome.muted, textAlign: 'center', marginTop: 8, lineHeight: 1.45 }}>
+            {l.sourceUrl ? (
+              <a href={l.sourceUrl} target="_blank" rel="noreferrer" style={{ color: party?.color || l.color, textDecoration: 'none' }}>
+                {ratingSourceLine(l)}
+              </a>
+            ) : (
+              ratingSourceLine(l)
+            )}
           </div>
 
           <div

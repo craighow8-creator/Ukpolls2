@@ -5157,6 +5157,41 @@ const worker = {
         const leaders = await env.DB.prepare(
           'SELECT id, name, net, role, bio, party FROM leaders ORDER BY id ASC'
         ).all()
+        const leaderRatings = await loadContentSection('leaderRatings')
+        const leaderRatingsRows = Array.isArray(leaderRatings?.ratings) ? leaderRatings.ratings : []
+        const leaderRatingsByName = new Map(
+          leaderRatingsRows
+            .filter((rating) => rating?.name)
+            .map((rating) => [String(rating.name).trim().toLowerCase(), rating])
+        )
+        const mergedLeaders = (leaders.results || []).map((leader) => {
+          const rating = leaderRatingsByName.get(String(leader.name || '').trim().toLowerCase())
+          if (!rating || rating.net == null || Number.isNaN(Number(rating.net))) {
+            return {
+              ...leader,
+              ratingSource: 'maintained-profile',
+              metricLabel: 'Maintained profile rating',
+            }
+          }
+
+          return {
+            ...leader,
+            favourable: rating.favourable ?? null,
+            unfavourable: rating.unfavourable ?? null,
+            net: Number(rating.net),
+            metricLabel: rating.metricLabel || leaderRatings?.metricLabel || 'Net favourability',
+            source: rating.source || leaderRatings?.source || '',
+            sourceUrl: rating.sourceUrl || leaderRatings?.sourceUrl || '',
+            fieldworkDate: rating.fieldworkDate || leaderRatings?.fieldworkDate || '',
+            publishedAt: rating.publishedAt || leaderRatings?.publishedAt || '',
+            updatedAt: rating.updatedAt || leaderRatings?.updatedAt || null,
+            ratingSource: 'sourced',
+          }
+        })
+        const matchedLeaderNames = new Set(mergedLeaders.map((leader) => String(leader.name || '').trim().toLowerCase()))
+        const unmatchedLeaderRatings = leaderRatingsRows
+          .filter((rating) => !matchedLeaderNames.has(String(rating?.name || '').trim().toLowerCase()))
+          .map((rating) => rating.name)
 
         const elections = await env.DB.prepare(
           'SELECT id, name, date, data FROM elections ORDER BY id ASC'
@@ -5189,7 +5224,20 @@ const worker = {
 
         return jsonResponse({
           polls: polls.results || [],
-          leaders: leaders.results || [],
+          leaders: mergedLeaders,
+          leaderRatings: leaderRatings
+            ? {
+                datasetId: leaderRatings.datasetId || null,
+                source: leaderRatings.source || null,
+                sourceUrl: leaderRatings.sourceUrl || null,
+                metricLabel: leaderRatings.metricLabel || 'Net favourability',
+                fieldworkDate: leaderRatings.fieldworkDate || null,
+                publishedAt: leaderRatings.publishedAt || null,
+                updatedAt: leaderRatings.updatedAt || null,
+                count: leaderRatingsRows.length,
+                unmatched: unmatchedLeaderRatings,
+              }
+            : null,
           elections: {
             ...electionsPayload,
             intelligence: electionsIntelligence,
@@ -5228,11 +5276,12 @@ const worker = {
             },
             leaders: {
               section: 'leaders',
-              label: 'Maintained',
-              tone: 'maintained',
-              source: 'D1 leaders table',
-              fallback: false,
-              maintained: true,
+              label: leaderRatingsRows.length ? 'Sourced' : 'Maintained',
+              tone: leaderRatingsRows.length ? 'live' : 'maintained',
+              updatedAt: leaderRatings?.updatedAt || leaderRatings?.publishedAt || null,
+              source: leaderRatings?.source || 'Maintained leader profiles',
+              fallback: !leaderRatingsRows.length,
+              maintained: !leaderRatingsRows.length,
             },
             betting: {
               section: 'betting',
@@ -5420,6 +5469,7 @@ const worker = {
             'councilStatus',
             'councilEditorial',
             'parliament',
+            'leaderRatings',
           ].includes(section)
         ) {
           await saveContentSection(section, payload)

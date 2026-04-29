@@ -19,8 +19,19 @@ function isFiniteNumber(value) {
   return Number.isFinite(Number(value))
 }
 
-function hasApprovalSplit(leader) {
-  return !!leader?._hasApprovalSplit && isFiniteNumber(leader.approve) && isFiniteNumber(leader.disapprove)
+function hasFavourabilitySplit(leader) {
+  return !!leader?._hasFavourabilitySplit && isFiniteNumber(leader.favourable) && isFiniteNumber(leader.unfavourable)
+}
+
+function ratingMetricLabel(leader) {
+  return leader?.metricLabel || (leader?.ratingSource === 'sourced' ? 'Net favourability' : 'Maintained profile rating')
+}
+
+function ratingSourceLine(leader) {
+  if (leader?.ratingSource !== 'sourced') return 'Maintained profile rating'
+  const source = leader.source || 'Leader ratings source'
+  const date = leader.publishedAt || leader.fieldworkDate || leader.updatedAt || ''
+  return date ? `${source} · ${date}` : source
 }
 
 function NetBadge({ net, large = false }) {
@@ -219,7 +230,7 @@ function HeroBriefing({ T, summary, isDark }) {
             lineHeight: 1.5,
           }}
         >
-          Net approval shown where available; approve/disapprove split shown only when supplied by data.
+          Net favourability shown where available; favourable/unfavourable split shown only when supplied by a sourced dataset.
         </div>
       </div>
     </div>
@@ -267,7 +278,7 @@ export default function LeadersScreen({ T, nav }) {
 
   const leaders = data?.leaders || []
   const parties = data?.polls || []
-  const sorted = useMemo(() => [...(leaders || [])].sort((a, b) => b.net - a.net), [leaders])
+  const sorted = useMemo(() => [...(leaders || [])].sort((a, b) => Number(b.net ?? -999) - Number(a.net ?? -999)), [leaders])
 
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
   const card = isDark ? 'rgba(12,20,30,0.97)' : '#ffffff'
@@ -288,8 +299,8 @@ export default function LeadersScreen({ T, nav }) {
 
   if (!top) {
     return {
-      headline: 'Leader approval data is not available yet.',
-      body: 'Once approval figures are loaded, this screen will highlight who is leading, who is under pressure, and where leadership is helping or hurting party performance.',
+      headline: 'Leader favourability data is not available yet.',
+      body: 'Once sourced favourability figures are loaded, this screen will highlight who is leading, who is under pressure, and where leadership is helping or hurting party performance.',
       topLabel: '—',
       pressureLabel: '—',
       mismatchLabel: '—',
@@ -317,12 +328,12 @@ export default function LeadersScreen({ T, nav }) {
   const mismatchPartyChange = typeof mismatchEntry?.partyChange === 'number' ? mismatchEntry.partyChange : null
 
   // Derived signals:
-  // - topGap: separation at the top of the approval table
+  // - topGap: separation at the top of the favourability table
   // - bottomSeverity: how far underwater the weakest leader is
   // - mismatchScore: distance between leader standing and party momentum
   // - spreadAcrossField: whether the table is compressed or stretched
   // These signals feed a narrative mode chooser so the hero leads with the
-  // most meaningful approval story rather than always defaulting to top vs bottom.
+  // most meaningful favourability story rather than always defaulting to top vs bottom.
   const topGap = second ? top.net - second.net : null
   const third = sorted[2] || null
   const spreadAcrossField = top.net - bottom.net
@@ -353,11 +364,11 @@ export default function LeadersScreen({ T, nav }) {
     mode = 'fragmented'
   }
 
-  let headline = `${top.name} leads the approval table`
+  let headline = `${top.name} leads the favourability table`
   let body = `${top.name} is still the strongest-rated leader, but the wider field remains open.`
 
   if (mode === 'dominance') {
-    headline = `${top.name} has opened a clear approval lead`
+    headline = `${top.name} has opened a clear favourability lead`
     body = second
       ? `${top.name} is ${topGap} points clear of ${second.name}, giving them the cleanest leadership cushion in the field.`
       : `${top.name} is clearly ahead on leader ratings, with no close challenger in view.`
@@ -365,18 +376,18 @@ export default function LeadersScreen({ T, nav }) {
     headline = 'The race at the top is tightening'
     body = second
       ? `${top.name} and ${second.name} are separated by only ${topGap} points, so the leadership order still looks contestable.`
-      : `${top.name} remains in front, but the approval lead is too narrow to feel settled.`
+      : `${top.name} remains in front, but the favourability lead is too narrow to feel settled.`
   } else if (mode === 'pressure') {
     headline = `${bottom.name} remains deep underwater`
-    body = `${bottom.name} is carrying the heaviest approval pressure in the table, and that level of weakness is now the defining signal in the field.`
+    body = `${bottom.name} is carrying the heaviest favourability pressure in the table, and that level of weakness is now the defining signal in the field.`
   } else if (mode === 'mismatch') {
-    headline = `${mismatch.name} is the clearest approval mismatch`
+    headline = `${mismatch.name} is the clearest favourability mismatch`
     body = `${mismatch.name}'s personal standing is the sharpest disconnect with party momentum, making that leadership gap harder to ignore.`
   } else {
-    headline = 'Leader ratings remain unsettled across the field'
+    headline = 'Leader favourability remains unsettled across the field'
     body = second && third
-      ? `${top.name} still leads, but the gaps behind are narrow enough that the approval order can still shift quickly.`
-      : `${top.name} remains ahead, but the table is not yet producing one dominant approval story.`
+      ? `${top.name} still leads, but the gaps behind are narrow enough that the favourability order can still shift quickly.`
+      : `${top.name} remains ahead, but the table is not yet producing one dominant favourability story.`
   }
 
   return {
@@ -411,7 +422,7 @@ export default function LeadersScreen({ T, nav }) {
       </div>
 
       <div style={{ padding: '4px 16px 40px' }}>
-        <SectionLabel T={T}>Approval leaderboard</SectionLabel>
+        <SectionLabel T={T}>Favourability leaderboard</SectionLabel>
 
         {sorted.map((l, i) => {
           const lIdx = leaders.indexOf(l)
@@ -496,9 +507,19 @@ export default function LeadersScreen({ T, nav }) {
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <NetBadge net={l.net} large={i === 0} />
                     <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, marginTop: 4 }}>
-                      {hasApprovalSplit(l) ? `${l.approve}% / ${l.disapprove}%` : 'net approval'}
+                      {hasFavourabilitySplit(l) ? `${l.favourable}% / ${l.unfavourable}%` : ratingMetricLabel(l)}
                     </div>
                   </div>
+                </div>
+
+                <div style={{ fontSize: 12, fontWeight: 650, color: T.tl, textAlign: 'center', marginTop: 9, lineHeight: 1.45 }}>
+                  {l.sourceUrl ? (
+                    <a href={l.sourceUrl} target="_blank" rel="noreferrer" style={{ color: T.pr, textDecoration: 'none' }}>
+                      {ratingSourceLine(l)}
+                    </a>
+                  ) : (
+                    ratingSourceLine(l)
+                  )}
                 </div>
 
                 <LeaderSignal text={signal} border={border} T={T} />
@@ -518,10 +539,10 @@ export default function LeadersScreen({ T, nav }) {
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 700, color: T.th, marginBottom: 5, textAlign: 'center' }}>
-            About net approval
+            About net favourability
           </div>
           <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, lineHeight: 1.6, textAlign: 'center' }}>
-            Net approval = % approve minus % disapprove. Approval/disapproval splits are hidden unless they are supplied by the loaded leader data.
+            Net favourability = % favourable minus % unfavourable. The app does not mix this with approval, satisfaction, or best-PM polling.
           </div>
         </div>
       </div>

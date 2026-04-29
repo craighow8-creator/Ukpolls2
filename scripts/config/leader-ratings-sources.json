@@ -1,0 +1,46 @@
+{
+  "datasetId": "yougov-political-favourability-april-2026",
+  "source": "YouGov",
+  "sourceUrl": "https://yougov.com/en-gb/articles/54604-political-favourability-ratings-april-2026",
+  "metricLabel": "Net favourability",
+  "fieldworkDate": "",
+  "publishedAt": "2026-04-23",
+  "updatedAt": "2026-04-29T00:00:00.000Z",
+  "ratings": [
+    {
+      "name": "Keir Starmer",
+      "party": "Labour",
+      "favourable": 24,
+      "unfavourable": 69,
+      "net": -45
+    },
+    {
+      "name": "Kemi Badenoch",
+      "party": "Conservative",
+      "favourable": 29,
+      "unfavourable": 50,
+      "net": -21
+    },
+    {
+      "name": "Nigel Farage",
+      "party": "Reform UK",
+      "favourable": 27,
+      "unfavourable": 65,
+      "net": -38
+    },
+    {
+      "name": "Ed Davey",
+      "party": "Lib Dem",
+      "favourable": 30,
+      "unfavourable": 33,
+      "net": -3
+    },
+    {
+      "name": "Zack Polanski",
+      "party": "Green",
+      "favourable": 26,
+      "unfavourable": 34,
+      "net": -8
+    }
+  ]
+}

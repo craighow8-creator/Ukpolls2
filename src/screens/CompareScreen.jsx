@@ -1191,7 +1191,9 @@ export default function CompareScreen({
                             >
                               {formatLeaderGap(leader.net)}
                             </div>
-                            <div style={{ fontSize: 13, color: T.tl, marginTop: 3 }}>Net approval</div>
+                            <div style={{ fontSize: 13, color: T.tl, marginTop: 3 }}>
+                              {leader.metricLabel || 'Net favourability'}
+                            </div>
                           </>
                         ) : (
                           <div style={{ fontSize: 13, color: T.tl }}>No leader data</div>

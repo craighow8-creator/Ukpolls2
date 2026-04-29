@@ -29,7 +29,7 @@ export default function Ring({ value, size = 128 }) {
           {value >= 0 ? '+' : ''}{value}
         </div>
         <div style={{ fontSize:size*0.07, fontWeight:800, letterSpacing:1.5, textTransform:'uppercase', color:'#999', marginTop:2 }}>
-          Net approval
+          Net favourability
         </div>
       </div>
     </div>
