@@ -144,6 +144,16 @@ function FactPill({ T, label, value }) {
   )
 }
 
+function formatVoteCount(value) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return ''
+  return number.toLocaleString('en-GB')
+}
+
+function getDeclaredWinners(results = []) {
+  return (Array.isArray(results) ? results : []).filter((result) => result?.elected)
+}
+
 function normaliseAreaQuery(value) {
   return String(value || 'UK postcode').trim() || 'UK postcode'
 }
@@ -222,6 +232,7 @@ export default function LocalVoteGuideScreen({
     areaName: '',
     candidates: [],
     d1Candidates: [],
+    d1Results: [],
     d1Match: null,
     sourceLabel: '',
     sourceUrl: '',
@@ -233,6 +244,7 @@ export default function LocalVoteGuideScreen({
   const [candidateState, setCandidateState] = useState({
     loading: false,
     candidates: [],
+    results: [],
     sourceLabel: '',
     sourceUrl: '',
   })
@@ -294,6 +306,7 @@ export default function LocalVoteGuideScreen({
         areaName: '',
         candidates: [],
         d1Candidates: [],
+        d1Results: [],
         d1Match: null,
         sourceLabel: '',
         sourceUrl: '',
@@ -333,6 +346,7 @@ export default function LocalVoteGuideScreen({
         areaName: result?.areaName || '',
         candidates: result?.candidates || [],
         d1Candidates: d1Payload?.candidates || [],
+        d1Results: d1Payload?.results || [],
         d1Match,
         sourceLabel: result?.sourceLabel || '',
         sourceUrl: result?.sourceUrl || '',
@@ -360,14 +374,17 @@ export default function LocalVoteGuideScreen({
 
   const externalBriefingTag = useMemo(() => deriveBriefingTag(externalCouncil), [externalCouncil])
   const externalDisplayedCandidates = externalGuide.d1Candidates.length ? externalGuide.d1Candidates : []
+  const externalResults = Array.isArray(externalGuide.d1Results) ? externalGuide.d1Results : []
+  const externalWinners = getDeclaredWinners(externalResults)
+  const externalHasDeclaredResult = externalResults.length > 0
   const externalHasResolvedWard = Boolean(externalGuide.d1Match?.councilSlug && externalGuide.d1Match?.wardSlug)
   const externalHasCandidateList = externalDisplayedCandidates.length > 0
-  const externalHasActiveElection = externalHasCandidateList
+  const externalHasActiveElection = externalHasCandidateList || externalHasDeclaredResult
   const externalNoElectionThisCycle = externalHasResolvedWard && !externalHasActiveElection
   const externalNoElectionHeadline = 'No local election in this ward on 07-05-2026.'
   const externalNoElectionBody = 'This area is not voting in this local election cycle.'
   const externalActiveElectionDate = formatUKDate(LOCAL_ELECTIONS?.date || '2026-05-07')
-  const externalActiveElectionStatus = 'Election taking place'
+  const externalActiveElectionStatus = externalHasDeclaredResult ? 'Result declared' : 'Election taking place'
   const externalCandidateFallbackText = externalHasResolvedWard
     ? externalNoElectionHeadline
     : 'Candidate data is building for this area.'
@@ -379,6 +396,7 @@ export default function LocalVoteGuideScreen({
       setCandidateState({
         loading: false,
         candidates: [],
+        results: [],
         sourceLabel: '',
         sourceUrl: '',
       })
@@ -404,6 +422,7 @@ export default function LocalVoteGuideScreen({
       setCandidateState({
         loading: false,
         candidates: result?.candidates || [],
+        results: result?.results || [],
         sourceLabel: result?.sourceLabel || '',
         sourceUrl: result?.sourceUrl || '',
       })
@@ -417,6 +436,11 @@ export default function LocalVoteGuideScreen({
   const displayedCandidates = selectedWard
     ? (candidateState.candidates.length ? candidateState.candidates : selectedWard.candidates)
     : []
+  const displayedResults = selectedWard
+    ? (candidateState.results.length ? candidateState.results : selectedWard.results || [])
+    : []
+  const declaredWinners = getDeclaredWinners(displayedResults)
+  const hasDeclaredResult = displayedResults.length > 0
   const candidateSourceLabel = candidateState.sourceLabel || (displayedCandidates.length ? 'Official statement of persons nominated' : '')
   const candidateSourceUrl = candidateState.sourceUrl || (displayedCandidates.length ? selectedWard?.candidates?.[0]?.sourceUrl || '' : '')
   const hasVerifiedIssueStatements = displayedCandidates.some((candidate) =>
@@ -430,13 +454,26 @@ export default function LocalVoteGuideScreen({
         { label: 'Election', value: formatUKDate(council.nextElectionDate) },
         { label: 'Current seats', value: selectedWard.councillors.length ? `${selectedWard.councillors.length}` : 'Not yet available' },
         {
-          label: 'Candidates listed',
-          value: displayedCandidates.length ? `${displayedCandidates.length}` : 'Unavailable',
+          label: hasDeclaredResult ? 'Result' : 'Candidates listed',
+          value: hasDeclaredResult
+            ? declaredWinners.length
+              ? `${declaredWinners.length} elected`
+              : 'Declared'
+            : displayedCandidates.length
+              ? `${displayedCandidates.length}`
+              : 'Unavailable',
         },
         { label: 'Sources', value: `${sources.length}` },
       ]
     : []
-  const externalKeyFacts = externalHasActiveElection
+  const externalKeyFacts = externalHasDeclaredResult
+    ? [
+        { label: 'Local Authority', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Local Authority not matched yet' },
+        { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
+        { label: 'Result', value: externalWinners.length ? `${externalWinners.length} elected` : 'Declared' },
+        { label: 'Status', value: 'Result declared' },
+      ]
+    : externalHasActiveElection
     ? [
         { label: 'Local Authority', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Local Authority not matched yet' },
         { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
@@ -492,6 +529,8 @@ export default function LocalVoteGuideScreen({
                 value={
                   externalGuide.loading
                     ? 'Checking external lookup...'
+                    : externalHasDeclaredResult
+                      ? 'Result declared'
                     : externalHasCandidateList
                       ? `${externalDisplayedCandidates.length} candidates listed`
                       : externalCandidateFallbackText
@@ -523,7 +562,11 @@ export default function LocalVoteGuideScreen({
                 </Chip>
               </div>
               <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.7 }}>
-                {externalHasActiveElection
+                {externalHasDeclaredResult
+                  ? externalWinners.length
+                    ? `${externalWinners.map((winner) => winner.candidateName || winner.name).filter(Boolean).join(', ')} elected in this ward.`
+                    : 'Official result available for this ward.'
+                  : externalHasActiveElection
                   ? externalCouncil?.watchFor ||
                     externalCouncil?.electionMessage ||
                     'Candidate list available for this ward in the current local election cycle.'
@@ -543,7 +586,11 @@ export default function LocalVoteGuideScreen({
                   T={T}
                   label="Verdict"
                   value={
-                    externalHasActiveElection
+                    externalHasDeclaredResult
+                      ? externalWinners.length
+                        ? `${externalWinners.map((winner) => winner.candidateName || winner.name).filter(Boolean).join(', ')} elected.`
+                        : 'Official result declared.'
+                      : externalHasActiveElection
                       ? externalCouncil?.verdict || externalActiveElectionStatus
                       : externalNoElectionThisCycle
                         ? externalNoElectionBody
@@ -554,13 +601,32 @@ export default function LocalVoteGuideScreen({
               </div>
             </SurfaceCard>
 
-            <SectionLabel T={T}>Candidate lookup</SectionLabel>
+            <SectionLabel T={T}>{externalHasDeclaredResult ? 'Election result' : 'Candidate lookup'}</SectionLabel>
             {externalGuide.loading ? (
               <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
                   Checking local candidate data...
                 </div>
               </SurfaceCard>
+            ) : externalHasDeclaredResult ? (
+              <>
+                {externalResults.map((result) => {
+                  const accent = partyColor(result.party, T.pr)
+                  return (
+                    <SurfaceCard key={result.id} T={T} borderColor={result.elected ? `${accent}55` : `${accent}20`} style={{ marginBottom: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                        <div>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: T.th }}>{result.candidateName || result.name}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginTop: 4 }}>
+                            {result.party || 'Party not listed'}{formatVoteCount(result.votes) ? ` · ${formatVoteCount(result.votes)} votes` : ''}
+                          </div>
+                        </div>
+                        {result.elected ? <Chip color={accent}>Elected</Chip> : null}
+                      </div>
+                    </SurfaceCard>
+                  )
+                })}
+              </>
             ) : externalHasCandidateList ? (
               <>
                 {externalDisplayedCandidates.map((candidate) => {
@@ -715,6 +781,75 @@ export default function LocalVoteGuideScreen({
                   Voters in {selectedWard.name} are choosing who will represent the ward on {council.councilName} at the next local election.
                   Use the verified candidate list, current councillor record, and source links below to understand who is standing and what this Local Authority controls.
                 </div>
+              </SurfaceCard>
+
+              <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+                <SectionLabel T={T}>Election result</SectionLabel>
+                {candidateState.loading ? (
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.th, textAlign: 'center', lineHeight: 1.6 }}>
+                    Checking official result data...
+                  </div>
+                ) : hasDeclaredResult ? (
+                  <>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: T.th, textAlign: 'center', lineHeight: 1.6, marginBottom: 10 }}>
+                      {declaredWinners.length
+                        ? `${declaredWinners.map((winner) => winner.candidateName || winner.name).filter(Boolean).join(', ')} elected.`
+                        : 'Official result declared for this ward.'}
+                    </div>
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      {displayedResults.map((result) => {
+                        const accent = partyColor(result.party, T.pr)
+                        const resultName = result.candidateName || result.name || 'Candidate'
+                        return (
+                          <div
+                            key={result.id || `${resultName}-${result.party}`}
+                            style={{
+                              border: `1px solid ${accent}28`,
+                              borderRadius: 12,
+                              padding: 10,
+                              background: T.card2,
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              gap: 10,
+                              alignItems: 'center'
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontSize: 14, fontWeight: 800, color: T.th }}>{resultName}</div>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, marginTop: 3 }}>{result.party || 'Party not listed'}</div>
+                            </div>
+                            <div style={{ textAlign: 'right', display: 'grid', gap: 4, justifyItems: 'end' }}>
+                              {result.elected ? <Chip color={accent}>Elected</Chip> : null}
+                              <div style={{ fontSize: 13, fontWeight: 800, color: T.th }}>
+                                {formatVoteCount(result.votes)}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {displayedResults[0]?.sourceUrl || displayedResults[0]?.sourceLabel ? (
+                      <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, textAlign: 'center', marginTop: 10 }}>
+                        {displayedResults[0]?.sourceUrl ? (
+                          <a
+                            href={displayedResults[0].sourceUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ color: T.pr, textDecoration: 'none' }}
+                          >
+                            Source: {displayedResults[0]?.sourceLabel || 'Official Local Authority result'}
+                          </a>
+                        ) : (
+                          `Source: ${displayedResults[0]?.sourceLabel || 'Official Local Authority result'}`
+                        )}
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.th, textAlign: 'center', lineHeight: 1.6 }}>
+                    Result not declared yet.
+                  </div>
+                )}
               </SurfaceCard>
 
               <SectionLabel T={T}>Current ward councillors</SectionLabel>

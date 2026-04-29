@@ -1,0 +1,31 @@
+{
+  "electionDate": "2026-05-07",
+  "sources": [
+    {
+      "councilSlug": "sheffield-city-council",
+      "councilName": "Sheffield City Council",
+      "enabled": false,
+      "priority": true,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-result-sources/sheffield-2026-results.csv",
+      "sourceLabel": "Official local election results",
+      "sourceUrl": "",
+      "lastChecked": "",
+      "verificationStatus": "verified",
+      "notes": "Enable after Sheffield publishes official 7 May 2026 ward results."
+    },
+    {
+      "councilSlug": "birmingham-city-council",
+      "councilName": "Birmingham City Council",
+      "enabled": false,
+      "priority": true,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-result-sources/birmingham-2026-results.csv",
+      "sourceLabel": "Official local election results",
+      "sourceUrl": "",
+      "lastChecked": "",
+      "verificationStatus": "verified",
+      "notes": "Enable after Birmingham publishes official 7 May 2026 ward results."
+    }
+  ]
+}

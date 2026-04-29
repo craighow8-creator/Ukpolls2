@@ -2321,6 +2321,17 @@ const worker = {
            ORDER BY c.ward_id ASC, c.name ASC`
         ).bind(councilRow.id).all()
 
+        const resultRows = await env.DB.prepare(
+          `SELECT
+             r.id, r.ward_id, r.candidate_id, r.candidate_name, r.party, r.votes,
+             r.elected, r.turnout, r.source_attribution, r.verification_status,
+             r.last_checked, s.label AS source_label, s.url AS source_url
+           FROM local_results r
+           LEFT JOIN local_sources s ON s.id = r.primary_source_id
+           WHERE r.council_id = ?
+           ORDER BY r.ward_id ASC, r.elected DESC, r.votes DESC, r.candidate_name ASC`
+        ).bind(councilRow.id).all()
+
         const officeholdersByWard = new Map()
         for (const row of officeholderRows.results || []) {
           const list = officeholdersByWard.get(row.ward_id) || []
@@ -2358,9 +2369,31 @@ const worker = {
           candidatesByWard.set(row.ward_id, list)
         }
 
+        const resultsByWard = new Map()
+        for (const row of resultRows.results || []) {
+          const list = resultsByWard.get(row.ward_id) || []
+          list.push({
+            id: row.id,
+            candidateId: row.candidate_id || '',
+            candidateName: row.candidate_name,
+            name: row.candidate_name,
+            party: row.party || '',
+            votes: Number.isFinite(Number(row.votes)) ? Number(row.votes) : null,
+            elected: normaliseD1Boolean(row.elected),
+            turnout: row.turnout || '',
+            sourceUrl: row.source_url || '',
+            sourceLabel: row.source_label || '',
+            lastChecked: row.last_checked || '',
+            verificationStatus: row.verification_status || 'verified',
+            sourceAttribution: row.source_attribution || 'official-result-source',
+          })
+          resultsByWard.set(row.ward_id, list)
+        }
+
         const wardPayloads = wards.map((ward) => {
           const councillors = officeholdersByWard.get(ward.id) || []
           const candidates = candidatesByWard.get(ward.id) || []
+          const results = resultsByWard.get(ward.id) || []
           const wardName = ward.name
 
           return {
@@ -2375,6 +2408,7 @@ const worker = {
             sources: wardSourceMap.get(ward.id) || [],
             councillors: councillors.map((item) => ({ ...item, ward: wardName })),
             candidates: candidates.map((item) => ({ ...item, ward: wardName })),
+            results: results.map((item) => ({ ...item, ward: wardName })),
           }
         })
 
@@ -2419,6 +2453,11 @@ const worker = {
         ).bind(council.id).all()
         const candidateIds = (candidateRows.results || []).map((row) => row.id)
 
+        const resultRows = await env.DB.prepare(
+          'SELECT id FROM local_results WHERE council_id = ?'
+        ).bind(council.id).all()
+        const resultIds = (resultRows.results || []).map((row) => row.id)
+
         const eventRows = await env.DB.prepare(
           'SELECT id FROM local_election_events WHERE council_id = ?'
         ).bind(council.id).all()
@@ -2441,12 +2480,14 @@ const worker = {
         }
 
         deleteEntitySources('candidate', candidateIds)
+        deleteEntitySources('result', resultIds)
         deleteEntitySources('officeholder', officeholderIds)
         deleteEntitySources('ward', wardIds)
         deleteEntitySources('ballot', ballotIds)
         deleteEntitySources('election_event', eventIds)
         deleteEntitySources('council', [council.id])
 
+        addDelete(env.DB.prepare('DELETE FROM local_results WHERE council_id = ?').bind(council.id))
         addDelete(env.DB.prepare('DELETE FROM local_candidates WHERE council_id = ?').bind(council.id))
         addDelete(env.DB.prepare('DELETE FROM local_officeholders WHERE council_id = ?').bind(council.id))
         addDelete(env.DB.prepare('DELETE FROM local_ballots WHERE council_id = ?').bind(council.id))
@@ -2773,11 +2814,47 @@ const worker = {
            ORDER BY c.name ASC`
         ).bind(councilRow.id, wardRow.id).all()
 
+        const resultRows = await env.DB.prepare(
+          `SELECT
+             r.id,
+             r.candidate_id,
+             r.candidate_name,
+             r.party,
+             r.votes,
+             r.elected,
+             r.turnout,
+             r.source_attribution,
+             r.verification_status,
+             r.last_checked,
+             s.label AS source_label,
+             s.url AS source_url
+           FROM local_results r
+           LEFT JOIN local_sources s ON s.id = r.primary_source_id
+           WHERE r.council_id = ? AND r.ward_id = ?
+           ORDER BY r.elected DESC, r.votes DESC, r.candidate_name ASC`
+        ).bind(councilRow.id, wardRow.id).all()
+
         return {
           councilSlug: councilRow.slug,
           councilName: councilRow.name,
           wardSlug: wardRow.slug,
           wardName: wardRow.name,
+          results: (resultRows.results || []).map((row) => ({
+            id: row.id,
+            ward: wardRow.name,
+            candidateId: row.candidate_id || '',
+            candidateName: row.candidate_name,
+            name: row.candidate_name,
+            party: row.party || '',
+            votes: Number.isFinite(Number(row.votes)) ? Number(row.votes) : null,
+            elected: normaliseD1Boolean(row.elected),
+            turnout: row.turnout || '',
+            sourceUrl: row.source_url || '',
+            sourceLabel: row.source_label || '',
+            lastChecked: row.last_checked || '',
+            verificationStatus: row.verification_status || 'verified',
+            sourceAttribution: row.source_attribution || 'official-result-source',
+          })),
           candidates: (candidateRows.results || []).map((row) => ({
             id: row.id,
             ward: wardRow.name,
@@ -2845,6 +2922,13 @@ const worker = {
            FROM local_officeholders
            WHERE is_current = 1`
         ).first()
+        const resultCoverage = await env.DB.prepare(
+          `SELECT
+             COUNT(*) AS result_count,
+             COUNT(DISTINCT council_id) AS council_count,
+             COUNT(DISTINCT ward_id) AS ward_count
+           FROM local_results`
+        ).first()
         const missingCandidateSourceUrl = await countFirst(
           `SELECT COUNT(*) AS count
            FROM local_candidates c
@@ -2857,6 +2941,12 @@ const worker = {
            LEFT JOIN local_sources s ON s.id = o.primary_source_id
            WHERE o.is_current = 1
              AND (s.url IS NULL OR s.url = '')`
+        )
+        const missingResultSourceUrl = await countFirst(
+          `SELECT COUNT(*) AS count
+           FROM local_results r
+           LEFT JOIN local_sources s ON s.id = r.primary_source_id
+           WHERE s.url IS NULL OR s.url = ''`
         )
         const candidateCouncilRows = await env.DB.prepare(
           `SELECT
@@ -2887,6 +2977,21 @@ const worker = {
            GROUP BY lc.slug, lc.name
            ORDER BY lc.name ASC`
         ).all()
+        const resultCouncilRows = await env.DB.prepare(
+          `SELECT
+             lc.slug,
+             lc.name,
+             COUNT(DISTINCT r.ward_id) AS ward_count,
+             COUNT(*) AS result_count,
+             SUM(CASE WHEN r.elected = 1 THEN 1 ELSE 0 END) AS elected_count,
+             SUM(CASE WHEN s.url IS NULL OR s.url = '' THEN 1 ELSE 0 END) AS missing_source_url_count
+           FROM local_results r
+           JOIN local_councils lc ON lc.id = r.council_id
+           LEFT JOIN local_sources s ON s.id = r.primary_source_id
+           WHERE lc.active = 1
+           GROUP BY lc.slug, lc.name
+           ORDER BY lc.name ASC`
+        ).all()
         const latestRun = await env.DB.prepare(
           `SELECT id, pipeline, status, started_at, finished_at, rows_upserted, error_summary, meta_json
            FROM local_ingest_runs
@@ -2898,7 +3003,7 @@ const worker = {
         if (!councilCount) warnings.push('No Local Authority rows found.')
         if (!wardCount) warnings.push('No ward rows found.')
         if (!Number(candidateCoverage?.candidate_count || 0)) warnings.push('No candidate rows found.')
-        if (missingCandidateSourceUrl || missingOfficeholderSourceUrl) warnings.push('Some Local Authority records are missing source URLs.')
+        if (missingCandidateSourceUrl || missingOfficeholderSourceUrl || missingResultSourceUrl) warnings.push('Some Local Authority records are missing source URLs.')
         if (!latestRun) warnings.push('No local ingest run has been recorded yet.')
 
         return {
@@ -2913,12 +3018,16 @@ const worker = {
             officeholderCouncils: Number(officeholderCoverage?.council_count || 0),
             officeholderWards: Number(officeholderCoverage?.ward_count || 0),
             officeholders: Number(officeholderCoverage?.officeholder_count || 0),
+            resultCouncils: Number(resultCoverage?.council_count || 0),
+            resultWards: Number(resultCoverage?.ward_count || 0),
+            resultRows: Number(resultCoverage?.result_count || 0),
             candidateCouncils: Number(candidateCoverage?.council_count || 0),
             candidateWards: Number(candidateCoverage?.ward_count || 0),
             candidates: Number(candidateCoverage?.candidate_count || 0),
-            rowsMissingSourceUrl: missingCandidateSourceUrl + missingOfficeholderSourceUrl,
+            rowsMissingSourceUrl: missingCandidateSourceUrl + missingOfficeholderSourceUrl + missingResultSourceUrl,
             candidatesMissingSourceUrl: missingCandidateSourceUrl,
             officeholdersMissingSourceUrl: missingOfficeholderSourceUrl,
+            resultsMissingSourceUrl: missingResultSourceUrl,
           },
           candidateCoverageByCouncil: (candidateCouncilRows.results || []).map((row) => ({
             slug: row.slug,
@@ -2932,6 +3041,14 @@ const worker = {
             name: row.name,
             wards: Number(row.ward_count || 0),
             officeholders: Number(row.officeholder_count || 0),
+            missingSourceUrl: Number(row.missing_source_url_count || 0),
+          })),
+          resultCoverageByCouncil: (resultCouncilRows.results || []).map((row) => ({
+            slug: row.slug,
+            name: row.name,
+            wards: Number(row.ward_count || 0),
+            results: Number(row.result_count || 0),
+            elected: Number(row.elected_count || 0),
             missingSourceUrl: Number(row.missing_source_url_count || 0),
           })),
           latestLocalIngestRun: latestRun
@@ -3500,6 +3617,298 @@ const worker = {
           ballotCount: Number(ballotRow?.count || 0),
           candidateCount: Number(candidateRow?.count || 0),
           sourcedCandidateCount: Number(linkedRow?.count || 0),
+        }
+      }
+
+      async function upsertLocalVoteResultSourceChunk({
+        electionDate,
+        sourceLabel,
+        sourceUrl,
+        rows,
+        runId,
+      }) {
+        const batchRunner = createLocalVoteBatchRunner()
+        const rowsReceived = toArray(rows).length
+        let rowsUpserted = 0
+        let matchedRows = 0
+        let skippedRows = 0
+        let insertedResults = 0
+        let unmatchedCandidates = 0
+        const processedEventIds = new Set()
+        const processedBallotIds = new Set()
+        const sourceIds = new Map()
+        const skippedSamples = []
+        const unmatchedCandidateSamples = []
+
+        const getSourceId = async (row) => {
+          const label = String(row.sourceLabel || sourceLabel || 'Official local election result').trim()
+          const urlValue = String(row.sourceUrl || sourceUrl || '').trim()
+          if (!label || !urlValue) return null
+
+          const key = `${label}|${urlValue}`
+          if (sourceIds.has(key)) return sourceIds.get(key)
+
+          const sourceId = await upsertLocalSource(
+            {
+              label,
+              url: urlValue,
+              publisher: row.publisher || row.councilName || 'Official Local Authority source',
+              sourceType: row.sourceType || 'official-election-result',
+              updatedAt: row.lastChecked || row.updatedAt || electionDate || new Date().toISOString(),
+              lastChecked: row.lastChecked || null,
+            },
+            'official-election-result',
+            batchRunner,
+          )
+          sourceIds.set(key, sourceId)
+          return sourceId
+        }
+
+        const noteSkipped = (reason, row) => {
+          skippedRows += 1
+          if (skippedSamples.length >= 25) return
+          skippedSamples.push({
+            reason,
+            councilSlug: row?.councilSlug || '',
+            wardSlug: row?.wardSlug || '',
+            wardName: row?.wardName || row?.ward || '',
+            candidateName: row?.candidateName || row?.name || '',
+          })
+        }
+
+        for (const row of toArray(rows)) {
+          const council = row?.councilId && row?.councilSlug
+            ? {
+                id: String(row.councilId).trim(),
+                slug: String(row.councilSlug).trim(),
+                name: String(row.councilName || '').trim(),
+              }
+            : null
+          const ward = row?.wardId && row?.wardSlug
+            ? {
+                id: String(row.wardId).trim(),
+                slug: String(row.wardSlug).trim(),
+                name: String(row.wardName || '').trim(),
+              }
+            : null
+          const candidateName = String(row.candidateName || row.name || '').trim()
+          const partyName = String(row.partyName || row.party || '').trim()
+          const rowElectionDate = String(row.electionDate || electionDate || '').trim()
+          const updatedAt = String(row.lastChecked || row.updatedAt || rowElectionDate || new Date().toISOString()).trim()
+          const sourceId = await getSourceId(row)
+          const votes = row.votes === '' || row.votes == null ? null : Number.parseInt(String(row.votes).replace(/,/g, ''), 10)
+
+          if (!council?.id || !ward?.id) {
+            noteSkipped('missing-council-or-ward-match', row)
+            continue
+          }
+          if (!candidateName) {
+            noteSkipped('missing-candidate-name', row)
+            continue
+          }
+          if (!sourceId) {
+            noteSkipped('missing-source-url', row)
+            continue
+          }
+          if (row.votes !== '' && row.votes != null && Number.isNaN(votes)) {
+            noteSkipped('invalid-votes', row)
+            continue
+          }
+
+          matchedRows += 1
+
+          const eventId = `election_event_${slugifyLocalVote(council.slug)}_${slugifyLocalVote(rowElectionDate || 'undated')}`
+          const ballotId = row.ballotId || `ballot_${slugifyLocalVote(council.slug)}_${slugifyLocalVote(ward.slug)}_${slugifyLocalVote(rowElectionDate || 'undated')}`
+          const ballotName = row.ballotName || `${council.name || council.slug} local election ${ward.name || ward.slug}`
+
+          if (!processedEventIds.has(eventId)) {
+            await batchRunner.push(env.DB.prepare(
+              `INSERT INTO local_election_events (id, council_id, election_date, label, source_system, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                 election_date = excluded.election_date,
+                 label = excluded.label,
+                 source_system = excluded.source_system,
+                 updated_at = excluded.updated_at`
+            ).bind(
+              eventId,
+              council.id,
+              rowElectionDate || null,
+              `${council.name || council.slug} local election`,
+              'official-election-result',
+              updatedAt,
+            ))
+            await linkEntitySource('election_event', eventId, sourceId, row.verificationStatus || 'verified', updatedAt, 'result', batchRunner)
+            processedEventIds.add(eventId)
+            rowsUpserted += 1
+          }
+
+          if (!processedBallotIds.has(ballotId)) {
+            await batchRunner.push(env.DB.prepare(
+              `INSERT INTO local_ballots (id, election_event_id, council_id, ward_id, ballot_paper_id, ballot_name, status, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                 election_event_id = excluded.election_event_id,
+                 council_id = excluded.council_id,
+                 ward_id = excluded.ward_id,
+                 ballot_name = excluded.ballot_name,
+                 status = excluded.status,
+                 updated_at = excluded.updated_at`
+            ).bind(
+              ballotId,
+              eventId,
+              council.id,
+              ward.id,
+              row.ballotPaperId || ballotId,
+              ballotName,
+              'result-declared',
+              updatedAt,
+            ))
+            await linkEntitySource('ballot', ballotId, sourceId, row.verificationStatus || 'verified', updatedAt, 'result', batchRunner)
+            processedBallotIds.add(ballotId)
+            rowsUpserted += 1
+          }
+
+          let candidateId = String(row.candidateId || '').trim() || null
+          if (!candidateId) {
+            const candidateRow = await env.DB.prepare(
+              `SELECT id
+               FROM local_candidates
+               WHERE council_id = ? AND ward_id = ?
+                 AND lower(name) = lower(?)
+                 AND (party = ? OR ? = '')
+               LIMIT 1`
+            ).bind(council.id, ward.id, candidateName, partyName, partyName).first()
+            candidateId = candidateRow?.id || null
+          }
+
+          if (!candidateId) {
+            unmatchedCandidates += 1
+            if (unmatchedCandidateSamples.length < 25) {
+              unmatchedCandidateSamples.push({
+                councilSlug: council.slug,
+                wardSlug: ward.slug,
+                candidateName,
+                party: partyName,
+              })
+            }
+          }
+
+          const resultId = `result_${slugifyLocalVote(council.slug)}_${slugifyLocalVote(ward.slug)}_${slugifyLocalVote(rowElectionDate || 'undated')}_${slugifyLocalVote(candidateName)}_${slugifyLocalVote(partyName)}`
+          await batchRunner.push(env.DB.prepare(
+            `INSERT INTO local_results (
+               id, ballot_id, council_id, ward_id, candidate_id, candidate_name, party,
+               votes, elected, turnout, source_attribution, primary_source_id,
+               verification_status, last_checked, updated_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET
+               ballot_id = excluded.ballot_id,
+               council_id = excluded.council_id,
+               ward_id = excluded.ward_id,
+               candidate_id = excluded.candidate_id,
+               candidate_name = excluded.candidate_name,
+               party = excluded.party,
+               votes = excluded.votes,
+               elected = excluded.elected,
+               turnout = excluded.turnout,
+               source_attribution = excluded.source_attribution,
+               primary_source_id = excluded.primary_source_id,
+               verification_status = excluded.verification_status,
+               last_checked = excluded.last_checked,
+               updated_at = excluded.updated_at`
+          ).bind(
+            resultId,
+            ballotId,
+            council.id,
+            ward.id,
+            candidateId,
+            candidateName,
+            partyName,
+            Number.isNaN(votes) ? null : votes,
+            normaliseD1Boolean(row.elected) ? 1 : 0,
+            String(row.turnout || '').trim() || null,
+            row.sourceAttribution || 'official-result-source',
+            sourceId,
+            row.verificationStatus || 'verified',
+            row.lastChecked || updatedAt,
+            updatedAt,
+          ))
+          await linkEntitySource('result', resultId, sourceId, row.verificationStatus || 'verified', row.lastChecked || updatedAt, 'record', batchRunner)
+
+          rowsUpserted += 1
+          insertedResults += 1
+        }
+
+        await batchRunner.flush()
+
+        if (runId) {
+          await env.DB.prepare(
+            `UPDATE local_ingest_runs
+             SET rows_upserted = COALESCE(rows_upserted, 0) + ?, meta_json = ?
+             WHERE id = ?`
+          ).bind(
+            rowsUpserted,
+            JSON.stringify({
+              electionDate,
+              rowsReceived,
+              matchedRows,
+              skippedRows,
+              insertedResults,
+              unmatchedCandidates,
+              skippedSamples,
+              unmatchedCandidateSamples,
+            }),
+            runId,
+          ).run()
+        }
+
+        return {
+          rowsReceived,
+          matchedRows,
+          skippedRows,
+          insertedResults,
+          unmatchedCandidates,
+          rowsUpserted,
+          skippedSamples,
+          unmatchedCandidateSamples,
+        }
+      }
+
+      async function validateLocalVoteResultImport(electionDate) {
+        const resultRow = await env.DB.prepare(
+          `SELECT COUNT(*) AS count
+           FROM local_results r
+           JOIN local_ballots b ON b.id = r.ballot_id
+           JOIN local_election_events e ON e.id = b.election_event_id
+           WHERE e.election_date = ?
+             AND r.source_attribution = ?`
+        ).bind(electionDate, 'official-result-source').first()
+
+        const sourcedRow = await env.DB.prepare(
+          `SELECT COUNT(*) AS count
+           FROM local_results r
+           JOIN local_ballots b ON b.id = r.ballot_id
+           JOIN local_election_events e ON e.id = b.election_event_id
+           LEFT JOIN local_sources s ON s.id = r.primary_source_id
+           WHERE e.election_date = ?
+             AND r.source_attribution = ?
+             AND s.url IS NOT NULL
+             AND s.url != ''`
+        ).bind(electionDate, 'official-result-source').first()
+
+        const wardRow = await env.DB.prepare(
+          `SELECT COUNT(DISTINCT r.ward_id) AS count
+           FROM local_results r
+           JOIN local_ballots b ON b.id = r.ballot_id
+           JOIN local_election_events e ON e.id = b.election_event_id
+           WHERE e.election_date = ?
+             AND r.source_attribution = ?`
+        ).bind(electionDate, 'official-result-source').first()
+
+        return {
+          resultCount: Number(resultRow?.count || 0),
+          sourcedResultCount: Number(sourcedRow?.count || 0),
+          wardCount: Number(wardRow?.count || 0),
         }
       }
 
@@ -4374,6 +4783,126 @@ const worker = {
                 sourceUrl,
                 validation,
                 skippedSamples: body?.skippedSamples || [],
+              }),
+              runId,
+            ).run()
+
+            return jsonResponse({
+              ok: !failed,
+              runId,
+              electionDate,
+              validation,
+            }, { status: failed ? 500 : 200 })
+          }
+
+          return jsonResponse({ ok: false, error: 'Unknown action.' }, { status: 400 })
+        } catch (error) {
+          return jsonResponse(
+            {
+              ok: false,
+              error: error instanceof Error ? error.message : String(error),
+            },
+            { status: 500 },
+          )
+        }
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/local-vote/ingest/results') {
+        try {
+          const body = await request.json()
+          const action = String(body?.action || 'chunk').trim().toLowerCase()
+          const electionDate = String(body?.electionDate || '').trim()
+          const sourceLabel = String(body?.sourceLabel || '').trim()
+          const sourceUrl = String(body?.sourceUrl || '').trim()
+          const runId = String(body?.runId || `local_vote_ingest_results_${Date.now()}`).trim()
+
+          if (!electionDate) {
+            return jsonResponse({ ok: false, error: 'Missing electionDate.' }, { status: 400 })
+          }
+
+          if (action === 'start') {
+            await env.DB.prepare(
+              `INSERT INTO local_ingest_runs (id, pipeline, status, started_at, finished_at, rows_upserted, error_summary, meta_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                 pipeline = excluded.pipeline,
+                 status = excluded.status,
+                 started_at = excluded.started_at,
+                 finished_at = excluded.finished_at,
+                 rows_upserted = excluded.rows_upserted,
+                 error_summary = excluded.error_summary,
+                 meta_json = excluded.meta_json`
+            ).bind(
+              runId,
+              'local-vote-official-election-results',
+              'running',
+              new Date().toISOString(),
+              null,
+              0,
+              null,
+              JSON.stringify({
+                electionDate,
+                sourceLabel,
+                sourceUrl,
+                totalRows: Number(body?.totalRows || 0),
+                priorityCouncils: body?.priorityCouncils || [],
+              }),
+            ).run()
+
+            return jsonResponse({
+              ok: true,
+              runId,
+              electionDate,
+              sourceLabel,
+              sourceUrl,
+            })
+          }
+
+          if (action === 'chunk') {
+            const rows = toArray(body?.rows)
+            if (!rows.length) {
+              return jsonResponse({ ok: false, error: 'Missing result rows.' }, { status: 400 })
+            }
+
+            const summary = await upsertLocalVoteResultSourceChunk({
+              electionDate,
+              sourceLabel,
+              sourceUrl,
+              rows,
+              runId,
+            })
+
+            return jsonResponse({
+              ok: true,
+              runId,
+              electionDate,
+              chunkIndex: Number(body?.chunkIndex || 0),
+              totalChunks: Number(body?.totalChunks || 0),
+              ...summary,
+            })
+          }
+
+          if (action === 'finish') {
+            const validation = await validateLocalVoteResultImport(electionDate)
+            const failed =
+              validation.resultCount <= 0 ||
+              validation.sourcedResultCount !== validation.resultCount
+
+            await env.DB.prepare(
+              `UPDATE local_ingest_runs
+               SET status = ?, finished_at = ?, error_summary = ?, meta_json = ?
+               WHERE id = ?`
+            ).bind(
+              failed ? 'failed' : 'success',
+              new Date().toISOString(),
+              failed ? 'Validation failed for official result source ingest.' : null,
+              JSON.stringify({
+                electionDate,
+                sourceLabel,
+                sourceUrl,
+                validation,
+                skippedSamples: body?.skippedSamples || [],
+                unmatchedCandidateSamples: body?.unmatchedCandidateSamples || [],
               }),
               runId,
             ).run()
