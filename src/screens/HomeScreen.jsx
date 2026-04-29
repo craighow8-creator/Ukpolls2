@@ -6,7 +6,7 @@ import { useResponsive } from '../utils/responsive'
 import { buildSmartSummary } from '../utils/intelligence'
 import { buildDisplayTrendRows } from '../components/charts/SharedTrendChart'
 import { buildHomeElectionsBriefing } from '../utils/homeElectionsBriefing'
-import { buildHomeNewsBriefing } from '../utils/news'
+import { buildHomeNewsBriefing, formatRelativeNewsTime, normaliseNewsPayload } from '../utils/news'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
@@ -127,6 +127,12 @@ function CompactPollingBriefing({ T, leader, second, gap, risingParty }) {
       </div>
     </div>
   )
+}
+
+function getHomeNewsStoryMeta(story) {
+  const source = story?.sourceDisplay || story?.source || story?.sourceName || story?.publisher || ''
+  const time = formatRelativeNewsTime(story?.publishedAt || story?.updatedAt || story?.date)
+  return [source, time].filter(Boolean).join(' · ')
 }
 
 const Divider = ({ T }) => (
@@ -410,6 +416,26 @@ export default function HomeScreen({
   )
   const [electionSignalIndex, setElectionSignalIndex] = React.useState(0)
   const newsBriefing = React.useMemo(() => buildHomeNewsBriefing(news), [news])
+  const normalisedNews = React.useMemo(() => normaliseNewsPayload(news), [news])
+  const newsStories = React.useMemo(() => normalisedNews.items.slice(0, 5), [normalisedNews])
+  const [newsStoryIndex, setNewsStoryIndex] = React.useState(0)
+
+  React.useEffect(() => {
+    setNewsStoryIndex(0)
+  }, [newsStories.length])
+
+  React.useEffect(() => {
+    if (newsStories.length <= 1) return undefined
+    const timer = window.setInterval(() => {
+      setNewsStoryIndex((current) => (current + 1) % newsStories.length)
+    }, 4600)
+    return () => window.clearInterval(timer)
+  }, [newsStories.length])
+
+  const hasNewsStories = newsStories.length > 0
+  const featuredNewsStory = newsStories[newsStoryIndex % Math.max(newsStories.length, 1)] || null
+  const featuredNewsNumber = hasNewsStories ? (newsStoryIndex % newsStories.length) + 1 : 0
+  const featuredNewsMeta = getHomeNewsStoryMeta(featuredNewsStory)
 
   React.useEffect(() => {
     setElectionSignalIndex(0)
@@ -1019,9 +1045,14 @@ export default function HomeScreen({
                   lineHeight: 1.16,
                   letterSpacing: '-0.03em',
                   maxWidth: 560,
+                  minHeight: isMobile ? 56 : 64,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
                 }}
               >
-                {newsBriefing.headline}
+                {featuredNewsStory?.displayHeadline || 'UK politics news feed'}
               </div>
 
               <div
@@ -1031,13 +1062,32 @@ export default function HomeScreen({
                   color: T.tm,
                   lineHeight: 1.55,
                   maxWidth: 560,
+                  minHeight: 44,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
                 }}
               >
-                {newsBriefing.teaser}
+                {featuredNewsStory?.displaySummary || 'Latest UK political reporting will appear here when the feed refreshes.'}
               </div>
 
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {newsBriefing.storyCount ? (
+              {featuredNewsMeta ? (
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: 750,
+                    color: T.tl,
+                    lineHeight: 1.4,
+                    maxWidth: 560,
+                  }}
+                >
+                  {featuredNewsMeta}
+                </div>
+              ) : null}
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                {featuredNewsStory?.tagDisplay ? (
                   <Chip
                     color={T.pr}
                     style={{
@@ -1047,10 +1097,10 @@ export default function HomeScreen({
                       border: `1px solid ${T.pr}24`,
                     }}
                   >
-                    {newsBriefing.storyCount} stories
+                    {featuredNewsStory.tagDisplay}
                   </Chip>
                 ) : null}
-                {newsBriefing.sourceCount ? (
+                {hasNewsStories ? (
                   <Chip
                     color={T.tl}
                     style={{
@@ -1060,24 +1110,10 @@ export default function HomeScreen({
                       border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
                     }}
                   >
-                    {newsBriefing.sourceCount} sources
+                    {newsStories.length > 1 ? `${featuredNewsNumber}/${newsStories.length}` : 'Latest story'}
                   </Chip>
                 ) : null}
               </div>
-
-              {newsBriefing.supportingLine ? (
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: T.tl,
-                    fontWeight: 650,
-                    lineHeight: 1.45,
-                    maxWidth: 560,
-                  }}
-                >
-                  {newsBriefing.supportingLine}
-                </div>
-              ) : null}
 
               <div
                 style={{
@@ -1089,9 +1125,9 @@ export default function HomeScreen({
                 }}
               >
                 <div style={{ fontSize: 13, color: T.tm, lineHeight: 1.45, maxWidth: 430 }}>
-                  {newsBriefing.statusTone === 'live'
-                    ? 'Follow the newest Westminster and campaign reporting in one place.'
-                    : 'See the latest available reporting, source breadth and story order at a glance.'}
+                  {hasNewsStories
+                    ? 'Previewing current UK political reporting from the news feed.'
+                    : 'Latest UK political reporting will appear here when the feed refreshes.'}
                 </div>
 
                 <div
@@ -1102,7 +1138,7 @@ export default function HomeScreen({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {newsBriefing.ctaLabel} →
+                  Open news feed →
                 </div>
               </div>
             </div>
