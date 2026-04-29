@@ -30,6 +30,10 @@
     "leader-ratings:import:remote": "node ./scripts/ingest-leader-ratings.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "leader-ratings:health:local": "node ./scripts/check-leader-ratings-health.mjs --api-base=http://127.0.0.1:8787",
     "leader-ratings:health:remote": "node ./scripts/check-leader-ratings-health.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
+    "policy-sources:import:local": "node ./scripts/ingest-party-policies.mjs --api-base=http://127.0.0.1:8787",
+    "policy-sources:import:remote": "node ./scripts/ingest-party-policies.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
+    "policy-sources:health:local": "node ./scripts/check-policy-sources-health.mjs --api-base=http://127.0.0.1:8787",
+    "policy-sources:health:remote": "node ./scripts/check-policy-sources-health.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "local-authority:health:local": "node ./scripts/check-local-authority-health.mjs --api-base=http://127.0.0.1:8787",
     "local-authority:health:remote": "node ./scripts/check-local-authority-health.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "health:pre-election": "npm run build && npm run polls:health:remote && npm run local-authority:health:remote && npm run leader-ratings:health:remote"

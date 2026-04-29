@@ -1,6 +1,7 @@
 import { getStanceLabel } from './stanceUtils'
 import { POLICY_AREAS } from './policyTaxonomy'
 import { getSourcePriority, normalizeSourceType, resolveSourceEvidence } from './sourcePriority'
+import GENERATED_OFFICIAL_POLICY_RECORDS from './officialPolicyRecords.generated.json'
 
 export { POLICY_AREAS }
 
@@ -1333,4 +1334,5 @@ export const POLICY_RECORDS = [
   }),
 
   ...STANDARD_COVERAGE_RECORDS.map(record),
+  ...GENERATED_OFFICIAL_POLICY_RECORDS,
 ]

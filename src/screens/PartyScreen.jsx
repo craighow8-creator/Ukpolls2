@@ -190,7 +190,13 @@ function PolicyRecordCard({ T, p, record }) {
   const details = Array.isArray(record.details) ? record.details.filter(Boolean) : []
   const sources = Array.isArray(record.sources) ? record.sources.filter(Boolean) : []
   const title = cleanText(record.title || record.topic || record.area)
-  const summary = cleanText(record.summary)
+  const officialPosition = record.officialPosition || null
+  const summary = cleanText(officialPosition?.shortSummary || record.summary)
+  const analysis = cleanText(record.politiscopeAnalysis)
+  const hasOfficialSource = sources.some((source) => {
+    const type = cleanText(source.type).replace(/-/g, '_')
+    return source.url && ['manifesto', 'official_policy_paper', 'official_policy_page', 'official_pledge_page'].includes(type)
+  })
   const sourceTypeLabel = (type) => cleanText(type).replace(/_/g, ' ')
 
   return (
@@ -211,9 +217,23 @@ function PolicyRecordCard({ T, p, record }) {
             {title}
           </div>
           {summary && summary !== title ? (
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.tm, marginTop: 5, lineHeight: 1.45 }}>
-              {summary}
-            </div>
+            <>
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: 850,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: hasOfficialSource ? p.color : T.tl,
+                  marginTop: 7,
+                }}
+              >
+                {hasOfficialSource ? 'Official position summary' : 'Maintained summary'}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.tm, marginTop: 4, lineHeight: 1.45 }}>
+                {summary}
+              </div>
+            </>
           ) : null}
         </div>
         <div
@@ -257,6 +277,36 @@ function PolicyRecordCard({ T, p, record }) {
         </div>
       ) : null}
 
+      {analysis ? (
+        <div
+          style={{
+            marginTop: 12,
+            padding: '10px 11px',
+            borderRadius: 12,
+            background: T.c1 || `${p.color}0F`,
+            border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 850,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: T.tl,
+              marginBottom: 4,
+            }}
+          >
+            Politiscope analysis
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 550, color: T.tm, lineHeight: 1.5 }}>
+            {analysis}
+          </div>
+        </div>
+      ) : null}
+
       {sources.length ? (
         <div
           style={{
@@ -270,10 +320,12 @@ function PolicyRecordCard({ T, p, record }) {
         >
           {sources.map((source) => {
             const label = source.title || source.label || 'Policy source'
+            const lastChecked = cleanText(source.lastChecked)
             const content = (
               <>
-                {label}
+                {source.url ? `Open official source: ${label}` : label}
                 {source.type ? <span style={{ color: T.tl, fontWeight: 700 }}> · {sourceTypeLabel(source.type)}</span> : null}
+                {lastChecked ? <span style={{ color: T.tl, fontWeight: 700 }}> · checked {lastChecked}</span> : null}
               </>
             )
 

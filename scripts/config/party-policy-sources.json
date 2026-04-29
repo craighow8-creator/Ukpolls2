@@ -1,0 +1,71 @@
+{
+  "updatedAt": "2026-04-29",
+  "notes": "Official party policy source inventory and manual structured rows. Add voter-facing policy rows only after manual review against the official source URL.",
+  "sources": [
+    {
+      "party": "Reform UK",
+      "sourceTitle": "Reform UK policies",
+      "sourceUrl": "https://www.reformparty.uk/policies",
+      "sourceType": "official_policy_page",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified"
+    },
+    {
+      "party": "Labour",
+      "sourceTitle": "Labour manifesto",
+      "sourceUrl": "https://labour.org.uk/manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified"
+    },
+    {
+      "party": "Conservative",
+      "sourceTitle": "Conservative manifesto",
+      "sourceUrl": "https://public.conservatives.com/publicweb/GE2024/Accessible-Manifesto/Large-Print-Conservative-Manifesto.pdf",
+      "sourceType": "manifesto",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified"
+    },
+    {
+      "party": "Green",
+      "sourceTitle": "Green Party manifesto",
+      "sourceUrl": "https://greenparty.org.uk/about/our-manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified"
+    },
+    {
+      "party": "Lib Dem",
+      "sourceTitle": "Liberal Democrat manifesto",
+      "sourceUrl": "https://www.libdems.org.uk/manifesto",
+      "sourceType": "manifesto",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified"
+    },
+    {
+      "party": "SNP",
+      "sourceTitle": "SNP manifesto",
+      "sourceUrl": "https://www.snp.org/manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified"
+    },
+    {
+      "party": "Plaid Cymru",
+      "sourceTitle": "Plaid Cymru manifesto",
+      "sourceUrl": "https://www.partyof.wales/manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified"
+    },
+    {
+      "party": "Restore Britain",
+      "sourceTitle": "Restore Britain policy papers",
+      "sourceUrl": "https://www.restorebritain.org.uk/papers",
+      "sourceType": "official_policy_page",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified"
+    }
+  ],
+  "rows": []
+}

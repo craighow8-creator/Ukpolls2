@@ -1324,6 +1324,25 @@ export default function CompareScreen({
                         >
                           {previewText(preview)}
                         </div>
+                        {preview?.controllingSource?.url ? (
+                          <a
+                            href={preview.controllingSource.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(event) => event.stopPropagation()}
+                            style={{
+                              display: 'block',
+                              fontSize: 11,
+                              fontWeight: 800,
+                              color: party?.color,
+                              textAlign: 'center',
+                              marginTop: 8,
+                              textDecoration: 'none',
+                            }}
+                          >
+                            Official source →
+                          </a>
+                        ) : null}
                         <div
                           style={{
                             fontSize: 11,
@@ -1403,17 +1422,37 @@ export default function CompareScreen({
                       {previewText(preview)}
                     </div>
                     {preview?.controllingSource ? (
-                      <div
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color: T.tl,
-                          marginTop: 8,
-                          textAlign: 'center',
-                        }}
-                      >
-                        {preview.controllingSource.title || preview.controllingSource.type}
-                      </div>
+                      preview.controllingSource.url ? (
+                        <a
+                          href={preview.controllingSource.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(event) => event.stopPropagation()}
+                          style={{
+                            display: 'block',
+                            fontSize: 12,
+                            fontWeight: 800,
+                            color: party?.color,
+                            marginTop: 8,
+                            textAlign: 'center',
+                            textDecoration: 'none',
+                          }}
+                        >
+                          Official source →
+                        </a>
+                      ) : (
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: T.tl,
+                            marginTop: 8,
+                            textAlign: 'center',
+                          }}
+                        >
+                          {preview.controllingSource.title || preview.controllingSource.type}
+                        </div>
+                      )
                     ) : null}
                     <div
                       style={{
