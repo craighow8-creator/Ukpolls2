@@ -29,14 +29,14 @@
       "councilSlug": "birmingham",
       "councilName": "Birmingham",
       "priority": true,
-      "enabled": false,
+      "enabled": true,
       "parserType": "manual-csv",
       "csvPath": "data/local-candidate-sources/birmingham-2026.csv",
       "sourceLabel": "Official statement of persons nominated",
       "sourceUrl": "https://www.birmingham.gov.uk/downloads/file/31538/birmingham_city_council_statement_of_persons_nominated",
       "lastChecked": "29-04-2026",
       "verificationStatus": "verified-source",
-      "notes": "Official source recorded; disabled until candidate rows are supplied as manual CSV or a parser is added."
+      "notes": "Small verified starter sample loaded through manual CSV; expand by transcribing further wards from the official statement."
     },
     {
       "councilSlug": "leeds",
