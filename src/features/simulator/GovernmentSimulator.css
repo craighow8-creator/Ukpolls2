@@ -300,10 +300,12 @@
 .mandate-logo strong {
   display: block;
   color: var(--mandate-gold, #f0c956);
-  font-size: 2.05rem;
+  font-size: clamp(1.65rem, 7vw, 2.05rem);
   letter-spacing: -0.08em;
   line-height: 1;
   text-shadow: 4px 4px #02040b;
+  max-width: 100%;
+  overflow-wrap: normal;
 }
 
 .mandate-card-title {
@@ -548,8 +550,9 @@
   }
 
   .mandate-scene-image {
-    height: 280px;
-    aspect-ratio: auto;
+    height: auto;
+    max-height: 280px;
+    aspect-ratio: 16 / 10;
     object-position: center top;
   }
 

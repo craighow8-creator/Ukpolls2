@@ -28,7 +28,6 @@ import BettingScreen from './screens/BettingScreen'
 import NewsScreen from './screens/NewsScreen'
 import VoteScreen from './screens/VoteScreen'
 import CompareScreen from './screens/CompareScreen'
-import SwingCalcScreen from './screens/SwingCalcScreen'
 import ParliamentScreen from './screens/ParliamentScreen'
 import QuoteMatchScreen from './screens/QuoteMatchScreen'
 import SeatBuilderScreen from './screens/SeatBuilderScreen'
@@ -594,8 +593,6 @@ export default function App() {
             returnPolicyArea={p.returnPolicyArea}
           />
         )
-      case 'swingcalc':
-        return <SwingCalcScreen {...common} />
       case 'parliament':
         return <ParliamentScreen {...common} />
       case 'quotematch':

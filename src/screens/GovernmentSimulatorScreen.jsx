@@ -38,8 +38,15 @@ function MeterList({ items, palette }) {
   ))
 }
 
-export default function GovernmentSimulatorScreen({ T }) {
-  const [state, setState] = useState(() => createSimulatorInitialState())
+export default function GovernmentSimulatorScreen({ T, pollContext = {}, parties = [] }) {
+  const simulatorSeed = useMemo(
+    () => ({
+      partyPollSnapshot: Array.isArray(pollContext?.partyPollSnapshot) ? pollContext.partyPollSnapshot : [],
+      parties: Array.isArray(parties) ? parties : [],
+    }),
+    [pollContext?.partyPollSnapshot, parties],
+  )
+  const [state, setState] = useState(() => createSimulatorInitialState(simulatorSeed))
   const audioRef = useRef(null)
   const scrollRef = useRef(null)
   const currentScene = getCurrentSimulatorScene(state, simulatorScenes)
@@ -98,7 +105,7 @@ export default function GovernmentSimulatorScreen({ T }) {
 
   const handleRestart = () => {
     haptic(6)
-    setState(restartSimulator())
+    setState(restartSimulator(simulatorSeed))
     scrollToTop()
   }
 

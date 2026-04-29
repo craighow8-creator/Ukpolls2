@@ -40,7 +40,102 @@ export const simulatorSceneArt = {
 export const simulatorIntroHeadline = 'PM faces first test'
 export const simulatorIntroSubhead = 'Advisers split as pressure builds'
 
-export function createSimulatorInitialState() {
+export const defaultSimulatorPolling = { LAB: 36, CON: 27, REF: 18, LD: 10, GRN: 6 }
+
+const simulatorPartyAliases = {
+  LAB: ['lab', 'labour'],
+  CON: ['con', 'conservative', 'conservatives', 'tory', 'tories'],
+  REF: ['ref', 'reform', 'reform uk', 'reformuk'],
+  LD: ['ld', 'lib dem', 'lib dems', 'liberal democrat', 'liberal democrats'],
+  GRN: ['grn', 'green', 'greens', 'green party'],
+}
+
+function normalisePartyLabel(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function simulatorKeyForParty(party) {
+  const labels = [
+    party?.abbr,
+    party?.shortName,
+    party?.name,
+    party?.party,
+    party?.label,
+    party?.id,
+  ].map(normalisePartyLabel).filter(Boolean)
+
+  return Object.entries(simulatorPartyAliases).find(([, aliases]) =>
+    labels.some((label) => aliases.includes(label)),
+  )?.[0] || null
+}
+
+export function buildSimulatorPollingSeed(source) {
+  const rows = Array.isArray(source)
+    ? source
+    : Array.isArray(source?.partyPollSnapshot) && source.partyPollSnapshot.length
+      ? source.partyPollSnapshot
+      : Array.isArray(source?.parties)
+        ? source.parties
+        : []
+
+  const nextPolls = { ...defaultSimulatorPolling }
+  let matched = 0
+
+  rows.forEach((party) => {
+    const key = simulatorKeyForParty(party)
+    const pct = Number(party?.pct ?? party?.voteShare ?? party?.share ?? party?.value)
+    if (!key || !Number.isFinite(pct) || pct <= 0) return
+    nextPolls[key] = Math.round(pct * 10) / 10
+    matched += 1
+  })
+
+  if (matched < 2) {
+    return {
+      polls: { ...defaultSimulatorPolling },
+      isLiveSeeded: false,
+      leader: null,
+    }
+  }
+
+  const leaderKey = Object.entries(nextPolls).sort(([, a], [, b]) => b - a)[0]?.[0] || null
+  return {
+    polls: nextPolls,
+    isLiveSeeded: true,
+    leader: leaderKey,
+  }
+}
+
+const simulatorPartyDisplay = {
+  LAB: 'Labour',
+  CON: 'Conservative',
+  REF: 'Reform',
+  LD: 'Lib Dem',
+  GRN: 'Green',
+}
+
+function buildOpeningNews(seed) {
+  if (!seed?.isLiveSeeded || !seed.leader) {
+    return {
+      headline: simulatorIntroHeadline,
+      subhead: simulatorIntroSubhead,
+    }
+  }
+
+  const leaderName = simulatorPartyDisplay[seed.leader] || seed.leader
+  return {
+    headline: `${leaderName} lead sets opening test`,
+    subhead: 'Latest polling frames the first crisis',
+  }
+}
+
+export function createSimulatorInitialState(seedSource) {
+  const seed = buildSimulatorPollingSeed(seedSource)
+  const openingNews = buildOpeningNews(seed)
+
   return {
     turnIndex: 0,
     approval: 42,
@@ -48,10 +143,10 @@ export function createSimulatorInitialState() {
     partyUnity: 61,
     majority: 23,
     media: 48,
-    polls: { LAB: 36, CON: 27, REF: 18, LD: 10, GRN: 6 },
+    polls: seed.polls,
     electorate: { Workers: 42, Middle: 46, Young: 35, Seniors: 54, Business: 48 },
-    newsHeadline: simulatorIntroHeadline,
-    newsSubhead: simulatorIntroSubhead,
+    newsHeadline: openingNews.headline,
+    newsSubhead: openingNews.subhead,
     selectedChoiceId: null,
     reaction: null,
     phase: 'playing',

@@ -1210,60 +1210,6 @@ export default function HomeScreen({
             </SmallCard>
           </SmallPair>
 
-          <LargeCard T={T} onClick={() => nav('swingcalc')}>
-            <div style={pL}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <Lbl T={T}>Swing Calculator</Lbl>
-                <Chip color={leader.color}>Interactive</Chip>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 10, marginBottom: 14 }}>
-                <BigStat color={leader.color} T={T} size={64}>
-                  +{gap}pt
-                </BigStat>
-                <div style={{ paddingBottom: 6, textAlign: 'left' }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: T.th }}>{leader.abbr} lead</div>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: T.tm }}>over {second.abbr}</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: leader.color, width: 30 }}>{leader.abbr}</div>
-                <div
-                  style={{
-                    flex: 1,
-                    height: 10,
-                    borderRadius: 999,
-                    background: T.c1,
-                    overflow: 'hidden',
-                    display: 'flex',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${(leader.pct / ((leader.pct + second.pct) || 1)) * 100}%`,
-                      height: '100%',
-                      background: leader.color,
-                    }}
-                  />
-                  <div
-                    style={{
-                      width: `${(second.pct / ((leader.pct + second.pct) || 1)) * 100}%`,
-                      height: '100%',
-                      background: second.color,
-                    }}
-                  />
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: second.color, width: 30, textAlign: 'right' }}>
-                  {second.abbr}
-                </div>
-              </div>
-
-              <Divider T={T} />
-              <Cta T={T}>How many points to flip a seat? →</Cta>
-            </div>
-          </LargeCard>
-
           <LargeCard T={T} onClick={() => nav('simulator')}>
             <div style={pL}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -1276,31 +1222,36 @@ export default function HomeScreen({
                   background: 'linear-gradient(180deg, #111b42 0%, #071026 100%)',
                   border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
                   borderRadius: 14,
-                  padding: '18px 16px',
+                  padding: isMobile ? '16px 12px' : '18px 16px',
                   textAlign: 'center',
+                  overflow: 'hidden',
                 }}
               >
                 <div
                   style={{
-                    fontSize: 40,
+                    fontSize: 'clamp(2rem, 11vw, 3rem)',
                     fontWeight: 800,
                     letterSpacing: '-0.06em',
                     color: '#F0C956',
                     textTransform: 'uppercase',
                     lineHeight: 0.95,
                     textShadow: '2px 2px rgba(2,4,11,0.8)',
+                    maxWidth: '100%',
+                    whiteSpace: 'normal',
+                    overflowWrap: 'normal',
                   }}
                 >
                   The Mandate
                 </div>
                 <div
                   style={{
-                    fontSize: 14,
+                    fontSize: 'clamp(0.68rem, 3.1vw, 0.88rem)',
                     fontWeight: 700,
-                    letterSpacing: '0.18em',
+                    letterSpacing: isMobile ? '0.12em' : '0.18em',
                     color: '#8BE9DD',
                     textTransform: 'uppercase',
                     marginTop: 8,
+                    lineHeight: 1.25,
                   }}
                 >
                   Government Simulator

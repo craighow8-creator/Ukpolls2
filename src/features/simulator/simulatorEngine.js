@@ -43,8 +43,8 @@ export function toggleSimulatorSfx(state) {
   return { ...state, sfxEnabled: !state.sfxEnabled }
 }
 
-export function restartSimulator() {
-  return createSimulatorInitialState()
+export function restartSimulator(seedSource) {
+  return createSimulatorInitialState(seedSource)
 }
 
 function applyChoiceEffects(state, effects = {}) {
