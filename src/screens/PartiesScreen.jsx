@@ -69,6 +69,15 @@ function formatSignedPts(value) {
   return Number(value) > 0 ? `+${formatted}` : formatted
 }
 
+function hasSourcedFavourability(leader) {
+  if (!leader || !Number.isFinite(Number(leader.net))) return false
+  const label = String(leader.metricLabel || '').toLowerCase()
+  const hasSourceMarker =
+    leader.ratingSource === 'sourced' ||
+    Boolean(leader.sourceUrl || leader.source || leader.publishedAt || leader.fieldworkDate)
+  return hasSourceMarker && label.includes('favourability')
+}
+
 function limitWords(text, maxWords = 25) {
   const words = String(text || '').trim().split(/\s+/).filter(Boolean)
   if (words.length <= maxWords) return text
@@ -381,7 +390,7 @@ export default function PartiesScreen({ T, nav, parties, polls, leaders, policyR
     const partySignals = mainParties.map((p, index) => {
       const leader = leadersByParty[p.name]
       const change = Number(p.change || 0)
-      const leaderNet = leader && typeof leader.net === 'number' ? Number(leader.net) : null
+      const leaderNet = hasSourcedFavourability(leader) ? Number(leader.net) : null
       return {
         p,
         leader,
@@ -540,7 +549,7 @@ export default function PartiesScreen({ T, nav, parties, polls, leaders, policyR
           value: underPressure?.p?.name || 'No clear target',
           meta:
             underPressure?.p
-              ? `${formatSignedPts(underPressurePts)}pt${underPressure.leader && typeof underPressure.leader.net === 'number' ? ` · leader net ${formatSignedPts(underPressure.leader.net)}` : ''}`
+              ? `${formatSignedPts(underPressurePts)}pt${underPressure.leaderNet != null ? ` · leader net ${formatSignedPts(underPressure.leaderNet)}` : ''}`
               : 'No standout pressure point',
           color: underPressure?.p?.color || '#C8102E',
         },
@@ -666,13 +675,13 @@ export default function PartiesScreen({ T, nav, parties, polls, leaders, policyR
                       />
                       {leader ? (
                         <StatPill
-                          label="Leader net"
-                          value={`${leader.net >= 0 ? '+' : ''}${leader.net}`}
-                          color={leader.net >= 0 ? '#02A95B' : '#C8102E'}
+                          label="Leader fav"
+                          value={hasSourcedFavourability(leader) ? `${leader.net >= 0 ? '+' : ''}${leader.net}` : 'Profile only'}
+                          color={hasSourcedFavourability(leader) ? (leader.net >= 0 ? '#02A95B' : '#C8102E') : T.tl}
                           T={T}
                         />
                       ) : (
-                        <StatPill label="Leader net" value="—" color={T.tl} T={T} />
+                        <StatPill label="Leader fav" value="—" color={T.tl} T={T} />
                       )}
                     </div>
 

@@ -80,6 +80,15 @@ function safeNumber(value) {
   return Number.isFinite(n) ? n : null
 }
 
+function hasSourcedFavourability(leader) {
+  if (!leader || !Number.isFinite(Number(leader.net))) return false
+  const label = String(leader.metricLabel || '').toLowerCase()
+  const hasSourceMarker =
+    leader.ratingSource === 'sourced' ||
+    Boolean(leader.sourceUrl || leader.source || leader.publishedAt || leader.fieldworkDate)
+  return hasSourceMarker && label.includes('favourability')
+}
+
 function displayDate(poll) {
   return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.date) || 'Date unavailable'
 }
@@ -536,12 +545,17 @@ export default function PartyScreen({
                           style={{
                             fontSize: 12,
                             fontWeight: 700,
-                            color: leader.net >= 0 ? '#02A95B' : '#C8102E',
+                            color: hasSourcedFavourability(leader)
+                              ? leader.net >= 0
+                                ? '#02A95B'
+                                : '#C8102E'
+                              : T.tl,
                             marginTop: 2,
                           }}
                         >
-                          Net {leader.net >= 0 ? '+' : ''}
-                          {leader.net}
+                          {hasSourcedFavourability(leader)
+                            ? `Net ${leader.net >= 0 ? '+' : ''}${leader.net}`
+                            : 'No sourced favourability row yet'}
                         </div>
                       </div>
                     </>

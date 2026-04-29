@@ -165,8 +165,50 @@ function StickyPillsBar({ T, pills, tab, setTab }) {
 }
 
 
+function hasSourcedFavourability(leader) {
+  if (!leader || !Number.isFinite(Number(leader.net))) return false
+  const label = String(leader.metricLabel || '').toLowerCase()
+  const hasSourceMarker =
+    leader.ratingSource === 'sourced' ||
+    Boolean(leader.sourceUrl || leader.source || leader.publishedAt || leader.fieldworkDate)
+  return hasSourceMarker && label.includes('favourability')
+}
+
+function leaderRatingDisplay(leader) {
+  if (!leader) {
+    return { value: '—', label: 'No leader data', sourced: false }
+  }
+  if (!hasSourcedFavourability(leader)) {
+    return {
+      value: 'Profile only',
+      label: 'No sourced favourability row yet',
+      sourced: false,
+    }
+  }
+  return {
+    value: formatLeaderGap(leader.net),
+    label: leader.metricLabel || 'Net favourability',
+    sourced: true,
+  }
+}
+
 function compareLeaderLine(leaderA, leaderB, partyA, partyB) {
   if (!leaderA || !leaderB) return null
+  const aSourced = hasSourcedFavourability(leaderA)
+  const bSourced = hasSourcedFavourability(leaderB)
+
+  if (!aSourced || !bSourced) {
+    const missing = [!aSourced ? leaderA?.name : null, !bSourced ? leaderB?.name : null]
+      .filter(Boolean)
+      .map((name) => name.split(' ').slice(-1)[0])
+      .join(' and ')
+    return {
+      title: 'Leader favourability is not directly comparable',
+      body: `${missing || 'One leader'} has no sourced net favourability row yet, so Politiscope is not comparing profile-only ratings with sourced polling.`,
+      accent: aSourced ? partyA?.color : bSourced ? partyB?.color : partyA?.color,
+    }
+  }
+
   const a = Number(leaderA.net ?? 0)
   const b = Number(leaderB.net ?? 0)
   const winningParty = a >= b ? partyA : partyB
@@ -175,14 +217,14 @@ function compareLeaderLine(leaderA, leaderB, partyA, partyB) {
 
   if (a < 0 && b < 0) {
     return {
-      title: `${winningParty.abbr} has the less negative leader rating`,
+      title: `${winningParty.abbr} has the less negative leader favourability`,
       body: `${winningLeader.name.split(' ').slice(-1)[0]} is ${a >= b ? formatLeaderGap(a) : formatLeaderGap(b)}; ${losingLeader.name.split(' ').slice(-1)[0]} is ${a >= b ? formatLeaderGap(b) : formatLeaderGap(a)}. Neither leader is strongly well-rated overall.`,
       accent: winningParty.color,
     }
   }
 
   return {
-    title: `${winningParty.abbr} has the stronger leader rating in this comparison`,
+    title: `${winningParty.abbr} has the stronger sourced leader favourability`,
     body: `${winningLeader.name.split(' ').slice(-1)[0]} is ${a >= b ? formatLeaderGap(a) : formatLeaderGap(b)}; ${losingLeader.name.split(' ').slice(-1)[0]} is ${a >= b ? formatLeaderGap(b) : formatLeaderGap(a)}.`,
     accent: winningParty.color,
   }
@@ -687,6 +729,9 @@ export default function CompareScreen({
     ],
   )
   const approvalLine = compareLeaderLine(leaderA, leaderB, partyA, partyB)
+  const leaderADisplay = leaderRatingDisplay(leaderA)
+  const leaderBDisplay = leaderRatingDisplay(leaderB)
+  const leadersComparable = Boolean(leaderA && leaderB && leaderADisplay.sourced && leaderBDisplay.sourced)
   const issueTopic = ['immigration', 'economy', 'nhs', 'climate'].find((topic) => topicPreview(topic, partyA?.name, policyRecords) || topicPreview(topic, partyB?.name, policyRecords))
   const issueA = issueTopic ? topicPreview(issueTopic, partyA?.name, policyRecords) : null
   const issueB = issueTopic ? topicPreview(issueTopic, partyB?.name, policyRecords) : null
@@ -1136,19 +1181,23 @@ export default function CompareScreen({
               <H2HRow
                 T={T}
                 label="Leader"
-                valA={formatLeaderGap(leaderA.net)}
-                valB={formatLeaderGap(leaderB.net)}
+                valA={leaderADisplay.value}
+                valB={leaderBDisplay.value}
                 colorA={partyA.color}
                 colorB={partyB.color}
-                winnerA={leaderA.net === leaderB.net ? null : leaderA.net > leaderB.net}
-                onClick={() => {
-                  const leader = leaderA.net >= leaderB.net ? leaderA : leaderB
-                  const leaderIdx = leaders?.indexOf(leader)
-                  if (leaderIdx >= 0) {
-                    haptic(8)
-                    nav('leader', { lIdx: leaderIdx, from: 'compare' })
-                  }
-                }}
+                winnerA={leadersComparable ? (leaderA.net === leaderB.net ? null : leaderA.net > leaderB.net) : null}
+                onClick={
+                  leadersComparable
+                    ? () => {
+                        const leader = leaderA.net >= leaderB.net ? leaderA : leaderB
+                        const leaderIdx = leaders?.indexOf(leader)
+                        if (leaderIdx >= 0) {
+                          haptic(8)
+                          nav('leader', { lIdx: leaderIdx, from: 'compare' })
+                        }
+                      }
+                    : undefined
+                }
               />
             )}
 
@@ -1157,49 +1206,52 @@ export default function CompareScreen({
                 <SectionLabel T={T}>Leaders</SectionLabel>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
                   {[{ leader: leaderA, party: partyA }, { leader: leaderB, party: partyB }].map(
-                    ({ leader, party }, i) => (
-                      <div
-                        key={i}
-                        onClick={() => {
-                          if (!leader) return
-                          const leaderIdx = leaders?.indexOf(leader)
-                          if (leaderIdx >= 0) {
-                            haptic(8)
-                            nav('leader', { lIdx: leaderIdx, from: 'compare' })
-                          }
-                        }}
-                        style={{
-                          borderRadius: 12,
-                          padding: '12px 12px',
-                          background: T.c0 || '#fff',
-                          border: `1px solid ${party?.color || T.cardBorder || 'rgba(0,0,0,0.07)'}28`,
-                          textAlign: 'center',
-                          cursor: leader ? 'pointer' : 'default',
-                          WebkitTapHighlightColor: 'transparent',
-                        }}
-                      >
-                        {leader ? (
-                          <>
-                            <div style={{ fontSize: 13, fontWeight: 800, color: party?.color }}>{leader.name}</div>
-                            <div
-                              style={{
-                                fontSize: 20,
-                                fontWeight: 800,
-                                color: leader.net >= 0 ? '#02A95B' : '#E4003B',
-                                marginTop: 4,
-                              }}
-                            >
-                              {formatLeaderGap(leader.net)}
-                            </div>
-                            <div style={{ fontSize: 13, color: T.tl, marginTop: 3 }}>
-                              {leader.metricLabel || 'Net favourability'}
-                            </div>
-                          </>
-                        ) : (
-                          <div style={{ fontSize: 13, color: T.tl }}>No leader data</div>
-                        )}
-                      </div>
-                    ),
+                    ({ leader, party }, i) => {
+                      const display = leaderRatingDisplay(leader)
+                      return (
+                        <div
+                          key={i}
+                          onClick={() => {
+                            if (!leader) return
+                            const leaderIdx = leaders?.indexOf(leader)
+                            if (leaderIdx >= 0) {
+                              haptic(8)
+                              nav('leader', { lIdx: leaderIdx, from: 'compare' })
+                            }
+                          }}
+                          style={{
+                            borderRadius: 12,
+                            padding: '12px 12px',
+                            background: T.c0 || '#fff',
+                            border: `1px solid ${party?.color || T.cardBorder || 'rgba(0,0,0,0.07)'}28`,
+                            textAlign: 'center',
+                            cursor: leader ? 'pointer' : 'default',
+                            WebkitTapHighlightColor: 'transparent',
+                          }}
+                        >
+                          {leader ? (
+                            <>
+                              <div style={{ fontSize: 13, fontWeight: 800, color: party?.color }}>{leader.name}</div>
+                              <div
+                                style={{
+                                  fontSize: display.sourced ? 20 : 16,
+                                  fontWeight: 800,
+                                  color: display.sourced ? (leader.net >= 0 ? '#02A95B' : '#E4003B') : T.th,
+                                  marginTop: 4,
+                                }}
+                              >
+                                {display.value}
+                              </div>
+                              <div style={{ fontSize: 13, color: T.tl, marginTop: 3 }}>
+                                {display.label}
+                              </div>
+                            </>
+                          ) : (
+                            <div style={{ fontSize: 13, color: T.tl }}>No leader data</div>
+                          )}
+                        </div>
+                      )
+                    },
                   )}
                 </div>
               </>

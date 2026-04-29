@@ -12,6 +12,15 @@ import { parseJsonResponse } from '../utils/http'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
+function hasSourcedFavourability(leader) {
+  if (!leader || !Number.isFinite(Number(leader.net))) return false
+  const label = String(leader.metricLabel || '').toLowerCase()
+  const hasSourceMarker =
+    leader.ratingSource === 'sourced' ||
+    Boolean(leader.sourceUrl || leader.source || leader.publishedAt || leader.fieldworkDate)
+  return hasSourceMarker && label.includes('favourability')
+}
+
 function MiniBar({ value, max, color, height = 8, T }) {
   const pct = Math.max(2, Math.min(100, (value / (max || 1)) * 100))
   return (
@@ -408,7 +417,9 @@ export default function HomeScreen({
     party?.confidenceLabel || 'No clear break yet'
 
   const topBet = betting?.odds?.[0]
-  const sortedLeaders = [...allLeaders].sort((a, b) => (b.net ?? -999) - (a.net ?? -999))
+  const sortedLeaders = allLeaders
+    .filter(hasSourcedFavourability)
+    .sort((a, b) => (b.net ?? -999) - (a.net ?? -999))
   const topLeader = sortedLeaders[0] || null
   const upBE = (byElections?.upcoming || []).filter((b) => b.status !== 'skip')
   const recBE = byElections?.recent || []
@@ -937,10 +948,10 @@ export default function HomeScreen({
             <SmallCard T={T} onClick={() => nav('leaders')}>
               <div style={pS}>
                 <Lbl T={T}>Leaders</Lbl>
-                <Stat color={topLeader?.net >= 0 ? '#02A95B' : '#E4003B'} T={T}>
+                <Stat color={topLeader ? (topLeader.net >= 0 ? '#02A95B' : '#E4003B') : T.tl} T={T}>
                   {topLeader ? `${(topLeader.net ?? 0) >= 0 ? '+' : ''}${topLeader.net ?? '—'}` : '—'}
                 </Stat>
-                <Sub T={T}>Highest rated leader · {topLeader?.name?.split(' ').pop() || '—'}</Sub>
+                <Sub T={T}>{topLeader ? `Highest sourced favourability · ${topLeader.name?.split(' ').pop() || '—'}` : 'No sourced favourability row yet'}</Sub>
                 <Cta T={T}>Compare leaders →</Cta>
               </div>
             </SmallCard>

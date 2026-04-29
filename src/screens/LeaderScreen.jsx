@@ -116,16 +116,42 @@ function ratingMetricLabel(leader) {
   return leader?.metricLabel || (leader?.ratingSource === 'sourced' ? 'Net favourability' : 'Maintained profile rating')
 }
 
+function isFiniteNumber(value) {
+  return Number.isFinite(Number(value))
+}
+
+function hasSourcedFavourability(leader) {
+  if (!leader || !isFiniteNumber(leader.net)) return false
+  const label = String(leader.metricLabel || '').toLowerCase()
+  const hasSourceMarker =
+    leader.ratingSource === 'sourced' ||
+    Boolean(leader.sourceUrl || leader.source || leader.publishedAt || leader.fieldworkDate)
+  return hasSourceMarker && label.includes('favourability')
+}
+
 function hasFavourabilitySplit(leader) {
   if (!leader?._hasFavourabilitySplit) return false
   return Number.isFinite(Number(leader.favourable)) && Number.isFinite(Number(leader.unfavourable))
 }
 
 function ratingSourceLine(leader) {
-  if (leader?.ratingSource !== 'sourced') return 'Maintained profile rating'
+  if (!hasSourcedFavourability(leader)) return 'No sourced favourability row yet'
   const source = leader.source || 'Leader ratings source'
   const date = leader.publishedAt || leader.fieldworkDate || leader.updatedAt || ''
   return date ? `${source} · ${date}` : source
+}
+
+function buildProfileOnlyIntelligence(leader) {
+  return {
+    contextLine: 'No sourced favourability row yet',
+    whyItMattersTitle: 'Profile only',
+    whyItMattersBody: `${leader.name}'s profile remains available, but Politiscope is not ranking maintained profile ratings against sourced favourability polling.`,
+    signals: [
+      { label: 'Rank', value: 'Not ranked' },
+      { label: 'Metric', value: 'Profile only' },
+      { label: 'Status', value: 'Awaiting source' },
+    ],
+  }
 }
 
 function buildLeaderIntelligence({ leader, party, sorted, curRank, prev, next }) {
@@ -289,15 +315,20 @@ export default function LeaderScreen({ T, lIdx, nav, leaders, parties, initialTa
     onNavigate: (newIdx) => nav('leader', { lIdx: newIdx, openTab: tab }),
   })
 
-  const sorted = [...(leaders || [])].sort((a, b) => b.net - a.net)
-  const curRank = sorted.findIndex((x) => x.name === l.name)
+  const isSourcedLeader = hasSourcedFavourability(l)
+  const sorted = [...(leaders || [])]
+    .filter(hasSourcedFavourability)
+    .sort((a, b) => Number(b.net) - Number(a.net))
+  const curRank = isSourcedLeader ? sorted.findIndex((x) => x.name === l.name) : -1
   const prev = curRank > 0 ? sorted[curRank - 1] : null
-  const next = curRank < sorted.length - 1 ? sorted[curRank + 1] : null
-  const rankLabel = curRank >= 0 ? `#${curRank + 1} by ${ratingMetricLabel(l).toLowerCase()}` : null
+  const next = curRank >= 0 && curRank < sorted.length - 1 ? sorted[curRank + 1] : null
+  const rankLabel = curRank >= 0 ? `#${curRank + 1} by net favourability` : null
 
   const chrome = leaderChrome(T)
-  const netColor = l.net >= 0 ? '#02A95B' : '#C8102E'
-  const intelligence = buildLeaderIntelligence({ leader: l, party, sorted, curRank, prev, next })
+  const netColor = isSourcedLeader && l.net >= 0 ? '#02A95B' : '#C8102E'
+  const intelligence = isSourcedLeader
+    ? buildLeaderIntelligence({ leader: l, party, sorted, curRank, prev, next })
+    : buildProfileOnlyIntelligence(l)
   const compareContextArea = tab === 'bio' ? 'overview' : tab
   const openCompareWith = ({ baseParty, opponent, contextArea }) => {
     setCompareOpen(false)
@@ -384,20 +415,31 @@ export default function LeaderScreen({ T, lIdx, nav, leaders, parties, initialTa
                 <InfoButton id="leader_profile" T={T} size={18} />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 9 }}>
-                <div style={{ fontSize: 44, fontWeight: 950, color: netColor, lineHeight: 0.92, letterSpacing: '-0.045em' }}>
-                  {l.net >= 0 ? '+' : ''}{l.net}
+              {isSourcedLeader ? (
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 9 }}>
+                  <div style={{ fontSize: 44, fontWeight: 950, color: netColor, lineHeight: 0.92, letterSpacing: '-0.045em' }}>
+                    {l.net >= 0 ? '+' : ''}{l.net}
+                  </div>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: chrome.muted, lineHeight: 1.34, paddingBottom: 3 }}>
+                    {hasFavourabilitySplit(l) ? (
+                      <>
+                        {l.favourable}% favourable<br />{l.unfavourable}% unfavourable
+                      </>
+                    ) : (
+                      ratingMetricLabel(l)
+                    )}
+                  </div>
                 </div>
-                <div style={{ fontSize: 11.5, fontWeight: 700, color: chrome.muted, lineHeight: 1.34, paddingBottom: 3 }}>
-                  {hasFavourabilitySplit(l) ? (
-                    <>
-                      {l.favourable}% favourable<br />{l.unfavourable}% unfavourable
-                    </>
-                  ) : (
-                    ratingMetricLabel(l)
-                  )}
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 9 }}>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: T.th, lineHeight: 1, letterSpacing: '-0.035em' }}>
+                    Profile only
+                  </div>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: chrome.muted, lineHeight: 1.34, paddingBottom: 2 }}>
+                    No sourced<br />favourability row yet
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -523,103 +565,105 @@ export default function LeaderScreen({ T, lIdx, nav, leaders, parties, initialTa
             </div>
           ) : null}
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr auto 1fr',
-              alignItems: 'center',
-              gap: 8,
-              paddingTop: 9,
-              borderTop: `1px solid ${chrome.hairline}`,
-            }}
-          >
+          {isSourcedLeader ? (
             <div
               style={{
-                fontSize: 12.5,
-                fontWeight: 850,
-                color: prev ? chrome.muted : 'transparent',
-                cursor: prev ? 'pointer' : 'default',
-                WebkitTapHighlightColor: 'transparent',
-                textAlign: 'left',
-              }}
-              onClick={() => {
-                if (!prev) return
-                haptic(6)
-                nav('leader', { lIdx: leaders.indexOf(prev), openTab: tab })
+                display: 'grid',
+                gridTemplateColumns: '1fr auto 1fr',
+                alignItems: 'center',
+                gap: 8,
+                paddingTop: 9,
+                borderTop: `1px solid ${chrome.hairline}`,
               }}
             >
-              {prev ? (
-                <>
-                  <span
-                    style={{
-                      display: 'block',
-                      fontSize: 9.5,
-                      fontWeight: 800,
-                      letterSpacing: '0.07em',
-                      textTransform: 'uppercase',
-                      color: chrome.faint,
-                      marginBottom: 1,
-                    }}
-                  >
-                    Above
-                  </span>
-                  <span>{shortName(prev.name)}</span>
-                </>
-              ) : (
-                '•'
-              )}
-            </div>
+              <div
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 850,
+                  color: prev ? chrome.muted : 'transparent',
+                  cursor: prev ? 'pointer' : 'default',
+                  WebkitTapHighlightColor: 'transparent',
+                  textAlign: 'left',
+                }}
+                onClick={() => {
+                  if (!prev) return
+                  haptic(6)
+                  nav('leader', { lIdx: leaders.indexOf(prev), openTab: tab })
+                }}
+              >
+                {prev ? (
+                  <>
+                    <span
+                      style={{
+                        display: 'block',
+                        fontSize: 9.5,
+                        fontWeight: 800,
+                        letterSpacing: '0.07em',
+                        textTransform: 'uppercase',
+                        color: chrome.faint,
+                        marginBottom: 1,
+                      }}
+                    >
+                      Above
+                    </span>
+                    <span>{shortName(prev.name)}</span>
+                  </>
+                ) : (
+                  '•'
+                )}
+              </div>
 
-            <div
-              style={{
-                fontSize: 10.5,
-                fontWeight: 700,
-                letterSpacing: '0.075em',
-                textTransform: 'uppercase',
-                color: chrome.faint,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Nearby leaders
-            </div>
+              <div
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  letterSpacing: '0.075em',
+                  textTransform: 'uppercase',
+                  color: chrome.faint,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Sourced leaders
+              </div>
 
-            <div
-              style={{
-                fontSize: 12.5,
-                fontWeight: 850,
-                color: next ? chrome.muted : 'transparent',
-                cursor: next ? 'pointer' : 'default',
-                WebkitTapHighlightColor: 'transparent',
-                textAlign: 'right',
-              }}
-              onClick={() => {
-                if (!next) return
-                haptic(6)
-                nav('leader', { lIdx: leaders.indexOf(next), openTab: tab })
-              }}
-            >
-              {next ? (
-                <>
-                  <span
-                    style={{
-                      display: 'block',
-                      fontSize: 9.5,
-                      fontWeight: 800,
-                      letterSpacing: '0.07em',
-                      textTransform: 'uppercase',
-                      color: chrome.faint,
-                      marginBottom: 1,
-                    }}
-                  >
-                    Below
-                  </span>
-                  <span>{shortName(next.name)}</span>
-                </>
-              ) : (
-                '•'
-              )}
+              <div
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 850,
+                  color: next ? chrome.muted : 'transparent',
+                  cursor: next ? 'pointer' : 'default',
+                  WebkitTapHighlightColor: 'transparent',
+                  textAlign: 'right',
+                }}
+                onClick={() => {
+                  if (!next) return
+                  haptic(6)
+                  nav('leader', { lIdx: leaders.indexOf(next), openTab: tab })
+                }}
+              >
+                {next ? (
+                  <>
+                    <span
+                      style={{
+                        display: 'block',
+                        fontSize: 9.5,
+                        fontWeight: 800,
+                        letterSpacing: '0.07em',
+                        textTransform: 'uppercase',
+                        color: chrome.faint,
+                        marginBottom: 1,
+                      }}
+                    >
+                      Below
+                    </span>
+                    <span>{shortName(next.name)}</span>
+                  </>
+                ) : (
+                  '•'
+                )}
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
 
