@@ -1,0 +1,4 @@
+council,ward,candidateName,party,votes,elected,turnout,sourceUrl,sourceLabel,lastChecked,verificationStatus
+Birmingham City Council,Acocks Green,"O'SHEA, John Anthony",Labour Party,1234,true,Test fixture,LOCAL_ONLY_TEST_DATA_DO_NOT_IMPORT,LOCAL TEST DATA - not official result,29-04-2026,test-only
+Birmingham City Council,Acocks Green,"HARMER, Roger Kingdon",Liberal Democrats,1110,false,Test fixture,LOCAL_ONLY_TEST_DATA_DO_NOT_IMPORT,LOCAL TEST DATA - not official result,29-04-2026,test-only
+Birmingham City Council,Acocks Green,"DRENNAN, Danny",Reform UK,980,false,Test fixture,LOCAL_ONLY_TEST_DATA_DO_NOT_IMPORT,LOCAL TEST DATA - not official result,29-04-2026,test-only

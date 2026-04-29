@@ -314,6 +314,11 @@ async function postJson(apiBase, body) {
 export async function ingestLocalElectionResults() {
   const apiBase = API_BASE
   const config = await readJsonFile(CONFIG_PATH)
+  const checkOnly = DRY_RUN || process.argv.includes('--check-only')
+  if (config.testOnly && !checkOnly) {
+    fail('This result source config is marked testOnly. Re-run with --dry-run or --check-only, or use the production result source config.')
+  }
+
   const electionDate = String(config.electionDate || '2026-05-07').trim()
   const sourceConfigs = (Array.isArray(config.sources) ? config.sources : [])
     .filter((source) => !COUNCIL_FILTER || slugify(source.councilSlug || source.councilName) === slugify(COUNCIL_FILTER))
@@ -377,7 +382,7 @@ export async function ingestLocalElectionResults() {
     fail('No result rows were ready to import.', JSON.stringify(summaryBase, null, 2))
   }
 
-  if (DRY_RUN || process.argv.includes('--check-only')) {
+  if (checkOnly) {
     console.log(JSON.stringify({ ok: true, dryRun: true, ...summaryBase }, null, 2))
     return
   }

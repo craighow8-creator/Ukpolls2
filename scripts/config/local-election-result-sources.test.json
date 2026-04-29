@@ -1,0 +1,19 @@
+{
+  "testOnly": true,
+  "electionDate": "2026-05-07",
+  "sources": [
+    {
+      "councilSlug": "birmingham-city-council",
+      "councilName": "Birmingham City Council",
+      "enabled": true,
+      "priority": true,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-result-sources/test-birmingham-2026-results.csv",
+      "sourceLabel": "LOCAL TEST DATA - not official result",
+      "sourceUrl": "LOCAL_ONLY_TEST_DATA_DO_NOT_IMPORT",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "test-only",
+      "notes": "Local-only dry-run fixture for testing result ingest matching before election night. The importer refuses non-dry-run imports when testOnly is true."
+    }
+  ]
+}
