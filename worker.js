@@ -2849,6 +2849,20 @@ export default {
            WHERE o.is_current = 1
              AND (s.url IS NULL OR s.url = '')`
         )
+        const candidateCouncilRows = await env.DB.prepare(
+          `SELECT
+             lc.slug,
+             lc.name,
+             COUNT(DISTINCT c.ward_id) AS ward_count,
+             COUNT(*) AS candidate_count,
+             SUM(CASE WHEN s.url IS NULL OR s.url = '' THEN 1 ELSE 0 END) AS missing_source_url_count
+           FROM local_candidates c
+           JOIN local_councils lc ON lc.id = c.council_id
+           LEFT JOIN local_sources s ON s.id = c.primary_source_id
+           WHERE lc.active = 1
+           GROUP BY lc.slug, lc.name
+           ORDER BY lc.name ASC`
+        ).all()
         const latestRun = await env.DB.prepare(
           `SELECT id, pipeline, status, started_at, finished_at, rows_upserted, error_summary, meta_json
            FROM local_ingest_runs
@@ -2882,6 +2896,13 @@ export default {
             candidatesMissingSourceUrl: missingCandidateSourceUrl,
             officeholdersMissingSourceUrl: missingOfficeholderSourceUrl,
           },
+          candidateCoverageByCouncil: (candidateCouncilRows.results || []).map((row) => ({
+            slug: row.slug,
+            name: row.name,
+            wards: Number(row.ward_count || 0),
+            candidates: Number(row.candidate_count || 0),
+            missingSourceUrl: Number(row.missing_source_url_count || 0),
+          })),
           latestLocalIngestRun: latestRun
             ? {
                 id: latestRun.id,
@@ -3180,6 +3201,274 @@ export default {
           ballotCount: Number(ballotRow?.count || 0),
           candidateCount: Number(candidateRow?.count || 0),
           linkedCandidateCount: Number(linkedRow?.count || 0),
+        }
+      }
+
+      async function upsertLocalVoteCandidateSourceChunk({
+        electionDate,
+        sourceLabel,
+        sourceUrl,
+        rows,
+        runId,
+      }) {
+        const batchRunner = createLocalVoteBatchRunner()
+        const rowsReceived = toArray(rows).length
+        let rowsUpserted = 0
+        let matchedRows = 0
+        let skippedRows = 0
+        let insertedBallots = 0
+        let insertedCandidates = 0
+        let candidateBallotLinks = 0
+        const processedEventIds = new Set()
+        const processedBallotIds = new Set()
+        const processedWardIds = new Set()
+        const sourceIds = new Map()
+        const skippedSamples = []
+
+        const getSourceId = async (row) => {
+          const label = String(row.sourceLabel || sourceLabel || 'Official statement of persons nominated').trim()
+          const urlValue = String(row.sourceUrl || sourceUrl || '').trim()
+          if (!label || !urlValue) return null
+
+          const key = `${label}|${urlValue}`
+          if (sourceIds.has(key)) return sourceIds.get(key)
+
+          const sourceId = await upsertLocalSource(
+            {
+              label,
+              url: urlValue,
+              publisher: row.publisher || row.councilName || 'Official Local Authority source',
+              sourceType: row.sourceType || 'official-candidate-source',
+              updatedAt: row.lastChecked || row.updatedAt || electionDate || new Date().toISOString(),
+              lastChecked: row.lastChecked || null,
+            },
+            'official-candidate-source',
+            batchRunner,
+          )
+          sourceIds.set(key, sourceId)
+          return sourceId
+        }
+
+        const noteSkipped = (reason, row) => {
+          skippedRows += 1
+          if (skippedSamples.length >= 25) return
+          skippedSamples.push({
+            reason,
+            councilSlug: row?.councilSlug || '',
+            wardSlug: row?.wardSlug || '',
+            wardName: row?.wardName || '',
+            candidateName: row?.candidateName || row?.personName || '',
+          })
+        }
+
+        for (const row of toArray(rows)) {
+          const council = row?.councilId && row?.councilSlug
+            ? {
+                id: String(row.councilId).trim(),
+                slug: String(row.councilSlug).trim(),
+                name: String(row.councilName || '').trim(),
+              }
+            : null
+          const ward = row?.wardId && row?.wardSlug
+            ? {
+                id: String(row.wardId).trim(),
+                slug: String(row.wardSlug).trim(),
+                name: String(row.wardName || '').trim(),
+              }
+            : null
+          const candidateName = String(row.candidateName || row.personName || '').trim()
+          const partyName = String(row.partyName || row.party || '').trim()
+          const rowElectionDate = String(row.electionDate || electionDate || '').trim()
+          const updatedAt = String(row.lastChecked || row.updatedAt || rowElectionDate || new Date().toISOString()).trim()
+          const sourceId = await getSourceId(row)
+
+          if (!council?.id || !ward?.id) {
+            noteSkipped('missing-council-or-ward-match', row)
+            continue
+          }
+          if (!candidateName) {
+            noteSkipped('missing-candidate-name', row)
+            continue
+          }
+          if (!sourceId) {
+            noteSkipped('missing-source-url', row)
+            continue
+          }
+
+          matchedRows += 1
+
+          const eventId = `election_event_${slugifyLocalVote(council.slug)}_${slugifyLocalVote(rowElectionDate || 'undated')}`
+          const ballotId = `ballot_${slugifyLocalVote(council.slug)}_${slugifyLocalVote(ward.slug)}_${slugifyLocalVote(rowElectionDate || 'undated')}`
+          const candidateId = `candidate_${slugifyLocalVote(council.slug)}_${slugifyLocalVote(ward.slug)}_${slugifyLocalVote(candidateName)}_${slugifyLocalVote(partyName)}`
+          const ballotName = row.ballotName || `${council.name || council.slug} local election ${ward.name || ward.slug}`
+
+          if (!processedEventIds.has(eventId)) {
+            await batchRunner.push(env.DB.prepare(
+              `INSERT INTO local_election_events (id, council_id, election_date, label, source_system, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                 election_date = excluded.election_date,
+                 label = excluded.label,
+                 source_system = excluded.source_system,
+                 updated_at = excluded.updated_at`
+            ).bind(
+              eventId,
+              council.id,
+              rowElectionDate || null,
+              `${council.name || council.slug} local election`,
+              'official-candidate-source',
+              updatedAt,
+            ))
+            await linkEntitySource('election_event', eventId, sourceId, row.verificationStatus || 'verified', updatedAt, 'record', batchRunner)
+            processedEventIds.add(eventId)
+            rowsUpserted += 1
+          }
+
+          if (!processedBallotIds.has(ballotId)) {
+            await batchRunner.push(env.DB.prepare(
+              `INSERT INTO local_ballots (id, election_event_id, council_id, ward_id, ballot_paper_id, ballot_name, status, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                 election_event_id = excluded.election_event_id,
+                 council_id = excluded.council_id,
+                 ward_id = excluded.ward_id,
+                 ballot_paper_id = excluded.ballot_paper_id,
+                 ballot_name = excluded.ballot_name,
+                 status = excluded.status,
+                 updated_at = excluded.updated_at`
+            ).bind(
+              ballotId,
+              eventId,
+              council.id,
+              ward.id,
+              row.ballotPaperId || ballotId,
+              ballotName,
+              row.ballotStatus || 'verified',
+              updatedAt,
+            ))
+            await linkEntitySource('ballot', ballotId, sourceId, row.verificationStatus || 'verified', updatedAt, 'record', batchRunner)
+            processedBallotIds.add(ballotId)
+            insertedBallots += 1
+            rowsUpserted += 1
+          }
+
+          if (!processedWardIds.has(ward.id)) {
+            await batchRunner.push(env.DB.prepare(
+              `UPDATE local_wards
+               SET candidate_list_status = ?, updated_at = ?
+               WHERE id = ?`
+            ).bind('Verified candidate list', updatedAt, ward.id))
+            processedWardIds.add(ward.id)
+          }
+
+          await batchRunner.push(env.DB.prepare(
+            `INSERT INTO local_candidates (
+               id, ballot_id, council_id, ward_id, name, party, election_date,
+               democracy_club_person_url, source_attribution, issue_statements_json,
+               primary_source_id, verification_status, last_checked, updated_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET
+               ballot_id = excluded.ballot_id,
+               council_id = excluded.council_id,
+               ward_id = excluded.ward_id,
+               name = excluded.name,
+               party = excluded.party,
+               election_date = excluded.election_date,
+               source_attribution = excluded.source_attribution,
+               issue_statements_json = excluded.issue_statements_json,
+               primary_source_id = excluded.primary_source_id,
+               verification_status = excluded.verification_status,
+               last_checked = excluded.last_checked,
+               updated_at = excluded.updated_at`
+          ).bind(
+            candidateId,
+            ballotId,
+            council.id,
+            ward.id,
+            candidateName,
+            partyName,
+            rowElectionDate || null,
+            null,
+            row.sourceAttribution || 'official-candidate-source',
+            JSON.stringify(row.issueStatements || {}),
+            sourceId,
+            row.verificationStatus || 'verified',
+            row.lastChecked || updatedAt,
+            updatedAt,
+          ))
+          await linkEntitySource('candidate', candidateId, sourceId, row.verificationStatus || 'verified', row.lastChecked || updatedAt, 'record', batchRunner)
+
+          rowsUpserted += 1
+          insertedCandidates += 1
+          candidateBallotLinks += ballotId ? 1 : 0
+        }
+
+        await batchRunner.flush()
+
+        if (runId) {
+          await env.DB.prepare(
+            `UPDATE local_ingest_runs
+             SET rows_upserted = COALESCE(rows_upserted, 0) + ?, meta_json = ?
+             WHERE id = ?`
+          ).bind(
+            rowsUpserted,
+            JSON.stringify({
+              electionDate,
+              rowsReceived,
+              matchedRows,
+              skippedRows,
+              insertedBallots,
+              insertedCandidates,
+              candidateBallotLinks,
+              skippedSamples,
+            }),
+            runId,
+          ).run()
+        }
+
+        return {
+          rowsReceived,
+          matchedRows,
+          skippedRows,
+          insertedBallots,
+          insertedCandidates,
+          candidateBallotLinks,
+          rowsUpserted,
+          skippedSamples,
+        }
+      }
+
+      async function validateLocalVoteCandidateSourceImport(electionDate) {
+        const ballotRow = await env.DB.prepare(
+          `SELECT COUNT(*) AS count
+           FROM local_ballots b
+           JOIN local_election_events e ON e.id = b.election_event_id
+           WHERE e.election_date = ?
+             AND e.source_system = ?`
+        ).bind(electionDate, 'official-candidate-source').first()
+
+        const candidateRow = await env.DB.prepare(
+          `SELECT COUNT(*) AS count
+           FROM local_candidates c
+           WHERE c.election_date = ?
+             AND c.source_attribution = ?`
+        ).bind(electionDate, 'official-candidate-source').first()
+
+        const linkedRow = await env.DB.prepare(
+          `SELECT COUNT(*) AS count
+           FROM local_candidates c
+           JOIN local_ballots b ON b.id = c.ballot_id
+           LEFT JOIN local_sources s ON s.id = c.primary_source_id
+           WHERE c.election_date = ?
+             AND c.source_attribution = ?
+             AND s.url IS NOT NULL
+             AND s.url != ''`
+        ).bind(electionDate, 'official-candidate-source').first()
+
+        return {
+          ballotCount: Number(ballotRow?.count || 0),
+          candidateCount: Number(candidateRow?.count || 0),
+          sourcedCandidateCount: Number(linkedRow?.count || 0),
         }
       }
 
@@ -3742,6 +4031,126 @@ export default {
                 validation,
                 unmatchedCouncils: body?.unmatchedCouncils || [],
                 unmatchedWards: body?.unmatchedWards || [],
+              }),
+              runId,
+            ).run()
+
+            return jsonResponse({
+              ok: !failed,
+              runId,
+              electionDate,
+              validation,
+            }, { status: failed ? 500 : 200 })
+          }
+
+          return jsonResponse({ ok: false, error: 'Unknown action.' }, { status: 400 })
+        } catch (error) {
+          return jsonResponse(
+            {
+              ok: false,
+              error: error instanceof Error ? error.message : String(error),
+            },
+            { status: 500 },
+          )
+        }
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/local-vote/ingest/candidate-sources') {
+        try {
+          const body = await request.json()
+          const action = String(body?.action || 'chunk').trim().toLowerCase()
+          const electionDate = String(body?.electionDate || '').trim()
+          const sourceLabel = String(body?.sourceLabel || '').trim()
+          const sourceUrl = String(body?.sourceUrl || '').trim()
+          const runId = String(body?.runId || `local_vote_ingest_candidate_sources_${Date.now()}`).trim()
+
+          if (!electionDate) {
+            return jsonResponse({ ok: false, error: 'Missing electionDate.' }, { status: 400 })
+          }
+
+          if (action === 'start') {
+            await env.DB.prepare(
+              `INSERT INTO local_ingest_runs (id, pipeline, status, started_at, finished_at, rows_upserted, error_summary, meta_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                 pipeline = excluded.pipeline,
+                 status = excluded.status,
+                 started_at = excluded.started_at,
+                 finished_at = excluded.finished_at,
+                 rows_upserted = excluded.rows_upserted,
+                 error_summary = excluded.error_summary,
+                 meta_json = excluded.meta_json`
+            ).bind(
+              runId,
+              'local-vote-official-candidate-sources',
+              'running',
+              new Date().toISOString(),
+              null,
+              0,
+              null,
+              JSON.stringify({
+                electionDate,
+                sourceLabel,
+                sourceUrl,
+                totalRows: Number(body?.totalRows || 0),
+                priorityCouncils: body?.priorityCouncils || [],
+              }),
+            ).run()
+
+            return jsonResponse({
+              ok: true,
+              runId,
+              electionDate,
+              sourceLabel,
+              sourceUrl,
+            })
+          }
+
+          if (action === 'chunk') {
+            const rows = toArray(body?.rows)
+            if (!rows.length) {
+              return jsonResponse({ ok: false, error: 'Missing candidate rows.' }, { status: 400 })
+            }
+
+            const summary = await upsertLocalVoteCandidateSourceChunk({
+              electionDate,
+              sourceLabel,
+              sourceUrl,
+              rows,
+              runId,
+            })
+
+            return jsonResponse({
+              ok: true,
+              runId,
+              electionDate,
+              chunkIndex: Number(body?.chunkIndex || 0),
+              totalChunks: Number(body?.totalChunks || 0),
+              ...summary,
+            })
+          }
+
+          if (action === 'finish') {
+            const validation = await validateLocalVoteCandidateSourceImport(electionDate)
+            const failed =
+              validation.ballotCount <= 0 ||
+              validation.candidateCount <= 0 ||
+              validation.sourcedCandidateCount !== validation.candidateCount
+
+            await env.DB.prepare(
+              `UPDATE local_ingest_runs
+               SET status = ?, finished_at = ?, error_summary = ?, meta_json = ?
+               WHERE id = ?`
+            ).bind(
+              failed ? 'failed' : 'success',
+              new Date().toISOString(),
+              failed ? 'Validation failed for official candidate source ingest.' : null,
+              JSON.stringify({
+                electionDate,
+                sourceLabel,
+                sourceUrl,
+                validation,
+                skippedSamples: body?.skippedSamples || [],
               }),
               runId,
             ).run()

@@ -1,0 +1,100 @@
+{
+  "electionDate": "2026-05-07",
+  "sources": [
+    {
+      "councilSlug": "sheffield-city-council",
+      "councilName": "Sheffield City Council",
+      "priority": true,
+      "enabled": true,
+      "parserType": "existing-local-guide",
+      "sourceLabel": "Official statement of persons nominated",
+      "sourceUrl": "https://www.sheffield.gov.uk/sites/default/files/2026-04/statement_of_persons_nominated.pdf",
+      "lastChecked": "25-04-2026",
+      "verificationStatus": "verified"
+    },
+    {
+      "councilSlug": "doncaster",
+      "councilName": "Doncaster",
+      "priority": true,
+      "enabled": false,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-candidate-sources/doncaster-2026.csv",
+      "sourceLabel": "Official statement of persons nominated",
+      "sourceUrl": "",
+      "lastChecked": "",
+      "verificationStatus": "source-needed"
+    },
+    {
+      "councilSlug": "birmingham",
+      "councilName": "Birmingham",
+      "priority": true,
+      "enabled": false,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-candidate-sources/birmingham-2026.csv",
+      "sourceLabel": "Official statement of persons nominated",
+      "sourceUrl": "",
+      "lastChecked": "",
+      "verificationStatus": "source-needed"
+    },
+    {
+      "councilSlug": "leeds",
+      "councilName": "Leeds",
+      "priority": true,
+      "enabled": false,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-candidate-sources/leeds-2026.csv",
+      "sourceLabel": "Official statement of persons nominated",
+      "sourceUrl": "",
+      "lastChecked": "",
+      "verificationStatus": "source-needed"
+    },
+    {
+      "councilSlug": "manchester",
+      "councilName": "Manchester",
+      "priority": true,
+      "enabled": false,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-candidate-sources/manchester-2026.csv",
+      "sourceLabel": "Official statement of persons nominated",
+      "sourceUrl": "",
+      "lastChecked": "",
+      "verificationStatus": "source-needed"
+    },
+    {
+      "councilSlug": "liverpool",
+      "councilName": "Liverpool",
+      "priority": true,
+      "enabled": false,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-candidate-sources/liverpool-2026.csv",
+      "sourceLabel": "Official statement of persons nominated",
+      "sourceUrl": "",
+      "lastChecked": "",
+      "verificationStatus": "source-needed"
+    },
+    {
+      "councilSlug": "devon",
+      "councilName": "Devon",
+      "priority": true,
+      "enabled": false,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-candidate-sources/devon-2026.csv",
+      "sourceLabel": "Official statement of persons nominated",
+      "sourceUrl": "",
+      "lastChecked": "",
+      "verificationStatus": "source-needed"
+    },
+    {
+      "councilSlug": "essex",
+      "councilName": "Essex",
+      "priority": true,
+      "enabled": false,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-candidate-sources/essex-2026.csv",
+      "sourceLabel": "Official statement of persons nominated",
+      "sourceUrl": "",
+      "lastChecked": "",
+      "verificationStatus": "source-needed"
+    }
+  ]
+}
