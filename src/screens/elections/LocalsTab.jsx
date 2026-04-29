@@ -23,7 +23,7 @@ import { LOCAL_FILTERS, selectLocalElectionModel } from './electionsSelectors'
 
 const ENGLISH_LOCAL_AUTHORITIES_VOTING = 136
 const ENGLISH_LOCAL_SEATS_UP_LABEL = '~5,000'
-const ENGLISH_LOCAL_SEATS_UP_DETAIL = '5,013–5,066 English council seats'
+const ENGLISH_LOCAL_SEATS_UP_DETAIL = '5,013-5,066 English Local Authority seats'
 
 function simplifyLookupValue(value = '') {
   return String(value || '')
@@ -97,7 +97,7 @@ export default function LocalsTab({
   )
 
   const detailedProfileCount = Object.keys(COUNCIL_PROFILES || {}).length
-  const officialLocalBriefing = `${ENGLISH_LOCAL_AUTHORITIES_VOTING} English councils vote on 7 May 2026. Politiscope also tracks important local authorities that are not voting this cycle.`
+  const officialLocalBriefing = `${ENGLISH_LOCAL_AUTHORITIES_VOTING} English Local Authorities vote on 7 May 2026. Politiscope also tracks important Local Authorities that are not voting this cycle.`
 
   const scrollToLocalResults = () => {
     const scroll = () => resultsAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -116,7 +116,7 @@ export default function LocalsTab({
   const handleOpenLocalVoteGuide = async () => {
     const trimmedQuery = voteGuideQuery.trim()
     if (!trimmedQuery) {
-      setVoteGuideMessage('Enter a postcode, council, ward, region or party pressure point.')
+      setVoteGuideMessage('Enter a postcode, Local Authority, ward, region or party pressure point.')
       return
     }
 
@@ -137,7 +137,7 @@ export default function LocalsTab({
           return
         }
 
-        setVoteGuideMessage('That postcode could not be matched yet. Try the council or ward name instead.')
+        setVoteGuideMessage('That postcode could not be matched yet. Try the Local Authority or ward name instead.')
         return
       }
 
@@ -152,7 +152,7 @@ export default function LocalsTab({
 
       setSearch(trimmedQuery)
       setLocalFilter('all')
-      setVoteGuideMessage('No exact authority match yet. Showing matching councils below.')
+      setVoteGuideMessage('No exact Local Authority match yet. Showing matching authorities below.')
       scrollToLocalResults()
     } finally {
       setVoteGuideBusy(false)
@@ -161,10 +161,10 @@ export default function LocalsTab({
 
   return (
     <>
-      <SectionLabel T={T}>Local authorities</SectionLabel>
+      <SectionLabel T={T}>Local Authorities</SectionLabel>
 
       <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-        <SectionLabel T={T}>Search or browse</SectionLabel>
+        <SectionLabel T={T}>Search or browse Local Authorities</SectionLabel>
 
         <div
           style={{
@@ -176,7 +176,7 @@ export default function LocalsTab({
             marginBottom: 12,
           }}
         >
-          Search by postcode, council, ward, region or political pressure point. One search handles local election lookup and council browsing.
+          Search by postcode, Local Authority, ward, region or political pressure point. One search handles local election lookup and Local Authority browsing.
         </div>
 
         <div style={{ position: 'relative', marginBottom: 10 }}>
@@ -192,7 +192,7 @@ export default function LocalsTab({
             type="text"
             inputMode="text"
             autoCapitalize="characters"
-            placeholder="Enter postcode, council, ward, region or party"
+            placeholder="Enter postcode, Local Authority, ward, region or party"
             value={voteGuideQuery}
             onChange={(e) => {
               const nextValue = e.target.value
@@ -286,7 +286,7 @@ export default function LocalsTab({
       </SurfaceCard>
 
       <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-        <SectionLabel T={T}>Local authority picture</SectionLabel>
+        <SectionLabel T={T}>Local Authority picture</SectionLabel>
 
         <div
           style={{
@@ -325,13 +325,13 @@ export default function LocalsTab({
             marginBottom: 12,
           }}
         >
-          English local council totals are kept separate from Scotland and Wales. Detailed profiles and ward data are separate depth layers.
+          English Local Authority totals are kept separate from Scotland and Wales. Detailed profiles and ward data are separate depth layers.
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
           <InteractiveStatCard
             T={T}
-            label="English councils"
+            label="English Local Authorities"
             value={ENGLISH_LOCAL_AUTHORITIES_VOTING}
             color={T.pr || '#12B7D4'}
             sub="Voting on 7 May"
@@ -399,7 +399,7 @@ export default function LocalsTab({
                 marginBottom: 8,
               }}
             >
-              Top councils to watch
+              Top Local Authorities to watch
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
               {topCouncilsToWatch.map((council, i) => (
@@ -445,7 +445,7 @@ export default function LocalsTab({
           </SectionLabel>
 
           <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginBottom: 8, textAlign: 'center' }}>
-            {localFilteredCouncils.length} of {councils.length} councils
+            {localFilteredCouncils.length} of {councils.length} authorities
             {search ? ` · search: "${search}"` : ''}
             {localFilter !== 'all' ? ` · ${currentLocalFilterLabel}` : ''}
           </div>
@@ -456,7 +456,7 @@ export default function LocalsTab({
             ))
           ) : (
             <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
-              <div style={{ fontSize: 14, color: T.tl }}>No councils match that search/filter yet.</div>
+              <div style={{ fontSize: 14, color: T.tl }}>No Local Authorities match that search/filter yet.</div>
             </SurfaceCard>
           )}
         </>
@@ -471,7 +471,7 @@ export default function LocalsTab({
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 15, fontWeight: 800, color: T.th }}>{region.name}</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
-                    {region.councils} councils · {region.seats} seats
+                    {region.councils} Local Authorities · {region.seats} seats
                   </div>
                 </div>
                 <Chip color={DIFF_COLORS[region.difficulty] || '#888'}>{region.difficulty}</Chip>

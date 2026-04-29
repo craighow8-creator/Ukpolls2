@@ -417,7 +417,7 @@ export default function LocalVoteGuideScreen({
   const displayedCandidates = selectedWard
     ? (candidateState.candidates.length ? candidateState.candidates : selectedWard.candidates)
     : []
-  const candidateSourceLabel = candidateState.sourceLabel || (displayedCandidates.length ? 'Sheffield City Council statement of persons nominated' : '')
+  const candidateSourceLabel = candidateState.sourceLabel || (displayedCandidates.length ? 'Official statement of persons nominated' : '')
   const candidateSourceUrl = candidateState.sourceUrl || (displayedCandidates.length ? selectedWard?.candidates?.[0]?.sourceUrl || '' : '')
   const hasVerifiedIssueStatements = displayedCandidates.some((candidate) =>
     LOCAL_VOTE_ISSUE_AREAS.some((area) => {
@@ -438,20 +438,20 @@ export default function LocalVoteGuideScreen({
     : []
   const externalKeyFacts = externalHasActiveElection
     ? [
-        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
+        { label: 'Local Authority', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Local Authority not matched yet' },
         { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
         { label: 'Election', value: externalActiveElectionDate },
         { label: 'Status', value: externalActiveElectionStatus },
       ]
     : externalNoElectionThisCycle
       ? [
-        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
+        { label: 'Local Authority', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Local Authority not matched yet' },
         { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
         { label: 'Election status', value: externalNoElectionHeadline },
         { label: 'Candidate list', value: 'Not applicable this year' },
       ]
       : [
-        { label: 'Council', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Council not matched yet' },
+        { label: 'Local Authority', value: externalCouncil?.name || externalGuide.postcodeContext?.councilName || 'Local Authority not matched yet' },
         { label: 'Ward', value: externalGuide.postcodeContext?.wardName || 'Ward not available' },
         { label: 'Election', value: resolveElectionDateForBriefing(externalCouncil) },
         { label: 'Status', value: externalBriefingTag.label },
@@ -462,7 +462,7 @@ export default function LocalVoteGuideScreen({
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: T.sf }}>
         <div style={{ padding: '16px 18px 0', flexShrink: 0 }}>
           <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl, textAlign: 'center' }}>
-            Local battleground briefing
+            Local Authority briefing
           </div>
           <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: T.th, lineHeight: 1.05, textAlign: 'center', marginTop: 6 }}>
             {externalCouncil?.name || externalGuide.postcodeContext?.councilName || externalGuide.areaName || normaliseAreaQuery(query)}
@@ -484,7 +484,7 @@ export default function LocalVoteGuideScreen({
                 ))}
               </div>
               <InfoRow T={T} label="Lookup" value={query || 'UK postcode'} />
-              <InfoRow T={T} label="Council control" value={externalCouncil?.control || 'Control not available'} />
+              <InfoRow T={T} label="Local Authority control" value={externalCouncil?.control || 'Control not available'} />
               <InfoRow T={T} label="Constituency" value={externalGuide.postcodeContext?.constituencyName || 'Not available'} />
               <InfoRow
                 T={T}
@@ -538,7 +538,7 @@ export default function LocalVoteGuideScreen({
             <SurfaceCard T={T} style={{ marginBottom: 12 }}>
               <SectionLabel T={T}>Briefing status</SectionLabel>
               <div style={{ display: 'grid', gap: 8 }}>
-                <InfoRow T={T} label="Coverage" value={externalCouncil ? 'Tracked in Politiscope local elections' : 'Briefing view only for now'} />
+                <InfoRow T={T} label="Coverage" value={externalCouncil ? 'Tracked Local Authority' : 'Briefing view only for now'} />
                 <InfoRow
                   T={T}
                   label="Verdict"
@@ -584,7 +584,7 @@ export default function LocalVoteGuideScreen({
                 })}
 
                 <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, textAlign: 'center', marginBottom: 10 }}>
-                  Source: Verified local data
+                  Source: Democracy Club
                 </div>
               </>
             ) : (
@@ -618,7 +618,7 @@ export default function LocalVoteGuideScreen({
             <SurfaceCard T={T} style={{ marginTop: 4 }}>
               <SectionLabel T={T}>Sources</SectionLabel>
               <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginBottom: 12 }}>
-                Maintained local battleground briefing · sources linked where available
+                Maintained Local Authority briefing · sources linked where available
               </div>
               {externalGuide.postcodeContext?.lastChecked ? (
                 <div
@@ -665,15 +665,15 @@ export default function LocalVoteGuideScreen({
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: T.sf }}>
         <div style={{ padding: '16px 18px 0', flexShrink: 0 }}>
-          <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: T.th, lineHeight: 1 }}>Local vote guide</div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>Ward-level guide data is not available for that council yet.</div>
+          <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: T.th, lineHeight: 1 }}>Local Authority guide</div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 4 }}>Ward-level guide data is not available for that Local Authority yet.</div>
         </div>
 
         <ScrollArea>
           <div style={{ padding: '12px 16px 32px' }}>
             <SurfaceCard T={T} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
-                We could not find a local guide for that council yet.
+                We could not find a Local Authority guide for that area yet.
               </div>
             </SurfaceCard>
           </div>
@@ -688,7 +688,7 @@ export default function LocalVoteGuideScreen({
         <div style={{ padding: '18px 16px 32px' }}>
           <div style={{ textAlign: 'center', marginBottom: 14 }}>
             <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
-              {selectedWard ? 'Your local election' : 'Local vote guide'}
+              {selectedWard ? 'Your local election' : 'Local Authority guide'}
             </div>
             <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: -1, color: T.th, lineHeight: 1.05, marginTop: 6 }}>
               {council.councilName}
@@ -713,7 +713,7 @@ export default function LocalVoteGuideScreen({
                 <SectionLabel T={T}>What this election means</SectionLabel>
                 <div style={{ fontSize: 14, fontWeight: 500, color: T.th, lineHeight: 1.7 }}>
                   Voters in {selectedWard.name} are choosing who will represent the ward on {council.councilName} at the next local election.
-                  Use the verified candidate list, current councillor record, and source links below to understand who is standing and what this council controls.
+                  Use the verified candidate list, current councillor record, and source links below to understand who is standing and what this Local Authority controls.
                 </div>
               </SurfaceCard>
 
@@ -843,7 +843,7 @@ export default function LocalVoteGuideScreen({
               ) : null}
 
               <SurfaceCard T={T} style={{ marginBottom: 12 }}>
-                <SectionLabel T={T}>What this council controls</SectionLabel>
+                <SectionLabel T={T}>What this Local Authority controls</SectionLabel>
                 <div style={{ display: 'grid', gap: 8 }}>
                   {council.controls.map((item) => (
                     <div
@@ -927,7 +927,7 @@ export default function LocalVoteGuideScreen({
             <>
               <SurfaceCard T={T} style={{ marginBottom: 12 }}>
                 <SectionLabel T={T}>Guide overview</SectionLabel>
-                <InfoRow T={T} label="Council" value={council.councilName} />
+                <InfoRow T={T} label="Local Authority" value={council.councilName} />
                 <InfoRow T={T} label="Ward" value="Select a ward below" />
                 <InfoRow T={T} label="Election" value={formatUKDate(council.nextElectionDate)} />
                 <InfoRow T={T} label="Your lookup" value={query || council.councilName} />
@@ -936,7 +936,7 @@ export default function LocalVoteGuideScreen({
               <SurfaceCard T={T} style={{ marginBottom: 12 }}>
                 <SectionLabel T={T}>Choose ward</SectionLabel>
                 <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginBottom: 10 }}>
-                  Search wards where verified local guide data is available.
+                  Search wards where verified Local Authority guide data is available.
                 </div>
                 <div style={{ position: 'relative', marginBottom: 12 }}>
                   <div style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>

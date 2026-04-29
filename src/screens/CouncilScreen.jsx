@@ -246,13 +246,13 @@ function seatsUpLabel(profile) {
 function nextElectionInfo(profile) {
   if (profile?.electionMessage) return formatDatesInText(profile.electionMessage)
   if (profile?.nextElectionYear && profile?.electionStatus === 'not-voting-2026') {
-    return `This council is not voting in 2026 and next returns to the polls in ${profile.nextElectionYear}.`
+    return `This Local Authority is not voting in 2026 and next returns to the polls in ${profile.nextElectionYear}.`
   }
   if (profile?.nextElectionYear) {
     return `The next scheduled election year is ${profile.nextElectionYear}.`
   }
   if (profile?.cycle) {
-    return `This council uses ${cycleLabel(profile).toLowerCase()}.`
+    return `This Local Authority uses ${cycleLabel(profile).toLowerCase()}.`
   }
   return ''
 }
@@ -332,12 +332,12 @@ function getControlInsight(profile, rows) {
   const leadOverSecond = second ? topSeats - secondSeats : topSeats
   const majorityMargin = Number.isFinite(threshold) ? topSeats - threshold : null
 
-  let headline = `${dominantParty} control the council`
+  let headline = `${dominantParty} control the Local Authority`
   let subline = `${dominantParty} hold ${topSeats} of ${totalSeats} seats.`
 
   if (Number.isFinite(majorityMargin)) {
     if (majorityMargin >= 0) {
-      headline = `${dominantParty} control the council with a working majority`
+      headline = `${dominantParty} control the Local Authority with a working majority`
       subline = `${dominantParty} hold ${topSeats} of ${totalSeats} seats, ${majorityMargin} above the ${threshold}-seat majority line.`
     } else {
       headline = `${dominantParty} are the largest group but short of a majority`
@@ -346,10 +346,10 @@ function getControlInsight(profile, rows) {
   }
 
   if (controlLabel.toLowerCase().includes('no overall control')) {
-    headline = `${dominantParty} are the largest group in a no overall control council`
+    headline = `${dominantParty} are the largest group in a no overall control Local Authority`
     subline = Number.isFinite(majorityMargin)
       ? `${dominantParty} hold ${topSeats} of ${totalSeats} seats, ${Math.abs(majorityMargin)} short of the ${threshold}-seat majority line.`
-      : `${dominantParty} are ahead, but the council remains under no overall control.`
+      : `${dominantParty} are ahead, but the Local Authority remains under no overall control.`
   }
 
   if (second && leadOverSecond > 0) {
@@ -380,9 +380,9 @@ function linkRows(profile) {
   const links = []
 
   for (const row of [
-    { label: 'Council website', href: profile?.website },
+    { label: 'Local Authority website', href: profile?.website },
     { label: 'Elections page', href: profile?.electionsPage },
-    { label: 'Council composition', href: profile?.officialCompositionUrl },
+    { label: 'Local Authority composition', href: profile?.officialCompositionUrl },
     { label: 'Wikipedia', href: profile?.wikipedia },
     { label: 'Official profile', href: profile?.profileUrl },
   ]) {
@@ -455,7 +455,7 @@ function buildPersonSummary(profile, type, name) {
   const roleLabel = type === 'leader' ? 'leader' : 'mayor'
 
   if (name === 'Not currently listed') {
-    return `No ${roleLabel} details are currently stored for this council yet.`
+    return `No ${roleLabel} details are currently stored for this Local Authority yet.`
   }
 
   const summaryParts = uniqueValues([
@@ -472,7 +472,7 @@ function buildPersonSummary(profile, type, name) {
     return formatDatesInText(summaryParts.slice(0, 2).join(' '))
   }
 
-  const councilName = cleanText(profile?.name) || 'this council'
+  const councilName = cleanText(profile?.name) || 'this Local Authority'
   return type === 'leader'
     ? `Political lead for ${councilName}.`
     : `Mayoral lead for ${councilName}.`
@@ -492,12 +492,12 @@ function buildPersonDetails(profile, type) {
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery.trim())}`
 
   if (officialProfile) links.push({ label: 'Official profile', href: officialProfile })
-  if (officialWebsite) links.push({ label: 'Council website', href: officialWebsite })
+  if (officialWebsite) links.push({ label: 'Local Authority website', href: officialWebsite })
   if (searchQuery.trim()) links.push({ label: 'Search', href: searchUrl })
 
   return {
     type,
-    title: isNamedMayor || type === 'mayor' ? 'Mayor' : 'Council leader',
+    title: isNamedMayor || type === 'mayor' ? 'Mayor' : 'Local Authority leader',
     name,
     qualifier,
     summary: buildPersonSummary(profile, type, name),
@@ -754,11 +754,11 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
               </div>
 
               <Card T={T} color={controlColor}>
-                <div style={sectionHeadingStyle(T)}>Council identity</div>
+                <div style={sectionHeadingStyle(T)}>Local Authority identity</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
                   {[
                     { label: 'Region', value: p.region },
-                    { label: 'Council type', value: p.type, span: true },
+                    { label: 'Local Authority type', value: p.type, span: true },
                     { label: 'Current control', value: controlStatusLabel(p), color: controlColor },
                   ].filter((row) => cleanText(row.value)).map((row) => (
                     <DetailCell
@@ -924,7 +924,7 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
                           textDecoration: 'none',
                         }}
                       >
-                        {politicalComposition.length ? 'View official council composition' : 'View full council composition'}
+                        {politicalComposition.length ? 'View official Local Authority composition' : 'View full Local Authority composition'}
                       </a>
                     </div>
                   ) : null}
@@ -937,7 +937,7 @@ export default function CouncilScreen({ T, name, goBack, fromTab, councilRegistr
               ) : null}
 
               <Card T={T}>
-                <div style={sectionHeadingStyle(T)}>Council snapshot</div>
+                <div style={sectionHeadingStyle(T)}>Local Authority snapshot</div>
                 {snapshotMessage ? (
                   <div style={{ fontSize: 13, fontWeight: 600, color: T.th, lineHeight: 1.6, textAlign: 'center', marginBottom: 10 }}>
                     {snapshotMessage}

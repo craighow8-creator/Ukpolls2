@@ -19,7 +19,9 @@
     "elections:mayors:refresh:local": "node ./scripts/refresh-mayors.mjs --api-base=http://127.0.0.1:8787",
     "elections:mayors:refresh:remote": "node ./scripts/refresh-mayors.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "elections:devolved:refresh:local": "node ./scripts/refresh-devolved.mjs --api-base=http://127.0.0.1:8787",
-    "elections:devolved:refresh:remote": "node ./scripts/refresh-devolved.mjs --api-base=https://politiscope-api.craighow8.workers.dev"
+    "elections:devolved:refresh:remote": "node ./scripts/refresh-devolved.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
+    "local-authority:health:local": "node ./scripts/check-local-authority-health.mjs --api-base=http://127.0.0.1:8787",
+    "local-authority:health:remote": "node ./scripts/check-local-authority-health.mjs --api-base=https://politiscope-api.craighow8.workers.dev"
   },
   "dependencies": {
     "framer-motion": "^11.0.0",

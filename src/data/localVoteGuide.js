@@ -7,7 +7,7 @@ const SHEFFIELD_LAST_CHECKED = '25-04-2026'
 const SHEFFIELD_CANDIDATE_NOTICE_DATE = '10-04-2026'
 const SHEFFIELD_NEXT_ELECTION_DATE = '07-05-2026'
 const DEMOCRACY_CLUB_API_BASE = 'https://developers.democracyclub.org.uk/api/v1'
-const DEMOCRACY_CLUB_SOURCE_LABEL = 'External candidate source'
+const DEMOCRACY_CLUB_SOURCE_LABEL = 'Democracy Club / WhoCanIVoteFor'
 const LOCAL_VOTE_FETCH_TIMEOUT_MS = 5000
 
 const SHEFFIELD_SOURCE_URLS = {
@@ -119,7 +119,7 @@ function createCouncillorFromDataset(ward, entry = {}) {
     name,
     party,
     sourceUrl: entry.sourceUrl || SHEFFIELD_SOURCE_URLS.councillorsByWard,
-    sourceLabel: entry.sourceLabel || 'Sheffield councillors by ward',
+    sourceLabel: entry.sourceLabel || 'Current councillors by ward',
     lastChecked: entry.lastChecked || SHEFFIELD_LAST_CHECKED,
     verificationStatus: entry.verificationStatus || 'verified',
     seatStatus: 'occupied',
@@ -226,7 +226,7 @@ const SHEFFIELD_WARDS = [
     slug: 'beauchief-and-greenhill',
     name: 'Beauchief and Greenhill',
     aliases: ['beauchief greenhill'],
-    notes: 'Current councillors verified from Sheffield City Council ward listings.',
+    notes: 'Current councillors verified from the official ward listings.',
     councillors: getSheffieldWardCouncillors('Beauchief and Greenhill'),
     candidates: [
       createCandidate('Beauchief and Greenhill', 'Michelle Lesley Astle', 'Conservative'),
@@ -241,7 +241,7 @@ const SHEFFIELD_WARDS = [
     slug: 'beighton',
     name: 'Beighton',
     aliases: ['beighton ward'],
-    notes: 'All three current councillors are present in the official Sheffield table view.',
+    notes: 'All three current councillors are present in the official table view.',
     councillors: getSheffieldWardCouncillors('Beighton'),
     candidates: [
       createCandidate('Beighton', 'Amanda Julie Adlington', 'Liberal Democrat'),
@@ -392,7 +392,7 @@ const SHEFFIELD_WARDS = [
     name: 'Firth Park',
     aliases: ['firth park ward'],
     councillors: getSheffieldWardCouncillors('Firth Park'),
-    notes: 'All three current councillors are verified from the official Sheffield table view.',
+    notes: 'All three current councillors are verified from the official table view.',
     candidates: [
       createCandidate('Firth Park', 'Omer Abdulqader', 'Independent'),
       createCandidate('Firth Park', 'Fran Belbin', 'Labour and Co-operative'),
@@ -752,7 +752,7 @@ const SHEFFIELD_COUNCIL = createLocalVoteGuideCouncil({
   nextElectionDate: '07-05-2026',
   updatedAt: SHEFFIELD_LAST_CHECKED,
   fetchedAt: SHEFFIELD_LAST_CHECKED,
-  sourceNote: 'Maintained local election guide · sources linked where available',
+  sourceNote: 'Maintained Local Authority guide · sources linked where available',
   controls: [
     'Council tax, budget priorities and neighbourhood services',
     'Bins, street cleaning, local environmental services and parks',
@@ -762,7 +762,7 @@ const SHEFFIELD_COUNCIL = createLocalVoteGuideCouncil({
   ],
   sources: [
     {
-      label: 'Sheffield elections hub',
+      label: 'Elections hub',
       url: SHEFFIELD_SOURCE_URLS.electionsHub,
       updatedAt: SHEFFIELD_LAST_CHECKED,
     },
@@ -787,17 +787,9 @@ const SHEFFIELD_COUNCIL = createLocalVoteGuideCouncil({
       updatedAt: SHEFFIELD_LAST_CHECKED,
     },
     {
-      label: 'Council overview',
+      label: 'Local Authority overview',
       url: SHEFFIELD_SOURCE_URLS.councilOverview,
       updatedAt: SHEFFIELD_LAST_CHECKED,
-    },
-    {
-      label: 'Postcode lookup API',
-      url: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
-    },
-    {
-      label: 'External candidate data source',
-      url: SHEFFIELD_SOURCE_URLS.democracyClubDocs,
     },
   ],
   wards: SHEFFIELD_WARDS,
@@ -1150,7 +1142,7 @@ export async function fetchExternalLocalVoteGuide(query = '') {
     sourceUrl: SHEFFIELD_SOURCE_URLS.postcodeLookupDocs,
     whoCanIVoteForUrl: '',
     status: postcodeContext ? 'baseline' : 'unavailable',
-    message: 'Politiscope postcode baseline matched. Ward and candidate detail appears where verified data exists.',
+    message: 'Local Authority context matched. Ward and candidate detail appears where verified data exists.',
   }
 }
 

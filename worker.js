@@ -2786,6 +2786,118 @@ export default {
         }
       }
 
+      async function loadLocalVoteHealth() {
+        const countFirst = async (sql, ...binds) => {
+          const statement = env.DB.prepare(sql)
+          const row = binds.length ? await statement.bind(...binds).first() : await statement.first()
+          return Number(row?.count || 0)
+        }
+
+        const councilCount = await countFirst(
+          `SELECT COUNT(*) AS count
+           FROM local_councils
+           WHERE active = 1`
+        )
+        const wardCount = await countFirst(
+          `SELECT COUNT(*) AS count
+           FROM local_wards
+           WHERE active = 1`
+        )
+        const detailedCouncilCount = await countFirst(
+          `SELECT COUNT(*) AS count
+           FROM local_councils
+           WHERE active = 1
+             AND (
+               (controls_json IS NOT NULL AND controls_json != '' AND controls_json != '[]')
+               OR (source_note IS NOT NULL AND source_note != '')
+             )`
+        )
+        const postcodeSupportedWardCount = await countFirst(
+          `SELECT COUNT(*) AS count
+           FROM local_wards
+           WHERE active = 1
+             AND (
+               (gss_code IS NOT NULL AND gss_code != '')
+               OR (mapit_area_id IS NOT NULL AND mapit_area_id != '')
+             )`
+        )
+        const candidateCoverage = await env.DB.prepare(
+          `SELECT
+             COUNT(*) AS candidate_count,
+             COUNT(DISTINCT council_id) AS council_count,
+             COUNT(DISTINCT ward_id) AS ward_count
+           FROM local_candidates`
+        ).first()
+        const officeholderCoverage = await env.DB.prepare(
+          `SELECT
+             COUNT(*) AS officeholder_count,
+             COUNT(DISTINCT council_id) AS council_count,
+             COUNT(DISTINCT ward_id) AS ward_count
+           FROM local_officeholders
+           WHERE is_current = 1`
+        ).first()
+        const missingCandidateSourceUrl = await countFirst(
+          `SELECT COUNT(*) AS count
+           FROM local_candidates c
+           LEFT JOIN local_sources s ON s.id = c.primary_source_id
+           WHERE s.url IS NULL OR s.url = ''`
+        )
+        const missingOfficeholderSourceUrl = await countFirst(
+          `SELECT COUNT(*) AS count
+           FROM local_officeholders o
+           LEFT JOIN local_sources s ON s.id = o.primary_source_id
+           WHERE o.is_current = 1
+             AND (s.url IS NULL OR s.url = '')`
+        )
+        const latestRun = await env.DB.prepare(
+          `SELECT id, pipeline, status, started_at, finished_at, rows_upserted, error_summary, meta_json
+           FROM local_ingest_runs
+           ORDER BY COALESCE(finished_at, started_at) DESC
+           LIMIT 1`
+        ).first()
+
+        const warnings = []
+        if (!councilCount) warnings.push('No Local Authority rows found.')
+        if (!wardCount) warnings.push('No ward rows found.')
+        if (!Number(candidateCoverage?.candidate_count || 0)) warnings.push('No candidate rows found.')
+        if (missingCandidateSourceUrl || missingOfficeholderSourceUrl) warnings.push('Some Local Authority records are missing source URLs.')
+        if (!latestRun) warnings.push('No local ingest run has been recorded yet.')
+
+        return {
+          ok: true,
+          checkedAt: new Date().toISOString(),
+          status: warnings.length ? 'WARNING' : 'OK',
+          counts: {
+            councils: councilCount,
+            wards: wardCount,
+            detailedCouncils: detailedCouncilCount,
+            postcodeSupportedWards: postcodeSupportedWardCount,
+            officeholderCouncils: Number(officeholderCoverage?.council_count || 0),
+            officeholderWards: Number(officeholderCoverage?.ward_count || 0),
+            officeholders: Number(officeholderCoverage?.officeholder_count || 0),
+            candidateCouncils: Number(candidateCoverage?.council_count || 0),
+            candidateWards: Number(candidateCoverage?.ward_count || 0),
+            candidates: Number(candidateCoverage?.candidate_count || 0),
+            rowsMissingSourceUrl: missingCandidateSourceUrl + missingOfficeholderSourceUrl,
+            candidatesMissingSourceUrl: missingCandidateSourceUrl,
+            officeholdersMissingSourceUrl: missingOfficeholderSourceUrl,
+          },
+          latestLocalIngestRun: latestRun
+            ? {
+                id: latestRun.id,
+                pipeline: latestRun.pipeline,
+                status: latestRun.status,
+                startedAt: latestRun.started_at,
+                finishedAt: latestRun.finished_at,
+                rowsUpserted: Number(latestRun.rows_upserted || 0),
+                errorSummary: latestRun.error_summary || '',
+                meta: parseJsonText(latestRun.meta_json, null),
+              }
+            : null,
+          warnings,
+        }
+      }
+
       async function upsertLocalVoteDemocracyClubChunk({
         electionDate,
         csvUrl,
@@ -3659,6 +3771,14 @@ export default {
       const localVoteWardMatch = url.pathname.match(/^\/api\/local-vote\/councils\/([^/]+)\/wards\/([^/]+)$/)
       const localVoteLookupIndexMatch = url.pathname === '/api/local-vote/lookup-index'
       const localVoteCandidatesMatch = url.pathname === '/api/local-vote/candidates'
+      const localVoteHealthMatch = url.pathname === '/api/local-vote/health'
+
+      if (request.method === 'GET' && localVoteHealthMatch) {
+        return cachedJsonResponse(request, async () => {
+          const payload = await loadLocalVoteHealth()
+          return jsonResponse(payload)
+        })
+      }
 
       if (request.method === 'GET' && localVoteCouncilMatch) {
         const councilSlug = routeSlugToCouncilSlug(decodeURIComponent(localVoteCouncilMatch[1] || ''))
