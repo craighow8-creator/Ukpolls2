@@ -24,6 +24,7 @@ import { LOCAL_FILTERS, selectLocalElectionModel } from './electionsSelectors'
 const ENGLISH_LOCAL_AUTHORITIES_VOTING = 136
 const ENGLISH_LOCAL_SEATS_UP_LABEL = '~5,000'
 const ENGLISH_LOCAL_SEATS_UP_DETAIL = '5,013-5,066 English Local Authority seats'
+const POSTCODE_OUTCODE_RE = /^[A-Z]{1,2}\d[A-Z\d]?$/i
 
 function simplifyLookupValue(value = '') {
   return String(value || '')
@@ -34,6 +35,75 @@ function simplifyLookupValue(value = '') {
     .replace(/\b(city council|county council|district council|borough council|metropolitan borough council|london borough|council)\b/gi, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
+}
+
+function isUkPostcodeOutcode(query = '') {
+  return POSTCODE_OUTCODE_RE.test(String(query || '').trim())
+}
+
+async function fetchOutcodeContext(outcode = '') {
+  try {
+    const response = await fetch(`https://api.postcodes.io/outcodes/${encodeURIComponent(outcode)}`)
+    const payload = await response.json().catch(() => null)
+    if (!response.ok || !payload?.result) return null
+    return payload.result
+  } catch {
+    return null
+  }
+}
+
+function getCouncilName(council = {}) {
+  return council.name || council.supportedAreaLabel || council.slug || ''
+}
+
+function getCandidateWardCount(wards = []) {
+  return wards.filter((ward) => Number(ward.candidateCount || 0) > 0).length
+}
+
+function formatWardCoverage(wards = []) {
+  const candidateWardCount = getCandidateWardCount(wards)
+  const wardLabel = `${wards.length} ${wards.length === 1 ? 'ward' : 'wards'} available`
+  if (!candidateWardCount) return wardLabel
+  return `${wardLabel} · ${candidateWardCount} ${candidateWardCount === 1 ? 'ward' : 'wards'} with candidate detail`
+}
+
+function buildLookupMaps(lookup = {}) {
+  const lookupCouncils = Array.isArray(lookup?.councils) ? lookup.councils : []
+  const lookupWards = Array.isArray(lookup?.wards) ? lookup.wards : []
+  const councilById = new Map(lookupCouncils.map((council) => [String(council.id), council]))
+
+  return { lookupCouncils, lookupWards, councilById }
+}
+
+function createCouncilMatch(council, lookupWards = []) {
+  const wards = lookupWards.filter((ward) => String(ward.councilId) === String(council.id))
+  return {
+    ...council,
+    displayName: getCouncilName(council),
+    wards,
+    wardCount: wards.length,
+    candidateWardCount: getCandidateWardCount(wards),
+  }
+}
+
+function createWardMatch(ward, councilById = new Map()) {
+  const council = councilById.get(String(ward.councilId)) || {}
+  return {
+    ...ward,
+    council,
+    councilName: getCouncilName(council),
+    councilSlug: ward.councilSlug || council.slug || '',
+  }
+}
+
+function uniqueBy(items = [], getKey = (item) => item?.id || item?.slug) {
+  const seen = new Set()
+  return items.filter((item) => {
+    const key = getKey(item)
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 function findBestCouncilSearchMatch(query = '', councils = [], lookupCouncils = []) {
@@ -54,6 +124,62 @@ function findBestCouncilSearchMatch(query = '', councils = [], lookupCouncils = 
   )
 }
 
+async function buildLocalAuthorityBrowseResults(query = '', lookup = {}) {
+  const trimmedQuery = String(query || '').trim()
+  const q = simplifyLookupValue(trimmedQuery)
+  if (!q || !lookup) return null
+
+  const { lookupCouncils, lookupWards, councilById } = buildLookupMaps(lookup)
+  let type = 'search'
+  let councilMatches = lookupCouncils.filter((council) => {
+    const name = simplifyLookupValue(getCouncilName(council))
+    const slug = simplifyLookupValue(council.slug)
+    return name === q || slug === q || name.includes(q) || slug.includes(q)
+  })
+  let wardMatches = lookupWards.filter((ward) => {
+    const values = [ward.name, ward.slug, ...(ward.aliases || [])].map(simplifyLookupValue)
+    return values.some((value) => value === q || value.includes(q))
+  })
+
+  if (isUkPostcodeOutcode(trimmedQuery)) {
+    const outcodeContext = await fetchOutcodeContext(trimmedQuery.toUpperCase())
+    const districtKeys = new Set((outcodeContext?.admin_district || []).map(simplifyLookupValue).filter(Boolean))
+    const wardKeys = new Set((outcodeContext?.admin_ward || []).map(simplifyLookupValue).filter(Boolean))
+
+    type = 'outcode'
+    councilMatches = lookupCouncils.filter((council) => districtKeys.has(simplifyLookupValue(getCouncilName(council))))
+    wardMatches = lookupWards.filter((ward) => {
+      const council = councilById.get(String(ward.councilId))
+      const councilMatchesOutcode = council && districtKeys.has(simplifyLookupValue(getCouncilName(council)))
+      return councilMatchesOutcode && wardKeys.has(simplifyLookupValue(ward.name))
+    })
+  }
+
+  councilMatches = councilMatches
+    .map((council) => createCouncilMatch(council, lookupWards))
+    .sort((a, b) => b.candidateWardCount - a.candidateWardCount || b.wardCount - a.wardCount)
+  councilMatches = uniqueBy(councilMatches, (council) => simplifyLookupValue(council.displayName))
+
+  wardMatches = wardMatches
+    .map((ward) => createWardMatch(ward, councilById))
+    .sort((a, b) => Number(b.candidateCount || 0) - Number(a.candidateCount || 0))
+  wardMatches = uniqueBy(wardMatches, (ward) => `${simplifyLookupValue(ward.councilName)}-${simplifyLookupValue(ward.name)}`)
+
+  if (!councilMatches.length && wardMatches.length) {
+    const councilIds = uniqueBy(
+      wardMatches.map((ward) => ward.council).filter(Boolean),
+      (council) => council.id || council.slug,
+    )
+    councilMatches = councilIds.map((council) => createCouncilMatch(council, lookupWards))
+  }
+
+  return {
+    query: trimmedQuery,
+    type,
+    councilMatches,
+    wardMatches,
+  }
+}
 
 export default function LocalsTab({
   T,
@@ -70,6 +196,7 @@ export default function LocalsTab({
   const [voteGuideQuery, setVoteGuideQuery] = useState('')
   const [voteGuideMessage, setVoteGuideMessage] = useState('')
   const [voteGuideBusy, setVoteGuideBusy] = useState(false)
+  const [lookupBrowseResults, setLookupBrowseResults] = useState(null)
   const resultsAnchorRef = useRef(null)
   const regions = LOCAL_REGIONS || []
   const {
@@ -110,6 +237,7 @@ export default function LocalsTab({
   const applyOverviewFilter = (nextFilter = 'all') => {
     setSearch('')
     setLocalFilter(nextFilter)
+    setLookupBrowseResults(null)
     scrollToLocalResults()
   }
 
@@ -117,6 +245,7 @@ export default function LocalsTab({
     const trimmedQuery = voteGuideQuery.trim()
     if (!trimmedQuery) {
       setVoteGuideMessage('Enter a postcode, Local Authority, ward, region or party pressure point.')
+      setLookupBrowseResults(null)
       return
     }
 
@@ -129,6 +258,7 @@ export default function LocalsTab({
 
         if (result?.status === 'matched' || result?.status === 'manual' || result?.status === 'external') {
           setVoteGuideMessage('')
+          setLookupBrowseResults(null)
           openLocalVoteGuide({
             councilSlug: result.councilSlug,
             wardSlug: result.wardSlug || '',
@@ -138,21 +268,35 @@ export default function LocalsTab({
         }
 
         setVoteGuideMessage('That postcode could not be matched yet. Try the Local Authority or ward name instead.')
+        setLookupBrowseResults(null)
         return
       }
 
       const lookup = await fetchLocalVoteGuideLookupIndex().catch(() => null)
-      const councilMatch = findBestCouncilSearchMatch(trimmedQuery, councils, lookup?.councils || [])
+      const browseResults = await buildLocalAuthorityBrowseResults(trimmedQuery, lookup)
 
-      if (councilMatch?.name) {
-        setVoteGuideMessage('')
-        openCouncil(councilMatch.name)
+      if (browseResults?.councilMatches?.length || browseResults?.wardMatches?.length) {
+        setLookupBrowseResults(browseResults)
+        setSearch('')
+        setLocalFilter('all')
+        setVoteGuideMessage(
+          browseResults.type === 'outcode'
+            ? 'Showing Local Authorities and wards that overlap this postcode area.'
+            : 'Showing matching Local Authorities and wards.',
+        )
+        scrollToLocalResults()
         return
       }
 
+      const councilMatch = findBestCouncilSearchMatch(trimmedQuery, councils, lookup?.councils || [])
+      setLookupBrowseResults(null)
       setSearch(trimmedQuery)
       setLocalFilter('all')
-      setVoteGuideMessage('No exact Local Authority match yet. Showing matching authorities below.')
+      setVoteGuideMessage(
+        councilMatch?.name
+          ? 'Showing matching Local Authorities below.'
+          : 'No exact Local Authority match yet. Showing matching authorities below.',
+      )
       scrollToLocalResults()
     } finally {
       setVoteGuideBusy(false)
@@ -198,6 +342,7 @@ export default function LocalsTab({
               const nextValue = e.target.value
               setVoteGuideQuery(nextValue)
               if (voteGuideMessage) setVoteGuideMessage('')
+              if (lookupBrowseResults) setLookupBrowseResults(null)
             }}
             onKeyDown={(e) => {
               if (e.key !== 'Enter') return
@@ -258,6 +403,7 @@ export default function LocalsTab({
               label={item.label}
               active={localFilter === item.key}
               onClick={() => {
+                setLookupBrowseResults(null)
                 setLocalFilter(item.key)
                 if (item.key !== 'all') scrollToLocalResults()
               }}
@@ -428,6 +574,104 @@ export default function LocalsTab({
       </SurfaceCard>
 
       <div ref={resultsAnchorRef} style={{ scrollMarginTop: 128 }} />
+
+      {lookupBrowseResults?.councilMatches?.length || lookupBrowseResults?.wardMatches?.length ? (
+        <>
+          <SectionLabel
+            T={T}
+            action={{
+              label: 'Clear',
+              onClick: () => {
+                setLookupBrowseResults(null)
+                setSearch('')
+                setLocalFilter('all')
+              },
+            }}
+          >
+            Local Authority matches
+          </SectionLabel>
+
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginBottom: 8, textAlign: 'center' }}>
+            {lookupBrowseResults.councilMatches.length} Local {lookupBrowseResults.councilMatches.length === 1 ? 'Authority' : 'Authorities'}
+            {lookupBrowseResults.wardMatches.length ? ` · ${lookupBrowseResults.wardMatches.length} ward ${lookupBrowseResults.wardMatches.length === 1 ? 'match' : 'matches'}` : ''}
+          </div>
+
+          {lookupBrowseResults.councilMatches.slice(0, 6).map((council) => {
+            const highlightedWards = uniqueBy(
+              [
+                ...lookupBrowseResults.wardMatches.filter((ward) => String(ward.council?.id) === String(council.id)),
+                ...council.wards.filter((ward) => Number(ward.candidateCount || 0) > 0),
+                ...council.wards,
+              ],
+              (ward) => ward.id || ward.slug,
+            ).slice(0, 10)
+
+            return (
+              <SurfaceCard key={council.id || council.slug} T={T} style={{ marginBottom: 10 }}>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 850, color: T.th }}>{council.displayName}</div>
+                    <div style={{ fontSize: 13, fontWeight: 650, color: T.tl, marginTop: 2 }}>
+                      Local Authority · {formatWardCoverage(council.wards)}
+                    </div>
+                  </div>
+                  <motion.button
+                    {...TAP}
+                    onClick={() => openCouncil(council.displayName)}
+                    style={{
+                      border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                      background: T.c0,
+                      color: T.th,
+                      borderRadius: 999,
+                      padding: '7px 10px',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Open profile
+                  </motion.button>
+                </div>
+
+                {highlightedWards.length ? (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {highlightedWards.map((ward) => {
+                      const candidateCount = Number(ward.candidateCount || 0)
+                      return (
+                        <motion.button
+                          key={ward.id || ward.slug}
+                          {...TAP}
+                          onClick={() =>
+                            openLocalVoteGuide({
+                              councilSlug: council.slug,
+                              wardSlug: ward.slug,
+                              query: ward.name,
+                            })
+                          }
+                          style={{
+                            border: `1px solid ${candidateCount ? T.pr : T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                            background: candidateCount ? `${T.pr}14` : T.c0,
+                            color: candidateCount ? T.pr : T.th,
+                            borderRadius: 999,
+                            padding: '7px 10px',
+                            fontSize: 12,
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {ward.name}
+                          {candidateCount ? ` · ${candidateCount} candidates` : ''}
+                        </motion.button>
+                      )
+                    })}
+                  </div>
+                ) : null}
+              </SurfaceCard>
+            )
+          })}
+        </>
+      ) : null}
 
       {hasLocalRefinement ? (
         <>

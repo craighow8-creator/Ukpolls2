@@ -2683,11 +2683,18 @@ export default {
              w.name AS ward_name,
              w.gss_code,
              w.mapit_area_id,
-             w.aliases_json
+             w.aliases_json,
+             COALESCE(cc.candidate_count, 0) AS candidate_count
            FROM local_councils c
            LEFT JOIN local_wards w
              ON w.council_id = c.id
             AND w.active = 1
+           LEFT JOIN (
+             SELECT ward_id, COUNT(*) AS candidate_count
+             FROM local_candidates
+             GROUP BY ward_id
+           ) cc
+             ON cc.ward_id = w.id
            WHERE c.active = 1
            ORDER BY c.name ASC, w.name ASC`
         ).all()
@@ -2718,6 +2725,7 @@ export default {
             gssCode: row.gss_code || '',
             mapitAreaId: row.mapit_area_id || '',
             aliases: parseJsonText(row.aliases_json, []),
+            candidateCount: Number(row.candidate_count || 0),
           })
         }
 
