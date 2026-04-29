@@ -40,6 +40,13 @@ function printLine(label, value) {
   console.log(`${label.padEnd(30)} ${value}`)
 }
 
+function isNotScheduledPrioritySource(source = {}) {
+  return (
+    String(source.parserType || '').trim() === 'not-scheduled' ||
+    String(source.verificationStatus || '').trim() === 'not-scheduled'
+  )
+}
+
 async function loadPriorityConfig() {
   const configPath = readArg('config', DEFAULT_PRIORITY_CONFIG)
   try {
@@ -79,8 +86,14 @@ function summarizePriorityCoverage(prioritySources = [], coverageByCouncil = [])
   )
   const covered = []
   const missing = []
+  const notScheduled = []
 
   for (const source of prioritySources) {
+    if (isNotScheduledPrioritySource(source)) {
+      notScheduled.push(source.councilName || source.councilSlug)
+      continue
+    }
+
     const slug = String(source.councilSlug || '').trim()
     const row = coverage.get(slug)
     if (row?.candidates > 0) {
@@ -90,7 +103,7 @@ function summarizePriorityCoverage(prioritySources = [], coverageByCouncil = [])
     }
   }
 
-  return { covered, missing }
+  return { covered, missing, notScheduled }
 }
 
 function summarizePriorityOfficeholderCoverage(prioritySources = [], coverageByCouncil = []) {
@@ -159,9 +172,11 @@ function summariseHealth(payload, prioritySources = [], officeholderPrioritySour
   printLine('Councils missing candidate source URL', councilsMissingCandidateSourceUrl.length)
   if (coverageByCouncil.length) {
     printLine('Priority councils covered', priority.covered.length ? priority.covered.join('; ') : 'none')
+    printLine('Priority councils not scheduled', priority.notScheduled.length ? priority.notScheduled.join('; ') : 'none')
     printLine('Priority councils missing', priority.missing.length ? priority.missing.join('; ') : 'none')
   } else {
     printLine('Priority councils covered', 'unavailable from deployed health endpoint')
+    printLine('Priority councils not scheduled', priority.notScheduled.length ? priority.notScheduled.join('; ') : 'none')
     printLine('Priority councils missing', 'unavailable from deployed health endpoint')
   }
   printLine('Officeholder coverage', `${counts.officeholderWards ?? 0} wards / ${counts.officeholderCouncils ?? 0} Local Authorities`)
@@ -200,8 +215,10 @@ function summariseLookupFallback(payload, prioritySources = []) {
   const councils = Array.isArray(payload?.councils) ? payload.councils : []
   const wards = Array.isArray(payload?.wards) ? payload.wards : []
   const councilSlugs = new Set(councils.map((council) => String(council.slug || '').trim()))
-  const priorityKnown = prioritySources.filter((source) => councilSlugs.has(String(source.councilSlug || '').trim()))
-  const priorityUnknown = prioritySources.filter((source) => !councilSlugs.has(String(source.councilSlug || '').trim()))
+  const priorityNotScheduled = prioritySources.filter(isNotScheduledPrioritySource)
+  const scheduledPrioritySources = prioritySources.filter((source) => !isNotScheduledPrioritySource(source))
+  const priorityKnown = scheduledPrioritySources.filter((source) => councilSlugs.has(String(source.councilSlug || '').trim()))
+  const priorityUnknown = scheduledPrioritySources.filter((source) => !councilSlugs.has(String(source.councilSlug || '').trim()))
 
   printLine('Councils', councils.length)
   printLine('Wards', wards.length)
@@ -213,6 +230,7 @@ function summariseLookupFallback(payload, prioritySources = []) {
   printLine('Priority councils missing baseline', priorityUnknown.length ? priorityUnknown.map((source) => source.councilName || source.councilSlug).join('; ') : 'none')
   printLine('Rows missing sourceUrl', 'unavailable from lookup index')
   printLine('Postcode-supported wards', countLookupPostcodeSupportedWards(wards))
+  printLine('Priority councils not scheduled', priorityNotScheduled.length ? priorityNotScheduled.map((source) => source.councilName || source.councilSlug).join('; ') : 'none')
   printLine('Latest local ingest', 'unavailable from lookup index')
 
   return councils.length && wards.length ? 'WARNING' : 'FAIL'
