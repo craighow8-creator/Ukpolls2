@@ -17,9 +17,12 @@ function trimApiBase(value) {
 }
 
 async function fetchJson(url) {
-  const response = await fetch(url, {
+  const requestUrl = new URL(url)
+  requestUrl.searchParams.set('_healthCheck', String(Date.now()))
+  const response = await fetch(requestUrl, {
     headers: {
       accept: 'application/json',
+      'cache-control': 'no-cache',
     },
   })
   const text = await response.text()

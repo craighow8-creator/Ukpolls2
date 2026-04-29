@@ -22,11 +22,17 @@ const WARDS_SOURCE_URL =
   process.argv.find((arg) => arg.startsWith('--wards-source-url='))?.split('=')[1] ||
   'https://www.ons.gov.uk/methodology/geography/geographicalproducts/namescodesandlookups/namesandcodeslistings/namesandcodesforelectoralgeography'
 
+const COUNCIL_FILTER =
+  process.argv.find((arg) => arg.startsWith('--council='))?.split('=')[1] ||
+  ''
+
 const CHUNK_SIZE = Number(
   process.env.LOCAL_VOTE_WARDS_CHUNK_SIZE ||
     process.argv.find((arg) => arg.startsWith('--chunk-size='))?.split('=')[1] ||
     '300',
 )
+
+const DRY_RUN = process.argv.includes('--dry-run') || process.argv.includes('--check-only')
 
 function fail(message, extra = '') {
   console.error(message)
@@ -126,6 +132,17 @@ function buildCouncilKeys(value) {
   keys.add(slugify(raw))
   keys.add(normalizeCouncilKey(raw))
   return new Set([...keys].filter(Boolean))
+}
+
+function matchesCouncilFilter(council, filterValue = '') {
+  const filter = slugify(filterValue)
+  if (!filter) return true
+  return [
+    council?.slug,
+    council?.name,
+    council?.supportedAreaLabel,
+    council?.gssCode,
+  ].some((value) => slugify(value) === filter)
 }
 
 function normalizeWardName(value) {
@@ -285,7 +302,7 @@ function buildBaseline({ registry, wardRows, wardsSourceUrl, fetchedAt }) {
 
   for (const rawRow of wardRows) {
     const row = mapWardRow(rawRow)
-    if (!row.wardCode || !row.wardName || !row.councilName) {
+    if (!row.wardName || !row.councilName) {
       unmatchedWards.push({
         reason: 'missing-core-fields',
         wardCode: row.wardCode,
@@ -465,12 +482,46 @@ export async function ingestLocalCouncilsAndWards() {
     fetchedAt,
   })
 
+  if (COUNCIL_FILTER) {
+    const allowedCouncilSlugs = new Set(
+      baseline.councils
+        .filter((council) => matchesCouncilFilter(council, COUNCIL_FILTER))
+        .map((council) => council.slug),
+    )
+
+    baseline.councils = baseline.councils.filter((council) => allowedCouncilSlugs.has(council.slug))
+    baseline.wards = baseline.wards.filter((ward) => allowedCouncilSlugs.has(ward.councilSlug))
+  }
+
   if (!baseline.councils.length) {
     fail('No councils were available for baseline import.')
   }
 
   if (!baseline.wards.length) {
     fail('No wards could be matched into the local vote baseline.')
+  }
+
+  const summaryBase = {
+    councilCount: baseline.councils.length,
+    wardCount: baseline.wards.length,
+    wardsSourceUrl: WARDS_SOURCE_URL || WARDS_URL,
+    unmatchedCouncils: baseline.unmatchedCouncils.slice(0, 25),
+    unmatchedWards: baseline.unmatchedWards.slice(0, 25),
+  }
+
+  if (DRY_RUN) {
+    console.log(
+      JSON.stringify(
+        {
+          ok: true,
+          dryRun: true,
+          ...summaryBase,
+        },
+        null,
+        2,
+      ),
+    )
+    return
   }
 
   const runId = `local_vote_ingest_councils_wards_${Date.now()}`
