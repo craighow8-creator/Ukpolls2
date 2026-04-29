@@ -128,6 +128,25 @@ function pick(row, keys) {
   return ''
 }
 
+function decodeHtml(value = '') {
+  return String(value || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;|&#39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function absoluteUrl(href, baseUrl) {
+  try {
+    return new URL(String(href || '').replace(/&amp;/g, '&'), baseUrl).toString()
+  } catch {
+    return ''
+  }
+}
+
 function chunkArray(values, size) {
   const chunks = []
   for (let i = 0; i < values.length; i += size) {
@@ -227,9 +246,81 @@ function normalizeManualRow(row, config) {
   }
 }
 
+async function fetchText(url, label) {
+  const response = await fetch(url).catch((error) => {
+    fail(`Failed to fetch ${label}.`, error?.message || String(error))
+  })
+
+  if (!response.ok) {
+    fail(`${label} fetch failed (${response.status}).`, url)
+  }
+
+  return response.text()
+}
+
+async function loadEssexCmisElectionRows(config, electionDate) {
+  const sourceUrl = String(config.sourceUrl || '').trim()
+  if (!sourceUrl) return { rows: [], warning: 'Essex CMIS source URL is missing.' }
+
+  const indexHtml = await fetchText(sourceUrl, 'Essex CMIS election index')
+  const divisionLinks = new Map()
+  const linkRe = /<a[^>]+href="([^"]*ViewCandidates[^"]*\/ID\/\d+\/Default\.aspx)"[^>]*>([\s\S]*?)<\/a>/gi
+  let linkMatch
+
+  while ((linkMatch = linkRe.exec(indexHtml))) {
+    const href = absoluteUrl(linkMatch[1], sourceUrl)
+    const label = decodeHtml(linkMatch[2])
+    if (!href || !label || /^image:/i.test(label)) continue
+    if (!divisionLinks.has(href)) divisionLinks.set(href, label)
+  }
+
+  const rows = []
+  const warnings = []
+
+  for (const [href, indexDivisionName] of divisionLinks.entries()) {
+    const detailHtml = await fetchText(href, `Essex CMIS candidate page ${indexDivisionName}`)
+    const wardMatch = detailHtml.match(/id="[^"]*OpenDataWard"[^>]*>([\s\S]*?)<\/span>/i)
+    const ward = decodeHtml(wardMatch?.[1] || indexDivisionName)
+    const rowRe = /<tr[^>]+rel="openelection:candidacy"[\s\S]*?<\/tr>/gi
+    let candidateCount = 0
+    let rowMatch
+
+    while ((rowMatch = rowRe.exec(detailHtml))) {
+      const rowHtml = rowMatch[0]
+      const name = decodeHtml(rowHtml.match(/property="foaf:name"[^>]*>([\s\S]*?)<\/span>/i)?.[1] || '')
+      const party = decodeHtml(rowHtml.match(/property="rdfs:label"[^>]*>([\s\S]*?)<\/span>/i)?.[1] || '')
+      if (!name || !party) continue
+      candidateCount += 1
+      rows.push({
+        ward,
+        name,
+        party,
+        electionDate,
+        sourceUrl: href,
+        sourceLabel: config.sourceLabel || 'Official Essex County Council candidate list',
+        lastChecked: config.lastChecked || '',
+        verificationStatus: config.verificationStatus || 'verified',
+      })
+    }
+
+    if (!candidateCount) {
+      warnings.push(`No Essex candidates parsed for ${ward}.`)
+    }
+  }
+
+  return {
+    rows,
+    warning: warnings.length ? warnings.join(' ') : '',
+  }
+}
+
 async function loadCandidatesForSource(config, globalElectionDate) {
   const parserType = String(config.parserType || '').trim()
   const electionDate = config.electionDate || globalElectionDate
+
+  if (parserType === 'essex-cmis-election') {
+    return loadEssexCmisElectionRows(config, electionDate)
+  }
 
   if (parserType === 'existing-local-guide') {
     const council = getLocalVoteGuideCouncil(config.councilSlug)

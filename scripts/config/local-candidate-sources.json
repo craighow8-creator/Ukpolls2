@@ -107,14 +107,14 @@
       "councilSlug": "essex",
       "councilName": "Essex",
       "priority": true,
-      "enabled": false,
-      "parserType": "index-source",
+      "enabled": true,
+      "parserType": "essex-cmis-election",
       "csvPath": "",
-      "sourceLabel": "Official election information index",
-      "sourceUrl": "https://www.essex.gov.uk/about-council/county-council-elections/7-may-2026-election-information",
+      "sourceLabel": "Official Essex County Council candidate list",
+      "sourceUrl": "https://cmis.essex.gov.uk/essexcmis5/Elections/tabid/63/ctl/ViewWards/mid/386/ID/31/Default.aspx",
       "lastChecked": "29-04-2026",
-      "verificationStatus": "verified-index",
-      "notes": "Index source only, not a single direct candidate list; keep disabled until district/division candidate rows are supplied or parser coverage is added."
+      "verificationStatus": "verified",
+      "notes": "Official Essex CMIS County Council 2026 election division candidate pages."
     }
   ]
 }
