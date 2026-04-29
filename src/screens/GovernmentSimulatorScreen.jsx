@@ -38,13 +38,15 @@ function MeterList({ items, palette }) {
   ))
 }
 
-export default function GovernmentSimulatorScreen({ T, pollContext = {}, parties = [] }) {
+export default function GovernmentSimulatorScreen({ T, pollContext = {}, parties = [], news = {}, meta = {} }) {
   const simulatorSeed = useMemo(
     () => ({
       partyPollSnapshot: Array.isArray(pollContext?.partyPollSnapshot) ? pollContext.partyPollSnapshot : [],
       parties: Array.isArray(parties) ? parties : [],
+      news,
+      meta,
     }),
-    [pollContext?.partyPollSnapshot, parties],
+    [pollContext?.partyPollSnapshot, parties, news, meta],
   )
   const [state, setState] = useState(() => createSimulatorInitialState(simulatorSeed))
   const audioRef = useRef(null)
