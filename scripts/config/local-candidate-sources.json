@@ -17,12 +17,13 @@
       "councilName": "Doncaster",
       "priority": true,
       "enabled": false,
-      "parserType": "manual-csv",
-      "csvPath": "data/local-candidate-sources/doncaster-2026.csv",
-      "sourceLabel": "Official statement of persons nominated",
+      "parserType": "not-scheduled",
+      "csvPath": "",
+      "sourceLabel": "No scheduled May 2026 local election",
       "sourceUrl": "",
       "lastChecked": "",
-      "verificationStatus": "source-needed"
+      "verificationStatus": "not-scheduled",
+      "notes": "Doncaster Council indicates no scheduled local elections in May 2026; last all-out was 01-05-2025 and next expected all-out is 03-05-2029 unless by-elections occur."
     },
     {
       "councilSlug": "birmingham",
@@ -32,9 +33,10 @@
       "parserType": "manual-csv",
       "csvPath": "data/local-candidate-sources/birmingham-2026.csv",
       "sourceLabel": "Official statement of persons nominated",
-      "sourceUrl": "",
-      "lastChecked": "",
-      "verificationStatus": "source-needed"
+      "sourceUrl": "https://www.birmingham.gov.uk/downloads/file/31538/birmingham_city_council_statement_of_persons_nominated",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified-source",
+      "notes": "Official source recorded; disabled until candidate rows are supplied as manual CSV or a parser is added."
     },
     {
       "councilSlug": "leeds",
@@ -43,10 +45,11 @@
       "enabled": false,
       "parserType": "manual-csv",
       "csvPath": "data/local-candidate-sources/leeds-2026.csv",
-      "sourceLabel": "Official statement of persons nominated",
-      "sourceUrl": "",
-      "lastChecked": "",
-      "verificationStatus": "source-needed"
+      "sourceLabel": "Official candidate information page",
+      "sourceUrl": "https://www.leeds.gov.uk/elections/information-for-candidates",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified-source",
+      "notes": "Official candidate information page recorded; disabled until exact candidate rows or a statement-of-persons-nominated source is available."
     },
     {
       "councilSlug": "manchester",
@@ -56,21 +59,23 @@
       "parserType": "manual-csv",
       "csvPath": "data/local-candidate-sources/manchester-2026.csv",
       "sourceLabel": "Official statement of persons nominated",
-      "sourceUrl": "",
-      "lastChecked": "",
-      "verificationStatus": "source-needed"
+      "sourceUrl": "https://www.manchester.gov.uk/the-council-and-democracy/elections-and-voting/elections/statement-of-persons-nominated-may-2026-local-elections2/statement-of-persons-nominated-may-2026-local-elections",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified-source",
+      "notes": "Official source recorded; disabled until candidate rows are supplied as manual CSV or a parser is added."
     },
     {
       "councilSlug": "liverpool",
       "councilName": "Liverpool",
       "priority": true,
       "enabled": false,
-      "parserType": "manual-csv",
-      "csvPath": "data/local-candidate-sources/liverpool-2026.csv",
-      "sourceLabel": "Official statement of persons nominated",
-      "sourceUrl": "",
-      "lastChecked": "",
-      "verificationStatus": "source-needed"
+      "parserType": "holding-page",
+      "csvPath": "",
+      "sourceLabel": "Official voting and elections page",
+      "sourceUrl": "https://liverpool.gov.uk/council/voting-and-elections/",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "holding-page",
+      "notes": "Holding election page only; keep disabled until an exact statement-of-persons-nominated URL or manual candidate rows are available."
     },
     {
       "councilSlug": "devon",
@@ -82,19 +87,34 @@
       "sourceLabel": "Official statement of persons nominated",
       "sourceUrl": "",
       "lastChecked": "",
-      "verificationStatus": "source-needed"
+      "verificationStatus": "source-needed",
+      "notes": "No verified official candidate source URL recorded yet."
+    },
+    {
+      "councilSlug": "stockport",
+      "councilName": "Stockport",
+      "priority": true,
+      "enabled": false,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-candidate-sources/stockport-2026.csv",
+      "sourceLabel": "Official legal notices",
+      "sourceUrl": "https://www.stockport.gov.uk/local-elections-thursday-7-may-2026/legal-notices-may2026",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified-source",
+      "notes": "Official legal notices source recorded; disabled until candidate rows are supplied as manual CSV or a parser is added."
     },
     {
       "councilSlug": "essex",
       "councilName": "Essex",
       "priority": true,
       "enabled": false,
-      "parserType": "manual-csv",
-      "csvPath": "data/local-candidate-sources/essex-2026.csv",
-      "sourceLabel": "Official statement of persons nominated",
-      "sourceUrl": "",
-      "lastChecked": "",
-      "verificationStatus": "source-needed"
+      "parserType": "index-source",
+      "csvPath": "",
+      "sourceLabel": "Official election information index",
+      "sourceUrl": "https://www.essex.gov.uk/about-council/county-council-elections/7-may-2026-election-information",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified-index",
+      "notes": "Index source only, not a single direct candidate list; keep disabled until district/division candidate rows are supplied or parser coverage is added."
     }
   ]
 }
