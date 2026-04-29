@@ -140,6 +140,12 @@ function getRouteResetKey(route, depth = 0) {
     .join('|')
 }
 
+function clearLocalsTabReturnState() {
+  try {
+    sessionStorage.removeItem('politiscope.localsTab.state')
+  } catch {}
+}
+
 export default function App() {
   const { dark, toggle: toggleDark } = useDarkMode()
 
@@ -276,6 +282,7 @@ export default function App() {
   }))
 
   const collapseExpanded = useCallback(() => {
+    clearLocalsTabReturnState()
     setExpanded(null)
     setNavStack([])
     const top = [...PARTIES].sort((a, b) => (b.pct || 0) - (a.pct || 0))[0]
@@ -300,6 +307,7 @@ export default function App() {
       if (screen === 'party' && params.idx !== undefined) setThemeKey(partyTheme(PARTIES[params.idx]?.name))
       else if (screen === 'leader' && params.lIdx !== undefined) setThemeKey(partyTheme(LEADERS[params.lIdx]?.party))
       if (screen === 'home') {
+        clearLocalsTabReturnState()
         setExpanded(null)
         setNavStack([])
         const top = [...PARTIES].sort((a, b) => (b.pct || 0) - (a.pct || 0))[0]

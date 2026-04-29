@@ -29,7 +29,9 @@ const LOCALS_TAB_STATE_KEY = 'politiscope.localsTab.state'
 
 function readStoredLocalsTabState() {
   try {
-    return JSON.parse(sessionStorage.getItem(LOCALS_TAB_STATE_KEY) || '{}')
+    const storedState = JSON.parse(sessionStorage.getItem(LOCALS_TAB_STATE_KEY) || '{}')
+    sessionStorage.removeItem(LOCALS_TAB_STATE_KEY)
+    return storedState?.restoreOnNextMount ? storedState : {}
   } catch {
     return {}
   }
@@ -267,19 +269,9 @@ export default function LocalsTab({
     }
   }, [])
 
-  useEffect(() => {
-    writeStoredLocalsTabState({
-      voteGuideQuery,
-      voteGuideMessage,
-      lookupBrowseResults,
-      search,
-      localFilter,
-      scrollTop: getLocalsScrollTop(resultsAnchorRef.current),
-    })
-  }, [voteGuideQuery, voteGuideMessage, lookupBrowseResults, search, localFilter])
-
   const persistLocalsState = () => {
     writeStoredLocalsTabState({
+      restoreOnNextMount: true,
       voteGuideQuery,
       voteGuideMessage,
       lookupBrowseResults,
