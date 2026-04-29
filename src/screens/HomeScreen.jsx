@@ -7,6 +7,8 @@ import { buildSmartSummary } from '../utils/intelligence'
 import { buildDisplayTrendRows } from '../components/charts/SharedTrendChart'
 import { buildHomeElectionsBriefing } from '../utils/homeElectionsBriefing'
 import { buildHomeNewsBriefing, formatRelativeNewsTime, normaliseNewsPayload } from '../utils/news'
+import { API_BASE } from '../constants'
+import { parseJsonResponse } from '../utils/http'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
@@ -415,8 +417,43 @@ export default function HomeScreen({
     [meta, byElections],
   )
   const [electionSignalIndex, setElectionSignalIndex] = React.useState(0)
-  const newsBriefing = React.useMemo(() => buildHomeNewsBriefing(news), [news])
-  const normalisedNews = React.useMemo(() => normaliseNewsPayload(news), [news])
+  const initialNewsPayload = React.useMemo(() => normaliseNewsPayload(news), [news])
+  const [homeNewsPayload, setHomeNewsPayload] = React.useState(initialNewsPayload)
+
+  React.useEffect(() => {
+    if (initialNewsPayload.items.length) {
+      setHomeNewsPayload(initialNewsPayload)
+    }
+  }, [initialNewsPayload])
+
+  React.useEffect(() => {
+    let cancelled = false
+
+    async function loadHomeNews() {
+      try {
+        const res = await fetch(`${API_BASE}/api/news`, {
+          headers: { Accept: 'application/json' },
+        })
+        const data = await parseJsonResponse(res, 'News request')
+        const nextPayload = normaliseNewsPayload(data)
+
+        if (!cancelled && nextPayload.items.length) {
+          setHomeNewsPayload(nextPayload)
+        }
+      } catch {
+        // Keep the existing app-data payload if the live news request is unavailable.
+      }
+    }
+
+    loadHomeNews()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const newsBriefing = React.useMemo(() => buildHomeNewsBriefing(homeNewsPayload), [homeNewsPayload])
+  const normalisedNews = React.useMemo(() => normaliseNewsPayload(homeNewsPayload), [homeNewsPayload])
   const newsStories = React.useMemo(() => normalisedNews.items.slice(0, 5), [normalisedNews])
   const [newsStoryIndex, setNewsStoryIndex] = React.useState(0)
 
