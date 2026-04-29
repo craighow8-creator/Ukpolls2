@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { InfoButton } from '../../components/InfoGlyph'
 import { COUNCIL_PROFILES, LOCAL_ELECTIONS, LOCAL_REGIONS } from '../../data/elections'
@@ -25,6 +25,32 @@ const ENGLISH_LOCAL_AUTHORITIES_VOTING = 136
 const ENGLISH_LOCAL_SEATS_UP_LABEL = '~5,000'
 const ENGLISH_LOCAL_SEATS_UP_DETAIL = '5,013-5,066 English Local Authority seats'
 const POSTCODE_OUTCODE_RE = /^[A-Z]{1,2}\d[A-Z\d]?$/i
+const LOCALS_TAB_STATE_KEY = 'politiscope.localsTab.state'
+
+function readStoredLocalsTabState() {
+  try {
+    return JSON.parse(sessionStorage.getItem(LOCALS_TAB_STATE_KEY) || '{}')
+  } catch {
+    return {}
+  }
+}
+
+function writeStoredLocalsTabState(nextState = {}) {
+  try {
+    sessionStorage.setItem(LOCALS_TAB_STATE_KEY, JSON.stringify(nextState))
+  } catch {}
+}
+
+function getLocalsScrollTop(anchor) {
+  const scrollRoot = anchor?.closest?.('[data-scroll-root]')
+  return Number(scrollRoot?.scrollTop || 0)
+}
+
+function restoreLocalsScrollTop(anchor, scrollTop) {
+  const scrollRoot = anchor?.closest?.('[data-scroll-root]')
+  if (!scrollRoot || !Number.isFinite(Number(scrollTop)) || Number(scrollTop) <= 0) return
+  scrollRoot.scrollTop = Number(scrollTop)
+}
 
 function simplifyLookupValue(value = '') {
   return String(value || '')
@@ -193,10 +219,11 @@ export default function LocalsTab({
   openCouncil,
   openLocalVoteGuide,
 }) {
-  const [voteGuideQuery, setVoteGuideQuery] = useState('')
-  const [voteGuideMessage, setVoteGuideMessage] = useState('')
+  const storedStateRef = useRef(readStoredLocalsTabState())
+  const [voteGuideQuery, setVoteGuideQuery] = useState(storedStateRef.current.voteGuideQuery || '')
+  const [voteGuideMessage, setVoteGuideMessage] = useState(storedStateRef.current.voteGuideMessage || '')
   const [voteGuideBusy, setVoteGuideBusy] = useState(false)
-  const [lookupBrowseResults, setLookupBrowseResults] = useState(null)
+  const [lookupBrowseResults, setLookupBrowseResults] = useState(storedStateRef.current.lookupBrowseResults || null)
   const resultsAnchorRef = useRef(null)
   const regions = LOCAL_REGIONS || []
   const {
@@ -226,6 +253,42 @@ export default function LocalsTab({
   const detailedProfileCount = Object.keys(COUNCIL_PROFILES || {}).length
   const officialLocalBriefing = `${ENGLISH_LOCAL_AUTHORITIES_VOTING} English Local Authorities vote on 7 May 2026. Politiscope also tracks important Local Authorities that are not voting this cycle.`
 
+  useEffect(() => {
+    const storedState = storedStateRef.current || {}
+    if (storedState.search && !search) setSearch(storedState.search)
+    if (storedState.localFilter && localFilter === 'all') setLocalFilter(storedState.localFilter)
+
+    const scrollTop = Number(storedState.scrollTop || 0)
+    if (scrollTop > 0) {
+      const restore = () => restoreLocalsScrollTop(resultsAnchorRef.current, scrollTop)
+      window.requestAnimationFrame(restore)
+      window.setTimeout(restore, 80)
+      window.setTimeout(restore, 220)
+    }
+  }, [])
+
+  useEffect(() => {
+    writeStoredLocalsTabState({
+      voteGuideQuery,
+      voteGuideMessage,
+      lookupBrowseResults,
+      search,
+      localFilter,
+      scrollTop: getLocalsScrollTop(resultsAnchorRef.current),
+    })
+  }, [voteGuideQuery, voteGuideMessage, lookupBrowseResults, search, localFilter])
+
+  const persistLocalsState = () => {
+    writeStoredLocalsTabState({
+      voteGuideQuery,
+      voteGuideMessage,
+      lookupBrowseResults,
+      search,
+      localFilter,
+      scrollTop: getLocalsScrollTop(resultsAnchorRef.current),
+    })
+  }
+
   const scrollToLocalResults = () => {
     const scroll = () => resultsAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
@@ -239,6 +302,16 @@ export default function LocalsTab({
     setLocalFilter(nextFilter)
     setLookupBrowseResults(null)
     scrollToLocalResults()
+  }
+
+  const openCouncilFromLocals = (name) => {
+    persistLocalsState()
+    openCouncil(name)
+  }
+
+  const openLocalVoteGuideFromLocals = (payload) => {
+    persistLocalsState()
+    openLocalVoteGuide(payload)
   }
 
   const handleOpenLocalVoteGuide = async () => {
@@ -259,7 +332,7 @@ export default function LocalsTab({
         if (result?.status === 'matched' || result?.status === 'manual' || result?.status === 'external') {
           setVoteGuideMessage('')
           setLookupBrowseResults(null)
-          openLocalVoteGuide({
+          openLocalVoteGuideFromLocals({
             councilSlug: result.councilSlug,
             wardSlug: result.wardSlug || '',
             query: result.query || normalizedQuery,
@@ -552,7 +625,7 @@ export default function LocalsTab({
                 <motion.button
                   key={i}
                   {...TAP}
-                  onClick={() => openCouncil(council.name)}
+                  onClick={() => openCouncilFromLocals(council.name)}
                   style={{
                     border: `1px solid ${(CONTROL_COLORS[council.control] || T.pr)}28`,
                     background: T.c0,
@@ -617,7 +690,7 @@ export default function LocalsTab({
                   </div>
                   <motion.button
                     {...TAP}
-                    onClick={() => openCouncil(council.displayName)}
+                    onClick={() => openCouncilFromLocals(council.displayName)}
                     style={{
                       border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
                       background: T.c0,
@@ -643,7 +716,7 @@ export default function LocalsTab({
                           key={ward.id || ward.slug}
                           {...TAP}
                           onClick={() =>
-                            openLocalVoteGuide({
+                            openLocalVoteGuideFromLocals({
                               councilSlug: council.slug,
                               wardSlug: ward.slug,
                               query: ward.name,
@@ -696,7 +769,7 @@ export default function LocalsTab({
 
           {localFilteredCouncils.length > 0 ? (
             localFilteredCouncils.map((council, i) => (
-              <CouncilRow key={`${council.slug || council.name}-${i}`} T={T} council={council} onOpen={openCouncil} />
+              <CouncilRow key={`${council.slug || council.name}-${i}`} T={T} council={council} onOpen={openCouncilFromLocals} />
             ))
           ) : (
             <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
@@ -756,7 +829,7 @@ export default function LocalsTab({
                     <motion.div
                       key={j}
                       {...TAP}
-                      onClick={() => openCouncil(council.name)}
+                      onClick={() => openCouncilFromLocals(council.name)}
                       style={{
                         fontSize: 13,
                         fontWeight: 700,
@@ -783,7 +856,7 @@ export default function LocalsTab({
           </div>
 
           {localFilteredCouncils.map((council, i) => (
-            <CouncilRow key={`${council.slug || council.name}-${i}`} T={T} council={council} onOpen={openCouncil} />
+            <CouncilRow key={`${council.slug || council.name}-${i}`} T={T} council={council} onOpen={openCouncilFromLocals} />
           ))}
         </>
       )}
