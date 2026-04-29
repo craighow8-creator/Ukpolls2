@@ -41,6 +41,14 @@ export const simulatorIntroHeadline = 'PM faces first test'
 export const simulatorIntroSubhead = 'Advisers split as pressure builds'
 
 export const defaultSimulatorPolling = { LAB: 36, CON: 27, REF: 18, LD: 10, GRN: 6 }
+const defaultSimulatorState = {
+  approval: 42,
+  treasury: 2.4,
+  partyUnity: 61,
+  majority: 23,
+  media: 48,
+  electorate: { Workers: 42, Middle: 46, Young: 35, Seniors: 54, Business: 48 },
+}
 
 const simulatorPartyAliases = {
   LAB: ['lab', 'labour'],
@@ -101,11 +109,18 @@ export function buildSimulatorPollingSeed(source) {
     }
   }
 
-  const leaderKey = Object.entries(nextPolls).sort(([, a], [, b]) => b - a)[0]?.[0] || null
+  const sortedPolls = Object.entries(nextPolls).sort(([, a], [, b]) => b - a)
+  const leaderKey = sortedPolls[0]?.[0] || null
+  const lead = Number.isFinite(sortedPolls[0]?.[1]) && Number.isFinite(sortedPolls[1]?.[1])
+    ? Math.round((sortedPolls[0][1] - sortedPolls[1][1]) * 10) / 10
+    : null
+  const leaderValue = Number.isFinite(sortedPolls[0]?.[1]) ? sortedPolls[0][1] : null
   return {
     polls: nextPolls,
     isLiveSeeded: true,
     leader: leaderKey,
+    lead,
+    leaderValue,
   }
 }
 
@@ -126,33 +141,115 @@ function buildOpeningNews(seed) {
   }
 
   const leaderName = simulatorPartyDisplay[seed.leader] || seed.leader
+  const leadText = seed.lead != null ? ` by ${seed.lead.toFixed(1)} pts` : ''
   return {
     headline: `${leaderName} lead sets opening test`,
-    subhead: 'Latest polling frames the first crisis',
+    subhead: `Latest polling puts ${leaderName} ahead${leadText}`,
   }
 }
 
-export function createSimulatorInitialState(seedSource) {
-  const seed = buildSimulatorPollingSeed(seedSource)
-  const openingNews = buildOpeningNews(seed)
+function getNewsItems(source) {
+  const news = source?.news
+  if (Array.isArray(news)) return news
+  if (Array.isArray(news?.items)) return news.items
+  if (Array.isArray(news?.newsItems)) return news.newsItems
+  if (Array.isArray(source?.newsItems)) return source.newsItems
+  return []
+}
+
+function getElectionUrgency(source) {
+  const meta = source?.meta || {}
+  const date = meta.nextElectionDate || meta.nextElection || null
+  const label = meta.nextElectionLabel || 'next election'
+  const ts = date ? new Date(date).getTime() : Number.NaN
+  if (Number.isNaN(ts)) return null
+
+  const days = Math.ceil((ts - Date.now()) / 86400000)
+  if (days < 0 || days > 90) return null
+  return { days, label }
+}
+
+function getNewsPressure(source) {
+  const items = getNewsItems(source)
+  if (!items.length) return { media: defaultSimulatorState.media, line: '' }
+
+  const latest = items[0]
+  const headline = String(latest?.displayHeadline || latest?.title || '').trim()
+  const hasFreshAgenda = items.length >= 3
+  const media = Math.min(62, defaultSimulatorState.media + (hasFreshAgenda ? 8 : 5))
+  const line = headline ? `News agenda: ${headline}` : 'Live news agenda raises the media temperature'
+
+  return { media, line }
+}
+
+function buildLiveOpeningContext(seedSource, pollingSeed) {
+  const openingNews = buildOpeningNews(pollingSeed)
+  const newsPressure = getNewsPressure(seedSource)
+  const urgency = getElectionUrgency(seedSource)
+  const contextLines = []
+
+  if (newsPressure.line) contextLines.push(newsPressure.line)
+  if (urgency) {
+    contextLines.push(`${urgency.days} days to ${urgency.label}`)
+  }
 
   return {
+    headline: openingNews.headline,
+    subhead: pollingSeed.isLiveSeeded ? openingNews.subhead : contextLines[0] || openingNews.subhead,
+    media: newsPressure.media,
+    liveContext: {
+      pollingSeeded: pollingSeed.isLiveSeeded,
+      pollingLeader: pollingSeed.leader,
+      pollingLeaderValue: pollingSeed.leaderValue,
+      pollingLead: pollingSeed.lead,
+      newsSeeded: Boolean(newsPressure.line),
+      newsHeadline: newsPressure.line.replace(/^News agenda:\s*/i, ''),
+      electionUrgency: urgency,
+      contextLines,
+    },
+  }
+}
+
+export function applyLiveSimulatorSeed(baseState, seedSource) {
+  const pollingSeed = buildSimulatorPollingSeed(seedSource)
+  const openingContext = buildLiveOpeningContext(seedSource, pollingSeed)
+
+  return {
+    ...baseState,
+    polls: pollingSeed.polls,
+    startingPolls: { ...pollingSeed.polls },
+    media: openingContext.media,
+    newsHeadline: openingContext.headline,
+    newsSubhead: openingContext.subhead,
+    liveContext: openingContext.liveContext,
+  }
+}
+
+export function createLiveSeededSimulatorState(seedSource) {
+  const baseState = {
     turnIndex: 0,
-    approval: 42,
-    treasury: 2.4,
-    partyUnity: 61,
-    majority: 23,
-    media: 48,
-    polls: seed.polls,
-    electorate: { Workers: 42, Middle: 46, Young: 35, Seniors: 54, Business: 48 },
-    newsHeadline: openingNews.headline,
-    newsSubhead: openingNews.subhead,
+    approval: defaultSimulatorState.approval,
+    treasury: defaultSimulatorState.treasury,
+    partyUnity: defaultSimulatorState.partyUnity,
+    majority: defaultSimulatorState.majority,
+    media: defaultSimulatorState.media,
+    polls: { ...defaultSimulatorPolling },
+    startingPolls: { ...defaultSimulatorPolling },
+    electorate: { ...defaultSimulatorState.electorate },
+    newsHeadline: simulatorIntroHeadline,
+    newsSubhead: simulatorIntroSubhead,
     selectedChoiceId: null,
     reaction: null,
     phase: 'playing',
     finalResult: null,
     sfxEnabled: true,
   }
+
+  return applyLiveSimulatorSeed(baseState, seedSource)
+}
+
+export function createSimulatorInitialState(seedSource) {
+  return createLiveSeededSimulatorState(seedSource)
 }
 
 export const simulatorScenes = [
