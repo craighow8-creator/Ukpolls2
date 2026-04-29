@@ -2,7 +2,7 @@ import { buildElectionsIntelligencePayload, buildMayorsIntelligencePayload, buil
 import { runPollIngestForWorker } from './src/shared/pollIngestCore.js'
 import { runPolymarketPredictionRefresh } from './src/shared/predictionMarketsCore.js'
 
-export default {
+const worker = {
   async fetch(request, env) {
     const url = new URL(request.url)
 
@@ -1319,7 +1319,7 @@ export default {
     }
 
     const NEWS_CACHE_SECTION = 'newsItems'
-    const NEWS_CACHE_MAX_AGE_MS = 12 * 60 * 60 * 1000
+    const NEWS_CACHE_MAX_AGE_MS = 3 * 60 * 60 * 1000
 
     function isFreshEnough(iso, maxAgeMs = NEWS_CACHE_MAX_AGE_MS) {
       if (!iso) return false
@@ -4967,5 +4967,17 @@ export default {
     } catch (err) {
       console.error('[worker] prediction markets refresh failed:', err)
     }
+    try {
+      const response = await worker.fetch(new Request('https://politiscope.internal/api/news'), env)
+      if (!response.ok) {
+        throw new Error(`News refresh returned ${response.status}`)
+      }
+      const payload = await response.json().catch(() => null)
+      console.log(`[worker] news refresh completed (${payload?.items?.length || 0} stories)`)
+    } catch (err) {
+      console.error('[worker] news refresh failed:', err)
+    }
   },
 }
+
+export default worker
