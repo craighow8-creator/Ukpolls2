@@ -135,7 +135,7 @@ function hasFavourabilitySplit(leader) {
 }
 
 function ratingSourceLine(leader) {
-  if (!hasSourcedFavourability(leader)) return 'No sourced favourability row yet'
+  if (!hasSourcedFavourability(leader)) return 'No sourced favourability rating yet.'
   const source = leader.source || 'Leader ratings source'
   const date = leader.publishedAt || leader.fieldworkDate || leader.updatedAt || ''
   return date ? `${source} · ${date}` : source
@@ -143,13 +143,13 @@ function ratingSourceLine(leader) {
 
 function buildProfileOnlyIntelligence(leader) {
   return {
-    contextLine: 'No sourced favourability row yet',
+    contextLine: 'Profile available',
     whyItMattersTitle: 'Profile only',
-    whyItMattersBody: `${leader.name}'s profile remains available, but Politiscope is not ranking maintained profile ratings against sourced favourability polling.`,
+    whyItMattersBody: 'Politiscope has a maintained leader profile, but this person is not included in the current sourced favourability dataset.',
     signals: [
       { label: 'Rank', value: 'Not ranked' },
-      { label: 'Metric', value: 'Profile only' },
-      { label: 'Status', value: 'Awaiting source' },
+      { label: 'Metric', value: 'Awaiting sourced favourability' },
+      { label: 'Status', value: 'Profile available' },
     ],
   }
 }
@@ -436,22 +436,24 @@ export default function LeaderScreen({ T, lIdx, nav, leaders, parties, initialTa
                     Profile only
                   </div>
                   <div style={{ fontSize: 11.5, fontWeight: 700, color: chrome.muted, lineHeight: 1.34, paddingBottom: 2 }}>
-                    No sourced<br />favourability row yet
+                    No sourced favourability<br />rating yet.
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          <div style={{ fontSize: 12, fontWeight: 650, color: chrome.muted, textAlign: 'center', marginTop: 8, lineHeight: 1.45 }}>
-            {l.sourceUrl ? (
-              <a href={l.sourceUrl} target="_blank" rel="noreferrer" style={{ color: party?.color || l.color, textDecoration: 'none' }}>
-                {ratingSourceLine(l)}
-              </a>
-            ) : (
-              ratingSourceLine(l)
-            )}
-          </div>
+          {isSourcedLeader ? (
+            <div style={{ fontSize: 12, fontWeight: 650, color: chrome.muted, textAlign: 'center', marginTop: 8, lineHeight: 1.45 }}>
+              {l.sourceUrl ? (
+                <a href={l.sourceUrl} target="_blank" rel="noreferrer" style={{ color: party?.color || l.color, textDecoration: 'none' }}>
+                  {ratingSourceLine(l)}
+                </a>
+              ) : (
+                ratingSourceLine(l)
+              )}
+            </div>
+          ) : null}
 
           <div
             style={{
