@@ -14,6 +14,15 @@ function shortLeaderRef(name) {
   return parts.length ? parts[parts.length - 1] : 'Leader'
 }
 
+function isFiniteNumber(value) {
+  if (value === null || value === undefined || value === '') return false
+  return Number.isFinite(Number(value))
+}
+
+function hasApprovalSplit(leader) {
+  return !!leader?._hasApprovalSplit && isFiniteNumber(leader.approve) && isFiniteNumber(leader.disapprove)
+}
+
 function NetBadge({ net, large = false }) {
   const positive = net >= 0
   const color = positive ? '#02A95B' : '#C8102E'
@@ -210,7 +219,7 @@ function HeroBriefing({ T, summary, isDark }) {
             lineHeight: 1.5,
           }}
         >
-          Approval source: Ipsos Political Monitor
+          Net approval shown where available; approve/disapprove split shown only when supplied by data.
         </div>
       </div>
     </div>
@@ -487,7 +496,7 @@ export default function LeadersScreen({ T, nav }) {
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
                     <NetBadge net={l.net} large={i === 0} />
                     <div style={{ fontSize: 12, fontWeight: 700, color: T.tl, marginTop: 4 }}>
-                      {l.approve}% / {l.disapprove}%
+                      {hasApprovalSplit(l) ? `${l.approve}% / ${l.disapprove}%` : 'net approval'}
                     </div>
                   </div>
                 </div>
@@ -512,7 +521,7 @@ export default function LeadersScreen({ T, nav }) {
             About net approval
           </div>
           <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, lineHeight: 1.6, textAlign: 'center' }}>
-            Net approval = % approve minus % disapprove. Tracked monthly by Ipsos Political Monitor since 1977.
+            Net approval = % approve minus % disapprove. Approval/disapproval splits are hidden unless they are supplied by the loaded leader data.
           </div>
         </div>
       </div>

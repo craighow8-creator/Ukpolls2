@@ -289,11 +289,41 @@ function enrichParties(liveParties, defaultParties) {
   return [...merged, ...missingDefaults]
 }
 
+function isFiniteNumericValue(value) {
+  if (value === null || value === undefined || value === '') return false
+  const n = Number(value)
+  return Number.isFinite(n)
+}
+
 function enrichLeaders(liveLeaders, defaultLeaders) {
   const defaultsByName = new Map(withFallbackArray(defaultLeaders, []).map((l) => [normaliseName(l.name), l]))
   const live = withFallbackArray(liveLeaders, [])
-  if (!live.length) return withFallbackArray(defaultLeaders, [])
-  return live.map((leader) => ({ ...defaultsByName.get(normaliseName(leader.name)), ...leader }))
+
+  if (!live.length) {
+    return withFallbackArray(defaultLeaders, []).map((leader) => ({
+      ...leader,
+      _hasApprovalSplit: isFiniteNumericValue(leader.approve) && isFiniteNumericValue(leader.disapprove) && !!(leader.approvalSource || leader.approvalSourceUrl || leader.approvalUpdatedAt || leader.sourceUrl || leader.source || leader.updatedAt),
+    }))
+  }
+
+  return live.map((leader) => {
+    const base = defaultsByName.get(normaliseName(leader.name)) || {}
+    const hasIncomingApprove = Object.prototype.hasOwnProperty.call(leader, 'approve') && isFiniteNumericValue(leader.approve)
+    const hasIncomingDisapprove = Object.prototype.hasOwnProperty.call(leader, 'disapprove') && isFiniteNumericValue(leader.disapprove)
+    const hasApprovalSource = !!(leader.approvalSource || leader.approvalSourceUrl || leader.approvalUpdatedAt || leader.sourceUrl || leader.source || leader.updatedAt)
+    const hasApprovalSplit = hasIncomingApprove && hasIncomingDisapprove && hasApprovalSource
+    const merged = { ...base, ...leader }
+
+    if (!hasApprovalSplit) {
+      delete merged.approve
+      delete merged.disapprove
+    }
+
+    return {
+      ...merged,
+      _hasApprovalSplit: hasApprovalSplit,
+    }
+  })
 }
 
 function attachLeaderRefs(parties, leaders) {
