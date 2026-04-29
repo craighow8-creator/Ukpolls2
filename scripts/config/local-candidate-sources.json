@@ -69,13 +69,13 @@
       "councilName": "Liverpool",
       "priority": true,
       "enabled": false,
-      "parserType": "holding-page",
+      "parserType": "not-scheduled",
       "csvPath": "",
-      "sourceLabel": "Official voting and elections page",
+      "sourceLabel": "No scheduled May 2026 local election",
       "sourceUrl": "https://liverpool.gov.uk/council/voting-and-elections/",
       "lastChecked": "29-04-2026",
-      "verificationStatus": "holding-page",
-      "notes": "Holding election page only; keep disabled until an exact statement-of-persons-nominated URL or manual candidate rows are available."
+      "verificationStatus": "not-scheduled",
+      "notes": "Liverpool City Council states there are no elections taking place in Liverpool on 7 May 2026 and that the next scheduled elections are in May 2027."
     },
     {
       "councilSlug": "devon",
