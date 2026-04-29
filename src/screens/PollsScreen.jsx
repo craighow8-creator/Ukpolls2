@@ -1084,13 +1084,61 @@ function IntelligenceLine({ T, label, text, subtle = false }) {
   )
 }
 
+function buildMobileBriefingText({ raceState, topTwo = [], intelligence }) {
+  const leader = topTwo[0]
+  const second = topTwo[1]
+  const leaderPct = safeNumber(leader?.pct)
+  const secondPct = safeNumber(second?.pct)
+
+  if (leader && second && leaderPct != null && secondPct != null) {
+    const gap = +((leaderPct || 0) - (secondPct || 0)).toFixed(1)
+    const movement = cleanText(intelligence?.whatChangedLine || raceState?.subline)
+    const movementSentence = movement ? ` ${movement.replace(/\.$/, '')}.` : ''
+    return `${shortPartyName(leader.name)} lead ${shortPartyName(second.name)} by ${formatGap(gap)} points in the latest polling picture.${movementSentence}`
+  }
+
+  return raceState?.subline || intelligence?.confidenceLine || 'The latest polling picture is still taking shape.'
+}
+
+function buildMobileBriefingChips(topTwo = []) {
+  const ranked = [...topTwo]
+  const chips = []
+  const leader = ranked[0]
+  const second = ranked[1]
+  const green = ranked.find((party) => cleanText(party?.name).toLowerCase().includes('green'))
+
+  if (leader) {
+    chips.push({
+      label: `${shortPartyName(leader.name)} lead`,
+      color: leader.color,
+    })
+  }
+
+  if (green) {
+    chips.push({
+      label: 'Green pressure',
+      color: green.color,
+    })
+  } else if (second) {
+    chips.push({
+      label: `${shortPartyName(second.name)} second`,
+      color: second.color,
+    })
+  }
+
+  return chips.slice(0, 2)
+}
+
 function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatters = '' }) {
   if (!intelligence) return null
   const fallbackHeadline = topTwo.length >= 1 ? `${topTwo[0].name} lead the current picture` : 'Current polling picture'
   const fallbackSubline = topTwo.length >= 2 ? `${topTwo[0].name} remain ahead of ${topTwo[1].name}.` : 'Limited recent polling reduces certainty.'
+  const mobileBriefing = buildMobileBriefingText({ raceState, topTwo, intelligence })
+  const mobileChips = buildMobileBriefingChips(topTwo)
 
   return (
     <div
+      className="poll-briefing-card"
       style={{
         borderRadius: 14,
         padding: '12px 14px',
@@ -1099,6 +1147,72 @@ function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatter
         border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
       }}
     >
+      <style>{`
+        .poll-briefing-mobile { display: none; }
+        @media (max-width: 640px) {
+          .poll-briefing-card {
+            padding: 10px 12px !important;
+            margin-bottom: 10px !important;
+          }
+          .poll-briefing-desktop { display: none !important; }
+          .poll-briefing-mobile {
+            display: block !important;
+          }
+        }
+      `}</style>
+
+      <div className="poll-briefing-mobile">
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 800,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: T.tl,
+            textAlign: 'center',
+            marginBottom: 6,
+          }}
+        >
+          Polling Briefing
+        </div>
+
+        <div
+          style={{
+            fontSize: 13.5,
+            fontWeight: 650,
+            color: T.th,
+            lineHeight: 1.45,
+            textAlign: 'center',
+          }}
+        >
+          {mobileBriefing}
+        </div>
+
+        {mobileChips.length ? (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+            {mobileChips.map((chip) => (
+              <Badge key={chip.label} color={chip.color || T.pr} subtle={chip.label !== mobileChips[0]?.label}>
+                {chip.label}
+              </Badge>
+            ))}
+          </div>
+        ) : null}
+
+        <div
+          style={{
+            fontSize: 11.5,
+            fontWeight: 700,
+            color: T.tl,
+            lineHeight: 1.35,
+            textAlign: 'center',
+            marginTop: 7,
+          }}
+        >
+          Based on latest polling data
+        </div>
+      </div>
+
+      <div className="poll-briefing-desktop">
       <SectionLabel T={T}>Polling intelligence</SectionLabel>
 
       <div
@@ -1158,6 +1272,7 @@ function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatter
       <IntelligenceLine T={T} label="What changed" text={intelligence.whatChangedLine} />
       {intelligence.disagreementNote ? <IntelligenceLine T={T} label="Disagreement" text={intelligence.disagreementNote} subtle /> : null}
       {whyItMatters ? <IntelligenceLine T={T} label="Why it matters" text={whyItMatters} subtle /> : null}
+      </div>
     </div>
   )
 }
