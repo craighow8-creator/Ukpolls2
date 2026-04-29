@@ -4464,10 +4464,6 @@ const worker = {
           const runId = String(body?.runId || `local_vote_ingest_councils_wards_${Date.now()}`).trim()
 
           if (action === 'start') {
-            const affectedCouncilIds = toArray(body?.affectedCouncilIds)
-              .map((value) => String(value || '').trim())
-              .filter(Boolean)
-
             await env.DB.prepare(
               `INSERT INTO local_ingest_runs (id, pipeline, status, started_at, finished_at, rows_upserted, error_summary, meta_json)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -4933,6 +4929,9 @@ const worker = {
           const action = String(body?.action || 'chunk').trim().toLowerCase()
           const sourceLabel = String(body?.sourceLabel || '').trim()
           const runId = String(body?.runId || `local_vote_ingest_officeholders_${Date.now()}`).trim()
+          const affectedCouncilIds = toArray(body?.affectedCouncilIds)
+            .map((value) => String(value || '').trim())
+            .filter(Boolean)
 
           if (action === 'start') {
             await env.DB.prepare(
