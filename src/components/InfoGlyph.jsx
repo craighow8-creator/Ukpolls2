@@ -101,12 +101,12 @@ In those cases, the app should clearly say there is no scheduled election this t
     title: 'About this news feed',
     body: `This feed is limited to approved UK politics sources and is filtered to try to remove non-political, foreign, audio, live-blog, and lifestyle stories.
 
-Stories do not refresh constantly. The app checks for fresh news roughly every 12 hours rather than hammering the API all day. That keeps usage sensible while still updating the feed regularly.
+Stories refresh regularly from approved UK politics sources.
 
-Because filtering is intentionally strict, the feed may sometimes show fewer stories, older stories, or a source mix that leans heavily toward whichever outlet has the clearest matching UK politics coverage at that moment.
+Because filtering is intentionally strict, the feed may sometimes show fewer stories or older stories when the clearest matching UK politics coverage is limited.
 
 This feed is designed as a fast political briefing layer, not a complete substitute for reading the original reporting.`,
-    source: 'Approved sources · filtered UK politics feed · ~12h refresh',
+    source: 'Approved sources · filtered UK politics feed',
   },
   betting_odds: {
     title: 'Betting Odds & Implied Probability',

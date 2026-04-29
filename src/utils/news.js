@@ -243,7 +243,7 @@ export function buildHomeNewsBriefing(payload) {
   if (!latest) {
     return {
       headline: 'UK politics news feed',
-      supportingLine: 'Tap in for the latest available reporting and source mix.',
+      supportingLine: 'Stories refresh regularly from approved UK politics sources.',
       sourceLine: '',
       statusLabel: 'NEWS FEED',
       statusTone: 'quiet',
@@ -251,7 +251,7 @@ export function buildHomeNewsBriefing(payload) {
       sourceCount: 0,
       storyCount: 0,
       freshnessLabel: '',
-      teaser: 'Awaiting the next refreshed source pull.',
+      teaser: 'Latest UK political reporting will appear here when the feed refreshes.',
       ctaLabel: 'Open news feed',
     }
   }
@@ -275,8 +275,8 @@ export function buildHomeNewsBriefing(payload) {
     teaser:
       latest.displaySummary ||
       (freshness.isLive
-        ? 'Track the live political wire with the newest stories and source mix surfaced first.'
-        : 'See the latest available reporting, with source breadth and recency surfaced first.'),
+        ? 'Track the latest UK political reporting from approved sources.'
+        : 'Stories refresh regularly from approved UK politics sources.'),
     ctaLabel: freshness.isLive ? 'Open live feed' : 'Open news feed',
   }
 }
