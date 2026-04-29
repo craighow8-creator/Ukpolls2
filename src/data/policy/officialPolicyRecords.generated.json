@@ -1,1 +1,51 @@
-[]
+[
+  {
+    "id": "official-restore-britain-nhs-healthcare-and-nhs-access",
+    "party": "Restore Britain",
+    "area": "nhs",
+    "topic": "Healthcare and NHS access",
+    "title": "Healthcare and NHS access",
+    "stanceScore": 0,
+    "stanceLabel": "National access focus",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Restore Britain says the NHS should be restored as a national health service serving British people first. Its healthcare pledges include free parking for NHS staff, patients and visitors, removing medical school caps, and prioritising British-trained doctors.",
+    "details": [
+      "Restore the NHS as a national health service serving British people first.",
+      "Offer free parking for NHS staff, patients and visitors.",
+      "Remove medical school caps and prioritise British-trained doctors."
+    ],
+    "officialPosition": {
+      "headline": "Healthcare and NHS access",
+      "shortSummary": "Restore Britain says the NHS should be restored as a national health service serving British people first. Its healthcare pledges include free parking for NHS staff, patients and visitors, removing medical school caps, and prioritising British-trained doctors.",
+      "detailedSummary": "Restore the NHS as a national health service serving British people first.|Offer free parking for NHS staff, patients and visitors.|Remove medical school caps and prioritise British-trained doctors.",
+      "sourceTitle": "Restore Britain healthcare policy",
+      "sourceUrl": "https://www.restorebritain.org.uk/healthcare",
+      "sourceType": "official_policy_page",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This frames NHS pressure mainly through national access, workforce and migration rather than through private-sector reform.",
+    "sources": [
+      {
+        "type": "official_policy_page",
+        "title": "Restore Britain healthcare policy",
+        "url": "https://www.restorebritain.org.uk/healthcare",
+        "priority": 80,
+        "lastChecked": "29-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "official_policy_page",
+      "title": "Restore Britain healthcare policy",
+      "url": "https://www.restorebritain.org.uk/healthcare",
+      "priority": 80,
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "29-04-2026"
+  }
+]
