@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { StickyPills, haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
 import SectionDataMeta from '../components/SectionDataMeta'
@@ -1129,7 +1129,37 @@ function buildMobileBriefingChips(topTwo = []) {
   return chips.slice(0, 2)
 }
 
+function useNarrowPollingBriefing() {
+  const getIsNarrow = () => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia?.('(max-width: 640px)').matches || window.innerWidth <= 640
+  }
+
+  const [isNarrow, setIsNarrow] = useState(getIsNarrow)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const update = () => setIsNarrow(getIsNarrow())
+    const media = window.matchMedia?.('(max-width: 640px)')
+    update()
+
+    media?.addEventListener?.('change', update)
+    window.addEventListener('resize', update)
+    window.addEventListener('orientationchange', update)
+
+    return () => {
+      media?.removeEventListener?.('change', update)
+      window.removeEventListener('resize', update)
+      window.removeEventListener('orientationchange', update)
+    }
+  }, [])
+
+  return isNarrow
+}
+
 function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatters = '' }) {
+  const isNarrow = useNarrowPollingBriefing()
   if (!intelligence) return null
   const fallbackHeadline = topTwo.length >= 1 ? `${topTwo[0].name} lead the current picture` : 'Current polling picture'
   const fallbackSubline = topTwo.length >= 2 ? `${topTwo[0].name} remain ahead of ${topTwo[1].name}.` : 'Limited recent polling reduces certainty.'
@@ -1141,27 +1171,14 @@ function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatter
       className="poll-briefing-card"
       style={{
         borderRadius: 14,
-        padding: '12px 14px',
-        marginBottom: 12,
+        padding: isNarrow ? '10px 12px' : '12px 14px',
+        marginBottom: isNarrow ? 10 : 12,
         background: T.c0,
         border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
       }}
     >
-      <style>{`
-        .poll-briefing-mobile { display: none; }
-        @media (max-width: 640px) {
-          .poll-briefing-card {
-            padding: 10px 12px !important;
-            margin-bottom: 10px !important;
-          }
-          .poll-briefing-desktop { display: none !important; }
-          .poll-briefing-mobile {
-            display: block !important;
-          }
-        }
-      `}</style>
-
-      <div className="poll-briefing-mobile">
+      {isNarrow ? (
+      <div>
         <div
           style={{
             fontSize: 12,
@@ -1211,8 +1228,8 @@ function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatter
           Based on latest polling data
         </div>
       </div>
-
-      <div className="poll-briefing-desktop">
+      ) : (
+      <div>
       <SectionLabel T={T}>Polling intelligence</SectionLabel>
 
       <div
@@ -1273,6 +1290,7 @@ function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatter
       {intelligence.disagreementNote ? <IntelligenceLine T={T} label="Disagreement" text={intelligence.disagreementNote} subtle /> : null}
       {whyItMatters ? <IntelligenceLine T={T} label="Why it matters" text={whyItMatters} subtle /> : null}
       </div>
+      )}
     </div>
   )
 }

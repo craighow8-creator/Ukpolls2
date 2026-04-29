@@ -44,6 +44,90 @@ function Chip({ children, color, style }) {
   )
 }
 
+function CompactPollingBriefing({ T, leader, second, gap, risingParty }) {
+  const leadText = leader?.name && second?.name
+    ? `${leader.name} lead ${second.name} by ${gap}pt in the current national polling picture.`
+    : 'The national polling picture is still taking shape.'
+  const pressureText = risingParty?.name && risingParty.name !== leader?.name
+    ? ` ${risingParty.name} are the clearest pressure signal in the visible trend data.`
+    : ' The main pressure point is whether the lead holds as fresh polling arrives.'
+  const chips = [
+    leader?.name ? { label: `${leader.name} lead`, color: leader.color || T.pr } : null,
+    risingParty?.name && risingParty.name !== leader?.name
+      ? { label: `${risingParty.name} pressure`, color: risingParty.color || T.pr }
+      : second?.name
+        ? { label: `${second.name} second`, color: second.color || T.tl }
+        : null,
+  ].filter(Boolean)
+
+  return (
+    <div
+      style={{
+        borderRadius: 16,
+        padding: '12px 14px',
+        background: T.c0 || '#fff',
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.07)'}`,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 800,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: T.tl,
+          textAlign: 'center',
+          marginBottom: 7,
+        }}
+      >
+        Polling Briefing
+      </div>
+
+      <div
+        style={{
+          fontSize: 14,
+          fontWeight: 600,
+          lineHeight: 1.5,
+          color: T.th,
+          textAlign: 'center',
+        }}
+      >
+        {leadText}{pressureText}
+      </div>
+
+      {chips.length ? (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap', marginTop: 9 }}>
+          {chips.slice(0, 2).map((chip) => (
+            <Chip
+              key={chip.label}
+              color={chip.color}
+              style={{
+                fontSize: 10.5,
+                borderRadius: 999,
+                padding: '3px 8px',
+              }}
+            >
+              {chip.label}
+            </Chip>
+          ))}
+        </div>
+      ) : null}
+
+      <div
+        style={{
+          fontSize: 11.5,
+          fontWeight: 700,
+          color: T.tl,
+          textAlign: 'center',
+          marginTop: 8,
+        }}
+      >
+        Based on latest polling data
+      </div>
+    </div>
+  )
+}
+
 const Divider = ({ T }) => (
   <div style={{ height: 1, background: T.cardBorder || 'rgba(0,0,0,0.07)', margin: '11px 0' }} />
 )
@@ -718,12 +802,22 @@ export default function HomeScreen({
           </LargeCard>
 
           <div style={{ gridColumn: 'span 2' }}>
-            <BriefingPanel
-              T={T}
-              title="Top line briefing"
-              subtitle="The national political picture in plain English, with the main pressure points surfaced first."
-              items={briefingItems}
-            />
+            {isMobile ? (
+              <CompactPollingBriefing
+                T={T}
+                leader={leader}
+                second={second}
+                gap={gap}
+                risingParty={risingParty}
+              />
+            ) : (
+              <BriefingPanel
+                T={T}
+                title="Top line briefing"
+                subtitle="The national political picture in plain English, with the main pressure points surfaced first."
+                items={briefingItems}
+              />
+            )}
           </div>
 
           <LargeCard
