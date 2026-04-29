@@ -1161,11 +1161,11 @@ export default function HomeScreen({
                   gap: 12,
                 }}
               >
-                <div style={{ fontSize: 13, color: T.tm, lineHeight: 1.45, maxWidth: 430 }}>
-                  {hasNewsStories
-                    ? 'Previewing current UK political reporting from the news feed.'
-                    : 'Latest UK political reporting will appear here when the feed refreshes.'}
-                </div>
+                {hasNewsStories ? <div /> : (
+                  <div style={{ fontSize: 13, color: T.tm, lineHeight: 1.45, maxWidth: 430 }}>
+                    Latest UK political reporting will appear here when the feed refreshes.
+                  </div>
+                )}
 
                 <div
                   style={{
