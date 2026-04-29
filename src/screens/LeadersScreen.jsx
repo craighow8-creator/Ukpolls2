@@ -34,6 +34,16 @@ function ratingSourceLine(leader) {
   return date ? `${source} · ${date}` : source
 }
 
+function hasSourcedFavourability(leader) {
+  if (!leader || !isFiniteNumber(leader.net)) return false
+  const label = String(leader.metricLabel || '').toLowerCase()
+  const hasSourceMarker =
+    leader.ratingSource === 'sourced' ||
+    !!(leader.sourceUrl || leader.source || leader.publishedAt || leader.fieldworkDate)
+
+  return hasSourceMarker && label.includes('favourability')
+}
+
 function NetBadge({ net, large = false }) {
   const positive = net >= 0
   const color = positive ? '#02A95B' : '#C8102E'
@@ -278,7 +288,12 @@ export default function LeadersScreen({ T, nav }) {
 
   const leaders = data?.leaders || []
   const parties = data?.polls || []
-  const sorted = useMemo(() => [...(leaders || [])].sort((a, b) => Number(b.net ?? -999) - Number(a.net ?? -999)), [leaders])
+  const sourcedFavourabilityLeaders = useMemo(() => (leaders || []).filter(hasSourcedFavourability), [leaders])
+  const maintainedLeaders = useMemo(() => (leaders || []).filter((leader) => !hasSourcedFavourability(leader)), [leaders])
+  const sorted = useMemo(
+    () => [...sourcedFavourabilityLeaders].sort((a, b) => Number(b.net ?? -999) - Number(a.net ?? -999)),
+    [sourcedFavourabilityLeaders]
+  )
 
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
   const card = isDark ? 'rgba(12,20,30,0.97)' : '#ffffff'
@@ -424,6 +439,25 @@ export default function LeadersScreen({ T, nav }) {
       <div style={{ padding: '4px 16px 40px' }}>
         <SectionLabel T={T}>Favourability leaderboard</SectionLabel>
 
+        {sorted.length === 0 && (
+          <div
+            style={{
+              borderRadius: 16,
+              padding: '15px 16px',
+              marginBottom: 12,
+              background: card,
+              border: `1px solid ${border}`,
+              color: T.tl,
+              fontSize: 13,
+              fontWeight: 650,
+              lineHeight: 1.55,
+              textAlign: 'center',
+            }}
+          >
+            Sourced leader favourability has not been loaded yet. Maintained leader profiles remain available below.
+          </div>
+        )}
+
         {sorted.map((l, i) => {
           const lIdx = leaders.indexOf(l)
           const party = leaderPartyMap[l.party]
@@ -545,6 +579,85 @@ export default function LeadersScreen({ T, nav }) {
             Net favourability = % favourable minus % unfavourable. The app does not mix this with approval, satisfaction, or best-PM polling.
           </div>
         </div>
+
+        {maintainedLeaders.length > 0 && (
+          <>
+            <SectionLabel T={T}>Maintained profiles</SectionLabel>
+
+            {maintainedLeaders.map((l, i) => {
+              const lIdx = leaders.indexOf(l)
+
+              return (
+                <motion.div
+                  key={`${l.name}-${i}`}
+                  {...TAP}
+                  onClick={() => {
+                    haptic(8)
+                    nav('leader', { lIdx })
+                  }}
+                  style={{
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    marginBottom: 9,
+                    background: card,
+                    border: `1px solid ${border}`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ height: 3, background: l.color || T.pr, flexShrink: 0, opacity: 0.72 }} />
+
+                  <div style={{ padding: '13px 15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <PortraitAvatar name={l.name} color={l.color} size={48} radius={24} />
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 15,
+                            fontWeight: 800,
+                            color: T.th,
+                            lineHeight: 1.18,
+                            marginBottom: 3,
+                          }}
+                        >
+                          {l.name}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 12.5,
+                            fontWeight: 700,
+                            color: l.color || T.tl,
+                          }}
+                        >
+                          {l.party}
+                        </div>
+                      </div>
+
+                      <Badge color={T.tl} subtle>
+                        Profile
+                      </Badge>
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 9,
+                        paddingTop: 9,
+                        borderTop: `1px solid ${border}`,
+                        fontSize: 12,
+                        fontWeight: 650,
+                        color: T.tl,
+                        lineHeight: 1.45,
+                        textAlign: 'center',
+                      }}
+                    >
+                      No sourced favourability row yet. Profile information is maintained separately from the leaderboard.
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </>
+        )}
       </div>
     </div>
   )
