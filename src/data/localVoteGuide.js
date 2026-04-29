@@ -810,6 +810,11 @@ const LOCAL_VOTE_GUIDES = Object.fromEntries(
 
 const LOCAL_VOTE_ROUTE_SLUGS = {
   [SHEFFIELD_COUNCIL_SLUG]: 'sheffield',
+  sheffield: 'sheffield',
+}
+
+const LOCAL_VOTE_CANONICAL_SLUGS = {
+  sheffield: SHEFFIELD_COUNCIL_SLUG,
 }
 
 export function normalisePostcodeInput(value) {
@@ -821,7 +826,8 @@ export function normalisePostcodeInput(value) {
 
 export function getLocalVoteGuideCouncil(councilSlug) {
   if (!councilSlug) return null
-  return LOCAL_VOTE_GUIDES[councilSlug] || null
+  const canonicalSlug = LOCAL_VOTE_CANONICAL_SLUGS[councilSlug] || councilSlug
+  return LOCAL_VOTE_GUIDES[canonicalSlug] || null
 }
 
 async function fetchLocalVoteGuideJson(path) {
@@ -848,11 +854,12 @@ async function fetchLocalVoteGuideJson(path) {
 }
 
 export async function fetchLocalVoteGuideCouncilData(councilSlug) {
-  const routeSlug = LOCAL_VOTE_ROUTE_SLUGS[councilSlug]
+  const routeSlug = LOCAL_VOTE_ROUTE_SLUGS[councilSlug] || councilSlug
+  const canonicalSlug = LOCAL_VOTE_CANONICAL_SLUGS[councilSlug] || councilSlug
   if (!routeSlug) return null
 
   const payload = await fetchLocalVoteGuideJson(`/api/local-vote/councils/${routeSlug}`)
-  if (!payload || payload.councilSlug !== councilSlug || !Array.isArray(payload.wards)) return null
+  if (!payload || payload.councilSlug !== canonicalSlug || !Array.isArray(payload.wards)) return null
   return payload
 }
 

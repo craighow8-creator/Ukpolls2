@@ -2093,7 +2093,8 @@ export default {
       }
 
       function routeSlugToCouncilSlug(routeSlug = '') {
-        return LOCAL_VOTE_ROUTE_MAP[String(routeSlug || '').trim().toLowerCase()] || ''
+        const normalizedRouteSlug = String(routeSlug || '').trim().toLowerCase()
+        return LOCAL_VOTE_ROUTE_MAP[normalizedRouteSlug] || normalizedRouteSlug
       }
 
       function makeLocalVoteSourceId(label, url) {
