@@ -2872,6 +2872,21 @@ export default {
            GROUP BY lc.slug, lc.name
            ORDER BY lc.name ASC`
         ).all()
+        const officeholderCouncilRows = await env.DB.prepare(
+          `SELECT
+             lc.slug,
+             lc.name,
+             COUNT(DISTINCT o.ward_id) AS ward_count,
+             COUNT(*) AS officeholder_count,
+             SUM(CASE WHEN s.url IS NULL OR s.url = '' THEN 1 ELSE 0 END) AS missing_source_url_count
+           FROM local_officeholders o
+           JOIN local_councils lc ON lc.id = o.council_id
+           LEFT JOIN local_sources s ON s.id = o.primary_source_id
+           WHERE lc.active = 1
+             AND o.is_current = 1
+           GROUP BY lc.slug, lc.name
+           ORDER BY lc.name ASC`
+        ).all()
         const latestRun = await env.DB.prepare(
           `SELECT id, pipeline, status, started_at, finished_at, rows_upserted, error_summary, meta_json
            FROM local_ingest_runs
@@ -2910,6 +2925,13 @@ export default {
             name: row.name,
             wards: Number(row.ward_count || 0),
             candidates: Number(row.candidate_count || 0),
+            missingSourceUrl: Number(row.missing_source_url_count || 0),
+          })),
+          officeholderCoverageByCouncil: (officeholderCouncilRows.results || []).map((row) => ({
+            slug: row.slug,
+            name: row.name,
+            wards: Number(row.ward_count || 0),
+            officeholders: Number(row.officeholder_count || 0),
             missingSourceUrl: Number(row.missing_source_url_count || 0),
           })),
           latestLocalIngestRun: latestRun
@@ -3481,6 +3503,194 @@ export default {
         }
       }
 
+      async function upsertLocalVoteOfficeholderChunk({
+        sourceLabel,
+        rows,
+        runId,
+      }) {
+        const batchRunner = createLocalVoteBatchRunner()
+        const rowsReceived = toArray(rows).length
+        let rowsUpserted = 0
+        let matchedRows = 0
+        let skippedRows = 0
+        let insertedOfficeholders = 0
+        const sourceIds = new Map()
+        const skippedSamples = []
+
+        const getSourceId = async (row) => {
+          const label = String(row.sourceLabel || sourceLabel || 'Official councillors by ward').trim()
+          const urlValue = String(row.sourceUrl || '').trim()
+          if (!label || !urlValue) return null
+
+          const key = `${label}|${urlValue}`
+          if (sourceIds.has(key)) return sourceIds.get(key)
+
+          const sourceId = await upsertLocalSource(
+            {
+              label,
+              url: urlValue,
+              publisher: row.publisher || row.councilName || 'Official Local Authority source',
+              sourceType: row.sourceType || 'official-officeholder-source',
+              updatedAt: row.lastChecked || row.updatedAt || new Date().toISOString(),
+              lastChecked: row.lastChecked || null,
+            },
+            'official-officeholder-source',
+            batchRunner,
+          )
+          sourceIds.set(key, sourceId)
+          return sourceId
+        }
+
+        const noteSkipped = (reason, row) => {
+          skippedRows += 1
+          if (skippedSamples.length >= 25) return
+          skippedSamples.push({
+            reason,
+            councilSlug: row?.councilSlug || '',
+            wardSlug: row?.wardSlug || '',
+            wardName: row?.wardName || '',
+            officeholderName: row?.officeholderName || row?.name || '',
+          })
+        }
+
+        for (const row of toArray(rows)) {
+          const council = row?.councilId && row?.councilSlug
+            ? {
+                id: String(row.councilId).trim(),
+                slug: String(row.councilSlug).trim(),
+                name: String(row.councilName || '').trim(),
+              }
+            : null
+          const ward = row?.wardId && row?.wardSlug
+            ? {
+                id: String(row.wardId).trim(),
+                slug: String(row.wardSlug).trim(),
+                name: String(row.wardName || '').trim(),
+              }
+            : null
+          const officeholderName = String(row.officeholderName || row.name || '').trim()
+          const partyName = String(row.partyName || row.party || '').trim()
+          const updatedAt = String(row.lastChecked || row.updatedAt || new Date().toISOString()).trim()
+          const sourceId = await getSourceId(row)
+
+          if (!council?.id || !ward?.id) {
+            noteSkipped('missing-council-or-ward-match', row)
+            continue
+          }
+          if (!officeholderName || !partyName) {
+            noteSkipped('missing-officeholder-fields', row)
+            continue
+          }
+          if (!sourceId) {
+            noteSkipped('missing-source-url', row)
+            continue
+          }
+
+          matchedRows += 1
+
+          const officeholderId = `officeholder_${slugifyLocalVote(council.slug)}_${slugifyLocalVote(ward.slug)}_${slugifyLocalVote(officeholderName)}_${slugifyLocalVote(partyName)}`
+
+          await batchRunner.push(env.DB.prepare(
+            `INSERT INTO local_officeholders (
+               id, council_id, ward_id, name, party, seat_status, role, is_current,
+               source_attribution, primary_source_id, verification_status, last_checked, updated_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET
+               council_id = excluded.council_id,
+               ward_id = excluded.ward_id,
+               name = excluded.name,
+               party = excluded.party,
+               seat_status = excluded.seat_status,
+               role = excluded.role,
+               is_current = excluded.is_current,
+               source_attribution = excluded.source_attribution,
+               primary_source_id = excluded.primary_source_id,
+               verification_status = excluded.verification_status,
+               last_checked = excluded.last_checked,
+               updated_at = excluded.updated_at`
+          ).bind(
+            officeholderId,
+            council.id,
+            ward.id,
+            officeholderName,
+            partyName,
+            row.seatStatus || 'occupied',
+            row.role || 'Councillor',
+            normaliseD1Boolean(row.isCurrent ?? true) ? 1 : 0,
+            row.sourceAttribution || 'official-councillor-source',
+            sourceId,
+            row.verificationStatus || 'verified',
+            row.lastChecked || updatedAt,
+            updatedAt,
+          ))
+          await linkEntitySource('officeholder', officeholderId, sourceId, row.verificationStatus || 'verified', row.lastChecked || updatedAt, 'record', batchRunner)
+
+          rowsUpserted += 1
+          insertedOfficeholders += 1
+        }
+
+        await batchRunner.flush()
+
+        if (runId) {
+          await env.DB.prepare(
+            `UPDATE local_ingest_runs
+             SET rows_upserted = COALESCE(rows_upserted, 0) + ?, meta_json = ?
+             WHERE id = ?`
+          ).bind(
+            rowsUpserted,
+            JSON.stringify({
+              rowsReceived,
+              matchedRows,
+              skippedRows,
+              insertedOfficeholders,
+              skippedSamples,
+            }),
+            runId,
+          ).run()
+        }
+
+        return {
+          rowsReceived,
+          matchedRows,
+          skippedRows,
+          insertedOfficeholders,
+          rowsUpserted,
+          skippedSamples,
+        }
+      }
+
+      async function validateLocalVoteOfficeholderImport() {
+        const officeholderRow = await env.DB.prepare(
+          `SELECT COUNT(*) AS count
+           FROM local_officeholders
+           WHERE is_current = 1
+             AND source_attribution = ?`
+        ).bind('official-councillor-source').first()
+
+        const sourcedRow = await env.DB.prepare(
+          `SELECT COUNT(*) AS count
+           FROM local_officeholders o
+           LEFT JOIN local_sources s ON s.id = o.primary_source_id
+           WHERE o.is_current = 1
+             AND o.source_attribution = ?
+             AND s.url IS NOT NULL
+             AND s.url != ''`
+        ).bind('official-councillor-source').first()
+
+        const wardRow = await env.DB.prepare(
+          `SELECT COUNT(DISTINCT ward_id) AS count
+           FROM local_officeholders
+           WHERE is_current = 1
+             AND source_attribution = ?`
+        ).bind('official-councillor-source').first()
+
+        return {
+          officeholderCount: Number(officeholderRow?.count || 0),
+          sourcedOfficeholderCount: Number(sourcedRow?.count || 0),
+          wardCount: Number(wardRow?.count || 0),
+        }
+      }
+
       async function upsertLocalVoteCouncilBaselineChunk({
         councils,
         runId,
@@ -3845,6 +4055,10 @@ export default {
           const runId = String(body?.runId || `local_vote_ingest_councils_wards_${Date.now()}`).trim()
 
           if (action === 'start') {
+            const affectedCouncilIds = toArray(body?.affectedCouncilIds)
+              .map((value) => String(value || '').trim())
+              .filter(Boolean)
+
             await env.DB.prepare(
               `INSERT INTO local_ingest_runs (id, pipeline, status, started_at, finished_at, rows_upserted, error_summary, meta_json)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -4168,6 +4382,120 @@ export default {
               ok: !failed,
               runId,
               electionDate,
+              validation,
+            }, { status: failed ? 500 : 200 })
+          }
+
+          return jsonResponse({ ok: false, error: 'Unknown action.' }, { status: 400 })
+        } catch (error) {
+          return jsonResponse(
+            {
+              ok: false,
+              error: error instanceof Error ? error.message : String(error),
+            },
+            { status: 500 },
+          )
+        }
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/local-vote/ingest/officeholders') {
+        try {
+          const body = await request.json()
+          const action = String(body?.action || 'chunk').trim().toLowerCase()
+          const sourceLabel = String(body?.sourceLabel || '').trim()
+          const runId = String(body?.runId || `local_vote_ingest_officeholders_${Date.now()}`).trim()
+
+          if (action === 'start') {
+            await env.DB.prepare(
+              `INSERT INTO local_ingest_runs (id, pipeline, status, started_at, finished_at, rows_upserted, error_summary, meta_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                 pipeline = excluded.pipeline,
+                 status = excluded.status,
+                 started_at = excluded.started_at,
+                 finished_at = excluded.finished_at,
+                 rows_upserted = excluded.rows_upserted,
+                 error_summary = excluded.error_summary,
+                 meta_json = excluded.meta_json`
+            ).bind(
+              runId,
+              'local-vote-official-officeholder-sources',
+              'running',
+              new Date().toISOString(),
+              null,
+              0,
+              null,
+              JSON.stringify({
+                sourceLabel,
+                totalRows: Number(body?.totalRows || 0),
+                affectedCouncilIds,
+                priorityCouncils: body?.priorityCouncils || [],
+              }),
+            ).run()
+
+            for (const councilIdChunk of chunkArray(affectedCouncilIds, LOCAL_VOTE_ID_DELETE_CHUNK_SIZE)) {
+              const placeholders = councilIdChunk.map(() => '?').join(', ')
+              await env.DB.prepare(
+                `UPDATE local_officeholders
+                 SET is_current = 0, updated_at = ?
+                 WHERE source_attribution = ?
+                   AND council_id IN (${placeholders})`
+              ).bind(new Date().toISOString(), 'official-councillor-source', ...councilIdChunk).run()
+            }
+
+            return jsonResponse({
+              ok: true,
+              runId,
+              sourceLabel,
+            })
+          }
+
+          if (action === 'chunk') {
+            const rows = toArray(body?.rows)
+            if (!rows.length) {
+              return jsonResponse({ ok: false, error: 'Missing officeholder rows.' }, { status: 400 })
+            }
+
+            const summary = await upsertLocalVoteOfficeholderChunk({
+              sourceLabel,
+              rows,
+              runId,
+            })
+
+            return jsonResponse({
+              ok: true,
+              runId,
+              chunkIndex: Number(body?.chunkIndex || 0),
+              totalChunks: Number(body?.totalChunks || 0),
+              ...summary,
+            })
+          }
+
+          if (action === 'finish') {
+            const validation = await validateLocalVoteOfficeholderImport()
+            const failed =
+              validation.officeholderCount <= 0 ||
+              validation.sourcedOfficeholderCount !== validation.officeholderCount
+
+            await env.DB.prepare(
+              `UPDATE local_ingest_runs
+               SET status = ?, finished_at = ?, error_summary = ?, meta_json = ?
+               WHERE id = ?`
+            ).bind(
+              failed ? 'failed' : 'success',
+              new Date().toISOString(),
+              failed ? 'Validation failed for official officeholder source ingest.' : null,
+              JSON.stringify({
+                sourceLabel,
+                validation,
+                skippedSamples: body?.skippedSamples || [],
+              }),
+              runId,
+            ).run()
+
+            return jsonResponse({
+              ok: !failed,
+              runId,
               validation,
             }, { status: failed ? 500 : 200 })
           }

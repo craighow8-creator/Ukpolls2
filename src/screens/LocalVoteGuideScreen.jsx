@@ -428,7 +428,7 @@ export default function LocalVoteGuideScreen({
   const keyFacts = selectedWard
     ? [
         { label: 'Election', value: formatUKDate(council.nextElectionDate) },
-        { label: 'Current seats', value: `${selectedWard.councillors.length}` },
+        { label: 'Current seats', value: selectedWard.councillors.length ? `${selectedWard.councillors.length}` : 'Not yet available' },
         {
           label: 'Candidates listed',
           value: displayedCandidates.length ? `${displayedCandidates.length}` : 'Unavailable',
@@ -721,7 +721,7 @@ export default function LocalVoteGuideScreen({
               <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginBottom: 10 }}>
                 These are the councillors who currently represent {selectedWard.name}.
               </div>
-              {selectedWard.councillors.map((councillor) => {
+              {selectedWard.councillors.length ? selectedWard.councillors.map((councillor) => {
                 const accent = partyColor(councillor.party, T.pr)
                 return (
                   <SurfaceCard key={councillor.id} T={T} borderColor={`${accent}28`} style={{ marginBottom: 10 }}>
@@ -740,7 +740,13 @@ export default function LocalVoteGuideScreen({
                     <EntrySourceMeta T={T} entry={councillor} />
                   </SurfaceCard>
                 )
-              })}
+              }) : (
+                <SurfaceCard T={T} style={{ marginBottom: 10, textAlign: 'center' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.th, lineHeight: 1.6 }}>
+                    Current councillor data is not yet available for this ward.
+                  </div>
+                </SurfaceCard>
+              )}
 
               <SectionLabel T={T}>Verified 2026 ward candidates</SectionLabel>
               <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, textAlign: 'center', lineHeight: 1.6, marginBottom: 10 }}>

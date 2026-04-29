@@ -22,6 +22,8 @@
     "elections:devolved:refresh:remote": "node ./scripts/refresh-devolved.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "local-candidates:import:local": "node ./scripts/ingest-local-candidate-sources.mjs --api-base=http://127.0.0.1:8787",
     "local-candidates:import:remote": "node ./scripts/ingest-local-candidate-sources.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
+    "local-officeholders:import:local": "node ./scripts/ingest-local-officeholders.mjs --api-base=http://127.0.0.1:8787",
+    "local-officeholders:import:remote": "node ./scripts/ingest-local-officeholders.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "local-authority:health:local": "node ./scripts/check-local-authority-health.mjs --api-base=http://127.0.0.1:8787",
     "local-authority:health:remote": "node ./scripts/check-local-authority-health.mjs --api-base=https://politiscope-api.craighow8.workers.dev"
   },

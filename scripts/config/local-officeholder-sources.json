@@ -1,0 +1,16 @@
+{
+  "sources": [
+    {
+      "councilSlug": "birmingham",
+      "councilName": "Birmingham",
+      "priority": true,
+      "enabled": true,
+      "parserType": "birmingham-councillors-by-ward",
+      "sourceLabel": "Official councillors by ward",
+      "sourceUrl": "https://www.birmingham.gov.uk/councillors-by-ward",
+      "lastChecked": "29-04-2026",
+      "verificationStatus": "verified",
+      "notes": "Official Birmingham City Council councillors-by-ward directory."
+    }
+  ]
+}

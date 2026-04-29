@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 
 const DEFAULT_API_BASE = 'https://politiscope-api.craighow8.workers.dev'
 const DEFAULT_PRIORITY_CONFIG = 'scripts/config/local-candidate-sources.json'
+const DEFAULT_OFFICEHOLDER_PRIORITY_CONFIG = 'scripts/config/local-officeholder-sources.json'
 
 function readArg(name, fallback = '') {
   const prefix = `--${name}=`
@@ -49,6 +50,17 @@ async function loadPriorityConfig() {
   }
 }
 
+async function loadOfficeholderPriorityConfig() {
+  const configPath = readArg('officeholder-config', DEFAULT_OFFICEHOLDER_PRIORITY_CONFIG)
+  try {
+    const text = await readFile(configPath, 'utf8')
+    const payload = JSON.parse(text)
+    return (Array.isArray(payload?.sources) ? payload.sources : []).filter((source) => source.priority)
+  } catch {
+    return []
+  }
+}
+
 function summarizePriorityCoverage(prioritySources = [], coverageByCouncil = []) {
   const coverage = new Map(
     (coverageByCouncil || []).map((row) => [String(row.slug || '').trim(), row]),
@@ -69,16 +81,39 @@ function summarizePriorityCoverage(prioritySources = [], coverageByCouncil = [])
   return { covered, missing }
 }
 
+function summarizePriorityOfficeholderCoverage(prioritySources = [], coverageByCouncil = []) {
+  const coverage = new Map(
+    (coverageByCouncil || []).map((row) => [String(row.slug || '').trim(), row]),
+  )
+  const covered = []
+  const missing = []
+
+  for (const source of prioritySources) {
+    const slug = String(source.councilSlug || '').trim()
+    const row = coverage.get(slug)
+    if (row?.officeholders > 0) {
+      covered.push(`${source.councilName || slug} (${row.officeholders} officeholders)`)
+    } else {
+      missing.push(source.councilName || slug)
+    }
+  }
+
+  return { covered, missing }
+}
+
 function countLookupPostcodeSupportedWards(wards = []) {
   return wards.filter((ward) => ward?.gssCode || ward?.mapitAreaId).length
 }
 
-function summariseHealth(payload, prioritySources = []) {
+function summariseHealth(payload, prioritySources = [], officeholderPrioritySources = []) {
   const counts = payload?.counts || {}
   const latest = payload?.latestLocalIngestRun || null
   const coverageByCouncil = Array.isArray(payload?.candidateCoverageByCouncil) ? payload.candidateCoverageByCouncil : []
+  const officeholderCoverageByCouncil = Array.isArray(payload?.officeholderCoverageByCouncil) ? payload.officeholderCoverageByCouncil : []
   const councilsMissingCandidateSourceUrl = coverageByCouncil.filter((row) => Number(row.missingSourceUrl || 0) > 0)
+  const councilsMissingOfficeholderSourceUrl = officeholderCoverageByCouncil.filter((row) => Number(row.missingSourceUrl || 0) > 0)
   const priority = summarizePriorityCoverage(prioritySources, coverageByCouncil)
+  const officeholderPriority = summarizePriorityOfficeholderCoverage(officeholderPrioritySources, officeholderCoverageByCouncil)
 
   printLine('Councils', counts.councils ?? 'unknown')
   printLine('Wards', counts.wards ?? 'unknown')
@@ -96,6 +131,15 @@ function summariseHealth(payload, prioritySources = []) {
   }
   printLine('Officeholder coverage', `${counts.officeholderWards ?? 0} wards / ${counts.officeholderCouncils ?? 0} Local Authorities`)
   printLine('Officeholders', counts.officeholders ?? 0)
+  printLine('Councils with officeholders', counts.officeholderCouncils ?? 0)
+  printLine('Councils missing officeholder source URL', councilsMissingOfficeholderSourceUrl.length)
+  if (officeholderCoverageByCouncil.length) {
+    printLine('Priority officeholder covered', officeholderPriority.covered.length ? officeholderPriority.covered.join('; ') : 'none')
+    printLine('Priority officeholder missing', officeholderPriority.missing.length ? officeholderPriority.missing.join('; ') : 'none')
+  } else {
+    printLine('Priority officeholder covered', 'unavailable from deployed health endpoint')
+    printLine('Priority officeholder missing', 'unavailable from deployed health endpoint')
+  }
   printLine('Rows missing sourceUrl', counts.rowsMissingSourceUrl ?? 0)
   printLine('Postcode-supported wards', counts.postcodeSupportedWards ?? 'unknown')
   printLine(
@@ -131,6 +175,7 @@ function summariseLookupFallback(payload, prioritySources = []) {
 async function main() {
   const apiBase = trimApiBase(readArg('api-base', process.env.POLITISCOPE_API_BASE || DEFAULT_API_BASE))
   const prioritySources = await loadPriorityConfig()
+  const officeholderPrioritySources = await loadOfficeholderPriorityConfig()
   console.log(`Local Authority health check: ${apiBase}`)
   console.log('')
 
@@ -143,7 +188,7 @@ async function main() {
   if (health.ok && health.body?.ok) {
     status = health.body.status || 'OK'
     warnings = Array.isArray(health.body.warnings) ? health.body.warnings : []
-    summariseHealth(health.body, prioritySources)
+    summariseHealth(health.body, prioritySources, officeholderPrioritySources)
   } else {
     console.log(`Health endpoint unavailable (${health.status}). Falling back to lookup-index.`)
     console.log('')
