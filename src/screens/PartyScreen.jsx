@@ -28,6 +28,12 @@ const TABS = [
 ]
 
 const COMPARE_POLICY_AREAS = new Set(['immigration', 'economy', 'nhs', 'climate'])
+const OFFICIAL_POLICY_SOURCE_TYPES = new Set([
+  'manifesto',
+  'official_policy_paper',
+  'official_policy_page',
+  'official_pledge_page',
+])
 
 const FUNDING = {
   'Reform UK': {
@@ -87,6 +93,21 @@ function hasSourcedFavourability(leader) {
     leader.ratingSource === 'sourced' ||
     Boolean(leader.sourceUrl || leader.source || leader.publishedAt || leader.fieldworkDate)
   return hasSourceMarker && label.includes('favourability')
+}
+
+function hasOfficialPolicySource(record) {
+  if (record?.officialPosition?.sourceUrl) return true
+  const sources = Array.isArray(record?.sources) ? record.sources : []
+  return sources.some((source) => {
+    const type = cleanText(source?.type).replace(/-/g, '_')
+    return source?.url && OFFICIAL_POLICY_SOURCE_TYPES.has(type)
+  })
+}
+
+function resolvePolicyRecordsForDisplay(records = []) {
+  const officialRecords = records.filter(hasOfficialPolicySource)
+  if (officialRecords.length) return officialRecords
+  return records
 }
 
 function displayDate(poll) {
@@ -193,10 +214,7 @@ function PolicyRecordCard({ T, p, record }) {
   const officialPosition = record.officialPosition || null
   const summary = cleanText(officialPosition?.shortSummary || record.summary)
   const analysis = cleanText(record.politiscopeAnalysis)
-  const hasOfficialSource = sources.some((source) => {
-    const type = cleanText(source.type).replace(/-/g, '_')
-    return source.url && ['manifesto', 'official_policy_paper', 'official_policy_page', 'official_pledge_page'].includes(type)
-  })
+  const hasOfficialSource = hasOfficialPolicySource(record)
   const sourceTypeLabel = (type) => cleanText(type).replace(/_/g, ' ')
 
   return (
@@ -442,7 +460,7 @@ export default function PartyScreen({
   const selectedPolicyArea = availablePolicyAreas.includes(pledgeTopic)
     ? pledgeTopic
     : availablePolicyAreas[0] || POLICY_AREAS[0]
-  const selectedPolicyRecords = getPartyPolicies(p.name, selectedPolicyArea, policyRecords)
+  const selectedPolicyRecords = resolvePolicyRecordsForDisplay(getPartyPolicies(p.name, selectedPolicyArea, policyRecords))
   const compareContextArea = tab === 'pledges' && COMPARE_POLICY_AREAS.has(selectedPolicyArea) ? selectedPolicyArea : 'overview'
   const openCompareWith = ({ baseParty, opponent, contextArea }) => {
     setCompareOpen(false)
