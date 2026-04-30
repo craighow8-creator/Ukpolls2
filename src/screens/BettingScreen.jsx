@@ -1,37 +1,90 @@
 import React from 'react'
 import { ScrollArea } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
-import SectionDataMeta from '../components/SectionDataMeta'
-import { POLITICAL_MARKET_GROUPS, POLITICAL_MARKET_ROWS } from '../data/politicalMarkets'
+import { POLITICAL_MARKET_ROWS } from '../data/politicalMarkets'
 import generatedPoliticalMarkets from '../data/politicalMarkets.generated.json'
 
-const GROUP_EMPTY_COPY = {
-  'local-elections': 'No maintained local election market rows are available yet.',
+const ELECTION_TYPE_LABELS = {
+  'general-election': 'General election',
+  'local-election': 'Local elections',
+  leadership: 'Leadership / leaders',
+  mayoral: 'Mayoral',
+  council: 'Council',
 }
 
-function formatCheckedAt(value) {
-  if (!value) return 'Date not recorded'
-  const [year, month, day] = String(value).split('-')
-  if (year && month && day) return `${day}-${month}-${year}`
-  return value
+function parseDate(value) {
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function formatDate(value, { includeTime = false } = {}) {
+  const parsed = parseDate(value)
+  if (!parsed) return 'Date not recorded'
+
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const year = parsed.getFullYear()
+  if (!includeTime) return `${day}-${month}-${year}`
+
+  const hour = String(parsed.getHours()).padStart(2, '0')
+  const minute = String(parsed.getMinutes()).padStart(2, '0')
+  return `${day}-${month}-${year} ${hour}:${minute}`
+}
+
+function formatMonthDate(year, monthName, day) {
+  const months = {
+    january: '01',
+    february: '02',
+    march: '03',
+    april: '04',
+    may: '05',
+    june: '06',
+    july: '07',
+    august: '08',
+    september: '09',
+    october: '10',
+    november: '11',
+    december: '12',
+  }
+  const month = months[String(monthName || '').toLowerCase()]
+  if (!month || !day || !year) return ''
+  return `${String(day).padStart(2, '0')}-${month}-${year}`
+}
+
+function readableMarketName(name = '') {
+  const text = String(name || '').trim()
+
+  const electionCall = text.match(/Will the next UK election be called by ([A-Za-z]+) (\d{1,2}), (\d{4})\?/i)
+  if (electionCall) {
+    const date = formatMonthDate(electionCall[3], electionCall[1], electionCall[2])
+    return `Will the next UK election be called by ${date}?`
+  }
+
+  const starmerOut = text.match(/Starmer out by ([A-Za-z]+) (\d{1,2}), (\d{4})\?/i)
+  if (starmerOut) {
+    const date = formatMonthDate(starmerOut[3], starmerOut[1], starmerOut[2])
+    return `Will Keir Starmer leave office by ${date}?`
+  }
+
+  return text
 }
 
 function statusStyles(status) {
   const key = String(status || '').toLowerCase()
-  if (key === 'stale') {
-    return {
-      color: '#8A5A00',
-      background: '#F59E0B18',
-      border: '#F59E0B36',
-      label: 'Stale archive',
-    }
-  }
   if (key === 'fresh') {
     return {
       color: '#067647',
       background: '#12B76A16',
       border: '#12B76A30',
       label: 'Fresh',
+    }
+  }
+  if (key === 'stale') {
+    return {
+      color: '#8A5A00',
+      background: '#F59E0B18',
+      border: '#F59E0B36',
+      label: 'Stale',
     }
   }
   return {
@@ -48,10 +101,11 @@ function Pill({ children, style }) {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
+        justifyContent: 'center',
         borderRadius: 999,
         padding: '4px 8px',
         fontSize: 11,
-        fontWeight: 800,
+        fontWeight: 850,
         textTransform: 'uppercase',
         letterSpacing: '0.04em',
         whiteSpace: 'nowrap',
@@ -63,26 +117,106 @@ function Pill({ children, style }) {
   )
 }
 
-function MarketRow({ T, row }) {
-  const status = statusStyles(row.freshnessStatus)
-  const oddsLabel = row.oddsFractional || (Number.isFinite(row.oddsDecimal) ? row.oddsDecimal.toFixed(2) : 'Not recorded')
+function groupByMarket(rows = []) {
+  const groups = new Map()
+  for (const row of rows) {
+    const key = `${row.electionType || 'unknown'}:${row.marketName || row.marketId}`
+    const existing = groups.get(key) || {
+      id: key,
+      displayName: readableMarketName(row.marketName),
+      electionType: row.electionType || 'general-election',
+      source: row.source || 'Unknown source',
+      checkedAt: row.checkedAt || '',
+      freshnessStatus: row.freshnessStatus || '',
+      outcomes: [],
+    }
+    existing.outcomes.push(row)
+    if (row.checkedAt && (!existing.checkedAt || new Date(row.checkedAt) > new Date(existing.checkedAt))) {
+      existing.checkedAt = row.checkedAt
+    }
+    groups.set(key, existing)
+  }
+
+  return [...groups.values()].sort((a, b) => {
+    const typeCompare = String(a.electionType).localeCompare(String(b.electionType))
+    if (typeCompare) return typeCompare
+    return String(a.displayName).localeCompare(String(b.displayName))
+  })
+}
+
+function formatOdds(row) {
+  if (row.oddsFractional) return { label: 'Fractional odds', value: row.oddsFractional }
+  if (Number.isFinite(row.oddsDecimal)) return { label: 'Decimal odds', value: row.oddsDecimal.toFixed(2) }
+  return { label: 'Odds', value: 'Not recorded' }
+}
+
+function OutcomeLine({ T, row, archived = false }) {
+  const odds = formatOdds(row)
+  const probability = Number.isFinite(row.impliedProbability) ? `${row.impliedProbability}%` : 'Not recorded'
 
   return (
     <div
       style={{
-        borderRadius: 12,
-        padding: 14,
-        background: T.c0,
+        display: 'grid',
+        gridTemplateColumns: 'minmax(44px, 0.7fr) minmax(78px, auto) minmax(86px, auto)',
+        alignItems: 'center',
+        gap: 10,
+        padding: archived ? '8px 10px' : '10px 12px',
+        borderRadius: 10,
+        background: archived ? 'transparent' : T.sf,
+        border: `1px solid ${archived ? T.cardBorder || 'rgba(0,0,0,0.06)' : T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+      }}
+    >
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: archived ? 13 : 14, fontWeight: 850, color: T.th, lineHeight: 1.2 }}>
+          {row.runner}
+        </div>
+        {row.party ? (
+          <div style={{ fontSize: 11.5, fontWeight: 650, color: T.tl, marginTop: 2 }}>{row.party}</div>
+        ) : null}
+      </div>
+
+      <div style={{ textAlign: 'right' }}>
+        <div style={{ fontSize: 11, fontWeight: 800, color: T.tl, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          Implied
+        </div>
+        <div style={{ fontSize: archived ? 16 : 20, fontWeight: 950, color: archived ? T.th : T.pr, lineHeight: 1.1 }}>
+          {probability}
+        </div>
+      </div>
+
+      <div style={{ textAlign: 'right' }}>
+        <div style={{ fontSize: 11, fontWeight: 800, color: T.tl, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          {odds.label}
+        </div>
+        <div style={{ fontSize: archived ? 14 : 16, fontWeight: 850, color: T.th, lineHeight: 1.2 }}>{odds.value}</div>
+      </div>
+    </div>
+  )
+}
+
+function MarketCard({ T, market, archived = false }) {
+  const status = statusStyles(market.freshnessStatus)
+
+  return (
+    <article
+      style={{
+        borderRadius: archived ? 12 : 14,
+        padding: archived ? 12 : 16,
+        background: archived ? 'rgba(255,255,255,0.45)' : T.c0,
         border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
         display: 'grid',
-        gap: 10,
+        gap: archived ? 8 : 12,
+        opacity: archived ? 0.78 : 1,
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: T.th, lineHeight: 1.25 }}>{row.runner}</div>
-          <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, marginTop: 3 }}>
-            {row.party || 'No party label'} · {row.marketName}
+          <div style={{ fontSize: archived ? 14 : 16, fontWeight: 900, color: T.th, lineHeight: 1.28 }}>
+            {market.displayName}
+          </div>
+          <div style={{ fontSize: 12.5, fontWeight: 650, color: T.tl, lineHeight: 1.4, marginTop: 4 }}>
+            {market.source} · checked {formatDate(market.checkedAt, { includeTime: !archived })}
           </div>
         </div>
         <Pill
@@ -96,105 +230,98 @@ function MarketRow({ T, row }) {
         </Pill>
       </div>
 
+      <div style={{ display: 'grid', gap: 8 }}>
+        {market.outcomes.map((row) => (
+          <OutcomeLine key={row.marketId} T={T} row={row} archived={archived} />
+        ))}
+      </div>
+    </article>
+  )
+}
+
+function CurrentSection({ T, groups }) {
+  if (!groups.length) {
+    return (
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(72px, 0.6fr) minmax(120px, 1fr)',
-          gap: 8,
-          alignItems: 'stretch',
+          borderRadius: 14,
+          padding: '16px',
+          background: T.c0,
+          border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+          color: T.tl,
+          fontSize: 13,
+          fontWeight: 700,
+          textAlign: 'center',
         }}
       >
-        <div
-          style={{
-            borderRadius: 10,
-            padding: '10px 12px',
-            background: T.sf,
-            border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.06)'}`,
-          }}
-        >
-          <div style={{ fontSize: 11, fontWeight: 800, color: T.tl, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Odds
-          </div>
-          <div style={{ fontSize: 20, fontWeight: 900, color: T.th, marginTop: 2 }}>
-            {oddsLabel}
-          </div>
-        </div>
-        <div
-          style={{
-            borderRadius: 10,
-            padding: '10px 12px',
-            background: T.sf,
-            border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.06)'}`,
-          }}
-        >
-          <div style={{ fontSize: 11, fontWeight: 800, color: T.tl, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Raw implied probability
-          </div>
-          <div style={{ fontSize: 20, fontWeight: 900, color: T.th, marginTop: 2 }}>
-            {Number.isFinite(row.impliedProbability) ? `${row.impliedProbability}%` : 'Not recorded'}
-          </div>
-        </div>
+        No current imported market rows are available.
       </div>
+    )
+  }
 
-      <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, lineHeight: 1.45 }}>
-        Source: {row.source || 'Unknown source'} · Checked {formatCheckedAt(row.checkedAt)}
-      </div>
+  const groupedByType = groups.reduce((acc, market) => {
+    const type = market.electionType || 'general-election'
+    acc[type] = [...(acc[type] || []), market]
+    return acc
+  }, {})
 
-      {row.notes ? (
-        <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, lineHeight: 1.45 }}>
-          {row.notes}
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-function MarketGroup({ T, group, rows, archived = false }) {
-  return (
-    <section style={{ display: 'grid', gap: 10 }}>
+  return Object.entries(groupedByType).map(([type, markets]) => (
+    <section key={type} style={{ display: 'grid', gap: 10 }}>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: -0.3, color: T.th }}>
-          {group.title}
-        </div>
-        <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, marginTop: 3 }}>
-          {archived
-            ? 'Maintained historic rows kept for context, not current pricing.'
-            : 'Freshness and source/date are shown on every row.'}
+        <div style={{ fontSize: 18, fontWeight: 950, color: T.th, letterSpacing: -0.2 }}>
+          {ELECTION_TYPE_LABELS[type] || 'Political markets'}
         </div>
       </div>
-
-      {rows.length ? (
-        <div style={{ display: 'grid', gap: 10 }}>
-          {rows.map((row) => (
-            <MarketRow key={row.marketId} T={T} row={row} />
-          ))}
-        </div>
-      ) : (
-        <div
-          style={{
-            borderRadius: 12,
-            padding: '14px 16px',
-            background: T.c0,
-            border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-            color: T.tl,
-            fontSize: 13,
-            fontWeight: 650,
-            textAlign: 'center',
-          }}
-        >
-          {GROUP_EMPTY_COPY[group.id] || 'No maintained market rows are available for this group yet.'}
-        </div>
-      )}
+      <div style={{ display: 'grid', gap: 10 }}>
+        {markets.map((market) => (
+          <MarketCard key={market.id} T={T} market={market} />
+        ))}
+      </div>
     </section>
+  ))
+}
+
+function ArchiveSection({ T, groups }) {
+  return (
+    <details
+      style={{
+        borderRadius: 14,
+        background: T.c0,
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+        overflow: 'hidden',
+      }}
+    >
+      <summary
+        style={{
+          cursor: 'pointer',
+          listStyle: 'none',
+          padding: '14px 16px',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: 16, fontWeight: 950, color: T.th }}>Archived market snapshot</div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: T.tl, marginTop: 4 }}>
+          Historical maintained snapshot · not current pricing · {groups.length} markets
+        </div>
+      </summary>
+
+      <div style={{ display: 'grid', gap: 10, padding: '0 12px 12px' }}>
+        {groups.map((market) => (
+          <MarketCard key={market.id} T={T} market={market} archived />
+        ))}
+      </div>
+    </details>
   )
 }
 
-export default function BettingScreen({ T, dataState = {} }) {
+export default function BettingScreen({ T }) {
   const archivedRows = POLITICAL_MARKET_ROWS
   const currentRows = Array.isArray(generatedPoliticalMarkets?.rows) ? generatedPoliticalMarkets.rows : []
-  const allRows = [...currentRows, ...archivedRows]
-  const staleCount = allRows.filter((row) => row.freshnessStatus === 'stale').length
   const failedSources = Array.isArray(generatedPoliticalMarkets?.failedSources) ? generatedPoliticalMarkets.failedSources : []
+  const currentGroups = groupByMarket(currentRows)
+  const archivedGroups = groupByMarket(archivedRows)
+  const staleCount = [...currentRows, ...archivedRows].filter((row) => row.freshnessStatus === 'stale').length
+  const sourceStatus = currentRows.length ? 'LIVE SOURCE · Polymarket' : 'ARCHIVE · Maintained snapshot'
 
   return (
     <div
@@ -206,37 +333,31 @@ export default function BettingScreen({ T, dataState = {} }) {
         background: T.sf,
       }}
     >
-      <div style={{ padding: '18px 18px 0', flexShrink: 0, textAlign: 'center' }}>
-        <div
-          style={{
-            fontSize: 24,
-            fontWeight: 900,
-            letterSpacing: -0.6,
-            color: T.th,
-            lineHeight: 1,
-          }}
-        >
-          Political markets
-        </div>
-
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            flexWrap: 'wrap',
-            marginTop: 6,
-          }}
-        >
-          <div style={{ fontSize: 13, fontWeight: 600, color: T.tl }}>
-            Public market odds as one political signal, not predictions or advice
+      <div
+        style={{
+          flexShrink: 0,
+          padding: '12px 16px 10px',
+          background: T.sf,
+          borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 20, fontWeight: 950, color: T.th, letterSpacing: -0.4, lineHeight: 1 }}>
+            Political markets
           </div>
           <InfoButton id="betting_odds" T={T} size={18} />
         </div>
-
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
-          <SectionDataMeta T={T} section={dataState.betting || null} />
+        <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center' }}>
+          <Pill
+            style={{
+              color: currentRows.length ? '#067647' : '#8A5A00',
+              background: currentRows.length ? '#12B76A16' : '#F59E0B18',
+              border: `1px solid ${currentRows.length ? '#12B76A30' : '#F59E0B36'}`,
+            }}
+          >
+            {sourceStatus}
+          </Pill>
         </div>
       </div>
 
@@ -251,87 +372,40 @@ export default function BettingScreen({ T, dataState = {} }) {
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: 17, fontWeight: 900, color: T.th, lineHeight: 1.2 }}>
-              Political markets
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.tl, lineHeight: 1.5, marginTop: 8 }}>
-              Odds can show how a public market is pricing political outcomes at a point in time. They are not
-              forecasts, seat projections, polling averages, or betting advice.
+            <div style={{ fontSize: 18, fontWeight: 950, color: T.th, lineHeight: 1.2 }}>Political markets</div>
+            <div style={{ fontSize: 13, fontWeight: 650, color: T.tl, lineHeight: 1.5, marginTop: 8 }}>
+              Market prices are shown as one public signal. They are not predictions, forecasts, seat projections or
+              betting advice.
             </div>
           </div>
 
           <div
             style={{
-              borderRadius: 14,
-              padding: '14px 16px',
-              background: '#F59E0B12',
-              border: '1px solid #F59E0B36',
-              textAlign: 'center',
-            }}
-          >
-            <div style={{ fontSize: 14, fontWeight: 900, color: '#8A5A00' }}>
-              {currentRows.length ? 'Current market import connected' : 'Live market import not connected yet'}
-            </div>
-            <div style={{ fontSize: 12.5, fontWeight: 650, color: '#8A5A00', lineHeight: 1.45, marginTop: 5 }}>
-              {currentRows.length
-                ? 'Current rows use public Polymarket read data. They are market signals only and should not be read as predictions, forecasts or advice.'
-                : 'The rows below are archived maintained snapshots from 20-03-2026. They are shown for context only and should not be read as current market pricing.'}
-            </div>
-          </div>
-
-          <div
-            style={{
-              borderRadius: 14,
-              padding: '12px 14px',
-              background: T.c0,
-              border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 10,
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+              gap: 8,
             }}
           >
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 20, fontWeight: 900, color: T.th }}>{currentRows.length}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: T.tl }}>current rows</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 20, fontWeight: 900, color: '#8A5A00' }}>{staleCount}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: T.tl }}>stale rows</div>
-            </div>
-          </div>
-
-          <section style={{ display: 'grid', gap: 12 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: -0.3, color: T.th }}>
-                Current market signals
-              </div>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, marginTop: 3 }}>
-                Public Polymarket rows imported from configured UK politics markets.
-              </div>
-            </div>
-
-            {currentRows.length ? (
-              POLITICAL_MARKET_GROUPS.map((group) => {
-                const groupRows = currentRows.filter((row) => group.electionTypes.includes(row.electionType))
-                return groupRows.length ? <MarketGroup key={`current-${group.id}`} T={T} group={group} rows={groupRows} /> : null
-              })
-            ) : (
+            {[
+              ['Current', currentGroups.length],
+              ['Archived', archivedGroups.length],
+              ['Stale rows', staleCount],
+            ].map(([label, value]) => (
               <div
+                key={label}
                 style={{
                   borderRadius: 12,
-                  padding: '14px 16px',
+                  padding: '10px 8px',
                   background: T.c0,
                   border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-                  color: T.tl,
-                  fontSize: 13,
-                  fontWeight: 650,
                   textAlign: 'center',
                 }}
               >
-                No current imported market rows are available.
+                <div style={{ fontSize: 18, fontWeight: 950, color: T.th }}>{value}</div>
+                <div style={{ fontSize: 11.5, fontWeight: 750, color: T.tl }}>{label}</div>
               </div>
-            )}
-          </section>
+            ))}
+          </div>
 
           {failedSources.length ? (
             <div
@@ -342,7 +416,7 @@ export default function BettingScreen({ T, dataState = {} }) {
                 border: '1px solid #FDA29B',
                 color: '#912018',
                 fontSize: 12.5,
-                fontWeight: 700,
+                fontWeight: 750,
                 lineHeight: 1.45,
                 textAlign: 'center',
               }}
@@ -353,19 +427,17 @@ export default function BettingScreen({ T, dataState = {} }) {
 
           <section style={{ display: 'grid', gap: 12 }}>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: -0.3, color: T.th }}>
-                Archived market snapshot
+              <div style={{ fontSize: 19, fontWeight: 950, color: T.th, letterSpacing: -0.3 }}>
+                Current market signals
               </div>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, marginTop: 3 }}>
-                Older maintained rows are separated from current market data.
+              <div style={{ fontSize: 12.5, fontWeight: 650, color: T.tl, marginTop: 4 }}>
+                Grouped by market question, with source and freshness shown once per card.
               </div>
             </div>
-
-          {POLITICAL_MARKET_GROUPS.map((group) => {
-            const groupRows = archivedRows.filter((row) => group.electionTypes.includes(row.electionType))
-            return <MarketGroup key={`archived-${group.id}`} T={T} group={group} rows={groupRows} archived />
-          })}
+            <CurrentSection T={T} groups={currentGroups} />
           </section>
+
+          <ArchiveSection T={T} groups={archivedGroups} />
 
           <div
             style={{
@@ -376,17 +448,15 @@ export default function BettingScreen({ T, dataState = {} }) {
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: 13, fontWeight: 800, color: T.th }}>
-              How to read these rows
-            </div>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, lineHeight: 1.5, marginTop: 6 }}>
-              Implied probability is calculated directly from the listed fractional odds and does not remove bookmaker
-              margin. Market prices can move quickly and should be compared with polls, policy positions and election
-              data rather than used on their own.
+            <div style={{ fontSize: 14, fontWeight: 900, color: T.th }}>How to read this</div>
+            <div style={{ fontSize: 12.5, fontWeight: 650, color: T.tl, lineHeight: 1.55, marginTop: 7 }}>
+              Market prices can move quickly. Implied probability may reflect market mechanics, liquidity and trader
+              positioning as well as political information. Compare these signals with polls, policy and election data.
+              This is not betting advice.
             </div>
           </div>
 
-          <div style={{ height: 32 }} />
+          <div style={{ height: 28 }} />
         </div>
       </ScrollArea>
     </div>
