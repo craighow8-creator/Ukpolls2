@@ -18,6 +18,10 @@ const TABS = [
   { key: 'methodology', label: 'Methodology' },
 ]
 
+function normalisePollsTab(tab) {
+  return TABS.some((item) => item.key === tab) ? tab : 'snapshot'
+}
+
 const POLL_PARTIES = [
   { key: 'ref', name: 'Reform UK' },
   { key: 'lab', name: 'Labour' },
@@ -2157,10 +2161,16 @@ function StickyPillsBar({ T, tab, setTab }) {
   )
 }
 
-export default function PollsScreen({ T, parties, polls, meta, nav, pollContext = {}, dataState = {} }) {
-  const [tab, setTab] = useState('snapshot')
+export default function PollsScreen({ T, parties, polls, meta, nav, pollContext = {}, dataState = {}, initialTab = 'snapshot', updateCurrentParams }) {
+  const [tab, setTabState] = useState(() => normalisePollsTab(initialTab))
   const [trendHidden, setTrendHidden] = useState({})
   const [trendFocused, setTrendFocused] = useState(null)
+
+  const setTab = (nextTab) => {
+    const normalised = normalisePollsTab(nextTab)
+    setTabState(normalised)
+    updateCurrentParams?.({ tab: normalised })
+  }
 
   const allPolls = useMemo(() => {
     const raw = Array.isArray(polls) ? polls : []
