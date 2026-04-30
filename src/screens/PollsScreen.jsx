@@ -2374,14 +2374,42 @@ export default function PollsScreen({ T, parties, polls, meta, nav, pollContext 
               <MethodologyGroup T={T} title="How we rank polls">
                 <MethodologyCard
                   T={T}
-                  title="Direct-source polls are prioritised"
-                  body="Polls with a direct source link and verified import metadata are shown ahead of older archive-only rows."
+                  title="Direct pollster sources first"
+                  body="Where possible, Politiscope uses the pollster's own release, table, PDF or official data file rather than a copied listing elsewhere."
                 />
 
                 <MethodologyCard
                   T={T}
-                  title="Trend views are directional"
-                  body="Trend charts show the broader direction of travel over time, rather than a prediction or a single definitive number."
+                  title="Fallback rows fill gaps"
+                  body="Archive or tracker rows are used only when a direct pollster source is not available, so useful older context is not lost."
+                />
+              </MethodologyGroup>
+
+              <MethodologyGroup T={T} title="Freshness matters">
+                <MethodologyCard
+                  T={T}
+                  title="Newer polls carry more weight"
+                  body="Recent polls are prioritised because they are more likely to reflect the current campaign and news environment."
+                />
+
+                <MethodologyCard
+                  T={T}
+                  title="Older pollsters can still appear"
+                  body="A pollster may remain visible so you can see when that firm last published. A stale pollster is not current momentum."
+                />
+              </MethodologyGroup>
+
+              <MethodologyGroup T={T} title="Latest Polls vs Trends">
+                <MethodologyCard
+                  T={T}
+                  title="Latest Polls shows published polls"
+                  body="Use Latest Polls to inspect recent releases, their fieldwork dates, sample sizes and source links."
+                />
+
+                <MethodologyCard
+                  T={T}
+                  title="Trends shows direction over time"
+                  body="Trend lines smooth noisy data to show the broader direction. They are not a prediction or a seat forecast."
                 />
               </MethodologyGroup>
 
@@ -2395,7 +2423,7 @@ export default function PollsScreen({ T, parties, polls, meta, nav, pollContext 
                 <MethodologyCard
                   T={T}
                   title="Sample size helps, but it is not everything"
-                  body="Larger samples can reduce random error, but weighting, turnout models and panel quality still shape the final result."
+                  body="Larger samples can reduce random error, but weighting, turnout modelling, panel quality and undecided handling also matter."
                 />
               </MethodologyGroup>
 
@@ -2403,7 +2431,21 @@ export default function PollsScreen({ T, parties, polls, meta, nav, pollContext 
                 <MethodologyCard
                   T={T}
                   title="Polling firms can show different pictures"
-                  body="House effects, turnout assumptions and different handling of undecided voters can all shift the topline, even in the same week."
+                  body="House effects, turnout assumptions, question wording and undecided treatment can all shift the topline, even in the same week."
+                />
+              </MethodologyGroup>
+
+              <MethodologyGroup T={T} title="What polls do not show">
+                <MethodologyCard
+                  T={T}
+                  title="Voting intention is not a seat forecast"
+                  body="National percentages do not translate directly into seats under First Past the Post."
+                />
+
+                <MethodologyCard
+                  T={T}
+                  title="Local contests can behave differently"
+                  body="Constituency geography, tactical voting and uneven local swings can matter as much as the national headline."
                 />
               </MethodologyGroup>
             </>
