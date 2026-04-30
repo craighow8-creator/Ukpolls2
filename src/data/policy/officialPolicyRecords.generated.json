@@ -514,6 +514,533 @@
     "updatedAt": "30-04-2026"
   },
   {
+    "id": "official-labour-immigration-secure-borders-and-managed-migration",
+    "party": "Labour",
+    "area": "immigration",
+    "topic": "Secure borders and managed migration",
+    "title": "Secure borders and managed migration",
+    "stanceScore": 0,
+    "stanceLabel": "Managed migration and enforcement",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Labour says it will restore order and control to the immigration and asylum system, reduce net migration, create a Border Security Command to target smuggling gangs, reform points-based migration rules, link immigration with skills policy, and increase returns for people with no right to stay.",
+    "details": [
+      "Create a new Border Security Command with investigators, intelligence officers and cross-border police officers.",
+      "Seek new security cooperation with the EU to support joint investigations against smuggling gangs.",
+      "Clear the asylum backlog, end asylum hotels and restore a system that operates swiftly, firmly and fairly.",
+      "Set up a returns and enforcement unit with additional staff and negotiate more returns arrangements.",
+      "Reform the points-based immigration system and link migration routes to skills and workforce plans.",
+      "Reduce reliance on overseas workers in sectors such as health, social care and construction by requiring domestic training plans."
+    ],
+    "officialPosition": {
+      "headline": "Secure borders and managed migration",
+      "shortSummary": "Labour says it will restore order and control to the immigration and asylum system, reduce net migration, create a Border Security Command to target smuggling gangs, reform points-based migration rules, link immigration with skills policy, and increase returns for people with no right to stay.",
+      "detailedSummary": "Create a new Border Security Command with investigators, intelligence officers and cross-border police officers.|Seek new security cooperation with the EU to support joint investigations against smuggling gangs.|Clear the asylum backlog, end asylum hotels and restore a system that operates swiftly, firmly and fairly.|Set up a returns and enforcement unit with additional staff and negotiate more returns arrangements.|Reform the points-based immigration system and link migration routes to skills and workforce plans.|Reduce reliance on overseas workers in sectors such as health, social care and construction by requiring domestic training plans.",
+      "sourceTitle": "Labour manifesto: Strong foundations",
+      "sourceUrl": "https://labour.org.uk/change/strong-foundations/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This combines tougher border enforcement with a skills-and-workforce approach to legal migration, rather than a blanket freeze.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Labour manifesto: Strong foundations",
+        "url": "https://labour.org.uk/change/strong-foundations/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Labour manifesto: Strong foundations",
+      "url": "https://labour.org.uk/change/strong-foundations/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-labour-economy-stability-investment-and-industrial-strategy",
+    "party": "Labour",
+    "area": "economy",
+    "topic": "Stability, investment and industrial strategy",
+    "title": "Stability, investment and industrial strategy",
+    "stanceScore": 0,
+    "stanceLabel": "Stability-led growth",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Labour says it will pursue economic growth through fiscal stability, an industrial strategy, a statutory Industrial Strategy Council, a National Wealth Fund, planning reform, business-tax certainty and stronger partnership with business, trade unions, local leaders and devolved governments.",
+    "details": [
+      "Use fiscal rules requiring day-to-day costs to be met by revenues and debt falling as a share of the economy by the fifth year of the forecast.",
+      "Introduce a new industrial strategy and establish an Industrial Strategy Council on a statutory footing.",
+      "Create a National Wealth Fund capitalised with £7.3bn to support growth and clean energy missions.",
+      "Cap corporation tax at 25% for the parliament and publish a business taxation roadmap.",
+      "Retain permanent full expensing and the annual investment allowance for small business.",
+      "Use public investment to unlock private investment, create jobs and support returns for taxpayers."
+    ],
+    "officialPosition": {
+      "headline": "Stability, investment and industrial strategy",
+      "shortSummary": "Labour says it will pursue economic growth through fiscal stability, an industrial strategy, a statutory Industrial Strategy Council, a National Wealth Fund, planning reform, business-tax certainty and stronger partnership with business, trade unions, local leaders and devolved governments.",
+      "detailedSummary": "Use fiscal rules requiring day-to-day costs to be met by revenues and debt falling as a share of the economy by the fifth year of the forecast.|Introduce a new industrial strategy and establish an Industrial Strategy Council on a statutory footing.|Create a National Wealth Fund capitalised with £7.3bn to support growth and clean energy missions.|Cap corporation tax at 25% for the parliament and publish a business taxation roadmap.|Retain permanent full expensing and the annual investment allowance for small business.|Use public investment to unlock private investment, create jobs and support returns for taxpayers.",
+      "sourceTitle": "Labour manifesto: Kickstart economic growth",
+      "sourceUrl": "https://labour.org.uk/change/kickstart-economic-growth/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a growth strategy built around stability, planning reform and state-backed investment rather than large headline tax cuts.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Labour manifesto: Kickstart economic growth",
+        "url": "https://labour.org.uk/change/kickstart-economic-growth/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Labour manifesto: Kickstart economic growth",
+      "url": "https://labour.org.uk/change/kickstart-economic-growth/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-labour-nhs-waiting-lists-prevention-and-nhs-reform",
+    "party": "Labour",
+    "area": "nhs",
+    "topic": "Waiting lists, prevention and NHS reform",
+    "title": "Waiting lists, prevention and NHS reform",
+    "stanceScore": 0,
+    "stanceLabel": "Public NHS reform",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Labour says the NHS will remain publicly owned and publicly funded while being reformed to cut waiting times, deliver 40,000 more appointments each week, double CT and MRI scanners, use spare independent-sector capacity, strengthen workforce planning, and shift care toward prevention and community services.",
+    "details": [
+      "Keep the NHS publicly owned and publicly funded.",
+      "Deliver an extra two million NHS operations, scans and appointments each year, equivalent to 40,000 more appointments each week.",
+      "Use shared waiting lists and spare independent-sector capacity to diagnose and treat patients more quickly.",
+      "Publish regular independent workforce planning across health and social care and deliver the NHS long-term workforce plan.",
+      "Introduce a Fit for the Future fund to double CT and MRI scanners.",
+      "Shift the NHS toward prevention, earlier diagnosis, community care and stronger mental health support."
+    ],
+    "officialPosition": {
+      "headline": "Waiting lists, prevention and NHS reform",
+      "shortSummary": "Labour says the NHS will remain publicly owned and publicly funded while being reformed to cut waiting times, deliver 40,000 more appointments each week, double CT and MRI scanners, use spare independent-sector capacity, strengthen workforce planning, and shift care toward prevention and community services.",
+      "detailedSummary": "Keep the NHS publicly owned and publicly funded.|Deliver an extra two million NHS operations, scans and appointments each year, equivalent to 40,000 more appointments each week.|Use shared waiting lists and spare independent-sector capacity to diagnose and treat patients more quickly.|Publish regular independent workforce planning across health and social care and deliver the NHS long-term workforce plan.|Introduce a Fit for the Future fund to double CT and MRI scanners.|Shift the NHS toward prevention, earlier diagnosis, community care and stronger mental health support.",
+      "sourceTitle": "Labour manifesto: Build an NHS fit for the future",
+      "sourceUrl": "https://labour.org.uk/change/build-an-nhs-fit-for-the-future/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This keeps the public NHS model while using reform, workforce planning and limited spare independent capacity to reduce waiting lists.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Labour manifesto: Build an NHS fit for the future",
+        "url": "https://labour.org.uk/change/build-an-nhs-fit-for-the-future/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Labour manifesto: Build an NHS fit for the future",
+      "url": "https://labour.org.uk/change/build-an-nhs-fit-for-the-future/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-labour-housing-housebuilding-renters-and-leasehold-reform",
+    "party": "Labour",
+    "area": "housing",
+    "topic": "Housebuilding, renters and leasehold reform",
+    "title": "Housebuilding, renters and leasehold reform",
+    "stanceScore": 0,
+    "stanceLabel": "Planning and renter reform",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Labour says it will build 1.5 million new homes over the parliament, reform planning, restore mandatory housing targets, prioritise brownfield development, use grey belt land under golden rules, build new towns, abolish Section 21 no-fault evictions, strengthen renters' rights, and reform leasehold.",
+    "details": [
+      "Build 1.5 million new homes over the parliament.",
+      "Update the National Planning Policy Framework and restore mandatory housing targets.",
+      "Fund additional planning officers and require up-to-date Local Plans.",
+      "Take a brownfield-first approach while using lower-quality grey belt land under golden rules.",
+      "Build a new generation of new towns and introduce cross-boundary strategic planning.",
+      "Abolish Section 21 no-fault evictions and empower renters to challenge unreasonable rent increases.",
+      "Act on leasehold reform, commonhold and unfair maintenance costs."
+    ],
+    "officialPosition": {
+      "headline": "Housebuilding, renters and leasehold reform",
+      "shortSummary": "Labour says it will build 1.5 million new homes over the parliament, reform planning, restore mandatory housing targets, prioritise brownfield development, use grey belt land under golden rules, build new towns, abolish Section 21 no-fault evictions, strengthen renters' rights, and reform leasehold.",
+      "detailedSummary": "Build 1.5 million new homes over the parliament.|Update the National Planning Policy Framework and restore mandatory housing targets.|Fund additional planning officers and require up-to-date Local Plans.|Take a brownfield-first approach while using lower-quality grey belt land under golden rules.|Build a new generation of new towns and introduce cross-boundary strategic planning.|Abolish Section 21 no-fault evictions and empower renters to challenge unreasonable rent increases.|Act on leasehold reform, commonhold and unfair maintenance costs.",
+      "sourceTitle": "Labour manifesto: Kickstart economic growth",
+      "sourceUrl": "https://labour.org.uk/change/kickstart-economic-growth/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This combines a supply-side housebuilding target with stronger renter and leaseholder protections.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Labour manifesto: Kickstart economic growth",
+        "url": "https://labour.org.uk/change/kickstart-economic-growth/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Labour manifesto: Kickstart economic growth",
+      "url": "https://labour.org.uk/change/kickstart-economic-growth/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-labour-education-teachers-curriculum-and-skills-reform",
+    "party": "Labour",
+    "area": "education",
+    "topic": "Teachers, curriculum and skills reform",
+    "title": "Teachers, curriculum and skills reform",
+    "stanceScore": 0,
+    "stanceLabel": "Opportunity and skills",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Labour says it will recruit 6,500 new expert teachers, open more than 3,000 primary school-based nurseries, provide free breakfast clubs in every primary school, modernise curriculum and assessment, reform inspection, create Skills England, and replace the Apprenticeships Levy with a Growth and Skills Levy.",
+    "details": [
+      "Recruit 6,500 new expert teachers, especially in shortage subjects and hard-to-recruit areas.",
+      "Open more than 3,000 nurseries by upgrading space in primary schools.",
+      "Fund free breakfast clubs in every primary school.",
+      "Review curriculum and assessment to create a broad, inclusive and innovative curriculum.",
+      "Replace single headline Ofsted grades with report cards and bring multi-academy trusts into inspection.",
+      "Create Skills England and transform further education colleges into Technical Excellence Colleges.",
+      "Replace the Apprenticeships Levy with a flexible Growth and Skills Levy."
+    ],
+    "officialPosition": {
+      "headline": "Teachers, curriculum and skills reform",
+      "shortSummary": "Labour says it will recruit 6,500 new expert teachers, open more than 3,000 primary school-based nurseries, provide free breakfast clubs in every primary school, modernise curriculum and assessment, reform inspection, create Skills England, and replace the Apprenticeships Levy with a Growth and Skills Levy.",
+      "detailedSummary": "Recruit 6,500 new expert teachers, especially in shortage subjects and hard-to-recruit areas.|Open more than 3,000 nurseries by upgrading space in primary schools.|Fund free breakfast clubs in every primary school.|Review curriculum and assessment to create a broad, inclusive and innovative curriculum.|Replace single headline Ofsted grades with report cards and bring multi-academy trusts into inspection.|Create Skills England and transform further education colleges into Technical Excellence Colleges.|Replace the Apprenticeships Levy with a flexible Growth and Skills Levy.",
+      "sourceTitle": "Labour manifesto: Break down barriers to opportunity",
+      "sourceUrl": "https://labour.org.uk/change/break-down-barriers-to-opportunity/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This focuses on teacher supply, early years, school standards and skills pathways rather than a single structural school reform.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Labour manifesto: Break down barriers to opportunity",
+        "url": "https://labour.org.uk/change/break-down-barriers-to-opportunity/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Labour manifesto: Break down barriers to opportunity",
+      "url": "https://labour.org.uk/change/break-down-barriers-to-opportunity/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-labour-welfare-child-poverty-work-support-and-social-security-review",
+    "party": "Labour",
+    "area": "welfare",
+    "topic": "Child poverty, work support and social security review",
+    "title": "Child poverty, work support and social security review",
+    "stanceScore": 0,
+    "stanceLabel": "Work and poverty reduction",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Labour says good work will be central to tackling poverty and inequality. Its pledges include reviewing Universal Credit so it makes work pay and tackles poverty, creating more good jobs, reforming employment support, supporting disabled people and people with health conditions into work, and developing a strategy to reduce child poverty.",
+    "details": [
+      "Review Universal Credit so that it makes work pay and tackles poverty.",
+      "Develop an ambitious strategy to reduce child poverty.",
+      "Introduce free breakfast clubs in every primary school as an initial anti-poverty step.",
+      "Bring Jobcentre Plus and the National Careers Service together into a national jobs and careers service.",
+      "Devolve funding so local areas can shape joined-up work, health and skills support.",
+      "Support more disabled people and people with health conditions into work while reforming or replacing the Work Capability Assessment.",
+      "Establish a youth guarantee of training, an apprenticeship or support to find work for all 18- to 21-year-olds."
+    ],
+    "officialPosition": {
+      "headline": "Child poverty, work support and social security review",
+      "shortSummary": "Labour says good work will be central to tackling poverty and inequality. Its pledges include reviewing Universal Credit so it makes work pay and tackles poverty, creating more good jobs, reforming employment support, supporting disabled people and people with health conditions into work, and developing a strategy to reduce child poverty.",
+      "detailedSummary": "Review Universal Credit so that it makes work pay and tackles poverty.|Develop an ambitious strategy to reduce child poverty.|Introduce free breakfast clubs in every primary school as an initial anti-poverty step.|Bring Jobcentre Plus and the National Careers Service together into a national jobs and careers service.|Devolve funding so local areas can shape joined-up work, health and skills support.|Support more disabled people and people with health conditions into work while reforming or replacing the Work Capability Assessment.|Establish a youth guarantee of training, an apprenticeship or support to find work for all 18- to 21-year-olds.",
+      "sourceTitle": "Labour manifesto: Break down barriers to opportunity",
+      "sourceUrl": "https://labour.org.uk/change/break-down-barriers-to-opportunity/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This frames welfare through child poverty, employment support and work incentives, with Universal Credit review rather than a fully specified replacement system.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Labour manifesto: Break down barriers to opportunity",
+        "url": "https://labour.org.uk/change/break-down-barriers-to-opportunity/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Labour manifesto: Break down barriers to opportunity",
+      "url": "https://labour.org.uk/change/break-down-barriers-to-opportunity/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-labour-climate-clean-power-and-great-british-energy",
+    "party": "Labour",
+    "area": "climate",
+    "topic": "Clean power and Great British Energy",
+    "title": "Clean power and Great British Energy",
+    "stanceScore": 0,
+    "stanceLabel": "Clean power mission",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Labour says it will make Britain a clean energy superpower through clean power by 2030, Great British Energy, a Green Prosperity Plan, more onshore wind, solar and offshore wind, investment in carbon capture, hydrogen and marine energy, no new oil and gas exploration licences, and a permanent ban on fracking.",
+    "details": [
+      "Work with the private sector to double onshore wind, triple solar power and quadruple offshore wind by 2030.",
+      "Create Great British Energy as a publicly owned company capitalised with £8.3bn.",
+      "Invest through the Green Prosperity Plan and National Wealth Fund to support clean-energy jobs and industries.",
+      "Invest in carbon capture and storage, hydrogen, marine energy and long-term energy storage.",
+      "Maintain a strategic reserve of gas power stations for security of supply.",
+      "Do not issue new licences to explore new oil and gas fields, do not grant new coal licences, and ban fracking for good.",
+      "Use a Local Power Plan for distributed clean-power projects with communities and local authorities."
+    ],
+    "officialPosition": {
+      "headline": "Clean power and Great British Energy",
+      "shortSummary": "Labour says it will make Britain a clean energy superpower through clean power by 2030, Great British Energy, a Green Prosperity Plan, more onshore wind, solar and offshore wind, investment in carbon capture, hydrogen and marine energy, no new oil and gas exploration licences, and a permanent ban on fracking.",
+      "detailedSummary": "Work with the private sector to double onshore wind, triple solar power and quadruple offshore wind by 2030.|Create Great British Energy as a publicly owned company capitalised with £8.3bn.|Invest through the Green Prosperity Plan and National Wealth Fund to support clean-energy jobs and industries.|Invest in carbon capture and storage, hydrogen, marine energy and long-term energy storage.|Maintain a strategic reserve of gas power stations for security of supply.|Do not issue new licences to explore new oil and gas fields, do not grant new coal licences, and ban fracking for good.|Use a Local Power Plan for distributed clean-power projects with communities and local authorities.",
+      "sourceTitle": "Labour manifesto: Make Britain a clean energy superpower",
+      "sourceUrl": "https://labour.org.uk/change/make-britain-a-clean-energy-superpower/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This treats climate policy as an industrial and energy-security mission, with public investment and a faster clean-power timetable.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Labour manifesto: Make Britain a clean energy superpower",
+        "url": "https://labour.org.uk/change/make-britain-a-clean-energy-superpower/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Labour manifesto: Make Britain a clean energy superpower",
+      "url": "https://labour.org.uk/change/make-britain-a-clean-energy-superpower/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-labour-transport-public-rail-roads-and-local-transport-powers",
+    "party": "Labour",
+    "area": "transport",
+    "topic": "Public rail, roads and local transport powers",
+    "title": "Public rail, roads and local transport powers",
+    "stanceScore": 0,
+    "stanceLabel": "Public transport reform",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Labour says it will modernise transport by fixing an additional one million potholes each year, supporting electric vehicle charging and a 2030 phase-out date for new petrol and diesel cars, bringing rail passenger services into public ownership as contracts expire or fail, creating Great British Railways, and giving local leaders stronger bus and transport powers.",
+    "details": [
+      "Fix an additional one million potholes across England in each year of the parliament.",
+      "Support the transition to electric vehicles by accelerating charge-point rollout and restoring the 2030 phase-out date for new internal-combustion cars.",
+      "Bring rail passenger services into public ownership as contracts expire or are broken through failure to deliver, without taxpayer compensation.",
+      "Create Great British Railways as a unified system focused on reliable, affordable and efficient services.",
+      "Create a new passenger watchdog to drive up rail standards.",
+      "Give local leaders powers to franchise local bus services and lift the ban on municipal ownership.",
+      "Give mayors powers to create unified and integrated transport systems and promote active travel networks."
+    ],
+    "officialPosition": {
+      "headline": "Public rail, roads and local transport powers",
+      "shortSummary": "Labour says it will modernise transport by fixing an additional one million potholes each year, supporting electric vehicle charging and a 2030 phase-out date for new petrol and diesel cars, bringing rail passenger services into public ownership as contracts expire or fail, creating Great British Railways, and giving local leaders stronger bus and transport powers.",
+      "detailedSummary": "Fix an additional one million potholes across England in each year of the parliament.|Support the transition to electric vehicles by accelerating charge-point rollout and restoring the 2030 phase-out date for new internal-combustion cars.|Bring rail passenger services into public ownership as contracts expire or are broken through failure to deliver, without taxpayer compensation.|Create Great British Railways as a unified system focused on reliable, affordable and efficient services.|Create a new passenger watchdog to drive up rail standards.|Give local leaders powers to franchise local bus services and lift the ban on municipal ownership.|Give mayors powers to create unified and integrated transport systems and promote active travel networks.",
+      "sourceTitle": "Labour manifesto: Kickstart economic growth",
+      "sourceUrl": "https://labour.org.uk/change/kickstart-economic-growth/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This combines public rail reform and stronger local transport powers with continued support for roads and electric-vehicle transition.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Labour manifesto: Kickstart economic growth",
+        "url": "https://labour.org.uk/change/kickstart-economic-growth/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Labour manifesto: Kickstart economic growth",
+      "url": "https://labour.org.uk/change/kickstart-economic-growth/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-labour-democracy-standards-lords-reform-and-votes-at-16",
+    "party": "Labour",
+    "area": "democracy",
+    "topic": "Standards, Lords reform and votes at 16",
+    "title": "Standards, Lords reform and votes at 16",
+    "stanceScore": 0,
+    "stanceLabel": "Standards and democratic reform",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Labour says it will restore public service in politics through an Ethics and Integrity Commission, stronger post-government employment rules, a House of Commons Modernisation Committee, an immediate ban on MPs taking paid advisory or consultancy roles, House of Lords reform, improved voter registration, votes at 16 and stronger political donation rules.",
+    "details": [
+      "Establish a new independent Ethics and Integrity Commission.",
+      "Review and update post-government employment rules, including stronger sanctions for abuses.",
+      "Give the Independent Adviser on Ministerial Interests powers to start investigations.",
+      "Create a House of Commons Modernisation Committee to reform procedures and standards.",
+      "Support an immediate ban on MPs taking paid advisory or consultancy roles.",
+      "Remove hereditary peers from the House of Lords, introduce a mandatory retirement age and consult on replacing the Lords with a more representative second chamber.",
+      "Improve voter registration, address voter ID inconsistencies, give 16- and 17-year-olds the vote in all elections and strengthen donation rules."
+    ],
+    "officialPosition": {
+      "headline": "Standards, Lords reform and votes at 16",
+      "shortSummary": "Labour says it will restore public service in politics through an Ethics and Integrity Commission, stronger post-government employment rules, a House of Commons Modernisation Committee, an immediate ban on MPs taking paid advisory or consultancy roles, House of Lords reform, improved voter registration, votes at 16 and stronger political donation rules.",
+      "detailedSummary": "Establish a new independent Ethics and Integrity Commission.|Review and update post-government employment rules, including stronger sanctions for abuses.|Give the Independent Adviser on Ministerial Interests powers to start investigations.|Create a House of Commons Modernisation Committee to reform procedures and standards.|Support an immediate ban on MPs taking paid advisory or consultancy roles.|Remove hereditary peers from the House of Lords, introduce a mandatory retirement age and consult on replacing the Lords with a more representative second chamber.|Improve voter registration, address voter ID inconsistencies, give 16- and 17-year-olds the vote in all elections and strengthen donation rules.",
+      "sourceTitle": "Labour manifesto: Serving the country",
+      "sourceUrl": "https://labour.org.uk/change/serving-the-country/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This focuses on political standards, parliamentary reform and widening democratic participation rather than proportional representation.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Labour manifesto: Serving the country",
+        "url": "https://labour.org.uk/change/serving-the-country/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Labour manifesto: Serving the country",
+      "url": "https://labour.org.uk/change/serving-the-country/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-labour-foreignpolicy-nato-europe-and-international-law",
+    "party": "Labour",
+    "area": "foreignPolicy",
+    "topic": "NATO, Europe and international law",
+    "title": "NATO, Europe and international law",
+    "stanceScore": 0,
+    "stanceLabel": "Atlanticist internationalism",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Labour says Britain should reconnect with allies while staying outside the EU. Its pledges include an unshakeable commitment to NATO and the nuclear deterrent, a Strategic Defence Review, a path to 2.5% of GDP defence spending, an improved UK-EU relationship without returning to the single market, customs union or freedom of movement, stronger European security cooperation, continued Ukraine support, and commitment to international law and the ECHR.",
+    "details": [
+      "Maintain an unshakeable commitment to NATO and the UK nuclear deterrent.",
+      "Conduct a Strategic Defence Review and set out a path to spending 2.5% of GDP on defence.",
+      "Stay outside the EU while seeking to reset and deepen ties with European partners without returning to the single market, customs union or freedom of movement.",
+      "Seek an ambitious UK-EU security pact and closer defence and security cooperation with key European allies.",
+      "Remain a member of the European Convention on Human Rights.",
+      "Maintain military, financial, diplomatic and political support for Ukraine.",
+      "Bring forward a defence industrial strategy and strengthen support for armed forces communities and veterans."
+    ],
+    "officialPosition": {
+      "headline": "NATO, Europe and international law",
+      "shortSummary": "Labour says Britain should reconnect with allies while staying outside the EU. Its pledges include an unshakeable commitment to NATO and the nuclear deterrent, a Strategic Defence Review, a path to 2.5% of GDP defence spending, an improved UK-EU relationship without returning to the single market, customs union or freedom of movement, stronger European security cooperation, continued Ukraine support, and commitment to international law and the ECHR.",
+      "detailedSummary": "Maintain an unshakeable commitment to NATO and the UK nuclear deterrent.|Conduct a Strategic Defence Review and set out a path to spending 2.5% of GDP on defence.|Stay outside the EU while seeking to reset and deepen ties with European partners without returning to the single market, customs union or freedom of movement.|Seek an ambitious UK-EU security pact and closer defence and security cooperation with key European allies.|Remain a member of the European Convention on Human Rights.|Maintain military, financial, diplomatic and political support for Ukraine.|Bring forward a defence industrial strategy and strengthen support for armed forces communities and veterans.",
+      "sourceTitle": "Labour manifesto: Britain reconnected",
+      "sourceUrl": "https://labour.org.uk/change/britain-reconnected/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a pro-NATO and pro-European-cooperation position that keeps Brexit institutional red lines while seeking closer practical ties.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Labour manifesto: Britain reconnected",
+        "url": "https://labour.org.uk/change/britain-reconnected/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Labour manifesto: Britain reconnected",
+      "url": "https://labour.org.uk/change/britain-reconnected/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
     "id": "official-restore-britain-nhs-healthcare-and-nhs-access",
     "party": "Restore Britain",
     "area": "nhs",
