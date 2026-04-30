@@ -239,6 +239,55 @@ function contestRank(contest) {
   )
 }
 
+function buildKeySignals(recent) {
+  const signals = []
+  const addSignal = (signal) => {
+    if (!signal?.contest?.name || !signal?.label || !signal?.metric) return
+    const key = `${signal.label}|${signal.contest.name}|${signal.metric}`
+    if (signals.some((item) => item.key === key)) return
+    signals.push({ ...signal, key })
+  }
+
+  const sortedBySwing = [...recent]
+    .filter((contest) => getSwingPoints(contest) > 0)
+    .sort((a, b) => getSwingPoints(b) - getSwingPoints(a))
+  const biggestSwing = sortedBySwing[0]
+  if (biggestSwing) {
+    addSignal({
+      label: 'Biggest swing',
+      contest: biggestSwing,
+      metric: `${getSwingPoints(biggestSwing).toFixed(1)} pts`,
+    })
+  }
+
+  const narrowestMajority = [...recent]
+    .filter((contest) => Number(contest?.majority) > 0)
+    .sort((a, b) => Number(a.majority) - Number(b.majority))[0]
+  if (narrowestMajority) {
+    const winner = getWinner(narrowestMajority)
+    const gainLabel = isGain(narrowestMajority) && winner ? `${winner} gain` : 'Closest result'
+    addSignal({
+      label: gainLabel,
+      contest: narrowestMajority,
+      metric: `majority ${Number(narrowestMajority.majority).toLocaleString()}`,
+    })
+  }
+
+  recent.forEach((contest) => {
+    const significance = cleanText(contest?.significance)
+    const lower = significance.toLowerCase()
+    if (getWinner(contest).toLowerCase() === 'green' && lower.includes('first green seat')) {
+      addSignal({
+        label: 'Green breakthrough',
+        contest,
+        metric: significance,
+      })
+    }
+  })
+
+  return signals.slice(0, 4)
+}
+
 function keyContestSentence(contest) {
   if (cleanText(contest?.significance)) return cleanText(contest.significance)
   if (isGain(contest)) {
@@ -313,19 +362,39 @@ function StatChip({ T, label, value, color, sub }) {
   )
 }
 
-function KeySignalCard({ T, contest }) {
-  const accent = getPartyColor(getWinner(contest), T.pr || '#12B7D4')
+function KeySignalsPanel({ T, signals }) {
   return (
-    <Card T={T} borderColor={`${accent}30`}>
-      <div style={{ fontSize: 15, fontWeight: 800, color: T.th, textAlign: 'center' }}>{contest.name}</div>
-      <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginTop: 4, textAlign: 'center' }}>{formatDisplayDate(contest)}</div>
-      <div style={{ fontSize: 14, fontWeight: 800, color: accent, marginTop: 8, textAlign: 'center' }}>{getResultLine(contest)}</div>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 9 }}>
-        {getSwingPoints(contest) ? <div style={{ fontSize: 12, fontWeight: 800, color: accent, background: `${accent}18`, borderRadius: 999, padding: '4px 9px' }}>Swing {getSwingPoints(contest).toFixed(1)} pts</div> : null}
-        {getMajorityToDefend(contest) ? <div style={{ fontSize: 12, fontWeight: 800, color: T.pr, background: `${T.pr}18`, borderRadius: 999, padding: '4px 9px' }}>Majority {getMajorityToDefend(contest).toLocaleString()}</div> : null}
-      </div>
-      <div style={{ fontSize: 13, fontWeight: 600, color: T.th, lineHeight: 1.55, marginTop: 9, textAlign: 'center' }}>
-        {keyContestSentence(contest)}
+    <Card T={T} style={{ padding: '10px 11px' }}>
+      <div style={{ display: 'grid', gap: 8 }}>
+        {signals.map((signal) => {
+          const accent = getPartyColor(getWinner(signal.contest), T.pr || '#12B7D4')
+          return (
+            <div
+              key={signal.key}
+              style={{
+                borderRadius: 13,
+                padding: '10px 11px',
+                background: T.c1 || 'rgba(0,0,0,0.035)',
+                border: `1px solid ${accent}24`,
+              }}
+            >
+              <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.04em', textTransform: 'uppercase', color: accent }}>
+                  {signal.label}
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: T.tl }}>
+                  {formatDisplayDate(signal.contest)}
+                </div>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 850, color: T.th, marginTop: 5, lineHeight: 1.3 }}>
+                {signal.contest.name}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.tl, marginTop: 4, lineHeight: 1.45 }}>
+                {signal.metric}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </Card>
   )
@@ -421,7 +490,7 @@ export default function ByElectionsScreen({ T, byElections, dataState = {} }) {
   )
 
   const summary = useMemo(() => heroSummary(recent), [recent])
-  const keySignals = useMemo(() => [...recent].sort((a, b) => contestRank(b) - contestRank(a)).slice(0, Math.min(4, recent.length)), [recent])
+  const keySignals = useMemo(() => buildKeySignals([...recent].sort((a, b) => contestRank(b) - contestRank(a))), [recent])
   const resolvedMeta = useMemo(() => ({
     recentCount: meta?.recentCount ?? summary.total ?? recent.length,
     upcomingCount: meta?.upcomingCount ?? upcoming.length,
@@ -556,11 +625,7 @@ export default function ByElectionsScreen({ T, byElections, dataState = {} }) {
                 {keySignalsOpen ? 'Hide' : 'Show'}
               </span>
             </button>
-            {keySignalsOpen
-              ? keySignals.map((contest) => (
-                  <KeySignalCard key={contest.id || contest.name} T={T} contest={contest} />
-                ))
-              : null}
+            {keySignalsOpen ? <KeySignalsPanel T={T} signals={keySignals} /> : null}
           </>
         ) : null}
 
