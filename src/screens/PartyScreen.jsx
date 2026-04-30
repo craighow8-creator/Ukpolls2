@@ -111,7 +111,31 @@ function resolvePolicyRecordsForDisplay(records = []) {
 }
 
 function displayDate(poll) {
-  return cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.date) || 'Date unavailable'
+  return formatUKDate(cleanText(poll?.publishedAt) || cleanText(poll?.fieldworkEnd) || cleanText(poll?.date)) || 'Date unavailable'
+}
+
+function formatUKDate(value) {
+  const raw = cleanText(value)
+  if (!raw) return ''
+
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (iso) return `${iso[3]}-${iso[2]}-${iso[1]}`
+
+  const slash = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/)
+  if (slash) {
+    const day = slash[1].padStart(2, '0')
+    const month = slash[2].padStart(2, '0')
+    return `${day}-${month}-${slash[3]}`
+  }
+
+  const parsed = new Date(raw)
+  if (!Number.isNaN(parsed.getTime())) {
+    const day = String(parsed.getDate()).padStart(2, '0')
+    const month = String(parsed.getMonth() + 1).padStart(2, '0')
+    return `${day}-${month}-${parsed.getFullYear()}`
+  }
+
+  return raw
 }
 
 function SectionLabel({ children, T }) {
@@ -454,6 +478,7 @@ export default function PartyScreen({
   const rank = ranked.findIndex((x) => x.name === p.name)
   const ranks = ['Leading', '2nd', '3rd', '4th', '5th', '6th', '7th']
   const rankLabel = ranks[rank] || ''
+  const numericChange = safeNumber(p.change)
   const leaderIdx = leaders?.indexOf(leader)
   const funding = FUNDING[p.name]
   const availablePolicyAreas = getAvailablePolicyAreasForParty(p.name, policyRecords)
@@ -546,7 +571,7 @@ export default function PartyScreen({
             WebkitTapHighlightColor: 'transparent',
           }}
         >
-          Compare with…
+          {tab === 'overview' ? 'Party snapshot' : 'Compare with…'}
         </button>
 
         {tab === 'overview' ? (
@@ -596,7 +621,7 @@ export default function PartyScreen({
                             marginBottom: 3,
                           }}
                         >
-                          Leader
+                          Leader favourability
                         </div>
                         <div
                           style={{
@@ -646,18 +671,23 @@ export default function PartyScreen({
                   color={p.color}
                 />
 
-                <StatBox T={T} label="Seats" value={p.seats || 0} color={p.color} />
+                <StatBox T={T} label="Modelled seats" value={p.seats || 0} sub="Indicative" color={p.color} />
 
                 <StatBox
                   T={T}
-                  label="Change"
-                  value={`${p.change > 0 ? '+' : p.change < 0 ? '-' : '—'}${p.change === 0 ? 'pt' : `${Math.abs(p.change)}pt`}`}
-                  color={p.change > 0 ? '#02A95B' : p.change < 0 ? '#C8102E' : T.tl}
+                  label={numericChange == null ? 'Change pending' : 'Change'}
+                  value={
+                    numericChange == null
+                      ? 'No data'
+                      : `${numericChange > 0 ? '+' : numericChange < 0 ? '-' : '0'}${numericChange === 0 ? 'pt' : `${Math.abs(numericChange)}pt`}`
+                  }
+                  sub={numericChange == null ? 'No numeric change' : null}
+                  color={numericChange > 0 ? '#02A95B' : numericChange < 0 ? '#C8102E' : T.tl}
                 />
 
                 <StatBox T={T} label="Rank" value={rankLabel || '—'} color={T.th} />
 
-                <StatBox T={T} label="MRP" value={`${p.seats || 0}/650`} color={p.color} />
+                <StatBox T={T} label="Modelled MRP" value={`${p.seats || 0}/650`} sub="Indicative" color={p.color} />
               </div>
 
               <div
@@ -696,7 +726,7 @@ export default function PartyScreen({
                     color: T.tl,
                   }}
                 >
-                  National position
+                  {next ? `Nearest party: ${next.name}` : 'National position'}
                 </div>
 
                 <div
@@ -713,7 +743,7 @@ export default function PartyScreen({
                     nav('party', { idx: parties.indexOf(next) })
                   }}
                 >
-                  {next ? `${next.abbr} ›` : '•'}
+                  {next ? 'View' : '•'}
                 </div>
               </div>
 
@@ -750,7 +780,7 @@ export default function PartyScreen({
                   textAlign: 'center',
                 }}
               >
-                MRP projection · <span style={{ color: p.color, fontWeight: 800 }}>{p.seats || 0} seats</span>
+                Indicative MRP projection · <span style={{ color: p.color, fontWeight: 800 }}>{p.seats || 0} modelled seats</span>
               </div>
             </div>
 
