@@ -109,18 +109,18 @@ This feed is designed as a fast political briefing layer, not a complete substit
     source: 'Approved sources · filtered UK politics feed',
   },
   betting_odds: {
-    title: 'Betting Odds & Implied Probability',
-    body: `Betting odds represent the bookmaker's assessment of probability, adjusted for their margin (the "overround").
+    title: 'Political Markets & Implied Probability',
+    body: `Political market odds show how a public market priced an outcome at the time it was checked. They are informational signals, not forecasts, predictions or betting advice.
 
 To convert fractional odds to implied probability:
 • 6/4 odds → probability = 4 ÷ (6+4) = 40%
 • 2/1 odds → probability = 1 ÷ (2+1) = 33%
 • 1/2 odds → probability = 2 ÷ (1+2) = 67%
 
-Because bookmakers build in a profit margin, the implied probabilities across all outcomes sum to more than 100%. The shown probabilities are raw implied values before removing the overround.
+Because bookmakers build in a profit margin, implied probabilities across all outcomes can sum to more than 100%. Politiscope shows raw implied values before removing any margin.
 
-Betting markets can reflect information not captured in polls — including political intelligence, market positioning, and punter sentiment.`,
-    source: 'Oddschecker · Updated daily',
+Live market import is not connected yet, so maintained rows should be read as archived context only.`,
+    source: 'Maintained market rows · source/date shown per row',
   },
   prediction_markets: {
     title: 'Prediction Markets',

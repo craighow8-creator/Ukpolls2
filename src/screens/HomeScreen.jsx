@@ -984,20 +984,20 @@ export default function HomeScreen({
           <SmallPair>
             <SmallCard T={T} onClick={() => nav('betting')}>
               <div style={pS}>
-                <Lbl T={T}>Betting</Lbl>
-                <Stat color={topBet?.color || T.pr} T={T}>
-                  {topBet?.odds || '6/4'}
+                <Lbl T={T}>Markets</Lbl>
+                <Stat color="#8A5A00" T={T}>
+                  Stale
                 </Stat>
-                <Sub T={T}>{(topBet?.name || 'Reform').split(' ')[0]} priced as current market favourite</Sub>
+                <Sub T={T}>Archived political market signals, not forecasts or advice</Sub>
                 {winProb != null && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                    <MiniBar value={winProb} max={100} color={topBet?.color || T.pr} height={5} T={T} />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: topBet?.color || T.pr, flexShrink: 0 }}>
-                      {winProb}%
+                    <MiniBar value={winProb} max={100} color="#8A5A00" height={5} T={T} />
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#8A5A00', flexShrink: 0 }}>
+                      archived
                     </span>
                   </div>
                 )}
-                <Cta T={T}>View odds →</Cta>
+                <Cta T={T}>Open markets →</Cta>
               </div>
             </SmallCard>
 

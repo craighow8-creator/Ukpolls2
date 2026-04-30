@@ -101,7 +101,7 @@ export default function AboutModal({ open, onClose, T, dark, onToggleDark }) {
         </div>
 
         <div style={{ fontSize: 14, fontWeight: 500, color: bodyCol, lineHeight: 1.7, marginBottom: 20 }}>
-          A UK politics app tracking polls, elections, leaders, demographics and betting odds in one place. Built to make political information clearer, easier to follow and easier to compare.
+          A UK politics app tracking polls, elections, leaders, demographics and political market signals in one place. Built to make political information clearer, easier to follow and easier to compare.
         </div>
 
         <div
@@ -170,7 +170,7 @@ export default function AboutModal({ open, onClose, T, dark, onToggleDark }) {
             { label: 'Polls', source: 'British Polling Council · 7-poll rolling average' },
             { label: 'Seat projection', source: 'Uniform swing model · Electoral Calculus MRP' },
             { label: 'Leader favourability', source: 'YouGov political favourability ratings' },
-            { label: 'Betting odds', source: 'Betfair / Oddschecker' },
+            { label: 'Political markets', source: 'Maintained rows with source/date labels' },
             { label: 'Net migration', source: 'ONS · Year ending June 2025' },
             { label: 'Channel crossings', source: 'Home Office / Migration Observatory 2025' },
           ].map((d, i) => (
