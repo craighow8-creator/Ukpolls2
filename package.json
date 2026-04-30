@@ -34,6 +34,7 @@
     "policy-sources:import:remote": "node ./scripts/ingest-party-policies.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "policy-sources:health:local": "node ./scripts/check-policy-sources-health.mjs --api-base=http://127.0.0.1:8787",
     "policy-sources:health:remote": "node ./scripts/check-policy-sources-health.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
+    "political-markets:import:remote": "node ./scripts/ingest-political-markets.mjs",
     "political-markets:health:remote": "node ./scripts/check-political-markets-health.mjs",
     "local-authority:health:local": "node ./scripts/check-local-authority-health.mjs --api-base=http://127.0.0.1:8787",
     "local-authority:health:remote": "node ./scripts/check-local-authority-health.mjs --api-base=https://politiscope-api.craighow8.workers.dev",

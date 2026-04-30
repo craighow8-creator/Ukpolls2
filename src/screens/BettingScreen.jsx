@@ -3,6 +3,7 @@ import { ScrollArea } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
 import SectionDataMeta from '../components/SectionDataMeta'
 import { POLITICAL_MARKET_GROUPS, POLITICAL_MARKET_ROWS } from '../data/politicalMarkets'
+import generatedPoliticalMarkets from '../data/politicalMarkets.generated.json'
 
 const GROUP_EMPTY_COPY = {
   'local-elections': 'No maintained local election market rows are available yet.',
@@ -64,6 +65,7 @@ function Pill({ children, style }) {
 
 function MarketRow({ T, row }) {
   const status = statusStyles(row.freshnessStatus)
+  const oddsLabel = row.oddsFractional || (Number.isFinite(row.oddsDecimal) ? row.oddsDecimal.toFixed(2) : 'Not recorded')
 
   return (
     <div
@@ -114,7 +116,7 @@ function MarketRow({ T, row }) {
             Odds
           </div>
           <div style={{ fontSize: 20, fontWeight: 900, color: T.th, marginTop: 2 }}>
-            {row.oddsFractional || 'Not recorded'}
+            {oddsLabel}
           </div>
         </div>
         <div
@@ -147,7 +149,7 @@ function MarketRow({ T, row }) {
   )
 }
 
-function MarketGroup({ T, group, rows }) {
+function MarketGroup({ T, group, rows, archived = false }) {
   return (
     <section style={{ display: 'grid', gap: 10 }}>
       <div style={{ textAlign: 'center' }}>
@@ -155,7 +157,9 @@ function MarketGroup({ T, group, rows }) {
           {group.title}
         </div>
         <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, marginTop: 3 }}>
-          Archived maintained rows only until a live market import is connected.
+          {archived
+            ? 'Maintained historic rows kept for context, not current pricing.'
+            : 'Freshness and source/date are shown on every row.'}
         </div>
       </div>
 
@@ -186,8 +190,11 @@ function MarketGroup({ T, group, rows }) {
 }
 
 export default function BettingScreen({ T, dataState = {} }) {
-  const rows = POLITICAL_MARKET_ROWS
-  const staleCount = rows.filter((row) => row.freshnessStatus === 'stale').length
+  const archivedRows = POLITICAL_MARKET_ROWS
+  const currentRows = Array.isArray(generatedPoliticalMarkets?.rows) ? generatedPoliticalMarkets.rows : []
+  const allRows = [...currentRows, ...archivedRows]
+  const staleCount = allRows.filter((row) => row.freshnessStatus === 'stale').length
+  const failedSources = Array.isArray(generatedPoliticalMarkets?.failedSources) ? generatedPoliticalMarkets.failedSources : []
 
   return (
     <div
@@ -263,11 +270,12 @@ export default function BettingScreen({ T, dataState = {} }) {
             }}
           >
             <div style={{ fontSize: 14, fontWeight: 900, color: '#8A5A00' }}>
-              Live market import not connected yet
+              {currentRows.length ? 'Current market import connected' : 'Live market import not connected yet'}
             </div>
             <div style={{ fontSize: 12.5, fontWeight: 650, color: '#8A5A00', lineHeight: 1.45, marginTop: 5 }}>
-              The rows below are archived maintained snapshots from 20-03-2026. They are shown for context only and
-              should not be read as current market pricing.
+              {currentRows.length
+                ? 'Current rows use public Polymarket read data. They are market signals only and should not be read as predictions, forecasts or advice.'
+                : 'The rows below are archived maintained snapshots from 20-03-2026. They are shown for context only and should not be read as current market pricing.'}
             </div>
           </div>
 
@@ -283,19 +291,81 @@ export default function BettingScreen({ T, dataState = {} }) {
             }}
           >
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 20, fontWeight: 900, color: T.th }}>{rows.length}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: T.tl }}>maintained rows</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: T.th }}>{currentRows.length}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: T.tl }}>current rows</div>
             </div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 20, fontWeight: 900, color: '#8A5A00' }}>{staleCount}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: T.tl }}>marked stale</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: T.tl }}>stale rows</div>
             </div>
           </div>
 
+          <section style={{ display: 'grid', gap: 12 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: -0.3, color: T.th }}>
+                Current market signals
+              </div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, marginTop: 3 }}>
+                Public Polymarket rows imported from configured UK politics markets.
+              </div>
+            </div>
+
+            {currentRows.length ? (
+              POLITICAL_MARKET_GROUPS.map((group) => {
+                const groupRows = currentRows.filter((row) => group.electionTypes.includes(row.electionType))
+                return groupRows.length ? <MarketGroup key={`current-${group.id}`} T={T} group={group} rows={groupRows} /> : null
+              })
+            ) : (
+              <div
+                style={{
+                  borderRadius: 12,
+                  padding: '14px 16px',
+                  background: T.c0,
+                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                  color: T.tl,
+                  fontSize: 13,
+                  fontWeight: 650,
+                  textAlign: 'center',
+                }}
+              >
+                No current imported market rows are available.
+              </div>
+            )}
+          </section>
+
+          {failedSources.length ? (
+            <div
+              style={{
+                borderRadius: 12,
+                padding: '12px 14px',
+                background: '#FEE4E2',
+                border: '1px solid #FDA29B',
+                color: '#912018',
+                fontSize: 12.5,
+                fontWeight: 700,
+                lineHeight: 1.45,
+                textAlign: 'center',
+              }}
+            >
+              {failedSources.length} configured market source failed during the latest import.
+            </div>
+          ) : null}
+
+          <section style={{ display: 'grid', gap: 12 }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: -0.3, color: T.th }}>
+                Archived market snapshot
+              </div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tl, marginTop: 3 }}>
+                Older maintained rows are separated from current market data.
+              </div>
+            </div>
+
           {POLITICAL_MARKET_GROUPS.map((group) => {
-            const groupRows = rows.filter((row) => group.electionTypes.includes(row.electionType))
-            return <MarketGroup key={group.id} T={T} group={group} rows={groupRows} />
+            const groupRows = archivedRows.filter((row) => group.electionTypes.includes(row.electionType))
+            return <MarketGroup key={`archived-${group.id}`} T={T} group={group} rows={groupRows} archived />
           })}
+          </section>
 
           <div
             style={{

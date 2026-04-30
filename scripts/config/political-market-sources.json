@@ -1,0 +1,34 @@
+{
+  "freshnessThresholdDays": 3,
+  "sources": [
+    {
+      "id": "polymarket-uk-election-called",
+      "enabled": true,
+      "source": "Polymarket",
+      "sourceType": "polymarket-gamma-event",
+      "sourceUrl": "https://gamma-api.polymarket.com/events/slug/uk-election-called-by",
+      "eventSlug": "uk-election-called-by",
+      "electionType": "general-election",
+      "marketType": "prediction-market",
+      "includeMarketSlugs": [
+        "will-the-next-uk-election-is-called-by-june-30-2026"
+      ],
+      "notes": "Public Polymarket Gamma API event for UK general-election timing. Informational market signal only, not a forecast or betting advice."
+    },
+    {
+      "id": "polymarket-starmer-out",
+      "enabled": true,
+      "source": "Polymarket",
+      "sourceType": "polymarket-gamma-event",
+      "sourceUrl": "https://gamma-api.polymarket.com/events/slug/starmer-out-in-2025",
+      "eventSlug": "starmer-out-in-2025",
+      "electionType": "leadership",
+      "marketType": "prediction-market",
+      "includeMarketSlugs": [
+        "starmer-out-by-june-30-2026-862-594-548",
+        "starmer-out-by-december-31-2026-936-416-977-234"
+      ],
+      "notes": "Public Polymarket Gamma API event for Keir Starmer tenure markets. Informational market signal only, not a forecast or betting advice."
+    }
+  ]
+}
