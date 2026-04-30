@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { StickyPills, haptic } from '../components/ui'
+import { haptic } from '../components/ui'
 import SharedTrendChart, { buildDisplayTrendRows, makeTrendPartyKeys } from '../components/charts/SharedTrendChart'
 import { PortraitAvatar } from '../utils/portraits'
 import { POLICY_AREAS, POLICY_RECORDS } from '../data/policy/policyRecords'
@@ -215,17 +215,63 @@ function StatBox({ T, label, value, sub, color, wide = false }) {
 function StickyPillsBar({ T, tab, setTab }) {
   return (
     <div
+      data-no-swipe
       style={{
         position: 'sticky',
         top: 0,
         zIndex: 8,
         background: T.sf,
-        padding: '10px 16px 12px',
+        padding: '10px 0 12px',
         borderBottom: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.12)'}`,
         boxShadow: '0 1px 0 rgba(0,0,0,0.02)',
+        overflow: 'hidden',
       }}
     >
-      <StickyPills pills={TABS} active={tab} onSelect={setTab} T={T} />
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          overflowX: 'auto',
+          overscrollBehaviorX: 'contain',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          padding: '0 16px',
+          scrollPaddingLeft: 16,
+          touchAction: 'pan-x',
+        }}
+      >
+        <style>{`::-webkit-scrollbar{display:none}`}</style>
+        {TABS.map((pill) => {
+          const active = tab === pill.key
+          return (
+            <button
+              key={pill.key}
+              type="button"
+              onClick={() => {
+                haptic(6)
+                setTab(pill.key)
+              }}
+              style={{
+                flex: '0 0 auto',
+                border: 'none',
+                borderRadius: 999,
+                padding: '8px 16px',
+                background: active ? '#012169' : T.c0,
+                color: active ? '#fff' : T.tm,
+                fontSize: 14,
+                fontWeight: active ? 800 : 650,
+                lineHeight: 1.1,
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                boxShadow: active ? 'none' : `inset 0 0 0 1px ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              {pill.label}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -240,10 +286,54 @@ function PolicyRecordCard({ T, p, record }) {
   const analysis = cleanText(record.politiscopeAnalysis)
   const hasOfficialSource = hasOfficialPolicySource(record)
   const sourceTypeLabel = (type) => cleanText(type).replace(/_/g, ' ')
+  const mobilePolicyStyles = `
+    @media (max-width: 520px) {
+      .party-policy-card {
+        padding: 13px 13px !important;
+      }
+      .party-policy-header {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+      }
+      .party-policy-title {
+        font-size: 14.5px !important;
+        line-height: 1.28 !important;
+      }
+      .party-policy-badge {
+        align-self: flex-start !important;
+        white-space: normal !important;
+        max-width: 100% !important;
+        line-height: 1.25 !important;
+        text-align: left !important;
+      }
+      .party-policy-summary-label {
+        margin-top: 2px !important;
+      }
+      .party-policy-summary,
+      .party-policy-detail,
+      .party-policy-analysis {
+        font-size: 12.8px !important;
+        line-height: 1.5 !important;
+      }
+      .party-policy-source-list {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 7px !important;
+      }
+      .party-policy-source-link {
+        overflow-wrap: anywhere !important;
+        line-height: 1.35 !important;
+      }
+    }
+  `
 
   return (
-    <div style={{ ...bCard(T, p.color, { marginBottom: 12 }) }}>
+    <div className="party-policy-card" style={{ ...bCard(T, p.color, { marginBottom: 12 }) }}>
+      <style>{mobilePolicyStyles}</style>
       <div
+        className="party-policy-header"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -255,12 +345,13 @@ function PolicyRecordCard({ T, p, record }) {
         }}
       >
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: T.th, lineHeight: 1.3 }}>
+          <div className="party-policy-title" style={{ fontSize: 15, fontWeight: 800, color: T.th, lineHeight: 1.3 }}>
             {title}
           </div>
           {summary && summary !== title ? (
             <>
               <div
+                className="party-policy-summary-label"
                 style={{
                   fontSize: 10,
                   fontWeight: 850,
@@ -272,13 +363,14 @@ function PolicyRecordCard({ T, p, record }) {
               >
                 {hasOfficialSource ? 'Official position summary' : 'Maintained summary'}
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.tm, marginTop: 4, lineHeight: 1.45 }}>
+              <div className="party-policy-summary" style={{ fontSize: 13, fontWeight: 600, color: T.tm, marginTop: 4, lineHeight: 1.45 }}>
                 {summary}
               </div>
             </>
           ) : null}
         </div>
         <div
+          className="party-policy-badge"
           style={{
             fontSize: 10.5,
             fontWeight: 800,
@@ -311,7 +403,7 @@ function PolicyRecordCard({ T, p, record }) {
                   opacity: 0.85,
                 }}
               />
-              <div style={{ fontSize: 13.5, fontWeight: 500, color: T.tm, lineHeight: 1.55 }}>
+              <div className="party-policy-detail" style={{ fontSize: 13.5, fontWeight: 500, color: T.tm, lineHeight: 1.55 }}>
                 {detail}
               </div>
             </div>
@@ -343,7 +435,7 @@ function PolicyRecordCard({ T, p, record }) {
           >
             Politiscope analysis
           </div>
-          <div style={{ fontSize: 13, fontWeight: 550, color: T.tm, lineHeight: 1.5 }}>
+          <div className="party-policy-analysis" style={{ fontSize: 13, fontWeight: 550, color: T.tm, lineHeight: 1.5 }}>
             {analysis}
           </div>
         </div>
@@ -351,6 +443,7 @@ function PolicyRecordCard({ T, p, record }) {
 
       {sources.length ? (
         <div
+          className="party-policy-source-list"
           style={{
             display: 'flex',
             flexWrap: 'wrap',
@@ -378,6 +471,7 @@ function PolicyRecordCard({ T, p, record }) {
                   href={source.url}
                   target="_blank"
                   rel="noreferrer"
+                  className="party-policy-source-link"
                   style={{
                     fontSize: 12,
                     fontWeight: 800,
@@ -391,7 +485,7 @@ function PolicyRecordCard({ T, p, record }) {
             }
 
             return (
-              <div key={`${record.id}-${label}`} style={{ fontSize: 12, fontWeight: 700, color: T.tl }}>
+              <div key={`${record.id}-${label}`} className="party-policy-source-link" style={{ fontSize: 12, fontWeight: 700, color: T.tl }}>
                 {content}
               </div>
             )
@@ -841,7 +935,16 @@ export default function PartyScreen({
         {tab === 'pledges' ? (
           <>
             {availablePolicyAreas.length ? (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 8,
+                  flexWrap: 'wrap',
+                  marginBottom: 14,
+                  overflowX: 'visible',
+                  maxWidth: '100%',
+                }}
+              >
                 {availablePolicyAreas.map((area) => (
                   <div
                     key={area}
@@ -850,16 +953,19 @@ export default function PartyScreen({
                       setPledgeTopic(area)
                     }}
                     style={{
-                      padding: '8px 14px',
+                      padding: '8px 12px',
                       borderRadius: 999,
                       background: selectedPolicyArea === area ? p.color : T.c0,
                       border: `1px solid ${selectedPolicyArea === area ? 'transparent' : p.color + '33'}`,
-                      fontSize: 14,
-                      fontWeight: 700,
+                      fontSize: 13,
+                      fontWeight: 750,
+                      lineHeight: 1.2,
                       color: selectedPolicyArea === area ? '#fff' : p.color,
                       cursor: 'pointer',
                       WebkitTapHighlightColor: 'transparent',
                       transition: 'background 0.18s',
+                      maxWidth: '100%',
+                      overflowWrap: 'anywhere',
                     }}
                   >
                     {POLICY_AREA_LABELS[area] || area}
