@@ -18,6 +18,21 @@ const PARTY_COLORS = {
   PC: '#3F8428',
 }
 
+const BY_ELECTION_EXPLAINER = [
+  {
+    title: 'One-seat pressure test',
+    body: 'A single contest can expose pressure on a party faster than national polling.',
+  },
+  {
+    title: 'Swing signal',
+    body: 'Changes in vote share show where local opinion may be moving.',
+  },
+  {
+    title: 'Message rehearsal',
+    body: 'Parties use by-elections to test campaign messages before bigger elections.',
+  },
+]
+
 function cleanText(value) {
   if (value == null) return ''
   return String(value).replace(/\s+/g, ' ').trim()
@@ -176,6 +191,25 @@ function heroSummary(recent) {
   }
 
   return { total, gains: gains.length, holds: holds.length, biggestSwing, benefiting, text: lines.join(' ') }
+}
+
+function buildHeroText({ recentCount, upcomingCount, biggestSwingContest, biggestSwingPoints }) {
+  let lead = ''
+  if (recentCount > 0 && upcomingCount > 0) {
+    lead = 'This watchlist tracks verified Westminster by-election results and confirmed upcoming Commons contests.'
+  } else if (recentCount > 0) {
+    lead = 'This watchlist tracks verified Westminster by-elections since the 2024 general election. No upcoming Commons by-election is currently loaded.'
+  } else if (upcomingCount > 0) {
+    lead = 'This watchlist is tracking confirmed upcoming Westminster by-elections. Results will appear here once contests are held.'
+  } else {
+    lead = 'No verified Westminster by-elections are loaded yet.'
+  }
+
+  if (biggestSwingContest && biggestSwingPoints != null) {
+    return `${lead} The sharpest recent move came in ${biggestSwingContest}, with a ${biggestSwingPoints.toFixed(1)} point swing.`
+  }
+
+  return lead
 }
 
 function tagBoost(contest) {
@@ -338,6 +372,41 @@ function RecentResultCard({ T, contest }) {
   )
 }
 
+function ByElectionExplainer({ T }) {
+  return (
+    <Card T={T} style={{ marginBottom: 12 }}>
+      <SectionTitle T={T}>Why by-elections matter</SectionTitle>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+          gap: 8,
+        }}
+      >
+        {BY_ELECTION_EXPLAINER.map((item) => (
+          <div
+            key={item.title}
+            style={{
+              borderRadius: 12,
+              padding: '11px 10px',
+              background: T.c1 || 'rgba(0,0,0,0.035)',
+              border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 800, color: T.th, lineHeight: 1.25, marginBottom: 5 }}>
+              {item.title}
+            </div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: T.tl, lineHeight: 1.45 }}>
+              {item.body}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
 export default function ByElectionsScreen({ T, byElections, dataState = {} }) {
   const meta = byElections?.meta && typeof byElections.meta === 'object' ? byElections.meta : null
 
@@ -362,35 +431,19 @@ export default function ByElectionsScreen({ T, byElections, dataState = {} }) {
         ? Number(meta.biggestSwingPoints)
         : summary.biggestSwing?.swing ?? null,
     latestRecentDate: formatDateLabel(meta?.latestRecentDate) || formatDisplayDate(recent[0]),
-    updatedAt: formatDateLabel(meta?.updatedAt),
-    sourceCount:
-      meta?.sourceCount != null && !Number.isNaN(Number(meta.sourceCount))
-        ? Number(meta.sourceCount)
-        : null,
+    reviewedAt: formatDateLabel(meta?.reviewedAt || meta?.updatedAt),
+    scope: cleanText(meta?.scope),
+    sourceType: cleanText(meta?.sourceType),
   }), [meta, recent, summary, upcoming])
-  const heroText = useMemo(() => {
-    if (!resolvedMeta.recentCount) {
-      return 'No recent by-election results are loaded yet.'
-    }
-
-    const sentences = [
-      `There are ${resolvedMeta.recentCount} recent results and ${resolvedMeta.upcomingCount} upcoming contests in the tracker.`,
-    ]
-
-    if (summary.benefiting) {
-      sentences.push(`${summary.benefiting.party} appear to be benefiting most from recent contests.`)
-    } else if (summary.gains) {
-      sentences.push('The gains are more mixed, with no single party fully dominating the picture.')
-    } else {
-      sentences.push('Recent contests have mostly reinforced existing control rather than overturning it.')
-    }
-
-    if (resolvedMeta.biggestSwingContest && resolvedMeta.biggestSwingPoints != null) {
-      sentences.push(`The sharpest move came in ${resolvedMeta.biggestSwingContest}, with a ${resolvedMeta.biggestSwingPoints.toFixed(1)} point swing.`)
-    }
-
-    return sentences.join(' ')
-  }, [resolvedMeta, summary])
+  const heroText = useMemo(() => buildHeroText(resolvedMeta), [resolvedMeta])
+  const compactMetaLine = useMemo(() => {
+    const parts = [
+      resolvedMeta.reviewedAt ? `Reviewed ${resolvedMeta.reviewedAt}` : null,
+      resolvedMeta.scope ? 'Westminster by-elections' : null,
+      resolvedMeta.sourceType ? 'official sources' : null,
+    ].filter(Boolean)
+    return parts.join(' · ')
+  }, [resolvedMeta])
   const [keySignalsOpen, setKeySignalsOpen] = useState(() => !(byElections?.upcoming || []).length)
 
   useEffect(() => {
@@ -426,13 +479,13 @@ export default function ByElectionsScreen({ T, byElections, dataState = {} }) {
           <SectionDataMeta T={T} section={dataState.byElections || null} />
         </div>
         <Card T={T} borderColor={`${T.pr || '#12B7D4'}28`} style={{ marginBottom: 12 }}>
-          <SectionTitle T={T}>By-election picture</SectionTitle>
+          <SectionTitle T={T}>Westminster by-election watchlist</SectionTitle>
           <div style={{ fontSize: 14, fontWeight: 600, color: T.th, lineHeight: 1.65, textAlign: 'center' }}>
             {heroText}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 12 }}>
-            <StatChip T={T} label="Recent" value={resolvedMeta.recentCount} color={T.pr || '#12B7D4'} sub="Tracked now" />
-            <StatChip T={T} label="Upcoming" value={resolvedMeta.upcomingCount} color={T.pr || '#12B7D4'} sub="Tracked now" />
+            <StatChip T={T} label="Recent" value={resolvedMeta.recentCount} color={T.pr || '#12B7D4'} sub="verified results" />
+            <StatChip T={T} label="Upcoming" value={resolvedMeta.upcomingCount} color={T.pr || '#12B7D4'} sub="confirmed contests" />
             <StatChip
               T={T}
               label="Biggest swing"
@@ -441,7 +494,7 @@ export default function ByElectionsScreen({ T, byElections, dataState = {} }) {
               sub={resolvedMeta.biggestSwingContest || 'No result'}
             />
           </div>
-          {(resolvedMeta.updatedAt || resolvedMeta.sourceCount != null || resolvedMeta.latestRecentDate) ? (
+          {compactMetaLine ? (
             <div
               style={{
                 marginTop: 10,
@@ -452,14 +505,12 @@ export default function ByElectionsScreen({ T, byElections, dataState = {} }) {
                 lineHeight: 1.45,
               }}
             >
-              {[
-                resolvedMeta.updatedAt ? `Updated ${resolvedMeta.updatedAt}` : null,
-                resolvedMeta.sourceCount != null ? `${resolvedMeta.sourceCount} source${resolvedMeta.sourceCount === 1 ? '' : 's'} tracked` : null,
-                resolvedMeta.latestRecentDate ? `Latest result: ${resolvedMeta.latestRecentDate}` : null,
-              ].filter(Boolean).join(' · ')}
+              {compactMetaLine}
             </div>
           ) : null}
         </Card>
+
+        <ByElectionExplainer T={T} />
 
         <SectionTitle T={T}>Upcoming watchlist</SectionTitle>
         {upcoming.length ? (
@@ -469,7 +520,7 @@ export default function ByElectionsScreen({ T, byElections, dataState = {} }) {
         ) : (
           <Card T={T}>
             <div style={{ fontSize: 14, fontWeight: 600, color: T.tl, textAlign: 'center' }}>
-              No upcoming by-elections confirmed.
+              No confirmed upcoming Commons by-election is currently loaded.
             </div>
           </Card>
         )}
