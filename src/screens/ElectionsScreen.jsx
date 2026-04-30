@@ -49,25 +49,43 @@ function normalizeElectionTab(value) {
   return VALID_TAB_KEYS.has(next) ? next : 'general'
 }
 
-function formatIntelligenceSourceType(value) {
-  const next = cleanText(value)
-  if (!next) return ''
-  if (next === 'maintained' || next === 'backend-shaped-from-maintained-source') {
-    return 'Maintained source'
+function hasPositiveMetaCount(value) {
+  return Number.isFinite(Number(value)) && Number(value) > 0
+}
+
+function buildIntelligenceProvenanceParts(meta) {
+  if (!meta || typeof meta !== 'object') return ''
+  const parts = []
+
+  if (meta.updatedAt) parts.push(`Reviewed ${formatDate(meta.updatedAt)}`)
+
+  const sourceType = cleanText(meta.sourceType).toLowerCase()
+  if (
+    sourceType ||
+    meta.sourceCount != null ||
+    meta.enrichedCount != null ||
+    meta.externalOverrideCount != null ||
+    meta.externalSourceUsed != null
+  ) {
+    parts.push('maintained dataset')
   }
-  return next
+
+  const hasExternalChecks =
+    hasPositiveMetaCount(meta.externalOverrideCount) ||
+    meta.externalSourceUsed === true ||
+    sourceType.includes('external')
+  if (hasExternalChecks) parts.push('external checks')
+
+  const hasManualEnrichments =
+    hasPositiveMetaCount(meta.enrichedCount) ||
+    sourceType.includes('enrichment')
+  if (hasManualEnrichments) parts.push('manual enrichments')
+
+  return parts
 }
 
 function buildIntelligenceMetaLine(meta) {
-  if (!meta || typeof meta !== 'object') return ''
-  const parts = []
-  if (meta.updatedAt) parts.push(`Updated ${formatDate(meta.updatedAt)}`)
-  const sourceType = formatIntelligenceSourceType(meta.sourceType)
-  if (sourceType) parts.push(sourceType)
-  if (Number.isFinite(Number(meta.sourceCount)) && Number(meta.sourceCount) > 0) {
-    const count = Number(meta.sourceCount)
-    parts.push(`${count} source${count === 1 ? '' : 's'} tracked`)
-  }
+  const parts = buildIntelligenceProvenanceParts(meta)
   return parts.join(' · ')
 }
 
