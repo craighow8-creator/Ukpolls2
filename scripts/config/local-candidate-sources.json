@@ -91,6 +91,19 @@
       "notes": "No verified official candidate source URL recorded yet."
     },
     {
+      "councilSlug": "coventry",
+      "councilName": "Coventry",
+      "priority": true,
+      "enabled": true,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-candidate-sources/coventry-2026.csv",
+      "sourceLabel": "Official statements of persons nominated",
+      "sourceUrl": "https://www.coventry.gov.uk/elections-voting/statements-persons-nominated",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified-source",
+      "notes": "Official Coventry City Council statement pages transcribed to manual CSV. Holbrooks is mapped to lookup ward Holbrook; Tile Hill and Canley remains unmatched because the lookup index still has Westwood."
+    },
+    {
       "councilSlug": "stockport",
       "councilName": "Stockport",
       "priority": true,
