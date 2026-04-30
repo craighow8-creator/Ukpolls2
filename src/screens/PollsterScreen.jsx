@@ -54,6 +54,63 @@ function metaLine(poll) {
   return parts.join(' · ')
 }
 
+function sourceTypeLabel(poll) {
+  if (!poll) return ''
+  const explicit = cleanText(poll?.sourceType || poll?.source_type)
+  if (explicit) return explicit
+
+  const tier = sourceTier(poll)
+  if (tier === 'direct') return 'Direct pollster/source row'
+  if (tier === 'manual') return 'Imported/manual source row'
+  if (tier === 'fallback') return 'Archive/tracker row'
+  return ''
+}
+
+function pollSourceUrl(poll) {
+  return cleanText(poll?.sourceUrl || poll?.source_url || poll?.url)
+}
+
+function buildTransparencyRows({ latestPoll, count, isBpcMember }) {
+  const methodParts = [
+    cleanText(latestPoll?.method),
+    cleanText(latestPoll?.mode),
+  ].filter(Boolean)
+  const sourceText = cleanText(latestPoll?.source || latestPoll?.sourceTitle || latestPoll?.sourceName)
+  const sourceUrl = pollSourceUrl(latestPoll)
+
+  return [
+    {
+      label: 'BPC status',
+      value: isBpcMember ? 'BPC member' : 'Not shown as BPC member',
+    },
+    latestPoll ? {
+      label: 'Latest poll date',
+      value: displayDate(latestPoll),
+    } : null,
+    {
+      label: 'Polls stored',
+      value: `${count} poll${count === 1 ? '' : 's'}`,
+    },
+    methodParts.length ? {
+      label: 'Method or mode',
+      value: methodParts.join(' · '),
+    } : null,
+    latestPoll?.sample ? {
+      label: 'Sample size',
+      value: String(latestPoll.sample),
+    } : null,
+    sourceTypeLabel(latestPoll) ? {
+      label: 'Source type',
+      value: sourceTypeLabel(latestPoll),
+    } : null,
+    sourceText || sourceUrl ? {
+      label: 'Source',
+      value: sourceText || sourceUrl,
+      href: sourceUrl || null,
+    } : null,
+  ].filter(Boolean)
+}
+
 function isImportedPoll(poll) {
   const tier = sourceTier(poll)
   return tier === 'manual' || tier === 'direct'
@@ -150,6 +207,48 @@ function SurfaceCard({ T, children, borderColor, style = {} }) {
   )
 }
 
+function SignalRow({ T, label, value, href }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        gap: 12,
+        padding: '8px 0',
+        borderTop: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+      }}
+    >
+      <div style={{ fontSize: 12, fontWeight: 800, color: T.tl, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {label}
+      </div>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            color: T.pr,
+            textAlign: 'right',
+            lineHeight: 1.35,
+            overflowWrap: 'anywhere',
+            textDecoration: 'none',
+          }}
+        >
+          {value}
+        </a>
+      ) : (
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.th, textAlign: 'right', lineHeight: 1.35 }}>
+          {value}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ScrollAwayHeader({ T, pollster, count, latestPoll }) {
   return (
     <div style={{ padding: '8px 16px 10px' }}>
@@ -239,7 +338,7 @@ function PollCard({ T, poll, nav }) {
         </div>
 
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {live ? <Badge color={T.pr}>Live import</Badge> : <Badge color={T.tl} subtle>Archive</Badge>}
+          {live ? <Badge color={T.pr}>Imported</Badge> : <Badge color={T.tl} subtle>Archive</Badge>}
           {poll?.isBpcMember ? <Badge color={T.pr} subtle>BPC</Badge> : null}
         </div>
       </div>
@@ -295,6 +394,7 @@ export default function PollsterScreen({ T, pollster, polls = [], nav }) {
   const latestLivePoll = pollsterPolls.find((p) => isImportedPoll(p)) || null
   const isBpcMember = latestPoll?.isBpcMember === true
   const importedCount = pollsterPolls.filter((p) => isImportedPoll(p)).length
+  const transparencyRows = buildTransparencyRows({ latestPoll, count: pollsterPolls.length, isBpcMember })
 
   return (
     <div
@@ -318,8 +418,8 @@ export default function PollsterScreen({ T, pollster, polls = [], nav }) {
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
             {isBpcMember ? <Badge color={T.pr}>BPC member</Badge> : <Badge color={T.tl} subtle>Pollster</Badge>}
-            {importedCount > 0 ? <Badge color={T.pr} subtle>{importedCount} live</Badge> : null}
-            {latestLivePoll ? <Badge color={T.pr} subtle>Latest live poll</Badge> : null}
+            {importedCount > 0 ? <Badge color={T.pr} subtle>{importedCount} imported</Badge> : null}
+            {latestLivePoll ? <Badge color={T.pr} subtle>Latest imported poll</Badge> : null}
           </div>
 
           {info ? (
@@ -373,9 +473,29 @@ export default function PollsterScreen({ T, pollster, polls = [], nav }) {
                 textAlign: 'center',
               }}
             >
-              This pollster page shows recent polling records, live imports where available, and a clearer route into full poll details.
+              This pollster page shows recent polling records, imported rows where available, and a clearer route into full poll details.
             </div>
           )}
+        </SurfaceCard>
+
+        <SurfaceCard T={T} borderColor={`${T.pr || '#12B7D4'}20`} style={{ marginBottom: 12 }}>
+          <SectionLabel T={T}>Transparency signals</SectionLabel>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 500,
+              color: T.tl,
+              lineHeight: 1.6,
+              textAlign: 'center',
+              marginBottom: 6,
+            }}
+          >
+            These are the signals available in the current poll records, not a full methodology audit.
+          </div>
+
+          {transparencyRows.map((row) => (
+            <SignalRow key={row.label} T={T} {...row} />
+          ))}
         </SurfaceCard>
 
         {latestPoll ? (

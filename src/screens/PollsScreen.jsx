@@ -2361,7 +2361,7 @@ export default function PollsScreen({ T, parties, polls, meta, nav, pollContext 
                 Pollster transparency
               </div>
               <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, lineHeight: 1.6, textAlign: 'center' }}>
-                Pollsters are now treated as real entities. Next stage should deepen this with methodology notes, BPC status, commissioner context and house-effect comparison.
+                See how each pollster reports the race, how recently they have published, and what transparency signals are available.
               </div>
             </div>
           </>
