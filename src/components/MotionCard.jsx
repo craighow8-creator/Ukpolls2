@@ -126,7 +126,7 @@ function BrandHeader({ T, onClose }) {
                 textOverflow: 'ellipsis',
               }}
             >
-              The full picture of British politics
+              Politiscope: the smarter way to follow UK politics.
             </div>
           </div>
         </div>

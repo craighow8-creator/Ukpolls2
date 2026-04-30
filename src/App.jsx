@@ -435,10 +435,10 @@ export default function App() {
     const latest = [...(POLLS_HISTORY || [])].sort((a, b) => getPollDateMs(b) - getPollDateMs(a))[0]
     const latestDate = formatShareDate(latest?.fieldworkEnd || latest?.publishedAt || latest?.date)
 
-    if (!snap) return 'Politiscope: the full picture of British politics'
+    if (!snap) return 'Politiscope: the smarter way to follow UK politics.'
 
     const dateLabel = latestDate ? `Latest poll data ${latestDate}` : 'Latest poll snapshot'
-    return `Politiscope: the full picture of British politics\n${dateLabel}\n${snap}`
+    return `Politiscope: the smarter way to follow UK politics.\n${dateLabel}\n${snap}`
   }
 
   if (!dataReady) {

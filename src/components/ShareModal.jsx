@@ -6,7 +6,7 @@ export default function ShareModal({ open, onClose, T, text, appUrl, title = 'Po
   if (!open) return null
 
   const canonicalUrl = appUrl || 'https://politiscope.co.uk'
-  const shareText = `${text || 'Politiscope: the full picture of British politics'}\n\nPolitiscope — the full picture of British politics\n${canonicalUrl}`
+  const shareText = `${text || 'Politiscope: the smarter way to follow UK politics.'}\n\nPolitiscope: the smarter way to follow UK politics.\n${canonicalUrl}`
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(shareText) } catch (e) {}

@@ -619,7 +619,7 @@ export default function HomeScreen({
                 textTransform: 'uppercase',
               }}
             >
-              The Full Picture of British Politics
+              Politiscope: the smarter way to follow UK politics.
             </div>
           </div>
         </div>
