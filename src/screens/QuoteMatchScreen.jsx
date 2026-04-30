@@ -107,8 +107,9 @@ export default function QuoteMatchScreen({ T, nav }) {
 
   const share = () => {
     const emoji = isCorrect ? '✅' : '❌'
-    const text = `${emoji} Politiscope Quote Match\n\n"${quote.quote.slice(0,60)}..."\n\nStreak: ${streak} 🔥 · Accuracy: ${total>0?Math.round(correct/total*100):0}%\n\nhttps://craighow8-creator.github.io/Ukpolls2/`
-    navigator.share?.({ title:'Politiscope', text }).catch(() => navigator.clipboard?.writeText(text))
+    const url = 'https://politiscope.co.uk'
+    const text = `${emoji} Politiscope Quote Match\n\n"${quote.quote.slice(0,60)}..."\n\nStreak: ${streak} 🔥 · Accuracy: ${total>0?Math.round(correct/total*100):0}%\n\n${url}`
+    navigator.share?.({ title:'Politiscope', text, url }).catch(() => navigator.clipboard?.writeText(text))
   }
 
   return (

@@ -6,7 +6,7 @@
     "nextElectionDate": "2026-05-07",
     "nextElectionLabel": "Local + Devolved Elections",
     "ge2029Date": "2029-05-02",
-    "appUrl": "https://craighow8-creator.github.io/Ukpolls2/"
+    "appUrl": "https://politiscope.co.uk"
   },
   "parties": [
     { "id": 1, "name": "Reform UK", "pct": 27, "change": 0, "seats": 335 },

@@ -17,7 +17,7 @@ const POLITISCOPE_DATA = {
     nextElectionLabel: "Local + Devolved Elections",
     ge2029Date:    "2029-08-15",
     nextGeneralElectionDate: "2029-08-15",
-    appUrl:        "https://craighow8-creator.github.io/Ukpolls2/",
+    appUrl:        "https://politiscope.co.uk",
   },
 
   /* ─────────────────────────────────────────

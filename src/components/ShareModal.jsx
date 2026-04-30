@@ -5,7 +5,8 @@ export default function ShareModal({ open, onClose, T, text, appUrl, title = 'Po
   const [copied, setCopied] = useState(false)
   if (!open) return null
 
-  const shareText = (text || '') + `\n\n🇬🇧 Politiscope — Your Full View on UK Politics\n${appUrl}`
+  const canonicalUrl = appUrl || 'https://politiscope.co.uk'
+  const shareText = `${text || 'Politiscope: the full picture of British politics'}\n\nPolitiscope — the full picture of British politics\n${canonicalUrl}`
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(shareText) } catch (e) {}
@@ -15,11 +16,11 @@ export default function ShareModal({ open, onClose, T, text, appUrl, title = 'Po
 
   const toX  = () => { window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText.slice(0,280))}`, '_blank'); onClose() }
   const toWA = () => { window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank'); onClose() }
-  const toFB = () => { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(appUrl)}&quote=${encodeURIComponent(text||'')}`, '_blank'); onClose() }
+  const toFB = () => { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(canonicalUrl)}&quote=${encodeURIComponent(text||'')}`, '_blank'); onClose() }
   const native = async () => {
     onClose()
     setTimeout(async () => {
-      if (navigator.share) { try { await navigator.share({ title, text: shareText }) } catch (e) {} }
+      if (navigator.share) { try { await navigator.share({ title, text: shareText, url: canonicalUrl }) } catch (e) {} }
       else copy()
     }, 150)
   }

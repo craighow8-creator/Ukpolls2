@@ -36,6 +36,8 @@ import GovernmentSimulatorScreen from './screens/GovernmentSimulatorScreen'
 import { getData } from './data/store.js'
 import { buildPollingAverage } from './utils/pollAverage'
 
+const CANONICAL_SHARE_URL = 'https://politiscope.co.uk'
+
 function getPollKeyForParty(party = {}) {
   const abbr = String(party?.abbr || '').trim().toLowerCase()
   const name = String(party?.name || '').trim().toLowerCase()
@@ -72,6 +74,19 @@ function getPollDateMs(poll) {
 
   const ts = new Date(raw).getTime()
   return Number.isFinite(ts) ? ts : 0
+}
+
+function formatShareDate(value) {
+  if (!value) return ''
+
+  if (typeof value === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(value)) return value
+
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return ''
+
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  return `${day}-${month}-${parsed.getFullYear()}`
 }
 
 function mergePollHistory(preferred = [], fallback = []) {
@@ -414,10 +429,16 @@ export default function App() {
     const sorted = [...PARTIES].sort((a, b) => (b.pct || 0) - (a.pct || 0))
     const snap = sorted
       .filter((p) => p.name !== 'Other')
+      .slice(0, 5)
       .map((p) => `${p.abbr} ${p.pct}%`)
       .join(' · ')
-    const days = Math.max(0, Math.ceil((new Date('2026-05-07') - new Date()) / 86400000))
-    return `UK polls (${META.fetchDate || ''}):\n${snap}\n\n${days} days to local elections\n\n${META.appUrl || ''}`
+    const latest = [...(POLLS_HISTORY || [])].sort((a, b) => getPollDateMs(b) - getPollDateMs(a))[0]
+    const latestDate = formatShareDate(latest?.fieldworkEnd || latest?.publishedAt || latest?.date)
+
+    if (!snap) return 'Politiscope: the full picture of British politics'
+
+    const dateLabel = latestDate ? `Latest poll data ${latestDate}` : 'Latest poll snapshot'
+    return `Politiscope: the full picture of British politics\n${dateLabel}\n${snap}`
   }
 
   if (!dataReady) {
@@ -695,7 +716,7 @@ export default function App() {
       </AnimatePresence>
 
       <Toast msg={toast} T={T} />
-      <ShareModal open={shareOpen} onClose={() => setShareOpen(false)} T={T} text={shareText} appUrl={META.appUrl} />
+      <ShareModal open={shareOpen} onClose={() => setShareOpen(false)} T={T} text={shareText} appUrl={CANONICAL_SHARE_URL} />
       <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} T={T} dark={dark} onToggleDark={toggleDark} />
       <MenuSheet
         open={menuOpen}
