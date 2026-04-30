@@ -2096,6 +2096,661 @@
     "updatedAt": "30-04-2026"
   },
   {
+    "id": "official-green-immigration-fair-migration-asylum-and-sanctuary",
+    "party": "Green",
+    "area": "immigration",
+    "topic": "Fair migration, asylum and sanctuary",
+    "title": "Fair migration, asylum and sanctuary",
+    "stanceScore": 0,
+    "stanceLabel": "Welcoming migration system",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "The Green Party says it would end the hostile environment, dismantle the dysfunctional Home Office by creating a Department of Migration and a Department of Justice, abolish No Recourse to Public Funds, end the ten-year route to settlement, simplify visa applications, charge application fees at cost, provide safe routes to sanctuary, process asylum claims fairly and quickly, and allow people seeking asylum to work.",
+    "details": [
+      "End the hostile environment and minimum income requirements for spouses of people holding work visas.",
+      "Dismantle the Home Office and create a new Department of Migration alongside a Department of Justice.",
+      "Simplify visa applications and charge application fees at cost rather than for profit.",
+      "Ensure NHS access is free and comprehensive for migrants with visas.",
+      "Allow migrants, including students, to bring family members who would normally live with them.",
+      "Abolish No Recourse to Public Funds and the ten-year route to settlement.",
+      "Work with other countries to establish safe routes for people fleeing persecution, war or climate disaster.",
+      "Create a fast and fair asylum process and allow people seeking asylum to work while claims are decided."
+    ],
+    "officialPosition": {
+      "headline": "Fair migration, asylum and sanctuary",
+      "shortSummary": "The Green Party says it would end the hostile environment, dismantle the dysfunctional Home Office by creating a Department of Migration and a Department of Justice, abolish No Recourse to Public Funds, end the ten-year route to settlement, simplify visa applications, charge application fees at cost, provide safe routes to sanctuary, process asylum claims fairly and quickly, and allow people seeking asylum to work.",
+      "detailedSummary": "End the hostile environment and minimum income requirements for spouses of people holding work visas.|Dismantle the Home Office and create a new Department of Migration alongside a Department of Justice.|Simplify visa applications and charge application fees at cost rather than for profit.|Ensure NHS access is free and comprehensive for migrants with visas.|Allow migrants, including students, to bring family members who would normally live with them.|Abolish No Recourse to Public Funds and the ten-year route to settlement.|Work with other countries to establish safe routes for people fleeing persecution, war or climate disaster.|Create a fast and fair asylum process and allow people seeking asylum to work while claims are decided.",
+      "sourceTitle": "Green Party manifesto: Real Hope. Real Change.",
+      "sourceUrl": "https://greenparty.org.uk/about/our-manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a rights-led migration position that separates migration from criminal justice and prioritises safe routes, lower barriers and access to support.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Green Party manifesto: Real Hope. Real Change.",
+        "url": "https://greenparty.org.uk/about/our-manifesto/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Green Party manifesto: Real Hope. Real Change.",
+      "url": "https://greenparty.org.uk/about/our-manifesto/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-green-economy-wealth-taxes-and-green-economic-transition",
+    "party": "Green",
+    "area": "economy",
+    "topic": "Wealth taxes and green economic transition",
+    "title": "Wealth taxes and green economic transition",
+    "stanceScore": 0,
+    "stanceLabel": "Redistributive green economy",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "The Green Party says it would fund public services and green investment through a wealth tax on assets above GBP 10m and GBP 1bn, aligning capital gains tax with income tax, removing the upper earnings limit on National Insurance, reforming inheritance and pension tax relief, introducing carbon taxes on fossil fuels, bringing key utilities into public ownership, supporting reduced working hours and moving toward a four-day week.",
+    "details": [
+      "Introduce a wealth tax of 1% on individual assets above GBP 10m and 2% on assets above GBP 1bn.",
+      "Align capital gains tax rates with income tax rates and reform inheritance tax.",
+      "Remove the National Insurance upper earnings limit so tax rates do not fall as income rises.",
+      "Equate pension tax relief with the basic rate of income tax to help fund social care.",
+      "Introduce a carbon tax on fossil fuels, whether produced in the UK or imported, rising over a decade.",
+      "Increase windfall taxes on oil and gas and introduce windfall taxes on banks where excessive profits are made.",
+      "Bring railways, water companies and the Big 5 retail energy companies into public ownership.",
+      "Support reduced working hours and movement toward a four-day working week."
+    ],
+    "officialPosition": {
+      "headline": "Wealth taxes and green economic transition",
+      "shortSummary": "The Green Party says it would fund public services and green investment through a wealth tax on assets above GBP 10m and GBP 1bn, aligning capital gains tax with income tax, removing the upper earnings limit on National Insurance, reforming inheritance and pension tax relief, introducing carbon taxes on fossil fuels, bringing key utilities into public ownership, supporting reduced working hours and moving toward a four-day week.",
+      "detailedSummary": "Introduce a wealth tax of 1% on individual assets above GBP 10m and 2% on assets above GBP 1bn.|Align capital gains tax rates with income tax rates and reform inheritance tax.|Remove the National Insurance upper earnings limit so tax rates do not fall as income rises.|Equate pension tax relief with the basic rate of income tax to help fund social care.|Introduce a carbon tax on fossil fuels, whether produced in the UK or imported, rising over a decade.|Increase windfall taxes on oil and gas and introduce windfall taxes on banks where excessive profits are made.|Bring railways, water companies and the Big 5 retail energy companies into public ownership.|Support reduced working hours and movement toward a four-day working week.",
+      "sourceTitle": "Green Party manifesto: Real Hope. Real Change.",
+      "sourceUrl": "https://greenparty.org.uk/about/our-manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a high-tax, high-investment economic position centred on wealth redistribution, public ownership and decarbonisation.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Green Party manifesto: Real Hope. Real Change.",
+        "url": "https://greenparty.org.uk/about/our-manifesto/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Green Party manifesto: Real Hope. Real Change.",
+      "url": "https://greenparty.org.uk/about/our-manifesto/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-green-nhs-public-nhs-dentistry-and-social-care",
+    "party": "Green",
+    "area": "nhs",
+    "topic": "Public NHS, dentistry and social care",
+    "title": "Public NHS, dentistry and social care",
+    "stanceScore": 0,
+    "stanceLabel": "Public health service",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "The Green Party says it would defend a fully public NHS, back the NHS Reinstatement Bill to reverse marketisation, reduce waiting lists, guarantee rapid GP access and same-day urgent access, guarantee NHS dentistry for everyone, boost NHS staff pay, restore public health funding, add GBP 8bn to NHS revenue spending in the first full year rising to GBP 28bn by 2030, invest GBP 20bn in NHS buildings and repairs, and create free personal care.",
+    "details": [
+      "Commit to a fully public health service and keep the profit motive away from the NHS.",
+      "Back the NHS Reinstatement Bill to abolish wasteful competition, re-establish public accountability and restrict commercial companies' role.",
+      "Reduce waiting lists through long-term funding commitments for hospital trusts.",
+      "Guarantee rapid access to a GP and same-day access for urgent need.",
+      "Guarantee access to an NHS dentist for everybody, with additional dentistry investment reaching GBP 3bn a year by 2030.",
+      "Boost NHS staff pay, including support for junior doctors' call for pay restoration.",
+      "Add GBP 8bn to NHS revenue spending in the first full year, rising to GBP 28bn by 2030, and invest at least GBP 20bn in NHS buildings and repair over five years.",
+      "Improve mental health care, including evidence-based therapies within 28 days.",
+      "Introduce free personal care, increase carer pay and invest GBP 20bn a year in social care."
+    ],
+    "officialPosition": {
+      "headline": "Public NHS, dentistry and social care",
+      "shortSummary": "The Green Party says it would defend a fully public NHS, back the NHS Reinstatement Bill to reverse marketisation, reduce waiting lists, guarantee rapid GP access and same-day urgent access, guarantee NHS dentistry for everyone, boost NHS staff pay, restore public health funding, add GBP 8bn to NHS revenue spending in the first full year rising to GBP 28bn by 2030, invest GBP 20bn in NHS buildings and repairs, and create free personal care.",
+      "detailedSummary": "Commit to a fully public health service and keep the profit motive away from the NHS.|Back the NHS Reinstatement Bill to abolish wasteful competition, re-establish public accountability and restrict commercial companies' role.|Reduce waiting lists through long-term funding commitments for hospital trusts.|Guarantee rapid access to a GP and same-day access for urgent need.|Guarantee access to an NHS dentist for everybody, with additional dentistry investment reaching GBP 3bn a year by 2030.|Boost NHS staff pay, including support for junior doctors' call for pay restoration.|Add GBP 8bn to NHS revenue spending in the first full year, rising to GBP 28bn by 2030, and invest at least GBP 20bn in NHS buildings and repair over five years.|Improve mental health care, including evidence-based therapies within 28 days.|Introduce free personal care, increase carer pay and invest GBP 20bn a year in social care.",
+      "sourceTitle": "Green Party manifesto: Real Hope. Real Change.",
+      "sourceUrl": "https://greenparty.org.uk/about/our-manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a strongly public-sector health position, combining anti-privatisation with large revenue, capital and social-care investment.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Green Party manifesto: Real Hope. Real Change.",
+        "url": "https://greenparty.org.uk/about/our-manifesto/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Green Party manifesto: Real Hope. Real Change.",
+      "url": "https://greenparty.org.uk/about/our-manifesto/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-green-housing-social-homes-rent-controls-and-warm-homes",
+    "party": "Green",
+    "area": "housing",
+    "topic": "Social homes, rent controls and warm homes",
+    "title": "Social homes, rent controls and warm homes",
+    "stanceScore": 0,
+    "stanceLabel": "Social housing and retrofit",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "The Green Party says it would provide 150,000 new social homes a year, end Right to Buy, empower councils to introduce rent controls, end no-fault evictions, introduce a Fairer Greener Homes Guarantee for warm and insulated homes, change planning so developments include public services and green space, require new homes to meet Passivhaus or equivalent standards, and fund a ten-year programme to retrofit homes to EPC B or above.",
+    "details": [
+      "Provide 150,000 new social homes a year and end Right to Buy so social homes remain community assets.",
+      "Empower local authorities to introduce rent controls where rental markets are overheated.",
+      "End Section 21 no-fault evictions and introduce long-term leases for private tenants.",
+      "Introduce a Fairer Greener Homes Guarantee so homes are warm, safe and well insulated.",
+      "Transform planning so large developments include GP surgeries, buses, walking and cycling routes, nursery and school places, and access to green space.",
+      "Change building regulations so all new homes meet Passivhaus or equivalent standards and include solar panels and low-carbon technologies.",
+      "Upgrade homes to EPC B or above through a ten-year programme, including GBP 12bn for social housing retrofit and GBP 17bn in grants for privately owned homes.",
+      "Give local authorities and community housing groups first option to buy certain empty or substandard properties."
+    ],
+    "officialPosition": {
+      "headline": "Social homes, rent controls and warm homes",
+      "shortSummary": "The Green Party says it would provide 150,000 new social homes a year, end Right to Buy, empower councils to introduce rent controls, end no-fault evictions, introduce a Fairer Greener Homes Guarantee for warm and insulated homes, change planning so developments include public services and green space, require new homes to meet Passivhaus or equivalent standards, and fund a ten-year programme to retrofit homes to EPC B or above.",
+      "detailedSummary": "Provide 150,000 new social homes a year and end Right to Buy so social homes remain community assets.|Empower local authorities to introduce rent controls where rental markets are overheated.|End Section 21 no-fault evictions and introduce long-term leases for private tenants.|Introduce a Fairer Greener Homes Guarantee so homes are warm, safe and well insulated.|Transform planning so large developments include GP surgeries, buses, walking and cycling routes, nursery and school places, and access to green space.|Change building regulations so all new homes meet Passivhaus or equivalent standards and include solar panels and low-carbon technologies.|Upgrade homes to EPC B or above through a ten-year programme, including GBP 12bn for social housing retrofit and GBP 17bn in grants for privately owned homes.|Give local authorities and community housing groups first option to buy certain empty or substandard properties.",
+      "sourceTitle": "Green Party manifesto: Real Hope. Real Change.",
+      "sourceUrl": "https://greenparty.org.uk/about/our-manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This housing offer combines public social-home supply, renter protection and climate retrofit, with less emphasis on private ownership incentives.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Green Party manifesto: Real Hope. Real Change.",
+        "url": "https://greenparty.org.uk/about/our-manifesto/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Green Party manifesto: Real Hope. Real Change.",
+      "url": "https://greenparty.org.uk/about/our-manifesto/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-green-education-school-investment-free-meals-and-lifelong-learning",
+    "party": "Green",
+    "area": "education",
+    "topic": "School investment, free meals and lifelong learning",
+    "title": "School investment, free meals and lifelong learning",
+    "stanceScore": 0,
+    "stanceLabel": "Universal education support",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "The Green Party says it would invest GBP 8bn in schools including GBP 2bn for teacher pay, invest GBP 2.5bn a year in safe school buildings, give all children a daily free school meal, invest GBP 5bn in SEND provision in mainstream schools, protect breakfast clubs, restore school nurses and counsellors, end high-stakes formal testing and abolish Ofsted, restore maintenance grants, scrap undergraduate tuition fees and invest in sixth-form, further education and lifelong learning.",
+    "details": [
+      "Invest GBP 8bn in schools, including GBP 2bn for a teacher pay uplift.",
+      "Invest GBP 2.5bn a year to tackle unsafe school buildings, including RAAC, and keep schools fit for purpose.",
+      "Provide all children with a daily free school meal and protect free breakfast clubs for primary pupils.",
+      "Invest GBP 5bn in SEND provision in mainstream schools, with accessible buildings and specially trained teachers.",
+      "Restore the role of the school nurse and give students in state-funded schools and colleges access to a qualified counsellor.",
+      "End high-stakes formal testing at primary and secondary schools and abolish Ofsted.",
+      "Fully fund every higher education student by restoring maintenance grants and scrapping undergraduate tuition fees.",
+      "Increase sixth-form funding by GBP 3bn and invest GBP 12bn in skills and lifelong learning for further education over the parliamentary term."
+    ],
+    "officialPosition": {
+      "headline": "School investment, free meals and lifelong learning",
+      "shortSummary": "The Green Party says it would invest GBP 8bn in schools including GBP 2bn for teacher pay, invest GBP 2.5bn a year in safe school buildings, give all children a daily free school meal, invest GBP 5bn in SEND provision in mainstream schools, protect breakfast clubs, restore school nurses and counsellors, end high-stakes formal testing and abolish Ofsted, restore maintenance grants, scrap undergraduate tuition fees and invest in sixth-form, further education and lifelong learning.",
+      "detailedSummary": "Invest GBP 8bn in schools, including GBP 2bn for a teacher pay uplift.|Invest GBP 2.5bn a year to tackle unsafe school buildings, including RAAC, and keep schools fit for purpose.|Provide all children with a daily free school meal and protect free breakfast clubs for primary pupils.|Invest GBP 5bn in SEND provision in mainstream schools, with accessible buildings and specially trained teachers.|Restore the role of the school nurse and give students in state-funded schools and colleges access to a qualified counsellor.|End high-stakes formal testing at primary and secondary schools and abolish Ofsted.|Fully fund every higher education student by restoring maintenance grants and scrapping undergraduate tuition fees.|Increase sixth-form funding by GBP 3bn and invest GBP 12bn in skills and lifelong learning for further education over the parliamentary term.",
+      "sourceTitle": "Green Party manifesto: Real Hope. Real Change.",
+      "sourceUrl": "https://greenparty.org.uk/about/our-manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a universalist education position, prioritising free meals, school funding, SEND, student support and reduced exam and inspection pressure.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Green Party manifesto: Real Hope. Real Change.",
+        "url": "https://greenparty.org.uk/about/our-manifesto/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Green Party manifesto: Real Hope. Real Change.",
+      "url": "https://greenparty.org.uk/about/our-manifesto/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-green-welfare-benefits-uplift-and-universal-basic-income-direction",
+    "party": "Green",
+    "area": "welfare",
+    "topic": "Benefits uplift and Universal Basic Income direction",
+    "title": "Benefits uplift and Universal Basic Income direction",
+    "stanceScore": 0,
+    "stanceLabel": "Universal safety net",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "The Green Party says it would increase Universal Credit and legacy benefits by GBP 40 a week, end the five-week wait, abolish the two-child benefit cap, increase disability benefits by 5%, end unfair targeting of carers and disabled people, oppose replacing PIP cash payments with vouchers, increase Carer's Allowance by at least 10% a month, scrap the bedroom tax, uprate pensions with inflation and wages, end benefit sanctions and pursue Universal Basic Income in the long term.",
+    "details": [
+      "Increase Universal Credit and legacy benefits by GBP 40 a week.",
+      "End the five-week wait for benefits.",
+      "Abolish the two-child benefit cap and lift 250,000 children out of poverty.",
+      "Increase all disability benefits by 5%.",
+      "End the unfair targeting of carers and disabled people on benefits and oppose replacing PIP cash payments with vouchers.",
+      "Increase Carer's Allowance by at least 10% a month.",
+      "Scrap the bedroom tax.",
+      "Ensure pensions are always uprated in line with inflation and keep pace with wage rises.",
+      "End benefit sanctions and challenge punitive welfare policy.",
+      "Push in the long term for Universal Basic Income so everyone has security to live, study, train or start a business."
+    ],
+    "officialPosition": {
+      "headline": "Benefits uplift and Universal Basic Income direction",
+      "shortSummary": "The Green Party says it would increase Universal Credit and legacy benefits by GBP 40 a week, end the five-week wait, abolish the two-child benefit cap, increase disability benefits by 5%, end unfair targeting of carers and disabled people, oppose replacing PIP cash payments with vouchers, increase Carer's Allowance by at least 10% a month, scrap the bedroom tax, uprate pensions with inflation and wages, end benefit sanctions and pursue Universal Basic Income in the long term.",
+      "detailedSummary": "Increase Universal Credit and legacy benefits by GBP 40 a week.|End the five-week wait for benefits.|Abolish the two-child benefit cap and lift 250,000 children out of poverty.|Increase all disability benefits by 5%.|End the unfair targeting of carers and disabled people on benefits and oppose replacing PIP cash payments with vouchers.|Increase Carer's Allowance by at least 10% a month.|Scrap the bedroom tax.|Ensure pensions are always uprated in line with inflation and keep pace with wage rises.|End benefit sanctions and challenge punitive welfare policy.|Push in the long term for Universal Basic Income so everyone has security to live, study, train or start a business.",
+      "sourceTitle": "Green Party manifesto: Real Hope. Real Change.",
+      "sourceUrl": "https://greenparty.org.uk/about/our-manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is an expansive welfare position focused on higher benefits, ending punitive conditions and moving over time toward Universal Basic Income.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Green Party manifesto: Real Hope. Real Change.",
+        "url": "https://greenparty.org.uk/about/our-manifesto/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Green Party manifesto: Real Hope. Real Change.",
+      "url": "https://greenparty.org.uk/about/our-manifesto/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-green-climate-rapid-renewables-and-fossil-fuel-phase-out",
+    "party": "Green",
+    "area": "climate",
+    "topic": "Rapid renewables and fossil fuel phase-out",
+    "title": "Rapid renewables and fossil fuel phase-out",
+    "stanceScore": 0,
+    "stanceLabel": "Rapid green transition",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "The Green Party says it would move to a zero-carbon society as soon as possible and more than a decade ahead of 2050, with wind providing around 70% of UK electricity by 2030, no new oil and gas licences, cancellation of recent fossil fuel licences such as Rosebank, an end to oil and gas subsidies, a carbon tax on fossil fuels, community ownership of energy, major grid and storage investment, targets of 80GW offshore wind, 53GW onshore wind and 100GW solar by 2035, and no new nuclear power.",
+    "details": [
+      "Push for a zero-carbon society as soon as possible and more than a decade ahead of 2050.",
+      "Aim for wind to provide around 70% of UK electricity by 2030.",
+      "Stop new oil and gas licences, cancel recently issued fossil fuel licences such as Rosebank and end all oil and gas subsidies.",
+      "Introduce a carbon tax on all fossil fuels, whether produced in the UK or imported, rising over a decade.",
+      "Set a minimum threshold of community ownership in sustainable energy infrastructure.",
+      "Support new incentives for wind, solar, marine, hydro-power and geothermal energy.",
+      "Target 80GW offshore wind, 53GW onshore wind and 100GW solar by 2035.",
+      "Expand and improve the electricity grid, interconnectors, storage and green hydrogen for necessary industrial uses.",
+      "Cease development of new nuclear power stations and campaign to phase out existing nuclear power."
+    ],
+    "officialPosition": {
+      "headline": "Rapid renewables and fossil fuel phase-out",
+      "shortSummary": "The Green Party says it would move to a zero-carbon society as soon as possible and more than a decade ahead of 2050, with wind providing around 70% of UK electricity by 2030, no new oil and gas licences, cancellation of recent fossil fuel licences such as Rosebank, an end to oil and gas subsidies, a carbon tax on fossil fuels, community ownership of energy, major grid and storage investment, targets of 80GW offshore wind, 53GW onshore wind and 100GW solar by 2035, and no new nuclear power.",
+      "detailedSummary": "Push for a zero-carbon society as soon as possible and more than a decade ahead of 2050.|Aim for wind to provide around 70% of UK electricity by 2030.|Stop new oil and gas licences, cancel recently issued fossil fuel licences such as Rosebank and end all oil and gas subsidies.|Introduce a carbon tax on all fossil fuels, whether produced in the UK or imported, rising over a decade.|Set a minimum threshold of community ownership in sustainable energy infrastructure.|Support new incentives for wind, solar, marine, hydro-power and geothermal energy.|Target 80GW offshore wind, 53GW onshore wind and 100GW solar by 2035.|Expand and improve the electricity grid, interconnectors, storage and green hydrogen for necessary industrial uses.|Cease development of new nuclear power stations and campaign to phase out existing nuclear power.",
+      "sourceTitle": "Green Party manifesto: Real Hope. Real Change.",
+      "sourceUrl": "https://greenparty.org.uk/about/our-manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is the fastest transition position in the main-party set, prioritising renewables, public and community ownership, carbon pricing and opposition to new nuclear.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Green Party manifesto: Real Hope. Real Change.",
+        "url": "https://greenparty.org.uk/about/our-manifesto/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Green Party manifesto: Real Hope. Real Change.",
+      "url": "https://greenparty.org.uk/about/our-manifesto/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-green-transport-public-rail-buses-and-active-travel",
+    "party": "Green",
+    "area": "transport",
+    "topic": "Public rail, buses and active travel",
+    "title": "Public rail, buses and active travel",
+    "stanceScore": 0,
+    "stanceLabel": "Public and active transport",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "The Green Party says it would invest an additional GBP 19bn over five years in public transport, electrification, cycleways and footpaths, reallocate road-building funds, bring railways back into public ownership, give local authorities control and funding for bus services, invest GBP 2.5bn a year in cycleways and footpaths, oppose new road building, favour privacy-protecting road pricing, replace petrol and diesel vehicles with EVs within a decade and halt airport expansion.",
+    "details": [
+      "Invest an additional GBP 19bn over five years in public transport, electrification, cycleways and footpaths, including reallocating funding earmarked for road building.",
+      "Bring railways back into public ownership as contracts expire and rolling stock needs replacement.",
+      "Give local authorities control over and funding for improved bus services, including bus services to every village in rural areas.",
+      "Invest GBP 2.5bn a year in new cycleways and footpaths built with sustainable materials.",
+      "Oppose all new road-building plans.",
+      "Favour privacy-protecting road pricing and support a rapid transition to electric vehicles through a scrappage scheme, with funding rising to GBP 5bn a year by the end of the parliament.",
+      "Apply the carbon tax to kerosene for aviation sold in the UK and halt any expansion of airport capacity.",
+      "Invest in skills so aviation and airport workers can move into alternative jobs as flights decline."
+    ],
+    "officialPosition": {
+      "headline": "Public rail, buses and active travel",
+      "shortSummary": "The Green Party says it would invest an additional GBP 19bn over five years in public transport, electrification, cycleways and footpaths, reallocate road-building funds, bring railways back into public ownership, give local authorities control and funding for bus services, invest GBP 2.5bn a year in cycleways and footpaths, oppose new road building, favour privacy-protecting road pricing, replace petrol and diesel vehicles with EVs within a decade and halt airport expansion.",
+      "detailedSummary": "Invest an additional GBP 19bn over five years in public transport, electrification, cycleways and footpaths, including reallocating funding earmarked for road building.|Bring railways back into public ownership as contracts expire and rolling stock needs replacement.|Give local authorities control over and funding for improved bus services, including bus services to every village in rural areas.|Invest GBP 2.5bn a year in new cycleways and footpaths built with sustainable materials.|Oppose all new road-building plans.|Favour privacy-protecting road pricing and support a rapid transition to electric vehicles through a scrappage scheme, with funding rising to GBP 5bn a year by the end of the parliament.|Apply the carbon tax to kerosene for aviation sold in the UK and halt any expansion of airport capacity.|Invest in skills so aviation and airport workers can move into alternative jobs as flights decline.",
+      "sourceTitle": "Green Party manifesto: Real Hope. Real Change.",
+      "sourceUrl": "https://greenparty.org.uk/about/our-manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a mode-shift transport position, moving investment away from roads and aviation toward rail, buses, walking, cycling and electrification.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Green Party manifesto: Real Hope. Real Change.",
+        "url": "https://greenparty.org.uk/about/our-manifesto/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Green Party manifesto: Real Hope. Real Change.",
+      "url": "https://greenparty.org.uk/about/our-manifesto/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-green-democracy-fair-politics-act-and-constitutional-reform",
+    "party": "Green",
+    "area": "democracy",
+    "topic": "Fair Politics Act and constitutional reform",
+    "title": "Fair Politics Act and constitutional reform",
+    "stanceScore": 0,
+    "stanceLabel": "Democratic renewal",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "The Green Party says it would introduce a Fair Politics Act, replace the House of Lords with an elected second chamber, support votes at 16 and residence-based voting rights, create a Constitutional Commission for a new constitutional settlement, make politics more accessible to under-represented groups, introduce a Digital Bill of Rights, strengthen media accountability and create a National Commission to review drug laws.",
+    "details": [
+      "Introduce a Fair Politics Act to strengthen democracy.",
+      "Replace the House of Lords with an elected second chamber.",
+      "Support votes for 16-year-olds and residence-based voting rights.",
+      "Create a Constitutional Commission to start a national conversation about a new constitutional settlement.",
+      "Advocate ways to make politics more accessible for under-represented groups, including women and disabled people.",
+      "Introduce a Digital Bill of Rights to set strong standards for rule of law and democracy in digital spaces and give people control over their data.",
+      "Strengthen media accountability and complete the second part of the press standards review.",
+      "Create a National Commission to agree an evidence-based approach to reforming drug laws and moving toward a legally regulated market."
+    ],
+    "officialPosition": {
+      "headline": "Fair Politics Act and constitutional reform",
+      "shortSummary": "The Green Party says it would introduce a Fair Politics Act, replace the House of Lords with an elected second chamber, support votes at 16 and residence-based voting rights, create a Constitutional Commission for a new constitutional settlement, make politics more accessible to under-represented groups, introduce a Digital Bill of Rights, strengthen media accountability and create a National Commission to review drug laws.",
+      "detailedSummary": "Introduce a Fair Politics Act to strengthen democracy.|Replace the House of Lords with an elected second chamber.|Support votes for 16-year-olds and residence-based voting rights.|Create a Constitutional Commission to start a national conversation about a new constitutional settlement.|Advocate ways to make politics more accessible for under-represented groups, including women and disabled people.|Introduce a Digital Bill of Rights to set strong standards for rule of law and democracy in digital spaces and give people control over their data.|Strengthen media accountability and complete the second part of the press standards review.|Create a National Commission to agree an evidence-based approach to reforming drug laws and moving toward a legally regulated market.",
+      "sourceTitle": "Green Party manifesto: Real Hope. Real Change.",
+      "sourceUrl": "https://greenparty.org.uk/about/our-manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a broad democratic-reform offer, combining institutional reform, wider voting rights, digital rights and deliberative constitutional change.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Green Party manifesto: Real Hope. Real Change.",
+        "url": "https://greenparty.org.uk/about/our-manifesto/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Green Party manifesto: Real Hope. Real Change.",
+      "url": "https://greenparty.org.uk/about/our-manifesto/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-green-foreignpolicy-peace-human-rights-aid-and-disarmament",
+    "party": "Green",
+    "area": "foreignPolicy",
+    "topic": "Peace, human rights, aid and disarmament",
+    "title": "Peace, human rights, aid and disarmament",
+    "stanceScore": 0,
+    "stanceLabel": "Peace and global justice",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "The Green Party says UK foreign policy should be based on democracy, peace, global solidarity and human rights. Its pledges include continued support for Ukraine, working toward European security reform and disarmament, rejoining the EU as soon as possible, an immediate permanent bilateral ceasefire in Gaza, recognition of Palestine, ending UK arms exports to Israel, going beyond restoring aid to 0.7% of GNI by raising it to 1% by 2033, increasing climate finance, signing the Treaty on the Prohibition of Nuclear Weapons and cancelling Trident.",
+    "details": [
+      "Base foreign policy on democracy, peace, global solidarity, human rights, self-determination and international law.",
+      "Continue to support Ukraine as it resists Russia's invasion.",
+      "Work toward reform of European security architecture and disarmament based on transparency and democracy.",
+      "Rejoin the European Union as soon as possible.",
+      "Push for an immediate and permanent bilateral ceasefire in Israel and Gaza, recognition of Palestine and an international effort to end the illegal occupation of Palestinian land.",
+      "End UK arms exports to, and military cooperation with, Israel.",
+      "Go beyond restoring international aid to 0.7% of GNI by raising it to 1% by 2033.",
+      "Increase climate finance to 1.5% of GNI by 2033, with additional Loss and Damage funding.",
+      "Sign the UN Treaty on the Prohibition of Nuclear Weapons, begin dismantling UK nuclear weapons, cancel Trident and remove foreign nuclear weapons from UK soil.",
+      "Work within NATO for reforms including No First Use of nuclear weapons, diplomacy before military action and NATO acting solely in defence of member states."
+    ],
+    "officialPosition": {
+      "headline": "Peace, human rights, aid and disarmament",
+      "shortSummary": "The Green Party says UK foreign policy should be based on democracy, peace, global solidarity and human rights. Its pledges include continued support for Ukraine, working toward European security reform and disarmament, rejoining the EU as soon as possible, an immediate permanent bilateral ceasefire in Gaza, recognition of Palestine, ending UK arms exports to Israel, going beyond restoring aid to 0.7% of GNI by raising it to 1% by 2033, increasing climate finance, signing the Treaty on the Prohibition of Nuclear Weapons and cancelling Trident.",
+      "detailedSummary": "Base foreign policy on democracy, peace, global solidarity, human rights, self-determination and international law.|Continue to support Ukraine as it resists Russia's invasion.|Work toward reform of European security architecture and disarmament based on transparency and democracy.|Rejoin the European Union as soon as possible.|Push for an immediate and permanent bilateral ceasefire in Israel and Gaza, recognition of Palestine and an international effort to end the illegal occupation of Palestinian land.|End UK arms exports to, and military cooperation with, Israel.|Go beyond restoring international aid to 0.7% of GNI by raising it to 1% by 2033.|Increase climate finance to 1.5% of GNI by 2033, with additional Loss and Damage funding.|Sign the UN Treaty on the Prohibition of Nuclear Weapons, begin dismantling UK nuclear weapons, cancel Trident and remove foreign nuclear weapons from UK soil.|Work within NATO for reforms including No First Use of nuclear weapons, diplomacy before military action and NATO acting solely in defence of member states.",
+      "sourceTitle": "Green Party manifesto: Real Hope. Real Change.",
+      "sourceUrl": "https://greenparty.org.uk/about/our-manifesto/",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a peace-and-rights foreign policy, pairing support for Ukraine with strong disarmament, aid, climate finance and international-law positions.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Green Party manifesto: Real Hope. Real Change.",
+        "url": "https://greenparty.org.uk/about/our-manifesto/",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Green Party manifesto: Real Hope. Real Change.",
+      "url": "https://greenparty.org.uk/about/our-manifesto/",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-restore-britain-immigration-reverse-mass-immigration-and-deport-illegal-migrants",
+    "party": "Restore Britain",
+    "area": "immigration",
+    "topic": "Reverse mass immigration and deport illegal migrants",
+    "title": "Reverse mass immigration and deport illegal migrants",
+    "stanceScore": 0,
+    "stanceLabel": "Mass immigration reversal",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Restore Britain says it would reverse mass immigration, deport all illegal migrants, remove legal obstacles to mass deportations, abolish the current asylum system, use austere modular or tent-based detention facilities pending deportation, end benefits linked to Indefinite Leave to Remain, tighten citizenship and spousal visa rules, introduce a Red List of countries facing stricter visa controls, and deport foreign criminals.",
+    "details": [
+      "Reverse mass immigration rather than only ending it.",
+      "Deport all illegal migrants and remove legal obstacles such as human-rights laws that Restore Britain says are easily exploited.",
+      "Abolish the current asylum system in its entirety.",
+      "Use modular, tent-based holding facilities for people it calls asylum seekers, with mandatory administrative detention pending deportation.",
+      "End benefits associated with Indefinite Leave to Remain and make non-citizen status strict, time-limited and conditional on work, tax contribution and good character.",
+      "Redefine British citizenship so it is harder to obtain and pursue denaturalisation where Restore Britain says this is in the public interest and lawful.",
+      "Introduce a Red List of countries whose nationals face stricter security checks, limited visa categories and higher entry barriers.",
+      "Simplify spousal visas for genuine relationships from countries not on the Red List while requiring English fluency, commitment to Britain and self-support.",
+      "Deport foreign criminals and people Restore Britain says enabled or covered up rape-gang abuse."
+    ],
+    "officialPosition": {
+      "headline": "Reverse mass immigration and deport illegal migrants",
+      "shortSummary": "Restore Britain says it would reverse mass immigration, deport all illegal migrants, remove legal obstacles to mass deportations, abolish the current asylum system, use austere modular or tent-based detention facilities pending deportation, end benefits linked to Indefinite Leave to Remain, tighten citizenship and spousal visa rules, introduce a Red List of countries facing stricter visa controls, and deport foreign criminals.",
+      "detailedSummary": "Reverse mass immigration rather than only ending it.|Deport all illegal migrants and remove legal obstacles such as human-rights laws that Restore Britain says are easily exploited.|Abolish the current asylum system in its entirety.|Use modular, tent-based holding facilities for people it calls asylum seekers, with mandatory administrative detention pending deportation.|End benefits associated with Indefinite Leave to Remain and make non-citizen status strict, time-limited and conditional on work, tax contribution and good character.|Redefine British citizenship so it is harder to obtain and pursue denaturalisation where Restore Britain says this is in the public interest and lawful.|Introduce a Red List of countries whose nationals face stricter security checks, limited visa categories and higher entry barriers.|Simplify spousal visas for genuine relationships from countries not on the Red List while requiring English fluency, commitment to Britain and self-support.|Deport foreign criminals and people Restore Britain says enabled or covered up rape-gang abuse.",
+      "sourceTitle": "Restore Britain immigration and border control policy",
+      "sourceUrl": "https://www.restorebritain.org.uk/immigration_border_control",
+      "sourceType": "official_policy_page",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is an explicitly maximal restriction and removal position, including abolition of the current asylum system and broad deportation powers.",
+    "sources": [
+      {
+        "type": "official_policy_page",
+        "title": "Restore Britain immigration and border control policy",
+        "url": "https://www.restorebritain.org.uk/immigration_border_control",
+        "priority": 80,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "official_policy_page",
+      "title": "Restore Britain immigration and border control policy",
+      "url": "https://www.restorebritain.org.uk/immigration_border_control",
+      "priority": 80,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-restore-britain-economy-lower-taxes-lower-waste-and-work-first-economics",
+    "party": "Restore Britain",
+    "area": "economy",
+    "topic": "Lower taxes, lower waste and work-first economics",
+    "title": "Lower taxes, lower waste and work-first economics",
+    "stanceScore": 0,
+    "stanceLabel": "Low-tax work-first economy",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Restore Britain says it would reward work and risk-taking by ending government waste, ending foreign aid, ending benefits for foreign nationals, getting able-bodied Britons on benefits back to work, scrapping IR35, abolishing inheritance tax, cutting corporation tax to the lowest rate in Europe, introducing tax holidays for new small businesses, taxing remittances sent abroad, investigating suspicious high-street businesses, and restoring the British high street.",
+    "details": [
+      "End government waste, foreign aid and benefits for foreign nationals.",
+      "Get able-bodied Britons on benefits back to work, including work such as litter-picking, graffiti removal and drain clearing, with benefit denial for refusal or slacking.",
+      "Scrap IR35 for contractors and the self-employed.",
+      "Abolish inheritance tax in full.",
+      "Cut corporation tax to the lowest rate in Europe and introduce tax holidays for new small businesses.",
+      "Offer additional deductions or incentives for companies investing in domestic manufacturing, research, training and infrastructure.",
+      "Tax remittances sent to foreign countries.",
+      "Create a multi-agency unit to investigate suspicious high-street businesses, with HMRC tax-compliance audits and immigration-enforcement involvement where relevant."
+    ],
+    "officialPosition": {
+      "headline": "Lower taxes, lower waste and work-first economics",
+      "shortSummary": "Restore Britain says it would reward work and risk-taking by ending government waste, ending foreign aid, ending benefits for foreign nationals, getting able-bodied Britons on benefits back to work, scrapping IR35, abolishing inheritance tax, cutting corporation tax to the lowest rate in Europe, introducing tax holidays for new small businesses, taxing remittances sent abroad, investigating suspicious high-street businesses, and restoring the British high street.",
+      "detailedSummary": "End government waste, foreign aid and benefits for foreign nationals.|Get able-bodied Britons on benefits back to work, including work such as litter-picking, graffiti removal and drain clearing, with benefit denial for refusal or slacking.|Scrap IR35 for contractors and the self-employed.|Abolish inheritance tax in full.|Cut corporation tax to the lowest rate in Europe and introduce tax holidays for new small businesses.|Offer additional deductions or incentives for companies investing in domestic manufacturing, research, training and infrastructure.|Tax remittances sent to foreign countries.|Create a multi-agency unit to investigate suspicious high-street businesses, with HMRC tax-compliance audits and immigration-enforcement involvement where relevant.",
+      "sourceTitle": "Restore Britain economy and taxation policy",
+      "sourceUrl": "https://www.restorebritain.org.uk/economy_taxation",
+      "sourceType": "official_policy_page",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This combines low-tax and anti-waste economics with a strong welfare-conditionality and immigration-enforcement frame.",
+    "sources": [
+      {
+        "type": "official_policy_page",
+        "title": "Restore Britain economy and taxation policy",
+        "url": "https://www.restorebritain.org.uk/economy_taxation",
+        "priority": 80,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "official_policy_page",
+      "title": "Restore Britain economy and taxation policy",
+      "url": "https://www.restorebritain.org.uk/economy_taxation",
+      "priority": 80,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
     "id": "official-restore-britain-nhs-healthcare-and-nhs-access",
     "party": "Restore Britain",
     "area": "nhs",
@@ -2118,7 +2773,7 @@
       "sourceTitle": "Restore Britain healthcare policy",
       "sourceUrl": "https://www.restorebritain.org.uk/healthcare",
       "sourceType": "official_policy_page",
-      "lastChecked": "29-04-2026",
+      "lastChecked": "30-04-2026",
       "verificationStatus": "verified"
     },
     "politiscopeAnalysis": "This frames NHS pressure mainly through national access, workforce and migration rather than through private-sector reform.",
@@ -2128,7 +2783,7 @@
         "title": "Restore Britain healthcare policy",
         "url": "https://www.restorebritain.org.uk/healthcare",
         "priority": 80,
-        "lastChecked": "29-04-2026",
+        "lastChecked": "30-04-2026",
         "verificationStatus": "verified"
       }
     ],
@@ -2137,11 +2792,375 @@
       "title": "Restore Britain healthcare policy",
       "url": "https://www.restorebritain.org.uk/healthcare",
       "priority": 80,
-      "lastChecked": "29-04-2026",
+      "lastChecked": "30-04-2026",
       "verificationStatus": "verified"
     },
     "confidence": "high",
     "coverage": "official-source",
-    "updatedAt": "29-04-2026"
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-restore-britain-housing-lower-housing-pressure-and-infrastructure-first-building",
+    "party": "Restore Britain",
+    "area": "housing",
+    "topic": "Lower housing pressure and infrastructure-first building",
+    "title": "Lower housing pressure and infrastructure-first building",
+    "stanceScore": 0,
+    "stanceLabel": "Population-pressure housing policy",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Restore Britain says Britain has a population crisis rather than a housing crisis, and that its immigration policies would reduce pressure on the housing market. It says it would protect the countryside from generic housing developments and implement an infrastructure-first housing policy requiring developers to fund local infrastructure before building, with British homes for British families.",
+    "details": [
+      "Protect the British countryside from endless, generic, low-quality housing developments.",
+      "Argue that Britain has a population crisis rather than a housing crisis.",
+      "Use immigration policy to reduce pressure on the housing market and make home ownership easier for young families.",
+      "Require developers to fund local infrastructure before building starts.",
+      "Frame its housing approach as British homes for British families."
+    ],
+    "officialPosition": {
+      "headline": "Lower housing pressure and infrastructure-first building",
+      "shortSummary": "Restore Britain says Britain has a population crisis rather than a housing crisis, and that its immigration policies would reduce pressure on the housing market. It says it would protect the countryside from generic housing developments and implement an infrastructure-first housing policy requiring developers to fund local infrastructure before building, with British homes for British families.",
+      "detailedSummary": "Protect the British countryside from endless, generic, low-quality housing developments.|Argue that Britain has a population crisis rather than a housing crisis.|Use immigration policy to reduce pressure on the housing market and make home ownership easier for young families.|Require developers to fund local infrastructure before building starts.|Frame its housing approach as British homes for British families.",
+      "sourceTitle": "Restore Britain environment and infrastructure policy",
+      "sourceUrl": "https://www.restorebritain.org.uk/environment_infrastructure",
+      "sourceType": "official_policy_page",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a demand-reduction and infrastructure-first housing position, with fewer direct commitments on social housing or private rented reform.",
+    "sources": [
+      {
+        "type": "official_policy_page",
+        "title": "Restore Britain environment and infrastructure policy",
+        "url": "https://www.restorebritain.org.uk/environment_infrastructure",
+        "priority": 80,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "official_policy_page",
+      "title": "Restore Britain environment and infrastructure policy",
+      "url": "https://www.restorebritain.org.uk/environment_infrastructure",
+      "priority": 80,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-restore-britain-education-pro-british-education-and-practical-skills",
+    "party": "Restore Britain",
+    "area": "education",
+    "topic": "Pro-British education and practical skills",
+    "title": "Pro-British education and practical skills",
+    "stanceScore": 0,
+    "stanceLabel": "Pro-British curriculum",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Restore Britain says it would deliver an education system that teaches, respects and celebrates British history while equipping students with practical skills. Its pledges include funding apprenticeships and practical skills, allowing up to five school days of term-time family trips without fines, and making universities openly pro-British by removing publicly funded staff or courses that it says push anti-British ideology.",
+    "details": [
+      "Encourage and fund young people to take apprenticeships and learn practical skills rather than what Restore Britain calls bogus university degrees.",
+      "Support less academically inclined pupils learning life skills needed in modern society.",
+      "End school holiday fines for up to five school days a year for meaningful family trips.",
+      "Say parents should be trusted to act in their children's interests.",
+      "Make universities openly pro-British and proud of British history, culture and people.",
+      "Remove professors and administrative staff pushing anti-British ideology from publicly funded universities.",
+      "Shut down courses that Restore Britain says teach students to hate their own culture and hold inquiries into universities in the most egregious cases."
+    ],
+    "officialPosition": {
+      "headline": "Pro-British education and practical skills",
+      "shortSummary": "Restore Britain says it would deliver an education system that teaches, respects and celebrates British history while equipping students with practical skills. Its pledges include funding apprenticeships and practical skills, allowing up to five school days of term-time family trips without fines, and making universities openly pro-British by removing publicly funded staff or courses that it says push anti-British ideology.",
+      "detailedSummary": "Encourage and fund young people to take apprenticeships and learn practical skills rather than what Restore Britain calls bogus university degrees.|Support less academically inclined pupils learning life skills needed in modern society.|End school holiday fines for up to five school days a year for meaningful family trips.|Say parents should be trusted to act in their children's interests.|Make universities openly pro-British and proud of British history, culture and people.|Remove professors and administrative staff pushing anti-British ideology from publicly funded universities.|Shut down courses that Restore Britain says teach students to hate their own culture and hold inquiries into universities in the most egregious cases.",
+      "sourceTitle": "Restore Britain education policy",
+      "sourceUrl": "https://www.restorebritain.org.uk/education",
+      "sourceType": "official_policy_page",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a cultural and vocational education position, prioritising apprenticeships, parental discretion and ideological control of publicly funded universities.",
+    "sources": [
+      {
+        "type": "official_policy_page",
+        "title": "Restore Britain education policy",
+        "url": "https://www.restorebritain.org.uk/education",
+        "priority": 80,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "official_policy_page",
+      "title": "Restore Britain education policy",
+      "url": "https://www.restorebritain.org.uk/education",
+      "priority": 80,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-restore-britain-welfare-work-requirements-and-restricted-benefits",
+    "party": "Restore Britain",
+    "area": "welfare",
+    "topic": "Work requirements and restricted benefits",
+    "title": "Work requirements and restricted benefits",
+    "stanceScore": 0,
+    "stanceLabel": "Conditional welfare",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Restore Britain says it would protect a social safety net for the genuinely vulnerable while ending benefits for foreign nationals and getting able-bodied Britons on benefits back to work. Its economy policy says work could include litter-picking, graffiti removal and drain clearing, and that anyone who refuses or slacks on the job would be denied benefits.",
+    "details": [
+      "Protect a robust social safety net for the nation's vulnerable, according to Restore Britain's economy policy.",
+      "End benefits for foreign nationals.",
+      "Get healthy or able-bodied Britons off benefits and into work.",
+      "Require work that could include picking litter, wiping away graffiti and clearing drains.",
+      "Deny benefits to anyone who refuses or slacks on assigned work.",
+      "Link welfare reform to ending government waste and reducing incentives that Restore Britain says reward shirkers."
+    ],
+    "officialPosition": {
+      "headline": "Work requirements and restricted benefits",
+      "shortSummary": "Restore Britain says it would protect a social safety net for the genuinely vulnerable while ending benefits for foreign nationals and getting able-bodied Britons on benefits back to work. Its economy policy says work could include litter-picking, graffiti removal and drain clearing, and that anyone who refuses or slacks on the job would be denied benefits.",
+      "detailedSummary": "Protect a robust social safety net for the nation's vulnerable, according to Restore Britain's economy policy.|End benefits for foreign nationals.|Get healthy or able-bodied Britons off benefits and into work.|Require work that could include picking litter, wiping away graffiti and clearing drains.|Deny benefits to anyone who refuses or slacks on assigned work.|Link welfare reform to ending government waste and reducing incentives that Restore Britain says reward shirkers.",
+      "sourceTitle": "Restore Britain economy and taxation policy",
+      "sourceUrl": "https://www.restorebritain.org.uk/economy_taxation",
+      "sourceType": "official_policy_page",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a work-first welfare position with explicit restrictions for foreign nationals and compulsory activity for able-bodied claimants.",
+    "sources": [
+      {
+        "type": "official_policy_page",
+        "title": "Restore Britain economy and taxation policy",
+        "url": "https://www.restorebritain.org.uk/economy_taxation",
+        "priority": 80,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "official_policy_page",
+      "title": "Restore Britain economy and taxation policy",
+      "url": "https://www.restorebritain.org.uk/economy_taxation",
+      "priority": 80,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-restore-britain-climate-repeal-net-zero-and-prioritise-energy-security",
+    "party": "Restore Britain",
+    "area": "climate",
+    "topic": "Repeal net zero and prioritise energy security",
+    "title": "Repeal net zero and prioritise energy security",
+    "stanceScore": 0,
+    "stanceLabel": "Energy security over net zero",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Restore Britain says energy should be cheap, reliable and scalable. It would repeal net zero goals by abolishing the Climate Change Act 2008, prioritise fossil-fuel investment where needed, pursue a Britain First energy-security strategy, prevent foreign ownership of energy infrastructure, lift the ban on North Sea oil and gas exploration, and re-examine shale gas.",
+    "details": [
+      "Make energy cheap, reliable and scalable as the first priority.",
+      "Accept investment in fossil fuels where Restore Britain says this is needed.",
+      "Abolish the Climate Change Act 2008 and repeal net zero goals.",
+      "Pursue a Britain First energy-security strategy based on energy independence.",
+      "Prevent foreign powers from owning components of UK energy infrastructure.",
+      "Lift the ban on North Sea oil and gas exploration.",
+      "Re-examine opportunities from shale gas."
+    ],
+    "officialPosition": {
+      "headline": "Repeal net zero and prioritise energy security",
+      "shortSummary": "Restore Britain says energy should be cheap, reliable and scalable. It would repeal net zero goals by abolishing the Climate Change Act 2008, prioritise fossil-fuel investment where needed, pursue a Britain First energy-security strategy, prevent foreign ownership of energy infrastructure, lift the ban on North Sea oil and gas exploration, and re-examine shale gas.",
+      "detailedSummary": "Make energy cheap, reliable and scalable as the first priority.|Accept investment in fossil fuels where Restore Britain says this is needed.|Abolish the Climate Change Act 2008 and repeal net zero goals.|Pursue a Britain First energy-security strategy based on energy independence.|Prevent foreign powers from owning components of UK energy infrastructure.|Lift the ban on North Sea oil and gas exploration.|Re-examine opportunities from shale gas.",
+      "sourceTitle": "Restore Britain environment and infrastructure policy",
+      "sourceUrl": "https://www.restorebritain.org.uk/environment_infrastructure",
+      "sourceType": "official_policy_page",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is an anti-net-zero energy-security position, prioritising domestic fossil fuels and sovereignty over decarbonisation targets.",
+    "sources": [
+      {
+        "type": "official_policy_page",
+        "title": "Restore Britain environment and infrastructure policy",
+        "url": "https://www.restorebritain.org.uk/environment_infrastructure",
+        "priority": 80,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "official_policy_page",
+      "title": "Restore Britain environment and infrastructure policy",
+      "url": "https://www.restorebritain.org.uk/environment_infrastructure",
+      "priority": 80,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-restore-britain-transport-automate-the-tube-and-prioritise-domestic-infrastructure",
+    "party": "Restore Britain",
+    "area": "transport",
+    "topic": "Automate the Tube and prioritise domestic infrastructure",
+    "title": "Automate the Tube and prioritise domestic infrastructure",
+    "stanceScore": 0,
+    "stanceLabel": "Automation and domestic infrastructure",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Restore Britain's environment and infrastructure policy says infrastructure projects would focus on needs at home and specifically calls for automating the London Underground. It argues driverless trains would cut costs, improve reliability and prevent Londoners being held hostage by transport unions.",
+    "details": [
+      "Focus infrastructure projects on domestic needs.",
+      "Automate the London Underground.",
+      "Argue that driverless trains already operate safely in other cities and on parts of London's own network.",
+      "Use automation to cut costs and improve reliability.",
+      "Frame Tube automation as a way to prevent disruption from transport unions."
+    ],
+    "officialPosition": {
+      "headline": "Automate the Tube and prioritise domestic infrastructure",
+      "shortSummary": "Restore Britain's environment and infrastructure policy says infrastructure projects would focus on needs at home and specifically calls for automating the London Underground. It argues driverless trains would cut costs, improve reliability and prevent Londoners being held hostage by transport unions.",
+      "detailedSummary": "Focus infrastructure projects on domestic needs.|Automate the London Underground.|Argue that driverless trains already operate safely in other cities and on parts of London's own network.|Use automation to cut costs and improve reliability.|Frame Tube automation as a way to prevent disruption from transport unions.",
+      "sourceTitle": "Restore Britain environment and infrastructure policy",
+      "sourceUrl": "https://www.restorebritain.org.uk/environment_infrastructure",
+      "sourceType": "official_policy_page",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is thin but explicit transport coverage, centred on Tube automation rather than a wider national transport programme.",
+    "sources": [
+      {
+        "type": "official_policy_page",
+        "title": "Restore Britain environment and infrastructure policy",
+        "url": "https://www.restorebritain.org.uk/environment_infrastructure",
+        "priority": 80,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "official_policy_page",
+      "title": "Restore Britain environment and infrastructure policy",
+      "url": "https://www.restorebritain.org.uk/environment_infrastructure",
+      "priority": 80,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-restore-britain-democracy-election-integrity-and-restricted-postal-voting",
+    "party": "Restore Britain",
+    "area": "democracy",
+    "topic": "Election integrity and restricted postal voting",
+    "title": "Election integrity and restricted postal voting",
+    "stanceScore": 0,
+    "stanceLabel": "Election security",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Restore Britain says it would safeguard election integrity by abolishing postal voting except for people with genuine, proven need, launching a full review of past irregularities with prosecutions for wrongdoing, deporting foreign or dual nationals found guilty, and barring foreign nationals from voting or standing in British local, regional or national elections.",
+    "details": [
+      "Abolish postal voting on demand, reserving postal votes for people who are genuinely housebound or abroad for official reasons such as military or diplomatic service.",
+      "Require individually verified, security-checked applications and strict regulation for any proxy voting.",
+      "Launch a full review into previous allegations of postal vote fraud and repeated irregularities.",
+      "Prosecute people found to have manipulated ballots, intimidated voters or exploited vulnerable communities.",
+      "Deport foreign or dual nationals found guilty of election wrongdoing.",
+      "Prevent foreign nationals from voting or standing in British local, regional or national elections."
+    ],
+    "officialPosition": {
+      "headline": "Election integrity and restricted postal voting",
+      "shortSummary": "Restore Britain says it would safeguard election integrity by abolishing postal voting except for people with genuine, proven need, launching a full review of past irregularities with prosecutions for wrongdoing, deporting foreign or dual nationals found guilty, and barring foreign nationals from voting or standing in British local, regional or national elections.",
+      "detailedSummary": "Abolish postal voting on demand, reserving postal votes for people who are genuinely housebound or abroad for official reasons such as military or diplomatic service.|Require individually verified, security-checked applications and strict regulation for any proxy voting.|Launch a full review into previous allegations of postal vote fraud and repeated irregularities.|Prosecute people found to have manipulated ballots, intimidated voters or exploited vulnerable communities.|Deport foreign or dual nationals found guilty of election wrongdoing.|Prevent foreign nationals from voting or standing in British local, regional or national elections.",
+      "sourceTitle": "Restore Britain election integrity policy",
+      "sourceUrl": "https://www.restorebritain.org.uk/election_integrity",
+      "sourceType": "official_policy_page",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a restrictive election-integrity position, focused on limiting postal voting and narrowing political rights for non-citizens.",
+    "sources": [
+      {
+        "type": "official_policy_page",
+        "title": "Restore Britain election integrity policy",
+        "url": "https://www.restorebritain.org.uk/election_integrity",
+        "priority": 80,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "official_policy_page",
+      "title": "Restore Britain election integrity policy",
+      "url": "https://www.restorebritain.org.uk/election_integrity",
+      "priority": 80,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-restore-britain-foreignpolicy-british-interests-first-foreign-policy",
+    "party": "Restore Britain",
+    "area": "foreignPolicy",
+    "topic": "British interests first foreign policy",
+    "title": "British interests first foreign policy",
+    "stanceScore": 0,
+    "stanceLabel": "National-interest foreign policy",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Restore Britain says foreign policy should put British interests first over international institutions or foreign states. It says military aid and armed-force deployments would be judged by the interests of the British people, foreign aid that does not advance Britain's national interests would be scrapped, Britain should rebuild and rearm, and DEI should be abolished across government departments including the armed forces.",
+    "details": [
+      "End what Restore Britain calls a globalist approach to foreign policy.",
+      "Prioritise British interests in military aid and deployment of the armed forces.",
+      "Scrap foreign aid that does nothing to advance Britain's national interests.",
+      "Rebuild and rearm Britain.",
+      "Abolish DEI across government departments, including the Ministry of Defence.",
+      "Focus armed-forces recruitment on the native majority, according to Restore Britain's stated objective."
+    ],
+    "officialPosition": {
+      "headline": "British interests first foreign policy",
+      "shortSummary": "Restore Britain says foreign policy should put British interests first over international institutions or foreign states. It says military aid and armed-force deployments would be judged by the interests of the British people, foreign aid that does not advance Britain's national interests would be scrapped, Britain should rebuild and rearm, and DEI should be abolished across government departments including the armed forces.",
+      "detailedSummary": "End what Restore Britain calls a globalist approach to foreign policy.|Prioritise British interests in military aid and deployment of the armed forces.|Scrap foreign aid that does nothing to advance Britain's national interests.|Rebuild and rearm Britain.|Abolish DEI across government departments, including the Ministry of Defence.|Focus armed-forces recruitment on the native majority, according to Restore Britain's stated objective.",
+      "sourceTitle": "Restore Britain foreign policy",
+      "sourceUrl": "https://www.restorebritain.org.uk/foreign_policy",
+      "sourceType": "official_policy_page",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a nationalist foreign-policy position, combining aid cuts, rearmament and a domestic cultural agenda for defence institutions.",
+    "sources": [
+      {
+        "type": "official_policy_page",
+        "title": "Restore Britain foreign policy",
+        "url": "https://www.restorebritain.org.uk/foreign_policy",
+        "priority": 80,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "official_policy_page",
+      "title": "Restore Britain foreign policy",
+      "url": "https://www.restorebritain.org.uk/foreign_policy",
+      "priority": 80,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
   }
 ]
