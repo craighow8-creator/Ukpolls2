@@ -1,5 +1,312 @@
 [
   {
+    "id": "official-reform-uk-immigration-immigration-restriction-and-removals",
+    "party": "Reform UK",
+    "area": "immigration",
+    "topic": "Immigration restriction and removals",
+    "title": "Immigration restriction and removals",
+    "stanceScore": 0,
+    "stanceLabel": "Strict border control",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Reform UK says it would freeze non-essential immigration, stop small boat crossings by leaving the ECHR, detain and deport illegal arrivals, restrict access to benefits, and introduce an employer immigration tax while exempting essential foreign health and care workers.",
+    "details": [
+      "Freeze non-essential immigration, with essential skills mainly around healthcare as the exception.",
+      "Leave the ECHR as part of its small boats plan and detain and deport illegal arrivals.",
+      "Bar student dependants and limit routes that Reform says abuse immigration rules.",
+      "Require five years of residency and employment before claiming benefits.",
+      "Raise employer National Insurance for foreign workers, while exempting essential foreign health and care workers."
+    ],
+    "officialPosition": {
+      "headline": "Immigration restriction and removals",
+      "shortSummary": "Reform UK says it would freeze non-essential immigration, stop small boat crossings by leaving the ECHR, detain and deport illegal arrivals, restrict access to benefits, and introduce an employer immigration tax while exempting essential foreign health and care workers.",
+      "detailedSummary": "Freeze non-essential immigration, with essential skills mainly around healthcare as the exception.|Leave the ECHR as part of its small boats plan and detain and deport illegal arrivals.|Bar student dependants and limit routes that Reform says abuse immigration rules.|Require five years of residency and employment before claiming benefits.|Raise employer National Insurance for foreign workers, while exempting essential foreign health and care workers.",
+      "sourceTitle": "Reform UK Contract with You 2024",
+      "sourceUrl": "https://www.reformparty.uk/reformisessential",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This is a highly restrictive immigration position that links border control to wages, housing pressure and public-service capacity.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Reform UK Contract with You 2024",
+        "url": "https://www.reformparty.uk/reformisessential",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Reform UK Contract with You 2024",
+      "url": "https://www.reformparty.uk/reformisessential",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-reform-uk-economy-tax-cuts-waste-reduction-and-business-deregulation",
+    "party": "Reform UK",
+    "area": "economy",
+    "topic": "Tax cuts, waste reduction and business deregulation",
+    "title": "Tax cuts, waste reduction and business deregulation",
+    "stanceScore": 0,
+    "stanceLabel": "Low-tax growth",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Reform UK says it would cut wasteful spending, raise the income tax starting threshold to £20,000, raise the higher-rate threshold to £70,000, cut energy taxes, reduce corporation tax, lift the VAT threshold to £150,000 and reduce regulation on business.",
+    "details": [
+      "Require departments to reduce wasteful spending without touching frontline services.",
+      "Raise the income tax starting threshold to £20,000 and the higher-rate threshold to £70,000.",
+      "Cut residential stamp duty and abolish inheritance tax for estates under £2m.",
+      "Lift the minimum corporation tax profit threshold to £100,000 and reduce the main corporation tax rate.",
+      "Lift the VAT threshold to £150,000 and abolish IR35 rules."
+    ],
+    "officialPosition": {
+      "headline": "Tax cuts, waste reduction and business deregulation",
+      "shortSummary": "Reform UK says it would cut wasteful spending, raise the income tax starting threshold to £20,000, raise the higher-rate threshold to £70,000, cut energy taxes, reduce corporation tax, lift the VAT threshold to £150,000 and reduce regulation on business.",
+      "detailedSummary": "Require departments to reduce wasteful spending without touching frontline services.|Raise the income tax starting threshold to £20,000 and the higher-rate threshold to £70,000.|Cut residential stamp duty and abolish inheritance tax for estates under £2m.|Lift the minimum corporation tax profit threshold to £100,000 and reduce the main corporation tax rate.|Lift the VAT threshold to £150,000 and abolish IR35 rules.",
+      "sourceTitle": "Reform UK Contract with You 2024",
+      "sourceUrl": "https://www.reformparty.uk/reformisessential",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This frames economic policy around tax cuts, spending restraint and deregulation, with the fiscal balance dependent on claimed savings and growth effects.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Reform UK Contract with You 2024",
+        "url": "https://www.reformparty.uk/reformisessential",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Reform UK Contract with You 2024",
+      "url": "https://www.reformparty.uk/reformisessential",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-reform-uk-nhs-nhs-waiting-lists-and-healthcare-capacity",
+    "party": "Reform UK",
+    "area": "nhs",
+    "topic": "NHS waiting lists and healthcare capacity",
+    "title": "NHS waiting lists and healthcare capacity",
+    "stanceScore": 0,
+    "stanceLabel": "Capacity and reform",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Reform UK says the NHS should remain free at the point of delivery while being reformed to reduce waiting lists. Its pledges include tax relief for frontline NHS and social care staff, ending training caps for UK medical students, using independent healthcare capacity and introducing vouchers where NHS waits exceed set limits.",
+    "details": [
+      "Keep healthcare free at the point of delivery while reforming the NHS to improve outcomes and reduce waiting lists.",
+      "Give frontline NHS and social care staff zero basic-rate tax for three years.",
+      "End training caps for UK medical students and write off student fees over NHS service.",
+      "Use independent and not-for-profit healthcare capacity in the UK and overseas.",
+      "Offer NHS patients a voucher for private treatment where GP, consultant or operation waits exceed stated limits."
+    ],
+    "officialPosition": {
+      "headline": "NHS waiting lists and healthcare capacity",
+      "shortSummary": "Reform UK says the NHS should remain free at the point of delivery while being reformed to reduce waiting lists. Its pledges include tax relief for frontline NHS and social care staff, ending training caps for UK medical students, using independent healthcare capacity and introducing vouchers where NHS waits exceed set limits.",
+      "detailedSummary": "Keep healthcare free at the point of delivery while reforming the NHS to improve outcomes and reduce waiting lists.|Give frontline NHS and social care staff zero basic-rate tax for three years.|End training caps for UK medical students and write off student fees over NHS service.|Use independent and not-for-profit healthcare capacity in the UK and overseas.|Offer NHS patients a voucher for private treatment where GP, consultant or operation waits exceed stated limits.",
+      "sourceTitle": "Reform UK Contract with You 2024",
+      "sourceUrl": "https://www.reformparty.uk/reformisessential",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This keeps a free-at-use NHS commitment but relies heavily on staffing tax incentives, management reform and independent-sector capacity.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Reform UK Contract with You 2024",
+        "url": "https://www.reformparty.uk/reformisessential",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Reform UK Contract with You 2024",
+      "url": "https://www.reformparty.uk/reformisessential",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-reform-uk-housing-housebuilding-planning-and-local-priority",
+    "party": "Reform UK",
+    "area": "housing",
+    "topic": "Housebuilding, planning and local priority",
+    "title": "Housebuilding, planning and local priority",
+    "stanceScore": 0,
+    "stanceLabel": "Build and prioritise locals",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Reform UK says it would increase home ownership by accelerating housebuilding, cutting immigration, fast-tracking brownfield development, changing social housing priority rules, restoring landlord finance-cost relief and using construction technology to speed up building.",
+    "details": [
+      "Unleash housebuilding and cut immigration as part of its housing approach.",
+      "Fast-track planning and tax incentives for brownfield development.",
+      "Prioritise local people and those who have paid into the system in social housing law.",
+      "Restore landlords' rights to deduct finance costs and mortgage interest from rental income tax.",
+      "Use modular construction and digital technology to speed up building and reduce waste."
+    ],
+    "officialPosition": {
+      "headline": "Housebuilding, planning and local priority",
+      "shortSummary": "Reform UK says it would increase home ownership by accelerating housebuilding, cutting immigration, fast-tracking brownfield development, changing social housing priority rules, restoring landlord finance-cost relief and using construction technology to speed up building.",
+      "detailedSummary": "Unleash housebuilding and cut immigration as part of its housing approach.|Fast-track planning and tax incentives for brownfield development.|Prioritise local people and those who have paid into the system in social housing law.|Restore landlords' rights to deduct finance costs and mortgage interest from rental income tax.|Use modular construction and digital technology to speed up building and reduce waste.",
+      "sourceTitle": "Reform UK Contract with You 2024",
+      "sourceUrl": "https://www.reformparty.uk/reformisessential",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This combines supply-side planning changes with a strong local-priority frame and a direct link between housing pressure and immigration.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Reform UK Contract with You 2024",
+        "url": "https://www.reformparty.uk/reformisessential",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Reform UK Contract with You 2024",
+      "url": "https://www.reformparty.uk/reformisessential",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-reform-uk-education-curriculum-discipline-and-higher-education-reform",
+    "party": "Reform UK",
+    "area": "education",
+    "topic": "Curriculum, discipline and higher education reform",
+    "title": "Curriculum, discipline and higher education reform",
+    "stanceScore": 0,
+    "stanceLabel": "Patriotic curriculum",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Reform UK says education should build skills, character and pride in Britain. Its pledges include a patriotic curriculum, banning transgender ideology in schools, tax relief on independent education, scrapping interest on student loans, more pupil referral units and requiring universities to offer two-year undergraduate courses.",
+    "details": [
+      "Introduce a patriotic curriculum in primary and secondary schools.",
+      "Ban transgender ideology in primary and secondary schools and require single-sex facilities.",
+      "Apply 20% tax relief on independent education.",
+      "Scrap interest on student loans and extend repayment periods.",
+      "Double pupil referral units for violent and disruptive students.",
+      "Require universities to provide two-year undergraduate courses."
+    ],
+    "officialPosition": {
+      "headline": "Curriculum, discipline and higher education reform",
+      "shortSummary": "Reform UK says education should build skills, character and pride in Britain. Its pledges include a patriotic curriculum, banning transgender ideology in schools, tax relief on independent education, scrapping interest on student loans, more pupil referral units and requiring universities to offer two-year undergraduate courses.",
+      "detailedSummary": "Introduce a patriotic curriculum in primary and secondary schools.|Ban transgender ideology in primary and secondary schools and require single-sex facilities.|Apply 20% tax relief on independent education.|Scrap interest on student loans and extend repayment periods.|Double pupil referral units for violent and disruptive students.|Require universities to provide two-year undergraduate courses.",
+      "sourceTitle": "Reform UK Contract with You 2024",
+      "sourceUrl": "https://www.reformparty.uk/reformisessential",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This frames education through cultural curriculum change, school discipline and reduced higher-education costs rather than a broad funding expansion.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Reform UK Contract with You 2024",
+        "url": "https://www.reformparty.uk/reformisessential",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Reform UK Contract with You 2024",
+      "url": "https://www.reformparty.uk/reformisessential",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
+    "id": "official-reform-uk-climate-net-zero-rollback-and-domestic-energy",
+    "party": "Reform UK",
+    "area": "climate",
+    "topic": "Net zero rollback and domestic energy",
+    "title": "Net zero rollback and domestic energy",
+    "stanceScore": 0,
+    "stanceLabel": "Energy security first",
+    "pledgeType": "policy",
+    "status": "active",
+    "summary": "Reform UK says net zero is raising bills and weakening industry. It would scrap net zero and related subsidies, tax renewable subsidies, fast-track North Sea oil and gas licences, test shale gas sites and pursue nuclear, lithium, gas, synthetic fuel, tidal power and clean coal options.",
+    "details": [
+      "Scrap net zero and related subsidies.",
+      "Apply equivalent taxes to annual renewable energy subsidies.",
+      "Fast-track North Sea oil and gas licences.",
+      "Grant shale gas licences on test sites for two years, with local compensation schemes if production follows.",
+      "Fast-track small modular nuclear reactors and explore UK lithium, gas turbines, synthetic fuel, tidal power and clean coal."
+    ],
+    "officialPosition": {
+      "headline": "Net zero rollback and domestic energy",
+      "shortSummary": "Reform UK says net zero is raising bills and weakening industry. It would scrap net zero and related subsidies, tax renewable subsidies, fast-track North Sea oil and gas licences, test shale gas sites and pursue nuclear, lithium, gas, synthetic fuel, tidal power and clean coal options.",
+      "detailedSummary": "Scrap net zero and related subsidies.|Apply equivalent taxes to annual renewable energy subsidies.|Fast-track North Sea oil and gas licences.|Grant shale gas licences on test sites for two years, with local compensation schemes if production follows.|Fast-track small modular nuclear reactors and explore UK lithium, gas turbines, synthetic fuel, tidal power and clean coal.",
+      "sourceTitle": "Reform UK Contract with You 2024",
+      "sourceUrl": "https://www.reformparty.uk/reformisessential",
+      "sourceType": "manifesto",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "politiscopeAnalysis": "This prioritises lower energy bills and domestic supply over the current net-zero timetable, while retaining some technology-led environmental measures.",
+    "sources": [
+      {
+        "type": "manifesto",
+        "title": "Reform UK Contract with You 2024",
+        "url": "https://www.reformparty.uk/reformisessential",
+        "priority": 90,
+        "lastChecked": "30-04-2026",
+        "verificationStatus": "verified"
+      }
+    ],
+    "controllingSource": {
+      "type": "manifesto",
+      "title": "Reform UK Contract with You 2024",
+      "url": "https://www.reformparty.uk/reformisessential",
+      "priority": 90,
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified"
+    },
+    "confidence": "high",
+    "coverage": "official-source",
+    "updatedAt": "30-04-2026"
+  },
+  {
     "id": "official-restore-britain-nhs-healthcare-and-nhs-access",
     "party": "Restore Britain",
     "area": "nhs",
