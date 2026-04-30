@@ -26,6 +26,24 @@ const ENGLISH_LOCAL_SEATS_UP_LABEL = '~5,000'
 const ENGLISH_LOCAL_SEATS_UP_DETAIL = '5,013-5,066 English Local Authority seats'
 const POSTCODE_OUTCODE_RE = /^[A-Z]{1,2}\d[A-Z\d]?$/i
 const LOCALS_TAB_STATE_KEY = 'politiscope.localsTab.state'
+const LOCAL_ELECTION_EXPLAINER = [
+  {
+    title: 'Councillors, not MPs',
+    body: 'Local elections choose councillors who run your council, not the UK government.',
+  },
+  {
+    title: 'Services close to home',
+    body: 'Councils shape bins, planning, roads, housing, libraries, social care and local tax.',
+  },
+  {
+    title: 'Control matters',
+    body: 'The party or coalition running a council sets budgets, priorities and local policy.',
+  },
+  {
+    title: 'National signal',
+    body: 'Local results can show whether parties are gaining or losing ground before a general election.',
+  },
+]
 
 function readStoredLocalsTabState() {
   try {
@@ -494,6 +512,38 @@ export default function LocalsTab({
             {voteGuideMessage}
           </div>
         ) : null}
+      </SurfaceCard>
+
+      <SurfaceCard T={T} style={{ marginBottom: 12 }}>
+        <SectionLabel T={T}>What do local elections decide?</SectionLabel>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: 8,
+          }}
+        >
+          {LOCAL_ELECTION_EXPLAINER.map((item) => (
+            <div
+              key={item.title}
+              style={{
+                borderRadius: 12,
+                padding: '11px 10px',
+                background: T.c1 || 'rgba(0,0,0,0.035)',
+                border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 800, color: T.th, lineHeight: 1.25, marginBottom: 5 }}>
+                {item.title}
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: T.tl, lineHeight: 1.45 }}>
+                {item.body}
+              </div>
+            </div>
+          ))}
+        </div>
       </SurfaceCard>
 
       <SurfaceCard T={T} style={{ marginBottom: 12 }}>
