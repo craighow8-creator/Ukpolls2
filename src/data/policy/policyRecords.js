@@ -7,6 +7,14 @@ export { POLICY_AREAS }
 
 const UPDATED_AT = '2026-04-10'
 
+const OFFICIAL_POLICY_SOURCE_TYPES = new Set([
+  'manifesto',
+  'official_policy_paper',
+  'official_policy_page',
+  'official_pledge_page',
+  'policy',
+])
+
 const SOURCE_URLS = {
   'Contract with You 2024': 'https://www.reformparty.uk/reformisessential',
   'Reform UK Policies 2026': 'https://www.reformparty.uk/policies',
@@ -73,6 +81,82 @@ function record({
     coverage,
     updatedAt: UPDATED_AT,
   }
+}
+
+function normalizePolicyKey(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+}
+
+function isExplicitSeparateSubPolicy(policyRecord) {
+  return Boolean(policyRecord?.isSeparateSubPolicy || policyRecord?.separateSubPolicy)
+}
+
+function isOfficialPolicyRecord(policyRecord) {
+  if (policyRecord?.officialPosition?.sourceUrl) return true
+  const sources = Array.isArray(policyRecord?.sources) ? policyRecord.sources : []
+  return sources.some((sourceItem) => {
+    const type = normalizeSourceType(sourceItem?.type)
+    return sourceItem?.url && OFFICIAL_POLICY_SOURCE_TYPES.has(type)
+  })
+}
+
+function policyRecordDateValue(policyRecord) {
+  const candidates = [
+    policyRecord?.officialPosition?.lastChecked,
+    policyRecord?.controllingSource?.lastChecked,
+    policyRecord?.updatedAt,
+  ]
+  const sourceDates = Array.isArray(policyRecord?.sources)
+    ? policyRecord.sources.map((sourceItem) => sourceItem?.lastChecked)
+    : []
+  for (const value of [...candidates, ...sourceDates]) {
+    if (!value) continue
+    const parts = String(value).trim().match(/^(\d{2})-(\d{2})-(\d{4})$/)
+    const iso = parts ? `${parts[3]}-${parts[2]}-${parts[1]}` : String(value).trim()
+    const timestamp = Date.parse(iso)
+    if (Number.isFinite(timestamp)) return timestamp
+  }
+  return 0
+}
+
+function policyRecordPriority(policyRecord) {
+  let score = 0
+  if (policyRecord?.isCanonical || policyRecord?.canonical) score += 10000
+  if (policyRecord?.id && String(policyRecord.id).startsWith('official-')) score += 5000
+  if (policyRecord?.officialPosition?.sourceUrl) score += 2500
+  if (policyRecord?.coverage === 'official-source') score += 1000
+  if (policyRecord?.controllingSource?.priority) score += Number(policyRecord.controllingSource.priority) || 0
+  score += Math.min(policyRecordDateValue(policyRecord) / 1000000000000, 999)
+  return score
+}
+
+function chooseCanonicalPolicyRecord(current, candidate) {
+  if (!current) return candidate
+  return policyRecordPriority(candidate) > policyRecordPriority(current) ? candidate : current
+}
+
+function dedupeCanonicalOfficialPolicyRecords(records) {
+  const officialCanonicalByKey = new Map()
+  const passthrough = []
+
+  for (const policyRecord of records) {
+    const key = `${normalizePolicyKey(policyRecord?.party)}::${normalizePolicyKey(policyRecord?.area)}`
+    if (!key.includes('::') || isExplicitSeparateSubPolicy(policyRecord) || !isOfficialPolicyRecord(policyRecord)) {
+      passthrough.push(policyRecord)
+      continue
+    }
+    officialCanonicalByKey.set(
+      key,
+      chooseCanonicalPolicyRecord(officialCanonicalByKey.get(key), policyRecord),
+    )
+  }
+
+  return [
+    ...passthrough,
+    ...officialCanonicalByKey.values(),
+  ]
 }
 
 // Supplemental maintained coverage fills the shared taxonomy where the current
@@ -603,7 +687,7 @@ const STANDARD_COVERAGE_RECORDS = [
 // Most records below are converted from earlier maintained manifesto pledge material.
 // Future manifesto ingestion can replace or enrich this export while preserving
 // the POLICY_RECORDS contract consumed by selectors and UI.
-export const POLICY_RECORDS = [
+const RAW_POLICY_RECORDS = [
   record({
     id: 'ref-immigration-restriction',
     party: 'Reform UK',
@@ -1336,3 +1420,5 @@ export const POLICY_RECORDS = [
   ...STANDARD_COVERAGE_RECORDS.map(record),
   ...GENERATED_OFFICIAL_POLICY_RECORDS,
 ]
+
+export const POLICY_RECORDS = dedupeCanonicalOfficialPolicyRecords(RAW_POLICY_RECORDS)
