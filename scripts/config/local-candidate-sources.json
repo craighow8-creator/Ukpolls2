@@ -128,6 +128,19 @@
       "lastChecked": "29-04-2026",
       "verificationStatus": "verified",
       "notes": "Official Essex CMIS County Council 2026 election division candidate pages."
+    },
+    {
+      "councilSlug": "norfolk",
+      "councilName": "Norfolk",
+      "priority": true,
+      "enabled": true,
+      "parserType": "manual-csv",
+      "csvPath": "data/local-candidate-sources/great-yarmouth-first-norfolk-2026.csv",
+      "sourceLabel": "Official Great Yarmouth First candidate pages",
+      "sourceUrl": "https://www.greatyarmouthfirst.co.uk/",
+      "lastChecked": "30-04-2026",
+      "verificationStatus": "verified-party-source",
+      "notes": "Great Yarmouth-area Norfolk County Council divisions only. Candidate rows use party label Great Yarmouth First. The official Great Yarmouth First homepage describes Rupert Lowe MP as Chair, says he formally endorses the party, and says he is funding the first 500 local memberships."
     }
   ]
 }
