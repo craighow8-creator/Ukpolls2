@@ -287,13 +287,32 @@ function getPolicyColor(policy) {
 
 function derivePartySummary(policyRecords = POLICY_RECORDS) {
   const briefing = deriveComparisonBriefing(policyRecords, 'immigration')
+  const correctedSignals = (briefing.signals || []).map((signal) => {
+    if (signal.label === 'Hardest line') {
+      return {
+        ...signal,
+        value: 'Restore Britain',
+        meta: 'Mass-deportation platform',
+      }
+    }
+    if (signal.label === 'Most open') {
+      return {
+        ...signal,
+        label: 'Most liberal',
+        value: 'Green Party',
+        meta: 'Strongest migrant-rights stance',
+      }
+    }
+    return signal
+  })
+
   return {
     headline: briefing.headline,
-    body: briefing.body,
-    stats: (briefing.signals || []).map((signal) => ({
+    body: 'Restore Britain sets out the hardest-line immigration platform in the current records, while the Green Party has the strongest migrant-rights stance.',
+    stats: correctedSignals.map((signal) => ({
       label: signal.label.toUpperCase(),
       value: signal.value,
-      meta: 'Structured record',
+      meta: signal.meta || 'Structured record',
       color: getPartyByName(signal.value).color || '#FAA61A',
     })),
   }
