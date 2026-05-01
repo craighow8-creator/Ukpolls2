@@ -1,7 +1,6 @@
 import React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { haptic } from '../components/ui'
-import { impliedProb } from '../utils/helpers'
 import { useResponsive } from '../utils/responsive'
 import { buildSmartSummary } from '../utils/intelligence'
 import { buildDisplayTrendRows } from '../components/charts/SharedTrendChart'
@@ -9,6 +8,7 @@ import { buildHomeElectionsBriefing } from '../utils/homeElectionsBriefing'
 import { buildHomeNewsBriefing, formatRelativeNewsTime, normaliseNewsPayload } from '../utils/news'
 import { API_BASE } from '../constants'
 import { parseJsonResponse } from '../utils/http'
+import { POLITICAL_MARKET_ROWS } from '../data/politicalMarkets'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
@@ -19,6 +19,94 @@ function hasSourcedFavourability(leader) {
     leader.ratingSource === 'sourced' ||
     Boolean(leader.sourceUrl || leader.source || leader.publishedAt || leader.fieldworkDate)
   return hasSourceMarker && label.includes('favourability')
+}
+
+function parseMarketDate(value) {
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function marketDaysSince(value) {
+  const parsed = parseMarketDate(value)
+  if (!parsed) return null
+  return Math.floor((Date.now() - parsed.getTime()) / 86400000)
+}
+
+function formatMarketDate(value) {
+  const parsed = parseMarketDate(value)
+  if (!parsed) return null
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  return `${day}-${month}-${parsed.getFullYear()}`
+}
+
+function extractPredictionMarketRows(predictionMarkets) {
+  const payload = Array.isArray(predictionMarkets) ? { rows: predictionMarkets } : predictionMarkets
+  if (!payload || typeof payload !== 'object') return []
+
+  const fallbackCheckedAt = payload.checkedAt || payload.generatedAt || payload.updatedAt || payload.meta?.updatedAt
+
+  if (Array.isArray(payload.rows)) {
+    return payload.rows
+      .map((row) => ({
+        checkedAt: row?.checkedAt || row?.updatedAt || fallbackCheckedAt,
+        freshnessStatus: String(row?.freshnessStatus || '').toLowerCase(),
+      }))
+      .filter((row) => row.checkedAt || row.freshnessStatus)
+  }
+
+  if (!Array.isArray(payload.markets)) return []
+
+  // Remote market rows should already be UK-politics filtered by the ingest/Worker path.
+  return payload.markets
+    .map((market) => ({
+      checkedAt: market?.checkedAt || market?.updatedAt || fallbackCheckedAt,
+      freshnessStatus: String(market?.freshnessStatus || '').toLowerCase(),
+    }))
+    .filter((row) => row.checkedAt || row.freshnessStatus)
+}
+
+function buildMarketTileState(predictionMarkets) {
+  const rows = extractPredictionMarketRows(predictionMarkets)
+  const archivedRows = Array.isArray(POLITICAL_MARKET_ROWS) ? POLITICAL_MARKET_ROWS : []
+
+  if (rows.length) {
+    const latestCheckedAt = rows
+      .map((row) => row.checkedAt)
+      .filter(Boolean)
+      .sort((a, b) => (parseMarketDate(b)?.getTime() || 0) - (parseMarketDate(a)?.getTime() || 0))[0]
+    const latestAge = marketDaysSince(latestCheckedAt)
+    const hasExplicitStale = rows.some((row) => row.freshnessStatus === 'stale')
+    const isStale = hasExplicitStale || latestAge == null || latestAge > 14
+
+    return isStale
+      ? {
+          headline: 'Market signals',
+          subcopy: latestCheckedAt
+            ? `Last checked ${formatMarketDate(latestCheckedAt)} · treat as context`
+            : 'Treat as context',
+          color: '#8A5A00',
+        }
+      : {
+          headline: 'Live signals',
+          subcopy: 'Public market prices · not advice',
+          color: '#067647',
+        }
+  }
+
+  if (archivedRows.length) {
+    return {
+      headline: 'Archived',
+      subcopy: 'Historical market signals · not current pricing',
+      color: '#8A5A00',
+    }
+  }
+
+  return {
+    headline: 'No current data',
+    subcopy: 'Market signal feed not loaded',
+    color: '#6b7280',
+  }
 }
 
 function MiniBar({ value, max, color, height = 8, T }) {
@@ -357,6 +445,7 @@ export default function HomeScreen({
   byElections = {},
   migration = {},
   betting = {},
+  predictionMarkets = {},
   news = {},
   meta = {},
   pollContext = {},
@@ -416,7 +505,6 @@ export default function HomeScreen({
   const confidenceFor = (party) =>
     party?.confidenceLabel || 'No clear break yet'
 
-  const topBet = betting?.odds?.[0]
   const sortedLeaders = allLeaders
     .filter(hasSourcedFavourability)
     .sort((a, b) => (b.net ?? -999) - (a.net ?? -999))
@@ -497,7 +585,7 @@ export default function HomeScreen({
     return () => window.clearInterval(timer)
   }, [electionsBriefing.signals])
 
-  const winProb = topBet?.odds ? impliedProb(topBet.odds) : null
+  const marketsTile = React.useMemo(() => buildMarketTileState(predictionMarkets), [predictionMarkets])
   const isDark = T.th === '#ffffff' || T.th?.toLowerCase?.() === '#ffffff'
   const newsLiveColor =
     newsBriefing.statusTone === 'live'
@@ -985,18 +1073,10 @@ export default function HomeScreen({
             <SmallCard T={T} onClick={() => nav('betting')}>
               <div style={pS}>
                 <Lbl T={T}>Markets</Lbl>
-                <Stat color="#8A5A00" T={T}>
-                  Stale
+                <Stat color={marketsTile.color} T={T}>
+                  {marketsTile.headline}
                 </Stat>
-                <Sub T={T}>Archived political market signals, not forecasts or advice</Sub>
-                {winProb != null && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                    <MiniBar value={winProb} max={100} color="#8A5A00" height={5} T={T} />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#8A5A00', flexShrink: 0 }}>
-                      archived
-                    </span>
-                  </div>
-                )}
+                <Sub T={T}>{marketsTile.subcopy}</Sub>
                 <Cta T={T}>Open markets →</Cta>
               </div>
             </SmallCard>

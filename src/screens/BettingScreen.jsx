@@ -17,6 +17,98 @@ function parseDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed
 }
 
+function daysSince(value) {
+  const parsed = parseDate(value)
+  if (!parsed) return null
+  return Math.floor((Date.now() - parsed.getTime()) / 86400000)
+}
+
+function inferFreshnessStatus(row, fallbackDate) {
+  const explicit = String(row?.freshnessStatus || '').trim().toLowerCase()
+  if (explicit) return explicit
+  const checkedAt = row?.checkedAt || row?.updatedAt || fallbackDate
+  const age = daysSince(checkedAt)
+  if (age == null) return ''
+  return age > 14 ? 'stale' : 'fresh'
+}
+
+function probabilityToDecimal(probability) {
+  if (!Number.isFinite(probability) || probability <= 0) return null
+  return Math.round((1 / probability) * 100) / 100
+}
+
+function normaliseProbability(value, displayPct) {
+  const numeric = Number(value)
+  if (Number.isFinite(numeric)) {
+    return numeric <= 1 ? Math.round(numeric * 1000) / 10 : Math.round(numeric * 10) / 10
+  }
+
+  const display = Number.parseFloat(String(displayPct || '').replace(/[^\d.-]/g, ''))
+  return Number.isFinite(display) ? display : null
+}
+
+function normalisePredictionMarketRows(predictionMarkets) {
+  const payload = Array.isArray(predictionMarkets) ? { rows: predictionMarkets } : predictionMarkets
+  if (!payload || typeof payload !== 'object') return []
+
+  const fallbackCheckedAt = payload.checkedAt || payload.generatedAt || payload.updatedAt || payload.meta?.updatedAt
+  const source = payload.source || payload.meta?.source || 'Polymarket'
+  const sourceUrl = payload.sourceUrl || payload.meta?.sourceUrl || ''
+
+  if (Array.isArray(payload.rows)) {
+    return payload.rows
+      .filter((row) => row && typeof row === 'object')
+      .map((row, index) => ({
+        marketId: row.marketId || row.id || `prediction-market-row-${index}`,
+        marketName: row.marketName || row.title || row.question || 'Political market',
+        electionType: row.electionType || row.category || 'general-election',
+        runner: row.runner || row.label || row.outcome || '',
+        party: row.party || '',
+        oddsFractional: row.oddsFractional || '',
+        oddsDecimal: Number.isFinite(Number(row.oddsDecimal)) ? Number(row.oddsDecimal) : null,
+        impliedProbability: normaliseProbability(row.impliedProbability ?? row.probability, row.displayPct),
+        source: row.source || source,
+        sourceUrl: row.sourceUrl || row.url || sourceUrl,
+        checkedAt: row.checkedAt || row.updatedAt || fallbackCheckedAt,
+        freshnessStatus: inferFreshnessStatus(row, fallbackCheckedAt),
+        marketType: row.marketType || 'prediction-market',
+        notes: row.notes || 'Public market signal. Informational only, not advice.',
+      }))
+      .filter((row) => row.runner && Number.isFinite(row.impliedProbability))
+  }
+
+  if (!Array.isArray(payload.markets)) return []
+
+  // Remote market rows should already be UK-politics filtered by the ingest/Worker path.
+  return payload.markets.flatMap((market, marketIndex) => {
+    const outcomes = Array.isArray(market?.outcomes) ? market.outcomes : []
+    const checkedAt = market?.checkedAt || market?.updatedAt || fallbackCheckedAt
+    return outcomes
+      .map((outcome, outcomeIndex) => {
+        const probability = normaliseProbability(outcome?.impliedProbability ?? outcome?.probability, outcome?.displayPct)
+        return {
+          marketId: outcome?.marketId || `${market?.id || `market-${marketIndex}`}-${outcome?.label || outcomeIndex}`,
+          marketName: market?.marketName || market?.title || market?.question || 'Political market',
+          electionType: market?.electionType || market?.category || 'general-election',
+          runner: outcome?.runner || outcome?.label || outcome?.outcome || '',
+          party: outcome?.party || '',
+          oddsFractional: outcome?.oddsFractional || '',
+          oddsDecimal: Number.isFinite(Number(outcome?.oddsDecimal))
+            ? Number(outcome.oddsDecimal)
+            : probabilityToDecimal(Number.isFinite(probability) ? probability / 100 : null),
+          impliedProbability: probability,
+          source: market?.source || source,
+          sourceUrl: market?.sourceUrl || market?.url || sourceUrl,
+          checkedAt,
+          freshnessStatus: inferFreshnessStatus(market, checkedAt),
+          marketType: market?.marketType || 'prediction-market',
+          notes: market?.notes || 'Public market signal. Informational only, not advice.',
+        }
+      })
+      .filter((row) => row.runner && Number.isFinite(row.impliedProbability))
+  })
+}
+
 function formatDate(value, { includeTime = false } = {}) {
   const parsed = parseDate(value)
   if (!parsed) return 'Date not recorded'
@@ -314,14 +406,16 @@ function ArchiveSection({ T, groups }) {
   )
 }
 
-export default function BettingScreen({ T }) {
+export default function BettingScreen({ T, predictionMarkets }) {
   const archivedRows = POLITICAL_MARKET_ROWS
-  const currentRows = Array.isArray(generatedPoliticalMarkets?.rows) ? generatedPoliticalMarkets.rows : []
+  const maintainedRows = normalisePredictionMarketRows(predictionMarkets)
+  const generatedRows = normalisePredictionMarketRows(generatedPoliticalMarkets)
+  const currentRows = maintainedRows.length ? maintainedRows : generatedRows
   const failedSources = Array.isArray(generatedPoliticalMarkets?.failedSources) ? generatedPoliticalMarkets.failedSources : []
   const currentGroups = groupByMarket(currentRows)
   const archivedGroups = groupByMarket(archivedRows)
   const staleCount = [...currentRows, ...archivedRows].filter((row) => row.freshnessStatus === 'stale').length
-  const sourceStatus = currentRows.length ? 'LIVE SOURCE · Polymarket' : 'ARCHIVE · Maintained snapshot'
+  const sourceStatus = currentRows.length ? `LIVE SOURCE · ${currentRows[0]?.source || 'Polymarket'}` : 'ARCHIVE · Maintained snapshot'
 
   return (
     <div
@@ -374,8 +468,7 @@ export default function BettingScreen({ T }) {
           >
             <div style={{ fontSize: 18, fontWeight: 950, color: T.th, lineHeight: 1.2 }}>Political markets</div>
             <div style={{ fontSize: 13, fontWeight: 650, color: T.tl, lineHeight: 1.5, marginTop: 8 }}>
-              Market prices are shown as one public signal. They are not predictions, forecasts, seat projections or
-              betting advice.
+              Market prices are shown as one public signal. They are not seat projections or advice.
             </div>
           </div>
 
@@ -452,7 +545,7 @@ export default function BettingScreen({ T }) {
             <div style={{ fontSize: 12.5, fontWeight: 650, color: T.tl, lineHeight: 1.55, marginTop: 7 }}>
               Market prices can move quickly. Implied probability may reflect market mechanics, liquidity and trader
               positioning as well as political information. Compare these signals with polls, policy and election data.
-              This is not betting advice.
+              This is not advice.
             </div>
           </div>
 

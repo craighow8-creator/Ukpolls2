@@ -693,6 +693,7 @@ export default function App() {
             byElections={BY_ELEC}
             migration={MIGRATION}
             betting={BETTING}
+            predictionMarkets={PREDICTION_MARKETS}
             news={NEWS}
             pollContext={POLL_CONTEXT}
             onMenu={() => setMenuOpen(true)}
