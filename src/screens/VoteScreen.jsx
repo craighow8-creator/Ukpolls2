@@ -155,7 +155,7 @@ export default function VoteScreen({ T, nav, meta, leaders = [] }) {
                     }}
                   />
 
-                  <PartyIdentityMark party={p.name} color={p.color} size={34} />
+                  <PartyIdentityMark party={p.name} color={p.color} size={44} radius={15} />
 
                   <div style={{ fontSize: 14, fontWeight: 800, color: sel ? p.color : T.th }}>
                     {p.name}

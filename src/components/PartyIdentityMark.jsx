@@ -64,6 +64,7 @@ export default function PartyIdentityMark({
 }) {
   const identity = getPartyIdentity({ party, name, key: partyKey, abbr, color, emblemPath })
   const r = radius ?? Math.round(size * 0.32)
+  const isNeutral = cleanKey(identity.name) === 'would not vote' || identity.color === '#6b7280'
 
   return (
     <span
@@ -77,13 +78,19 @@ export default function PartyIdentityMark({
         justifyContent: 'center',
         flexShrink: 0,
         overflow: 'hidden',
-        background: `${identity.color}18`,
-        border: `1px solid ${identity.color}40`,
+        background: isNeutral
+          ? 'linear-gradient(145deg, rgba(107,114,128,0.12), rgba(107,114,128,0.05))'
+          : `linear-gradient(145deg, ${identity.color}24, ${identity.color}0D)`,
+        border: `${Math.max(1, Math.round(size / 22))}px solid ${identity.color}${isNeutral ? '32' : '55'}`,
+        boxShadow: isNeutral
+          ? 'inset 0 1px 0 rgba(255,255,255,0.34)'
+          : `inset 0 1px 0 rgba(255,255,255,0.42), 0 6px 14px ${identity.color}18`,
         color: identity.color,
         fontSize: Math.max(10, size * 0.3),
         fontWeight: 900,
-        letterSpacing: '0.02em',
+        letterSpacing: '0.03em',
         lineHeight: 1,
+        opacity: isNeutral ? 0.82 : 1,
         ...style,
       }}
       title={identity.name}
