@@ -1,56 +1,27 @@
 const POLYMARKET_BASE = 'https://gamma-api.polymarket.com'
 const POLYMARKET_SITE_BASE = 'https://polymarket.com'
 
-const UK_MARKET_HINTS = [
-  'uk',
-  'britain',
-  'british',
-  'united kingdom',
-  'westminster',
-  'general election',
-  'next general election',
-  'prime minister',
-  'next prime minister',
-  'labour leader',
-  'conservative leader',
-  'reform leader',
-  'lib dem',
-  'liberal democrat',
-  'green leader',
-  'snp',
-  'plaid cymru',
-  'parliament',
-  'house of commons',
-  'house of lords',
-  'by-election',
-  'byelection',
-]
-
-const UK_POLITICS_HINTS = [
-  'uk',
-  'united kingdom',
-  'britain',
-  'british',
-  'prime minister',
-  'general election',
-  'parliament',
-  'westminster',
-  'labour',
-  'conservative',
-  'reform',
-  'liberal democrat',
-  'lib dem',
-  'snp',
-  'plaid cymru',
+const CONFIGURED_UK_POLITICAL_MARKET_SOURCES = [
+  {
+    id: 'polymarket-uk-election-called',
+    sourceUrl: `${POLYMARKET_BASE}/events/slug/uk-election-called-by`,
+    electionType: 'general-election',
+    includeMarketSlugs: ['will-the-next-uk-election-is-called-by-june-30-2026'],
+  },
+  {
+    id: 'polymarket-starmer-out',
+    sourceUrl: `${POLYMARKET_BASE}/events/slug/starmer-out-in-2025`,
+    electionType: 'leadership',
+    includeMarketSlugs: [
+      'starmer-out-by-june-30-2026-862-594-548',
+      'starmer-out-by-december-31-2026-936-416-977-234',
+    ],
+  },
 ]
 
 function cleanText(value) {
   if (value == null) return ''
   return String(value).replace(/\s+/g, ' ').trim()
-}
-
-function lower(value) {
-  return cleanText(value).toLowerCase()
 }
 
 function parseJsonMaybe(value, fallback = null) {
@@ -69,34 +40,6 @@ function toNumber(value) {
   if (value == null || value === '') return null
   const n = Number(value)
   return Number.isFinite(n) ? n : null
-}
-
-function joinText(event, market) {
-  return [
-    event?.title,
-    event?.subtitle,
-    event?.description,
-    event?.resolutionSource,
-    event?.category,
-    event?.subcategory,
-    market?.question,
-    market?.description,
-    market?.resolutionSource,
-    market?.category,
-  ]
-    .map(lower)
-    .filter(Boolean)
-    .join(' | ')
-}
-
-function isUkPoliticsMarket(event, market) {
-  const text = joinText(event, market)
-  if (!text) return false
-
-  const politicsHit = UK_POLITICS_HINTS.some((term) => text.includes(term))
-  const ukHit = UK_MARKET_HINTS.some((term) => text.includes(term))
-
-  return politicsHit && ukHit
 }
 
 function buildMarketUrl(event, market) {
@@ -131,7 +74,7 @@ function normalizeOutcomes(market) {
   })
 }
 
-function normalizeMarket(event, market, sourceUpdatedAt) {
+function normalizeMarket(event, market, sourceUpdatedAt, source = {}) {
   const outcomes = normalizeOutcomes(market)
   if (!outcomes.length) return null
 
@@ -146,7 +89,10 @@ function normalizeMarket(event, market, sourceUpdatedAt) {
     outcomes,
     liquidity: toNumber(market?.liquidity ?? event?.liquidity),
     volume: toNumber(market?.volume ?? event?.volume),
-    category: cleanText(event?.category || market?.category || 'Politics'),
+    category: source.electionType || cleanText(event?.category || market?.category || 'Politics'),
+    source: 'Polymarket',
+    sourceUrl: buildMarketUrl(event, market),
+    marketType: 'prediction-market',
     updatedAt: market?.updatedAt || event?.updatedAt || sourceUpdatedAt,
   }
 }
@@ -167,45 +113,47 @@ async function fetchJson(url, logger = console) {
   return res.json()
 }
 
-async function fetchPolymarketEvents({ pages = 3, limit = 100, logger = console } = {}) {
-  const all = []
-
-  for (let page = 0; page < pages; page += 1) {
-    const offset = page * limit
-    const url = new URL('/events', POLYMARKET_BASE)
-    url.searchParams.set('active', 'true')
-    url.searchParams.set('closed', 'false')
-    url.searchParams.set('limit', String(limit))
-    url.searchParams.set('offset', String(offset))
-    url.searchParams.set('order', 'volume_24hr')
-    url.searchParams.set('ascending', 'false')
-
-    const batch = await fetchJson(url.toString(), logger)
-    if (!Array.isArray(batch) || !batch.length) break
-    all.push(...batch)
-    if (batch.length < limit) break
-  }
-
-  return all
-}
-
 export async function runPolymarketPredictionRefresh({ logger = console } = {}) {
   const fetchedAt = new Date().toISOString()
-  const events = await fetchPolymarketEvents({ logger })
-
+  let fetchedCount = 0
+  let rejectedCount = 0
+  const failedSources = []
   const markets = []
-  for (const event of events) {
-    if (!event || typeof event !== 'object') continue
-    if (event.active === false || event.closed || event.archived) continue
 
-    const eventMarkets = Array.isArray(event.markets) ? event.markets : []
-    for (const market of eventMarkets) {
-      if (!market || typeof market !== 'object') continue
-      if (market.active === false || market.closed || market.archived) continue
-      if (!isUkPoliticsMarket(event, market)) continue
+  for (const source of CONFIGURED_UK_POLITICAL_MARKET_SOURCES) {
+    try {
+      const event = await fetchJson(source.sourceUrl, logger)
+      if (!event || typeof event !== 'object' || event.active === false || event.closed || event.archived) {
+        rejectedCount += 1
+        continue
+      }
 
-      const normalized = normalizeMarket(event, market, fetchedAt)
-      if (normalized) markets.push(normalized)
+      fetchedCount += 1
+      const include = new Set((source.includeMarketSlugs || []).map(String))
+      const eventMarkets = Array.isArray(event.markets) ? event.markets : []
+      for (const market of eventMarkets) {
+        if (!market || typeof market !== 'object') {
+          rejectedCount += 1
+          continue
+        }
+        if (market.active === false || market.closed || market.archived) {
+          rejectedCount += 1
+          continue
+        }
+        if (include.size && !include.has(String(market.slug || ''))) {
+          rejectedCount += 1
+          continue
+        }
+
+        const normalized = normalizeMarket(event, market, fetchedAt, source)
+        if (normalized) {
+          markets.push(normalized)
+        } else {
+          rejectedCount += 1
+        }
+      }
+    } catch (error) {
+      failedSources.push({ id: source.id, reason: error?.message || String(error) })
     }
   }
 
@@ -215,21 +163,26 @@ export async function runPolymarketPredictionRefresh({ logger = console } = {}) 
     return bv - av
   })
 
-  const curatedMarkets = markets.slice(0, 5)
+  const curatedMarkets = markets
 
   return {
     source: 'Polymarket',
     sourceUrl: POLYMARKET_BASE,
     updatedAt: fetchedAt,
     markets: curatedMarkets,
+    failedSources,
     meta: {
       source: 'Polymarket',
       sourceUrl: POLYMARKET_BASE,
       updatedAt: fetchedAt,
-      eventCount: events.length,
+      fetchedCount,
+      matchedCount: curatedMarkets.length,
+      rejectedCount,
+      failedSourceCount: failedSources.length,
+      eventCount: fetchedCount,
       marketCount: curatedMarkets.length,
       totalMatchedCount: markets.length,
-      freshnessLabel: curatedMarkets.length ? 'Live' : 'Cached',
+      freshnessLabel: curatedMarkets.length ? 'Live' : 'Empty',
     },
   }
 }
