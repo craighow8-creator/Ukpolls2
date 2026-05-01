@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { ScrollArea, StickyPills } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
-import SectionDataMeta from '../components/SectionDataMeta'
 import { getPartyByName } from '../data/partyRegistry'
 import { POLICY_RECORDS } from '../data/policy/policyRecords'
 import { deriveComparisonBriefing, getComparisonRows } from '../data/policy/policyCompareSelectors'
@@ -14,7 +13,7 @@ const TABS = [
 ]
 
 const OVERVIEW_FALLBACK = {
-  fetchYear: 'ONS · Year ending June 2025',
+  fetchYear: 'Year ending June 2025 · ONS estimate',
   netTotal: 204000,
   netPrev: 649000,
   netPrev2: 944000,
@@ -30,6 +29,30 @@ function fmt(n) {
 function pct(value, digits = 0) {
   if (!Number.isFinite(value)) return '0%'
   return `${value.toFixed(digits)}%`
+}
+
+function formatReviewDate(value) {
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return null
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  return `${day}-${month}-${parsed.getFullYear()}`
+}
+
+function migrationEstimateLabel(M = {}) {
+  const raw = String(M.fetchYear || OVERVIEW_FALLBACK.fetchYear || '').trim()
+  if (!raw) return OVERVIEW_FALLBACK.fetchYear
+  if (/estimate/i.test(raw)) return raw
+  return `${raw} estimate`
+}
+
+function migrationProvenanceText(section, M = {}) {
+  const reviewedAt = formatReviewDate(section?.updatedAt || M.reviewedAt || M.updatedAt)
+  const parts = []
+  if (reviewedAt) parts.push(`Reviewed ${reviewedAt}`)
+  parts.push('ONS migration statistics')
+  parts.push('maintained dataset')
+  return parts.join(' · ')
 }
 
 function formatSignedCompact(value, suffix = '') {
@@ -107,7 +130,7 @@ function deriveMigrationOverviewSummary(M = {}) {
   if (fallFromPeak < 25) headline = 'Net migration remains elevated by recent standards'
   else if (fallFromPeak >= 60) headline = 'Net migration has fallen sharply from its peak'
 
-  let body = `The latest estimate is ${fmt(netNow)}, ${pct(fallFromPeak)} below the 2023 high.`
+  let body = `The ONS latest estimate is ${fmt(netNow)}, ${pct(fallFromPeak)} below the 2023 high.`
   if (topVisa) {
     body = `${body} Study and work routes still shape the legal migration picture.`
   } else if (usingFallback) {
@@ -119,9 +142,9 @@ function deriveMigrationOverviewSummary(M = {}) {
   return {
     headline,
     body,
-    context: usingFallback ? 'Using maintained headline series while fuller route data updates' : 'Latest net migration estimate and recent direction',
+    context: usingFallback ? 'Using maintained ONS headline series while fuller route data updates' : 'ONS latest estimate and recent direction',
     stats: [
-      { label: 'CURRENT', value: fmt(netNow), meta: 'Latest estimate', color: '#02A95B' },
+      { label: 'CURRENT', value: fmt(netNow), meta: 'ONS latest estimate', color: '#02A95B' },
       { label: 'FROM PEAK', value: `↓ ${pct(fallFromPeak)}`, meta: `${fmt(peak)} in 2023`, color: '#12B7D4' },
       { label: 'VS 2024', value: `${changeVsPrev < 0 ? '↓' : '↑'} ${pct(Math.abs(changeVsPrev))}`, meta: `${fmt(prev)} previous`, color: changeVsPrev < 0 ? '#02A95B' : '#E4003B' },
     ],
@@ -671,6 +694,8 @@ export default function MigrationScreen({ T, nav, migration, policyRecords = POL
   const nationalityRows = nationalitySplit.foreignRows
   const britishNationalityRows = nationalitySplit.britishRows
   const visaRows = useMemo(() => normaliseVisaRows(M), [M])
+  const estimateLabel = migrationEstimateLabel(M)
+  const provenanceText = migrationProvenanceText(dataState.migration, M)
 
   const breakdownMax = nationalityRows.length ? Math.max(...nationalityRows.map((row) => row.inflow || 0)) : 0
   const visaMax = visaRows.length ? Math.max(...visaRows.map((row) => row.total || 0)) : 0
@@ -699,7 +724,25 @@ export default function MigrationScreen({ T, nav, migration, policyRecords = POL
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
-          <SectionDataMeta T={T} section={dataState.migration || null} />
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              flexWrap: 'wrap',
+              padding: '6px 10px',
+              borderRadius: 999,
+              background: '#0F766E12',
+              border: '1px solid #0F766E2A',
+              color: T.th,
+              fontSize: 11.5,
+              fontWeight: 700,
+              lineHeight: 1.35,
+              textAlign: 'center',
+            }}
+          >
+            {provenanceText}
+          </div>
         </div>
 
         <div
@@ -712,7 +755,7 @@ export default function MigrationScreen({ T, nav, migration, policyRecords = POL
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 500, color: T.tl }}>
-            {M.fetchYear || OVERVIEW_FALLBACK.fetchYear}
+            {estimateLabel}
           </div>
 
           <InfoButton id="migration_net" T={T} size={18} />
@@ -786,7 +829,7 @@ export default function MigrationScreen({ T, nav, migration, policyRecords = POL
                   textAlign: 'center',
                 }}
               >
-                {M.fetchYear || OVERVIEW_FALLBACK.fetchYear}
+                {estimateLabel}
               </div>
 
               <div style={{ marginTop: 14, position: 'relative', zIndex: 1 }}>
@@ -856,7 +899,7 @@ export default function MigrationScreen({ T, nav, migration, policyRecords = POL
             >
               <OverviewStatCard T={T} label="2023 peak" value={fmt(overview.peak)} sub="ONS high" color="#E4003B" change="▲ Historical high" />
               <OverviewStatCard T={T} label="2024 estimate" value={fmt(overview.prev)} sub="Revised ONS" color="#F97316" change="▼ Down from peak" />
-              <OverviewStatCard T={T} label="2025 estimate" value={fmt(overview.netNow)} sub="Latest headline view" color="#02A95B" change="▼ Lower again" />
+              <OverviewStatCard T={T} label="2025 estimate" value={fmt(overview.netNow)} sub="ONS latest estimate" color="#02A95B" change="▼ Lower again" />
               <OverviewStatCard T={T} label="Political benchmark" value="<100k" sub="Stated control target" color={T.pr} />
             </div>
           </>
@@ -905,7 +948,7 @@ export default function MigrationScreen({ T, nav, migration, policyRecords = POL
               <DataUnavailable
                 T={T}
                 title="Visa route detail unavailable"
-                body="The headline migration series is live, but the visa-route breakdown is still awaiting a fuller data update."
+                body="The ONS headline migration estimate is available, but the visa-route breakdown is still awaiting a fuller data update."
               />
             ) : (
               <>

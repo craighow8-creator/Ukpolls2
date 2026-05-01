@@ -1089,10 +1089,10 @@ export default function HomeScreen({
                   {migration?.netTotal ? `${Math.round(migration.netTotal / 1000)}k` : '685k'}
                 </Stat>
                 <Sub T={T}>
-                  Net migration ·{' '}
-                  {migration?.netPeak
-                    ? `↓ ${Math.round((1 - migration.netTotal / migration.netPeak) * 100)}% from peak`
-                    : '↓ 78% from peak'}
+                  ONS latest estimate ·{' '}
+                  {migration?.netTotal && (migration?.netPeak || migration?.netPrev2)
+                    ? `down ${Math.round((1 - migration.netTotal / (migration.netPeak || migration.netPrev2)) * 100)}% from peak`
+                    : 'down 78% from peak'}
                 </Sub>
                 <Cta T={T}>View migration data →</Cta>
               </div>
