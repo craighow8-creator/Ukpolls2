@@ -1,0 +1,30 @@
+{
+  "reviewedAt": "2026-05-01",
+  "outputPath": "src/data/migration.generated.json",
+  "sources": {
+    "onsBulletin": {
+      "id": "ons-ltim-bulletin",
+      "title": "Long-term international migration, provisional: year ending June 2025",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/bulletins/longterminternationalmigrationprovisional/yearendingjune2025",
+      "source": "Office for National Statistics"
+    },
+    "onsDataset": {
+      "id": "ons-ltim-dataset",
+      "title": "Long-term international immigration, emigration and net migration flows, provisional",
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/datasets/longterminternationalimmigrationemigrationandnetmigrationflowsprovisional",
+      "source": "Office for National Statistics"
+    },
+    "homeOfficeDataTables": {
+      "id": "home-office-immigration-system-data-tables",
+      "title": "Immigration system statistics data tables",
+      "url": "https://www.gov.uk/government/statistical-data-sets/immigration-system-statistics-data-tables",
+      "source": "Home Office"
+    },
+    "homeOfficeLatestRelease": {
+      "id": "home-office-immigration-system-latest-release",
+      "title": "Immigration system statistics, year ending December 2025",
+      "url": "https://www.gov.uk/government/statistics/immigration-system-statistics-year-ending-december-2025",
+      "source": "Home Office"
+    }
+  }
+}

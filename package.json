@@ -36,6 +36,10 @@
     "policy-sources:health:remote": "node ./scripts/check-policy-sources-health.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "political-markets:import:remote": "node ./scripts/ingest-political-markets.mjs",
     "political-markets:health:remote": "node ./scripts/check-political-markets-health.mjs",
+    "migration:import:local": "node ./scripts/ingest-migration.mjs --api-base=http://127.0.0.1:8787",
+    "migration:import:remote": "node ./scripts/ingest-migration.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
+    "migration:health:local": "node ./scripts/check-migration-health.mjs --api-base=http://127.0.0.1:8787",
+    "migration:health:remote": "node ./scripts/check-migration-health.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "local-authority:health:local": "node ./scripts/check-local-authority-health.mjs --api-base=http://127.0.0.1:8787",
     "local-authority:health:remote": "node ./scripts/check-local-authority-health.mjs --api-base=https://politiscope-api.craighow8.workers.dev",
     "health:pre-election": "npm run build && npm run polls:health:remote && npm run local-authority:health:remote && npm run leader-ratings:health:remote"
