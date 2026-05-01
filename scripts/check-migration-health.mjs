@@ -38,6 +38,12 @@ const result = {
   sourceType: '',
   sourceUrlsPresent: false,
   trendRows: 0,
+  historicalTrendRows: 0,
+  historicalPeriodStart: null,
+  historicalPeriodEnd: null,
+  historicalHasComparabilityWarning: false,
+  firstHistoricalRow: null,
+  lastHistoricalRow: null,
   nationalityRows: 0,
   visaRows: 0,
   hasSmallBoats: false,
@@ -59,6 +65,14 @@ try {
     result.sourceType = cleanText(migration.meta?.sourceType)
     result.sourceUrlsPresent = !!(migration.meta?.onsSourceUrl && migration.meta?.onsBulletinUrl)
     result.trendRows = Array.isArray(migration.trend) ? migration.trend.length : 0
+    result.historicalTrendRows = Array.isArray(migration.historicalTrend) ? migration.historicalTrend.length : 0
+    result.historicalPeriodStart = migration.historicalMeta?.periodStart ?? null
+    result.historicalPeriodEnd = migration.historicalMeta?.periodEnd ?? null
+    result.historicalHasComparabilityWarning = Array.isArray(migration.historicalMeta?.warnings)
+      ? migration.historicalMeta.warnings.some((warning) => /not fully comparable|not directly comparable/i.test(String(warning)))
+      : false
+    result.firstHistoricalRow = result.historicalTrendRows ? migration.historicalTrend[0] : null
+    result.lastHistoricalRow = result.historicalTrendRows ? migration.historicalTrend.at(-1) : null
     result.nationalityRows = Array.isArray(migration.byNationality) ? migration.byNationality.length : 0
     result.visaRows = Array.isArray(migration.byVisa) ? migration.byVisa.length : 0
     result.hasSmallBoats = !!migration.smallBoats
@@ -71,6 +85,15 @@ try {
     if (!result.sourceType) result.errors.push('meta.sourceType is missing.')
     if (!result.sourceUrlsPresent) result.errors.push('ONS source URLs are missing.')
     if (result.trendRows < 2) result.errors.push('Trend does not include current and prior comparison rows.')
+    if (result.historicalTrendRows) {
+      if (result.historicalTrendRows < 50) result.warnings.push(`Historical ONS trend only has ${result.historicalTrendRows} rows.`)
+      if (result.historicalPeriodStart !== 1964 || result.historicalPeriodEnd !== 2019) {
+        result.warnings.push(`Historical ONS trend period is ${result.historicalPeriodStart}-${result.historicalPeriodEnd}; expected 1964-2019.`)
+      }
+      if (!result.historicalHasComparabilityWarning) result.warnings.push('Historical ONS comparability warning is missing.')
+    } else {
+      result.warnings.push('Historical ONS long-run context is not present.')
+    }
 
     const reviewedAge = daysSince(result.reviewedAt)
     if (reviewedAge == null) {

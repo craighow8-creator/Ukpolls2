@@ -14,6 +14,17 @@
       "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/datasets/longterminternationalimmigrationemigrationandnetmigrationflowsprovisional",
       "source": "Office for National Statistics"
     },
+    "onsHistoricalDataset": {
+      "id": "ons-ltim-historical-2-00",
+      "sourceId": "ons-ltim-historical-2-00",
+      "title": "Long-term international migration 2.00, citizenship, UK (Discontinued after 2019)",
+      "sourceType": "ONS historical LTIM / IPS / archived series",
+      "periodStart": 1964,
+      "periodEnd": 2019,
+      "url": "https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/datasets/longterminternationalmigration200citizenshipuk",
+      "workbookUrl": "https://www.ons.gov.uk/file?uri=%2Fpeoplepopulationandcommunity%2Fpopulationandmigration%2Finternationalmigration%2Fdatasets%2Flongterminternationalmigration200citizenshipuk%2Fcurrent%2F2.00ltimcitizenship1964to2019.xls",
+      "source": "Office for National Statistics"
+    },
     "homeOfficeDataTables": {
       "id": "home-office-immigration-system-data-tables",
       "title": "Immigration system statistics data tables",

@@ -346,6 +346,99 @@ function parseHomeOfficeSmallBoats(workbook) {
   }
 }
 
+const HISTORICAL_COMPARABILITY_NOTE =
+  'Historical discontinued ONS series; not directly comparable with the current official-in-development series.'
+
+const HISTORICAL_WARNINGS = [
+  'Historical series is discontinued after 2019.',
+  'Current ONS official-in-development series is backdated to 2012 and is not fully comparable with pre-2012 estimates.',
+  '2001-2011 net migration was revised after Census 2011; immigration and emigration were not revised on the same basis.',
+]
+
+function parseOnsHistoricalTrend(workbook, source = {}) {
+  const sheetName = 'Table 2.00'
+  if (!workbook?.Sheets?.[sheetName]) throw new Error(`ONS historical workbook did not contain sheet "${sheetName}".`)
+
+  const expectedStart = Number(source.periodStart || 1964)
+  const expectedEnd = Number(source.periodEnd || 2019)
+  const sourceId = source.sourceId || source.id || 'ons-ltim-historical-2-00'
+  const sourceUrl = source.url || ''
+  const rows = sheetRows(workbook, sheetName)
+  const warnings = []
+  const trend = []
+
+  for (const row of rows) {
+    const year = Number(row[0])
+    if (!Number.isInteger(year) || year < 1900) continue
+
+    const immigrationThousands = toNumber(row[1])
+    const emigrationThousands = toNumber(row[2])
+    const netThousands = toNumber(row[3])
+    const originalNetThousands = toNumber(row[25])
+    if (![immigrationThousands, emigrationThousands, netThousands].every(Number.isFinite)) {
+      throw new Error(`ONS historical row for ${year} has missing or invalid all-citizenship values.`)
+    }
+
+    const immigration = Math.round(immigrationThousands * 1000)
+    const emigration = Math.round(Math.abs(emigrationThousands) * 1000)
+    const net = Math.round(netThousands * 1000)
+    const originalNetEstimate = Number.isFinite(originalNetThousands) ? Math.round(originalNetThousands * 1000) : null
+    const derivedNet = immigration - emigration
+    const censusRevisionRow = year >= 2001 && year <= 2011 && originalNetEstimate != null
+    if (Math.abs(derivedNet - net) > 2000 && !censusRevisionRow) {
+      throw new Error(`ONS historical row for ${year} failed immigration minus emigration validation.`)
+    }
+    if (censusRevisionRow && Math.abs(derivedNet - originalNetEstimate) > 2000) {
+      throw new Error(`ONS historical row for ${year} failed original balance validation.`)
+    }
+    if (censusRevisionRow && !warnings.some((warning) => /2001-2011 net migration/i.test(warning))) {
+      warnings.push('2001-2011 net migration uses ONS Census 2011 revised balance; immigration and emigration remain the detailed table components.')
+    }
+
+    const record = {
+      year,
+      immigration,
+      emigration,
+      net,
+      sourceId,
+      sourceUrl,
+      seriesLabel: source.sourceType || 'Historical LTIM / IPS / archived series',
+      comparabilityNote: HISTORICAL_COMPARABILITY_NOTE,
+    }
+    if (originalNetEstimate != null) {
+      record.originalNetEstimate = originalNetEstimate
+      record.netRevisionNote = 'ONS Census 2011 revised net migration balance.'
+    }
+    trend.push(record)
+  }
+
+  if (trend.length < 50) throw new Error(`ONS historical workbook only parsed ${trend.length} annual rows.`)
+  const firstYear = trend[0]?.year
+  const lastYear = trend.at(-1)?.year
+  if (firstYear !== expectedStart) warnings.push(`Historical ONS first parsed year was ${firstYear}, expected ${expectedStart}.`)
+  if (lastYear !== expectedEnd) warnings.push(`Historical ONS final parsed year was ${lastYear}, expected ${expectedEnd}.`)
+
+  return {
+    trend,
+    meta: {
+      sourceId,
+      sourceType: source.sourceType || 'ONS historical LTIM / IPS / archived series',
+      periodStart: firstYear,
+      periodEnd: lastYear,
+      expectedPeriodStart: expectedStart,
+      expectedPeriodEnd: expectedEnd,
+      unit: 'people',
+      originalUnit: 'thousands',
+      comparableWithCurrentSeries: false,
+      overlapWithCurrentSeries: '2012-2019',
+      sourceUrl,
+      workbookUrl: source.workbookUrl || null,
+      warnings: [...HISTORICAL_WARNINGS, ...warnings],
+    },
+    warnings,
+  }
+}
+
 async function buildMigrationPayload(config) {
   const warnings = []
   const sources = config.sources || {}
@@ -361,6 +454,20 @@ async function buildMigrationPayload(config) {
   const main = parseOnsMainTable(onsWorkbook)
   const byNationality = [...parseOnsTopNationalities(onsWorkbook), ...parseOnsNationalityGroups(main)]
   const byVisa = parseOnsReasonRows(onsWorkbook)
+
+  let historicalTrend = []
+  let historicalMeta = null
+  try {
+    const historicalSource = sources.onsHistoricalDataset
+    if (!historicalSource?.workbookUrl) throw new Error('Historical ONS workbook URL is not configured.')
+    const historicalWorkbook = await fetchWorkbook(historicalSource.workbookUrl)
+    const historical = parseOnsHistoricalTrend(historicalWorkbook, historicalSource)
+    historicalTrend = historical.trend
+    historicalMeta = historical.meta
+    warnings.push(...historical.warnings.map((warning) => `ONS historical LTIM context warning: ${warning}`))
+  } catch (error) {
+    warnings.push(`ONS historical LTIM context skipped: ${error?.message || String(error)}`)
+  }
 
   let smallBoats = null
   let homeOfficeDownloadUrl = null
@@ -387,6 +494,8 @@ async function buildMigrationPayload(config) {
     byNationality,
     byVisa,
     trend: main.trend,
+    historicalTrend,
+    historicalMeta,
     smallBoats,
     meta: {
       reviewedAt: cleanText(config.reviewedAt) || new Date().toISOString().slice(0, 10),
@@ -396,6 +505,8 @@ async function buildMigrationPayload(config) {
       onsSourceUrl: sources.onsDataset.url,
       onsBulletinUrl: sources.onsBulletin.url,
       onsDownloadUrl: onsLinks[0],
+      onsHistoricalSourceUrl: sources.onsHistoricalDataset?.url || null,
+      onsHistoricalWorkbookUrl: sources.onsHistoricalDataset?.workbookUrl || null,
       homeOfficeSourceUrl: sources.homeOfficeDataTables.url,
       homeOfficeLatestReleaseUrl: sources.homeOfficeLatestRelease.url,
       homeOfficeDownloadUrl,
@@ -434,6 +545,38 @@ function validatePayload(payload) {
   if (!Array.isArray(payload?.byNationality) || !payload.byNationality.length) warnings.push('No ONS nationality rows were parsed.')
   if (!Array.isArray(payload?.byVisa) || !payload.byVisa.length) warnings.push('No ONS reason/visa-style rows were parsed.')
   if (!payload?.smallBoats) warnings.push('Home Office small-boats enrichment is not present.')
+  if (payload?.historicalTrend != null) {
+    if (!Array.isArray(payload.historicalTrend)) {
+      warnings.push('Historical ONS trend is not an array.')
+    } else if (payload.historicalTrend.length) {
+      if (payload.historicalTrend.length < 50) warnings.push(`Historical ONS trend only has ${payload.historicalTrend.length} rows.`)
+      const first = payload.historicalTrend[0]
+      const last = payload.historicalTrend.at(-1)
+      if (first?.year !== 1964) warnings.push(`Historical ONS trend starts at ${first?.year}, expected 1964.`)
+      if (last?.year !== 2019) warnings.push(`Historical ONS trend ends at ${last?.year}, expected 2019.`)
+      for (const row of payload.historicalTrend) {
+        if (![row.year, row.immigration, row.emigration, row.net].every((value) => Number.isFinite(Number(value)))) {
+          warnings.push(`Historical ONS trend has invalid values for row ${row?.year || 'unknown'}.`)
+          break
+        }
+        if (!row.sourceId || !row.comparabilityNote) {
+          warnings.push(`Historical ONS trend row ${row?.year || 'unknown'} is missing source/comparability labels.`)
+          break
+        }
+        const reconciles = Math.abs((Number(row.immigration) - Number(row.emigration)) - Number(row.net)) <= 2000
+        const censusRevisionRow = Number(row.year) >= 2001 && Number(row.year) <= 2011 && Number.isFinite(Number(row.originalNetEstimate))
+        if (!reconciles && !censusRevisionRow) {
+          warnings.push(`Historical ONS trend row ${row.year} does not reconcile within rounding tolerance.`)
+          break
+        }
+      }
+      if (!payload?.historicalMeta?.warnings?.some((warning) => /not fully comparable|not directly comparable/i.test(warning))) {
+        warnings.push('Historical ONS comparability warning is missing.')
+      }
+    } else {
+      warnings.push('Historical ONS trend is not present.')
+    }
+  }
 
   return { errors, warnings }
 }
@@ -521,6 +664,9 @@ export async function ingestMigration() {
         netPrev: payload.netPrev,
         netPrev2: payload.netPrev2,
         trendRows: payload.trend?.length || 0,
+        historicalRows: payload.historicalTrend?.length || 0,
+        firstHistoricalRow: payload.historicalTrend?.[0] || null,
+        lastHistoricalRow: payload.historicalTrend?.at(-1) || null,
         nationalityRows: payload.byNationality?.length || 0,
         visaRows: payload.byVisa?.length || 0,
         hasSmallBoats: !!payload.smallBoats,
@@ -542,6 +688,9 @@ export async function ingestMigration() {
       netPrev: payload.netPrev,
       netPrev2: payload.netPrev2,
       trendRows: payload.trend?.length || 0,
+      historicalRows: payload.historicalTrend?.length || 0,
+      firstHistoricalRow: payload.historicalTrend?.[0] || null,
+      lastHistoricalRow: payload.historicalTrend?.at(-1) || null,
       nationalityRows: payload.byNationality?.length || 0,
       visaRows: payload.byVisa?.length || 0,
       hasSmallBoats: !!payload.smallBoats,

@@ -9,6 +9,7 @@ const TABS = [
   { key: 'overview', label: 'Overview' },
   { key: 'breakdown', label: 'Breakdown' },
   { key: 'visas', label: 'Visas' },
+  { key: 'longrun', label: 'Long-run context' },
   { key: 'parties', label: 'Party views' },
 ]
 
@@ -101,6 +102,47 @@ function normaliseNationalityRows(M = {}) {
     }))
     .filter((row) => row.inflow > 0 || row.outflow > 0 || (row.net != null && row.net !== 0))
     .sort((a, b) => b.inflow - a.inflow)
+}
+
+function normaliseHistoricalRows(M = {}) {
+  return Array.isArray(M.historicalTrend)
+    ? M.historicalTrend
+        .map((row) => ({
+          ...row,
+          year: Number(row?.year),
+          immigration: Number(row?.immigration),
+          emigration: Number(row?.emigration),
+          net: Number(row?.net),
+        }))
+        .filter((row) => [row.year, row.immigration, row.emigration, row.net].every(Number.isFinite))
+        .sort((a, b) => a.year - b.year)
+    : []
+}
+
+function normaliseRecentTrendRows(M = {}) {
+  return Array.isArray(M.trend)
+    ? M.trend
+        .map((row) => ({
+          ...row,
+          year: Number(row?.year),
+          immigration: Number(row?.immigration),
+          emigration: Number(row?.emigration),
+          net: Number(row?.net),
+        }))
+        .filter((row) => [row.year, row.immigration, row.emigration, row.net].every(Number.isFinite))
+        .sort((a, b) => a.year - b.year)
+    : []
+}
+
+function pickLongRunBenchmarks(historicalRows = [], recentRows = []) {
+  const wantedYears = [1964, 1980, 1990, 2000, 2010, 2019]
+  const byYear = new Map(historicalRows.map((row) => [row.year, row]))
+  const selected = wantedYears.map((year) => byYear.get(year)).filter(Boolean)
+  const latest = recentRows.at(-1)
+  if (latest && !selected.some((row) => row.year === latest.year)) {
+    selected.push({ ...latest, seriesLabel: 'Current ONS official-in-development series' })
+  }
+  return selected
 }
 
 function isBritishNationalityRow(row = {}) {
@@ -595,6 +637,132 @@ function ContextMovementCard({ T, rows = [] }) {
   )
 }
 
+function LongRunChart({ T, historicalRows = [], recentRows = [] }) {
+  const allRows = [...historicalRows, ...recentRows]
+  if (!allRows.length) return null
+
+  const width = 560
+  const height = 220
+  const padX = 34
+  const padY = 24
+  const years = allRows.map((row) => row.year)
+  const values = allRows.map((row) => row.net)
+  const minYear = Math.min(...years)
+  const maxYear = Math.max(...years)
+  const minValue = Math.min(...values, 0)
+  const maxValue = Math.max(...values, 0)
+  const yearSpan = Math.max(1, maxYear - minYear)
+  const valueSpan = Math.max(1, maxValue - minValue)
+
+  const pointFor = (row) => {
+    const x = padX + ((row.year - minYear) / yearSpan) * (width - padX * 2)
+    const y = height - padY - ((row.net - minValue) / valueSpan) * (height - padY * 2)
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }
+  const zeroY = height - padY - ((0 - minValue) / valueSpan) * (height - padY * 2)
+  const historicalPoints = historicalRows.map(pointFor).join(' ')
+  const recentPoints = recentRows.map(pointFor).join(' ')
+
+  return (
+    <div
+      style={{
+        borderRadius: 14,
+        padding: '13px 13px 11px',
+        marginBottom: 12,
+        background: T.c0,
+        border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+      }}
+    >
+      <SectionLabel T={T} quiet>Long-run net migration</SectionLabel>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Long-run net migration chart" style={{ width: '100%', height: 'auto', display: 'block' }}>
+        <line x1={padX} y1={zeroY} x2={width - padX} y2={zeroY} stroke={T.tl} strokeOpacity="0.22" strokeWidth="1" />
+        <line x1={padX} y1={padY} x2={padX} y2={height - padY} stroke={T.tl} strokeOpacity="0.14" strokeWidth="1" />
+        <line x1={width - padX} y1={padY} x2={width - padX} y2={height - padY} stroke={T.tl} strokeOpacity="0.08" strokeWidth="1" />
+        {historicalPoints ? (
+          <polyline fill="none" stroke={T.tl} strokeOpacity="0.58" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" points={historicalPoints} />
+        ) : null}
+        {recentPoints ? (
+          <polyline fill="none" stroke={T.pr} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" points={recentPoints} />
+        ) : null}
+        {[historicalRows[0], historicalRows.at(-1), recentRows.at(-1)].filter(Boolean).map((row) => {
+          const [x, y] = pointFor(row).split(',').map(Number)
+          const color = recentRows.includes(row) ? T.pr : T.tl
+          return <circle key={`${row.year}-${row.net}`} cx={x} cy={y} r="4" fill={color} opacity="0.9" />
+        })}
+        <text x={padX} y={height - 6} fill={T.tl} fontSize="11" fontWeight="700">{minYear}</text>
+        <text x={width - padX} y={height - 6} fill={T.tl} fontSize="11" fontWeight="700" textAnchor="end">{maxYear}</text>
+        <text x={padX} y={padY - 8} fill={T.tl} fontSize="11" fontWeight="700">{fmt(maxValue)}</text>
+        <text x={padX} y={Math.min(height - 10, zeroY - 5)} fill={T.tl} fontSize="10" fontWeight="700">0</text>
+      </svg>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap', marginTop: 6 }}>
+        <div style={{ fontSize: 11.5, fontWeight: 700, color: T.tl }}>Historical LTIM / IPS</div>
+        <div style={{ fontSize: 11.5, fontWeight: 800, color: T.pr }}>Current ONS series</div>
+      </div>
+    </div>
+  )
+}
+
+function LongRunContext({ T, historicalRows = [], recentRows = [], historicalMeta = null }) {
+  const benchmarkRows = pickLongRunBenchmarks(historicalRows, recentRows)
+  const hasHistoricalRows = historicalRows.length > 0
+  const periodStart = historicalMeta?.periodStart || historicalRows[0]?.year
+  const periodEnd = historicalMeta?.periodEnd || historicalRows.at(-1)?.year
+
+  if (!hasHistoricalRows) {
+    return (
+      <DataUnavailable
+        T={T}
+        title="Long-run context unavailable"
+        body="The current ONS estimate is available, but the historical ONS LTIM series has not been loaded into this dataset yet."
+      />
+    )
+  }
+
+  return (
+    <>
+      <BriefingCard
+        T={T}
+        title="Long-run context"
+        body="Net migration has fallen from the recent peak, but long-run ONS historical data shows how unusual the post-2000 period is compared with much of the late 20th century."
+        stats={[
+          { label: 'HISTORICAL SERIES', value: `${periodStart}-${periodEnd}`, meta: 'ONS discontinued LTIM table', color: T.tl },
+          { label: 'LATEST ESTIMATE', value: recentRows.at(-1) ? fmt(recentRows.at(-1).net) : 'Not loaded', meta: 'Current ONS series', color: T.pr },
+          { label: 'COMPARABILITY', value: 'Context only', meta: 'Not like-for-like', color: '#FAA61A' },
+        ]}
+      />
+
+      <LongRunChart T={T} historicalRows={historicalRows} recentRows={recentRows} />
+
+      <div style={{ marginBottom: 12 }}>
+        <SectionLabel T={T}>Selected years</SectionLabel>
+        {benchmarkRows.map((row) => {
+          const isRecent = row.seriesLabel === 'Current ONS official-in-development series'
+          return (
+            <MetricRow
+              key={`${row.year}-${row.seriesLabel || 'historical'}`}
+              T={T}
+              title={String(row.year)}
+              value={row.net < 0 ? `${fmt(Math.abs(row.net))} net out` : `${fmt(row.net)} net in`}
+              detail={isRecent ? 'Current ONS official-in-development estimate' : 'Historical ONS LTIM / IPS archived series'}
+              fillPct={Math.min(100, Math.abs(row.net) / 10000)}
+              color={isRecent ? T.pr : row.net < 0 ? '#02A95B' : T.tl}
+              signal={row.immigration && row.emigration ? `${fmt(row.immigration)} in · ${fmt(row.emigration)} out` : null}
+            />
+          )
+        })}
+      </div>
+
+      <BriefingCard
+        T={T}
+        title="Series note"
+        body="Historical LTIM series and current ONS official-in-development estimates are shown together for context, not as a single like-for-like series."
+        context={historicalMeta?.warnings?.[0] || 'Historical series is discontinued after 2019.'}
+        subtle
+      />
+    </>
+  )
+}
+
 function PartyViewCard({ T, party }) {
   const color = getPolicyColor(party)
   const stanceLabel = party.stanceLabel || 'No record'
@@ -694,6 +862,8 @@ export default function MigrationScreen({ T, nav, migration, policyRecords = POL
   const nationalityRows = nationalitySplit.foreignRows
   const britishNationalityRows = nationalitySplit.britishRows
   const visaRows = useMemo(() => normaliseVisaRows(M), [M])
+  const historicalRows = useMemo(() => normaliseHistoricalRows(M), [M])
+  const recentTrendRows = useMemo(() => normaliseRecentTrendRows(M), [M])
   const estimateLabel = migrationEstimateLabel(M)
   const provenanceText = migrationProvenanceText(dataState.migration, M)
 
@@ -976,6 +1146,10 @@ export default function MigrationScreen({ T, nav, migration, policyRecords = POL
               </>
             )}
           </>
+        )}
+
+        {tab === 'longrun' && (
+          <LongRunContext T={T} historicalRows={historicalRows} recentRows={recentTrendRows} historicalMeta={M.historicalMeta} />
         )}
 
         {tab === 'parties' && (
