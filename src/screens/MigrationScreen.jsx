@@ -20,6 +20,35 @@ const OVERVIEW_FALLBACK = {
   netPrev2: 944000,
 }
 
+const MIGRATION_PARTY_ORDER = [
+  'restore britain',
+  'reform uk',
+  'conservative',
+  'labour',
+  'liberal democrats',
+  'plaid cymru',
+  'snp',
+  'green party',
+]
+
+const MIGRATION_PARTY_ALIASES = {
+  rb: 'restore britain',
+  ref: 'reform uk',
+  reform: 'reform uk',
+  con: 'conservative',
+  conservatives: 'conservative',
+  lab: 'labour',
+  ld: 'liberal democrats',
+  'lib dem': 'liberal democrats',
+  'lib dems': 'liberal democrats',
+  'liberal democrat': 'liberal democrats',
+  pc: 'plaid cymru',
+  plaid: 'plaid cymru',
+  grn: 'green party',
+  green: 'green party',
+  greens: 'green party',
+}
+
 function fmt(n) {
   const value = Number(n || 0)
   if (Math.abs(value) >= 1000000) return `${(value / 1000000).toFixed(1)}m`
@@ -283,6 +312,22 @@ function deriveVisaSummary(M = {}) {
 
 function getPolicyColor(policy) {
   return getPartyByName(policy?.party).color
+}
+
+function normaliseMigrationPartyName(value = '') {
+  const key = String(value || '').trim().toLowerCase()
+  return MIGRATION_PARTY_ALIASES[key] || key
+}
+
+function sortMigrationPartyRows(rows = []) {
+  return [...rows].sort((a, b) => {
+    const aIndex = MIGRATION_PARTY_ORDER.indexOf(normaliseMigrationPartyName(a?.party))
+    const bIndex = MIGRATION_PARTY_ORDER.indexOf(normaliseMigrationPartyName(b?.party))
+    const safeA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex
+    const safeB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex
+    if (safeA !== safeB) return safeA - safeB
+    return String(a?.party || '').localeCompare(String(b?.party || ''))
+  })
 }
 
 function derivePartySummary(policyRecords = POLICY_RECORDS) {
@@ -875,7 +920,7 @@ export default function MigrationScreen({ T, nav, migration, policyRecords = POL
   const overview = useMemo(() => deriveMigrationOverviewSummary(M), [M])
   const breakdown = useMemo(() => deriveBreakdownSummary(M), [M])
   const visaSummary = useMemo(() => deriveVisaSummary(M), [M])
-  const partyRows = useMemo(() => getComparisonRows(policyRecords, 'immigration'), [policyRecords])
+  const partyRows = useMemo(() => sortMigrationPartyRows(getComparisonRows(policyRecords, 'immigration')), [policyRecords])
   const partySummary = useMemo(() => derivePartySummary(policyRecords), [policyRecords])
   const nationalitySplit = useMemo(() => splitNationalityRows(M), [M])
   const nationalityRows = nationalitySplit.foreignRows
