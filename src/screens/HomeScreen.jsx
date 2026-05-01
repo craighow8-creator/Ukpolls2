@@ -9,6 +9,7 @@ import { buildHomeNewsBriefing, formatRelativeNewsTime, normaliseNewsPayload } f
 import { API_BASE } from '../constants'
 import { parseJsonResponse } from '../utils/http'
 import { POLITICAL_MARKET_ROWS } from '../data/politicalMarkets'
+import GENERATED_POLITICAL_MARKETS from '../data/politicalMarkets.generated.json'
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
@@ -45,20 +46,18 @@ function extractPredictionMarketRows(predictionMarkets) {
   if (!payload || typeof payload !== 'object') return []
 
   const fallbackCheckedAt = payload.checkedAt || payload.generatedAt || payload.updatedAt || payload.meta?.updatedAt
-
-  if (Array.isArray(payload.rows)) {
-    return payload.rows
-      .map((row) => ({
-        checkedAt: row?.checkedAt || row?.updatedAt || fallbackCheckedAt,
-        freshnessStatus: String(row?.freshnessStatus || '').toLowerCase(),
-      }))
-      .filter((row) => row.checkedAt || row.freshnessStatus)
-  }
-
-  if (!Array.isArray(payload.markets)) return []
+  const rawRows = Array.isArray(payload.rows)
+    ? payload.rows
+    : Array.isArray(payload.markets)
+      ? payload.markets
+      : Array.isArray(payload.data?.rows)
+        ? payload.data.rows
+        : Array.isArray(payload.data?.markets)
+          ? payload.data.markets
+          : []
 
   // Remote market rows should already be UK-politics filtered by the ingest/Worker path.
-  return payload.markets
+  return rawRows
     .map((market) => ({
       checkedAt: market?.checkedAt || market?.updatedAt || fallbackCheckedAt,
       freshnessStatus: String(market?.freshnessStatus || '').toLowerCase(),
@@ -68,15 +67,17 @@ function extractPredictionMarketRows(predictionMarkets) {
 
 function buildMarketTileState(predictionMarkets) {
   const rows = extractPredictionMarketRows(predictionMarkets)
+  const generatedRows = extractPredictionMarketRows(GENERATED_POLITICAL_MARKETS)
+  const currentRows = rows.length ? rows : generatedRows
   const archivedRows = Array.isArray(POLITICAL_MARKET_ROWS) ? POLITICAL_MARKET_ROWS : []
 
-  if (rows.length) {
-    const latestCheckedAt = rows
+  if (currentRows.length) {
+    const latestCheckedAt = currentRows
       .map((row) => row.checkedAt)
       .filter(Boolean)
       .sort((a, b) => (parseMarketDate(b)?.getTime() || 0) - (parseMarketDate(a)?.getTime() || 0))[0]
     const latestAge = marketDaysSince(latestCheckedAt)
-    const hasExplicitStale = rows.some((row) => row.freshnessStatus === 'stale')
+    const hasExplicitStale = currentRows.some((row) => row.freshnessStatus === 'stale')
     const isStale = hasExplicitStale || latestAge == null || latestAge > 14
 
     return isStale
