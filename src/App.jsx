@@ -605,7 +605,7 @@ export default function App() {
       case 'news':
         return <NewsScreen {...common} news={NEWS} />
       case 'vote':
-        return <VoteScreen {...common} parties={PARTIES} />
+        return <VoteScreen {...common} parties={PARTIES} leaders={LEADERS} />
       case 'compare':
         return (
           <CompareScreen

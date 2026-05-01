@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { WORKER, APP_TOKEN, R } from '../constants'
 import { LS, getDeviceId } from '../utils/helpers'
 import { parseJsonResponse } from '../utils/http'
+import PartyIdentityMark from './PartyIdentityMark'
+import { PortraitAvatar } from '../utils/portraits'
 
 const POTD_QUESTIONS = [
   { id:'q_vote',   q:'If there was a general election tomorrow, who would you vote for?',      opts:['Reform UK','Labour','Conservative','Green','Lib Dem','Restore Britain','SNP / Plaid','Would not vote'] },
@@ -17,7 +19,31 @@ function getTodayQ() {
   return POTD_QUESTIONS[day % POTD_QUESTIONS.length]
 }
 
-export default function POTDWidget({ T }) {
+function isPartyQuestion(question) {
+  return ['q_vote', 'q_winner'].includes(question?.id)
+}
+
+function isLeaderQuestion(question) {
+  return question?.id === 'q_pm'
+}
+
+function findLeaderByName(leaders = [], name = '') {
+  const key = String(name || '').trim().toLowerCase()
+  return leaders.find((leader) => String(leader?.name || '').trim().toLowerCase() === key) || null
+}
+
+function OptionIdentity({ T, question, option, leaders = [], size = 30 }) {
+  if (isPartyQuestion(question)) {
+    return <PartyIdentityMark party={option} size={size} />
+  }
+  if (isLeaderQuestion(question)) {
+    const leader = findLeaderByName(leaders, option)
+    return <PortraitAvatar name={option} color={leader?.color || T.pr} size={size} radius={Math.round(size / 2)} />
+  }
+  return null
+}
+
+export default function POTDWidget({ T, leaders = [] }) {
   const q = getTodayQ()
   const [voted, setVoted] = useState(LS.get('potd_' + q.id))
   const [results, setResults] = useState(null)
@@ -48,8 +74,9 @@ export default function POTDWidget({ T }) {
         <div style={{ fontSize:16, fontWeight:700, color:T.th, lineHeight:1.4, marginBottom:14 }}>{q.q}</div>
         <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           {q.opts.map((opt, i) => (
-            <button key={i} onClick={() => vote(opt)} style={{ padding:'12px 16px', borderRadius:14, border:`2px solid ${T.pr}30`, background:T.c1, fontSize:14, fontWeight:700, color:T.th, textAlign:'left', cursor:'pointer', fontFamily:"'Outfit',sans-serif" }}>
-              {opt}
+            <button key={i} onClick={() => vote(opt)} style={{ padding:'12px 16px', borderRadius:14, border:`2px solid ${T.pr}30`, background:T.c1, fontSize:14, fontWeight:700, color:T.th, textAlign:'left', cursor:'pointer', fontFamily:"'Outfit',sans-serif", display:'flex', alignItems:'center', gap:10 }}>
+              <OptionIdentity T={T} question={q} option={opt} leaders={leaders} />
+              <span>{opt}</span>
             </button>
           ))}
         </div>
@@ -70,7 +97,10 @@ export default function POTDWidget({ T }) {
         return (
           <div key={i} style={{ marginBottom:8 }}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
-              <span style={{ fontSize:14, fontWeight:isMe?800:600, color:isMe?T.pr:T.th }}>{r.opt}{isMe ? ' ✓' : ''}</span>
+              <span style={{ display:'inline-flex', alignItems:'center', gap:8, minWidth:0, fontSize:14, fontWeight:isMe?800:600, color:isMe?T.pr:T.th }}>
+                <OptionIdentity T={T} question={q} option={r.opt} leaders={leaders} size={24} />
+                <span>{r.opt}{isMe ? ' ✓' : ''}</span>
+              </span>
               <span style={{ fontSize:14, fontWeight:800, color:T.pr }}>{r.pct}%</span>
             </div>
             <div style={{ height:6, background:T.sf, borderRadius:999, overflow:'hidden' }}>

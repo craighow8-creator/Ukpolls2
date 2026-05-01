@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ScrollArea } from '../components/ui'
 import POTDWidget from '../components/POTDWidget'
+import PartyIdentityMark from '../components/PartyIdentityMark'
 import { WORKER, APP_TOKEN } from '../constants'
 import { getMyVote, setMyVote, getDeviceId } from '../utils/helpers'
 import { parseJsonResponse } from '../utils/http'
@@ -30,7 +31,7 @@ const POLL_MAP = {
   SNP: 3,
 }
 
-export default function VoteScreen({ T, nav, meta }) {
+export default function VoteScreen({ T, nav, meta, leaders = [] }) {
   const [myVote, setMyVoteState] = useState(getMyVote())
   const [votes, setVotes] = useState({})
   const [total, setTotal] = useState(0)
@@ -154,6 +155,8 @@ export default function VoteScreen({ T, nav, meta }) {
                     }}
                   />
 
+                  <PartyIdentityMark party={p.name} color={p.color} size={34} />
+
                   <div style={{ fontSize: 14, fontWeight: 800, color: sel ? p.color : T.th }}>
                     {p.name}
                   </div>
@@ -192,6 +195,7 @@ export default function VoteScreen({ T, nav, meta }) {
                     cursor: 'pointer',
                   }}
                 >
+                  <PartyIdentityMark party={p.name} color={p.color} size={28} style={{ margin: '0 auto 6px' }} />
                   <div style={{ fontSize: 13, fontWeight: 800, color: sel ? p.color : T.th }}>
                     {p.name}
                   </div>
@@ -248,7 +252,10 @@ export default function VoteScreen({ T, nav, meta }) {
                           marginBottom: 5,
                         }}
                       >
-                        <span style={{ fontSize: 13, fontWeight: 800, color: p.color }}>{p.name}</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                          <PartyIdentityMark party={p.name} color={p.color} size={24} />
+                          <span style={{ fontSize: 13, fontWeight: 800, color: p.color }}>{p.name}</span>
+                        </span>
 
                         {n > 0 && pollPct > 0 && (
                           <span
@@ -356,7 +363,21 @@ export default function VoteScreen({ T, nav, meta }) {
             Poll of the day
           </div>
 
-          <POTDWidget T={T} />
+          <POTDWidget T={T} leaders={leaders} />
+
+          <div
+            style={{
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: T.tl,
+              lineHeight: 1.45,
+              textAlign: 'center',
+              marginTop: 12,
+              padding: '0 8px',
+            }}
+          >
+            Party identity marks are shown for identification and editorial context only. Politiscope is independent and not endorsed by any political party.
+          </div>
 
           <div style={{ height: 40 }} />
         </div>
