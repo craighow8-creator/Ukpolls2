@@ -12,8 +12,20 @@ const POLICY_TOPICS = [
   { key: 'immigration', label: 'Immigration' },
   { key: 'economy', label: 'Economy' },
   { key: 'nhs', label: 'NHS' },
+  { key: 'housing', label: 'Housing' },
+  { key: 'education', label: 'Education' },
+  { key: 'welfare', label: 'Welfare' },
   { key: 'climate', label: 'Climate' },
+  { key: 'transport', label: 'Transport' },
+  { key: 'democracy', label: 'Democracy' },
+  { key: 'foreignPolicy', label: 'Foreign policy' },
 ]
+
+const POLICY_TOPIC_KEYS = POLICY_TOPICS
+  .map((topic) => topic.key)
+  .filter((key) => key !== 'overview')
+
+const OVERVIEW_PREVIEW_TOPICS = ['immigration', 'economy', 'nhs', 'housing', 'climate', 'democracy']
 
 function SectionLabel({ children, T }) {
   return (
@@ -732,7 +744,7 @@ export default function CompareScreen({
   const leaderADisplay = leaderRatingDisplay(leaderA)
   const leaderBDisplay = leaderRatingDisplay(leaderB)
   const leadersComparable = Boolean(leaderA && leaderB && leaderADisplay.sourced && leaderBDisplay.sourced)
-  const issueTopic = ['immigration', 'economy', 'nhs', 'climate'].find((topic) => topicPreview(topic, partyA?.name, policyRecords) || topicPreview(topic, partyB?.name, policyRecords))
+  const issueTopic = POLICY_TOPIC_KEYS.find((topic) => topicPreview(topic, partyA?.name, policyRecords) || topicPreview(topic, partyB?.name, policyRecords))
   const issueA = issueTopic ? topicPreview(issueTopic, partyA?.name, policyRecords) : null
   const issueB = issueTopic ? topicPreview(issueTopic, partyB?.name, policyRecords) : null
   const activePolicyArea = tab !== 'overview' ? tab : issueTopic || 'immigration'
@@ -1257,7 +1269,7 @@ export default function CompareScreen({
               </>
             )}
 
-            {['immigration', 'economy', 'nhs'].map((topic) => {
+            {OVERVIEW_PREVIEW_TOPICS.map((topic) => {
               const previewA = topicPreview(topic, partyA?.name, policyRecords)
               const previewB = topicPreview(topic, partyB?.name, policyRecords)
               if (!previewA && !previewB) return null

@@ -27,7 +27,18 @@ const TABS = [
   { key: 'funding', label: 'Funding' },
 ]
 
-const COMPARE_POLICY_AREAS = new Set(['immigration', 'economy', 'nhs', 'climate'])
+const COMPARE_POLICY_AREAS = new Set([
+  'immigration',
+  'economy',
+  'nhs',
+  'housing',
+  'education',
+  'welfare',
+  'climate',
+  'transport',
+  'democracy',
+  'foreignPolicy',
+])
 const OFFICIAL_POLICY_SOURCE_TYPES = new Set([
   'manifesto',
   'official_policy_paper',
