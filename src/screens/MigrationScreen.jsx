@@ -902,6 +902,13 @@ export default function MigrationScreen({ T, nav, migration, policyRecords = POL
               <OverviewStatCard T={T} label="2025 estimate" value={fmt(overview.netNow)} sub="ONS latest estimate" color="#02A95B" change="▼ Lower again" />
               <OverviewStatCard T={T} label="Political benchmark" value="<100k" sub="Stated control target" color={T.pr} />
             </div>
+
+            <BriefingCard
+              T={T}
+              title="Historical context"
+              body="Net migration has fallen sharply from the 2023 peak, but the latest estimate is still high compared with much of the pre-2000 period. The current ONS series is strongest for recent years, so older comparisons should be treated as long-run context rather than a like-for-like live series."
+              subtle
+            />
           </>
         )}
 
