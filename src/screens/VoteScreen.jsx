@@ -144,6 +144,13 @@ export default function VoteScreen({ T, nav, meta, leaders = [] }) {
                     position: 'relative',
                   }}
                 >
+                  <PartyIdentityMark
+                    party={p.name}
+                    color={p.color}
+                    variant="watermark"
+                    style={{ opacity: sel ? 1 : 0.85 }}
+                  />
+
                   <div
                     style={{
                       height: 3,

@@ -1,23 +1,6 @@
 import React from 'react'
 import { getPartyById, getPartyByName } from '../data/partyRegistry'
-
-const EXTRA_IDENTITIES = {
-  'would not vote': {
-    name: 'Would not vote',
-    abbr: 'WNV',
-    color: '#6b7280',
-  },
-  'snp / plaid': {
-    name: 'SNP / Plaid',
-    abbr: 'S/P',
-    color: '#5f7f2f',
-  },
-  'no idea': {
-    name: 'No idea',
-    abbr: '?',
-    color: '#6b7280',
-  },
-}
+import { getPartyIdentity as getConfiguredPartyIdentity } from '../data/partyIdentity'
 
 function cleanKey(value = '') {
   return String(value || '').trim().toLowerCase()
@@ -38,16 +21,17 @@ function initialsFromName(value = '') {
 
 export function getPartyIdentity({ party, name, key, abbr, color, emblemPath } = {}) {
   const raw = party || name || key || ''
-  const extra = EXTRA_IDENTITIES[cleanKey(raw)]
+  const configured = getConfiguredPartyIdentity(raw)
   const registry = key ? getPartyById(key) : getPartyByName(raw)
-  const resolved = extra || registry
+  const resolved = configured || registry
   const isOtherFallback = resolved?.id === 'other' && cleanKey(raw) !== 'other'
 
   return {
-    name: extra?.name || (isOtherFallback ? raw : resolved?.name) || raw || 'Other',
-    abbr: abbr || extra?.abbr || (isOtherFallback ? initialsFromName(raw) : resolved?.abbr) || initialsFromName(raw),
-    color: color || extra?.color || (isOtherFallback ? '#6b7280' : resolved?.color) || '#6b7280',
+    name: configured?.name || (isOtherFallback ? raw : resolved?.name) || raw || 'Other',
+    abbr: abbr || configured?.fallbackInitials || configured?.abbr || (isOtherFallback ? initialsFromName(raw) : resolved?.abbr) || initialsFromName(raw),
+    color: color || configured?.color || (isOtherFallback ? '#6b7280' : resolved?.color) || '#6b7280',
     emblemPath: emblemPath || resolved?.emblemPath || null,
+    usageNote: configured?.usageNote || 'Shown for identification and editorial context only.',
   }
 }
 
@@ -60,9 +44,44 @@ export default function PartyIdentityMark({
   emblemPath,
   size = 34,
   radius,
+  variant = 'badge',
   style = {},
 }) {
   const identity = getPartyIdentity({ party, name, key: partyKey, abbr, color, emblemPath })
+  if (variant === 'watermark') {
+    if (!identity.emblemPath) return null
+    return (
+      <span
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+          overflow: 'hidden',
+          ...style,
+        }}
+      >
+        <img
+          src={identity.emblemPath}
+          alt=""
+          style={{
+            width: '78%',
+            height: '78%',
+            objectFit: 'contain',
+            opacity: 0.08,
+            filter: 'grayscale(12%)',
+          }}
+          onError={(event) => {
+            event.currentTarget.style.display = 'none'
+          }}
+        />
+      </span>
+    )
+  }
+
   const r = radius ?? Math.round(size * 0.32)
   const isNeutral = cleanKey(identity.name) === 'would not vote' || identity.color === '#6b7280'
 
