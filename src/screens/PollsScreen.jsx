@@ -142,6 +142,17 @@ function formatSignedMovement(value) {
   return `${number > 0 ? '+' : ''}${number.toFixed(1)}`
 }
 
+function parseSnapshotMovementValue(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  const text = cleanText(value)
+  if (!text) return null
+  const numeric = Number(text.replace(/[^\d.+-]/g, ''))
+  if (!Number.isFinite(numeric)) return null
+  if (text.includes('▼')) return -Math.abs(numeric)
+  if (text.includes('▲')) return Math.abs(numeric)
+  return numeric
+}
+
 function formatRelativePollTime(value) {
   const parsed = parseDateish(value)
   if (!parsed) return null
@@ -304,12 +315,27 @@ function buildRaceStateSummary(parties = [], trendSeries = []) {
   return { headline, subline }
 }
 
-function getSnapshotMovements(parties = [], trendSeries = []) {
+function getSnapshotMovements(parties = [], trendSeries = [], displayedMovementRows = []) {
+  const displayedByKey = new Map(
+    (Array.isArray(displayedMovementRows) ? displayedMovementRows : [])
+      .map((row) => [row?.key, parseSnapshotMovementValue(row?.delta)])
+      .filter(([key, movement]) => key && movement != null),
+  )
+  const displayedByName = new Map(
+    (Array.isArray(displayedMovementRows) ? displayedMovementRows : [])
+      .map((row) => [cleanText(row?.name).toLowerCase(), parseSnapshotMovementValue(row?.delta)])
+      .filter(([name, movement]) => name && movement != null),
+  )
   const rows = [...(Array.isArray(parties) ? parties : [])]
     .map((party) => {
-      const signal = getPartyTrendSignal(party, trendSeries)
-      const movement = Number(signal?.change)
-      return Number.isFinite(movement) ? { ...party, movement } : null
+      const key = POLL_PARTIES.find((pollParty) => {
+        const partyMeta = getPollPartyMeta(pollParty.key)
+        return partyMeta.name === getPartyByName(party?.name).name || party?.abbr === partyMeta.short
+      })?.key
+      const displayedMovement = displayedByKey.get(key) ?? displayedByName.get(cleanText(party?.name).toLowerCase())
+      const fallbackSignal = displayedMovement == null ? getPartyTrendSignal(party, trendSeries) : null
+      const movement = displayedMovement ?? parseSnapshotMovementValue(fallbackSignal?.change)
+      return movement != null ? { ...party, key, movement } : null
     })
     .filter(Boolean)
 
@@ -351,13 +377,13 @@ function buildSnapshotProvenance({ polls = [], pollContext = {}, dataState = {},
   return refreshed ? `${base} · refreshed ${refreshed}` : base
 }
 
-function buildSnapshotBriefing({ parties = [], trendSeries = [], pollContext = {}, polls = [], dataState = {}, meta = {} }) {
+function buildSnapshotBriefing({ parties = [], trendSeries = [], movementRows = [], pollContext = {}, polls = [], dataState = {}, meta = {} }) {
   const ranked = [...(Array.isArray(parties) ? parties : [])]
     .filter((party) => safeNumber(party?.pct) != null)
     .sort((a, b) => (safeNumber(b?.pct) || 0) - (safeNumber(a?.pct) || 0))
   const leader = ranked[0]
   const second = ranked[1]
-  const { surge, drop } = getSnapshotMovements(ranked, trendSeries)
+  const { surge, drop } = getSnapshotMovements(ranked, trendSeries, movementRows)
   const chips = []
 
   if (leader) {
@@ -2319,16 +2345,22 @@ export default function PollsScreen({ T, parties, polls, meta, nav, pollContext 
     }),
     [allPolls, mainParties, latestLivePoll, latestPolls, pollContext, raceState, pollSpread, pollHouseEffects],
   )
+  const snapshotMovementRows = useMemo(
+    () => getTrendValuesFromParties(mainParties, buildDisplayTrendRows(allPolls, pollContext))
+      .filter((row) => POLL_PARTY_KEYS.includes(row.key)),
+    [mainParties, allPolls, pollContext],
+  )
   const snapshotBriefing = useMemo(
     () => buildSnapshotBriefing({
       parties: mainParties,
       trendSeries: pollContext?.trendSeries || [],
+      movementRows: snapshotMovementRows,
       pollContext,
       polls: allPolls,
       dataState,
       meta,
     }),
-    [mainParties, pollContext, allPolls, dataState, meta],
+    [mainParties, pollContext, snapshotMovementRows, allPolls, dataState, meta],
   )
 
   const topTwo = mainParties.slice(0, 2)
