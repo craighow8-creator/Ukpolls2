@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ScrollArea } from '../components/ui'
 import POTDWidget from '../components/POTDWidget'
-import PartyIdentityMark from '../components/PartyIdentityMark'
+import PartyIdentityMark, { getPartyIdentity } from '../components/PartyIdentityMark'
 import { WORKER, APP_TOKEN } from '../constants'
 import { getMyVote, setMyVote, getDeviceId } from '../utils/helpers'
 import { parseJsonResponse } from '../utils/http'
@@ -121,6 +121,9 @@ export default function VoteScreen({ T, nav, meta, leaders = [] }) {
             {mainParties.map((p, i) => {
               const sel = p.name === myVote
               const pollPct = POLL_MAP[p.name]
+              const identity = getPartyIdentity({ party: p.name, color: p.color })
+              const cardBackground = identity.cardBackground || p.color
+              const cardText = identity.cardTextColor || '#fff'
 
               return (
                 <motion.div
@@ -130,27 +133,24 @@ export default function VoteScreen({ T, nav, meta, leaders = [] }) {
                   style={{
                     borderRadius: 14,
                     overflow: 'hidden',
-                    background: sel ? `${p.color}14` : T.c0 || '#fff',
-                    border: `${sel ? 2 : 1}px solid ${sel ? p.color : `${p.color}28`}`,
+                    background: sel
+                      ? `linear-gradient(145deg, ${cardBackground}, ${cardBackground}D9)`
+                      : `linear-gradient(145deg, ${cardBackground}, ${cardBackground}E6)`,
+                    border: `${sel ? 2 : 1}px solid ${sel ? 'rgba(255,255,255,0.86)' : 'rgba(255,255,255,0.24)'}`,
+                    boxShadow: sel
+                      ? `0 12px 26px ${cardBackground}30, inset 0 1px 0 rgba(255,255,255,0.32)`
+                      : `0 8px 18px ${cardBackground}20, inset 0 1px 0 rgba(255,255,255,0.22)`,
                     cursor: 'pointer',
-                    minHeight: 76,
+                    minHeight: 132,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 3,
-                    padding: '12px 8px',
-                    textAlign: 'center',
+                    gap: 9,
+                    padding: '17px 12px 12px',
                     position: 'relative',
                   }}
                 >
-                  <PartyIdentityMark
-                    party={p.name}
-                    color={p.color}
-                    variant="watermark"
-                    style={{ opacity: sel ? 1 : 0.85 }}
-                  />
-
                   <div
                     style={{
                       height: 3,
@@ -162,17 +162,72 @@ export default function VoteScreen({ T, nav, meta, leaders = [] }) {
                     }}
                   />
 
-                  <PartyIdentityMark party={p.name} color={p.color} size={44} radius={15} />
+                  <PartyIdentityMark
+                    party={p.name}
+                    color={p.color}
+                    variant="heroLogo"
+                    size={62}
+                    style={{
+                      maxWidth: '84%',
+                      height: 66,
+                      position: 'relative',
+                      zIndex: 1,
+                    }}
+                  />
 
-                  <div style={{ fontSize: 14, fontWeight: 800, color: sel ? p.color : T.th }}>
-                    {p.name}
+                  <div
+                    style={{
+                      width: '78%',
+                      height: 1,
+                      background: 'rgba(255,255,255,0.32)',
+                      position: 'relative',
+                      zIndex: 1,
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      position: 'relative',
+                      zIndex: 1,
+                      display: 'grid',
+                      gap: 4,
+                      justifyItems: 'center',
+                    }}
+                  >
+                    {pollPct ? (
+                      <div
+                        style={{
+                          fontSize: 15,
+                          fontWeight: 700,
+                          color: cardText,
+                          textAlign: 'center',
+                          textShadow: '0 1px 8px rgba(0,0,0,0.2)',
+                        }}
+                      >
+                        Poll: <span style={{ fontSize: 22, fontWeight: 900 }}>{pollPct}%</span>
+                      </div>
+                    ) : null}
+
+                    {sel ? (
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          width: 'fit-content',
+                          fontSize: 12,
+                          fontWeight: 800,
+                          color: cardBackground,
+                          background: 'rgba(255,255,255,0.92)',
+                          border: '1px solid rgba(255,255,255,0.72)',
+                          borderRadius: 999,
+                          padding: '4px 10px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.14)',
+                        }}
+                      >
+                        Your vote
+                      </div>
+                    ) : null}
                   </div>
-
-                  {sel ? (
-                    <div style={{ fontSize: 13, fontWeight: 800, color: p.color }}>✓ Your vote</div>
-                  ) : pollPct ? (
-                    <div style={{ fontSize: 13, fontWeight: 700, color: T.tl }}>Poll: {pollPct}%</div>
-                  ) : null}
                 </motion.div>
               )
             })}
