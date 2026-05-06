@@ -211,40 +211,32 @@ function buildStateWatchCue(main, leader, second, gap) {
     }
 }
 
-function buildStateIntelligenceFeed(main, leader, second, gap) {
-  const movementRows = main
-    .map((party) => ({ ...party, _stateMovement: getPartyMovementValue(party) }))
-    .filter((party) => party?.name && Number.isFinite(Number(party._stateMovement)))
-  const largestGain = [...movementRows].sort((a, b) => Number(b._stateMovement) - Number(a._stateMovement))[0] || null
-  const largestDrop = [...movementRows].sort((a, b) => Number(a._stateMovement) - Number(b._stateMovement))[0] || null
+function buildStateIntelligenceFeed(main, leader, second, third, gap, pollContext) {
   const leaderPct = Number(leader?.pct)
+  const secondPct = Number(second?.pct)
+  const thirdPct = Number(third?.pct)
   const gapValue = Number(gap)
   const events = []
 
-  if (largestGain && Number(largestGain._stateMovement) > 0) {
-    events.push(`${largestGain.name} surge (${formatMovementValue(largestGain._stateMovement)}) — strongest movement`)
+  if (Number.isFinite(leaderPct) && Number.isFinite(thirdPct)) {
+    events.push(`Top 3 spread: ${formatPointValue(leaderPct - thirdPct)} pts`)
   }
 
-  if (largestDrop && Number(largestDrop._stateMovement) < 0) {
-    events.push(`${largestDrop.name} decline (${formatMovementValue(largestDrop._stateMovement)}) — sharp drop`)
+  if (second?.name && third?.name && Number.isFinite(secondPct) && Number.isFinite(thirdPct)) {
+    events.push(`${second.name} edge over ${third.name}: ${formatPointValue(secondPct - thirdPct)} pts`)
   }
 
-  if (Number.isFinite(leaderPct) && leaderPct < 30) {
-    events.push('Fragmented race')
-  }
-
-  if (Number.isFinite(gapValue) && gapValue <= 3 && leader?.name && second?.name) {
+  if (Number.isFinite(gapValue) && gapValue <= 3) {
     events.push(`Tight race — top two within ${formatPointValue(gapValue)} pts`)
   }
 
-  const maxMovement = movementRows.reduce((max, party) => Math.max(max, Math.abs(Number(party._stateMovement))), 0)
-  if (movementRows.length && maxMovement < 1) {
-    events.push('Stable polling environment')
-  } else if (leader?.name && Number.isFinite(gapValue) && gapValue > 3) {
-    events.push(`${leader.name} lead holding`)
+  const pollRows = getPollRowsForHome(pollContext)
+  const pollCount = Number(pollContext?.sourcePollCount) || pollRows.length || 0
+  if (pollCount) {
+    events.push(`${pollCount} polls in current average`)
   }
 
-  return [...new Set(events)].slice(0, 5)
+  return [...new Set(events)].slice(0, 3)
 }
 
 function getPollDateValue(poll) {
@@ -977,7 +969,7 @@ export default function HomeScreen({
   const stateInsight = buildStateOfPlayInsight(stateOfPlayRows, leader, second, third, gap)
   const stateStructureLine = buildStateStructureLine(stateOfPlayRows, leader, second, third, gap)
   const stateWatchCue = buildStateWatchCue(stateOfPlayRows, leader, second, gap)
-  const stateIntelligenceFeed = buildStateIntelligenceFeed(stateOfPlayRows, leader, second, gap)
+  const stateIntelligenceFeed = buildStateIntelligenceFeed(stateOfPlayRows, leader, second, third, gap, pollContext)
   const stateProvenanceLine = buildStateProvenanceLine({ meta, pollContext })
   const stateConfidenceLine = buildStateConfidenceLine({ meta, pollContext })
 
