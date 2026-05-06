@@ -9,7 +9,7 @@ const worker = {
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, x-admin-key',
     }
 
     if (request.method === 'OPTIONS') {
@@ -1509,6 +1509,52 @@ const worker = {
             sources: [...new Set(items.map((item) => item.source).filter(Boolean))],
             sourceType: 'live-fetch',
           },
+        })
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/admin/refresh-markets') {
+        const configuredAdminKey = String(env?.ADMIN_ACTION_KEY || '').trim()
+        if (!configuredAdminKey) {
+          return jsonResponse(
+            { ok: false, error: 'Admin action key is not configured' },
+            { status: 401 }
+          )
+        }
+
+        const suppliedAdminKey = String(request.headers.get('x-admin-key') || '').trim()
+        if (!suppliedAdminKey || suppliedAdminKey !== configuredAdminKey) {
+          return jsonResponse(
+            { ok: false, error: 'Unauthorized' },
+            { status: 401 }
+          )
+        }
+
+        const payload = await runPolymarketPredictionRefresh({ logger: console })
+        await saveContentSection('predictionMarkets', payload)
+
+        const rows = Array.isArray(payload?.rows)
+          ? payload.rows
+          : Array.isArray(payload?.markets)
+            ? payload.markets
+            : []
+        const failedSources = Array.isArray(payload?.failedSources)
+          ? payload.failedSources
+          : Array.isArray(payload?.meta?.failedSources)
+            ? payload.meta.failedSources
+            : []
+        const updatedAt =
+          payload?.updatedAt ||
+          payload?.generatedAt ||
+          payload?.meta?.updatedAt ||
+          payload?.meta?.generatedAt ||
+          new Date().toISOString()
+
+        return jsonResponse({
+          ok: true,
+          section: 'predictionMarkets',
+          updatedAt,
+          marketCount: rows.length,
+          failedSourceCount: failedSources.length,
         })
       }
 

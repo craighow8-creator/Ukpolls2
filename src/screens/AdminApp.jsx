@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { saveSection, loadTimestamps, formatTs, getData, clearAll } from '../data/store.js'
+import { API_BASE } from '../constants.js'
 
 const GOOGLE_CLIENT_ID = '427686428321-pcb44g2h03ahesjsejmo9nqodrkehn7c.apps.googleusercontent.com'
 const ALLOWED_EMAILS   = ['craighow8@googlemail.com']
@@ -357,7 +358,7 @@ function CommandList({ commands = [], note }) {
   )
 }
 
-function HealthCard({ title, status, summary, rows = [], commands = [], note }) {
+function HealthCard({ title, status, summary, rows = [], commands = [], note, action = null }) {
   return (
     <div style={{ background: C.card, border: `1px solid ${C.bdr}`, borderRadius: 18, padding: 18 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', marginBottom: 10 }}>
@@ -391,11 +392,49 @@ function HealthCard({ title, status, summary, rows = [], commands = [], note }) 
       </div>
 
       <CommandList commands={commands} note={note} />
+      {action ? (
+        <div style={{ marginTop: 14, borderTop: `1px solid ${C.bdr}`, paddingTop: 14 }}>
+          <button
+            onClick={action.onClick}
+            disabled={action.disabled}
+            style={{
+              background: action.disabled ? C.dim : '#12B7D4',
+              border: 'none',
+              borderRadius: 999,
+              padding: '10px 18px',
+              fontSize: 13,
+              fontWeight: 800,
+              color: '#fff',
+              cursor: action.disabled ? 'wait' : 'pointer',
+              fontFamily: "'Outfit', sans-serif",
+            }}
+          >
+            {action.disabled ? action.busyLabel || 'Working...' : action.label}
+          </button>
+          {action.help ? <div style={{ marginTop: 8, fontSize: 12, color: C.lo, lineHeight: 1.5 }}>{action.help}</div> : null}
+          {action.message ? (
+            <div
+              style={{
+                marginTop: 10,
+                fontSize: 12,
+                color: action.tone === 'error' ? '#ffb8c6' : '#9ff0c0',
+                lineHeight: 1.5,
+                overflowWrap: 'anywhere',
+              }}
+            >
+              {action.message}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }
 
-function DataHealthTab({ data }) {
+function DataHealthTab({ data, onRefreshData }) {
+  const [marketsRefreshing, setMarketsRefreshing] = useState(false)
+  const [marketsRefreshResult, setMarketsRefreshResult] = useState(null)
+
   const ingestStatus = data?.ingestStatus && typeof data.ingestStatus === 'object' ? data.ingestStatus : null
   const polls = Array.isArray(data?.pollsData) && data.pollsData.length
     ? data.pollsData
@@ -447,6 +486,53 @@ function DataHealthTab({ data }) {
     ? 'Review'
     : freshnessFromDate(leaderUpdatedAt, { okDays: 45, staleDays: 120 })
 
+  const refreshMarkets = async () => {
+    setMarketsRefreshResult(null)
+    let adminKey = sessionStorage.getItem('politiscope_admin_action_key') || ''
+    if (!adminKey) {
+      adminKey = window.prompt('Enter admin action key for market refresh:') || ''
+      adminKey = adminKey.trim()
+      if (!adminKey) {
+        setMarketsRefreshResult({ tone: 'error', message: 'Refresh cancelled: admin action key is required.' })
+        return
+      }
+      sessionStorage.setItem('politiscope_admin_action_key', adminKey)
+    }
+
+    setMarketsRefreshing(true)
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/refresh-markets`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': adminKey,
+        },
+      })
+      const text = await response.text()
+      let payload = null
+      try {
+        payload = text ? JSON.parse(text) : null
+      } catch {
+        throw new Error(`Refresh returned non-JSON response: ${text.slice(0, 180)}`)
+      }
+
+      if (!response.ok || payload?.ok === false) {
+        if (response.status === 401) sessionStorage.removeItem('politiscope_admin_action_key')
+        throw new Error(payload?.error || `Refresh failed with ${response.status}`)
+      }
+
+      setMarketsRefreshResult({
+        tone: 'success',
+        message: `Updated ${formatAdminDateTime(payload.updatedAt)} · ${compactNumber(payload.marketCount)} rows · ${compactNumber(payload.failedSourceCount)} failed sources`,
+      })
+      await Promise.resolve(onRefreshData?.())
+    } catch (error) {
+      setMarketsRefreshResult({ tone: 'error', message: error?.message || 'Market refresh failed.' })
+    } finally {
+      setMarketsRefreshing(false)
+    }
+  }
+
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={{ background: 'rgba(18,183,212,0.12)', border: '1px solid rgba(18,183,212,0.22)', borderRadius: 18, padding: '16px 18px' }}>
@@ -489,6 +575,15 @@ function DataHealthTab({ data }) {
             'npm run political-markets:health:remote',
             'npm run political-markets:import:remote',
           ]}
+          action={{
+            label: 'Refresh markets',
+            busyLabel: 'Refreshing...',
+            disabled: marketsRefreshing,
+            onClick: refreshMarkets,
+            help: 'Uses Worker-side configured UK market sources. Requires admin action key.',
+            message: marketsRefreshResult?.message,
+            tone: marketsRefreshResult?.tone,
+          }}
         />
 
         <HealthCard
@@ -1718,7 +1813,7 @@ export default function AdminApp() {
       </div>
 
       <div style={{ padding: '20px' }}>
-        {tab === 'dataHealth' && <DataHealthTab data={data} />}
+        {tab === 'dataHealth' && <DataHealthTab data={data} onRefreshData={loadAdminData} />}
         {tab === 'polls' && <PollsTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
         {tab === 'pollImport' && <PollImportTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
         {tab === 'elections' && <ElectionsTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
