@@ -68,7 +68,7 @@ export default function MenuSheet({ open, onClose, T, onAbout, onShare, dark, on
       const basePath = base.endsWith('/') ? base : base + '/'
       return url.origin + basePath + 'admin.html'
     } catch {
-      return '/Ukpolls2/admin.html'
+      return '/admin.html'
     }
   })()
 
@@ -201,7 +201,7 @@ export default function MenuSheet({ open, onClose, T, onAbout, onShare, dark, on
                 Admin Panel
               </div>
               <div style={{ fontSize: 13, fontWeight: 500, color: T.tl, marginTop: 1 }}>
-                Opens in new tab · PIN required
+                Opens in new tab · authorised account required
               </div>
             </div>
           </button>
