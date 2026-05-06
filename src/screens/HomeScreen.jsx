@@ -55,13 +55,53 @@ function formatPointValue(value) {
   return numeric.toFixed(1).replace(/\.0$/, '.0')
 }
 
+function formatMovementValue(value) {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return null
+  return `${numeric > 0 ? '+' : ''}${numeric.toFixed(1)}`
+}
+
 function normalisePartyName(value) {
   return String(value || '').toLowerCase().replace(/[^a-z]/g, '')
+}
+
+function getPartyMovementValue(party) {
+  const candidates = [party?.change, party?._stateMovement, party?.recentDelta, party?.trendDelta, party?._recentDelta]
+  for (const candidate of candidates) {
+    const numeric = Number(candidate)
+    if (Number.isFinite(numeric)) return numeric
+  }
+  return null
+}
+
+function getStateMovements(main) {
+  const movementRows = main
+    .map((party) => ({ ...party, _stateMovement: getPartyMovementValue(party) }))
+    .filter((party) => Number.isFinite(Number(party._stateMovement)))
+  return {
+    surge: movementRows
+      .filter((party) => party._stateMovement >= 4)
+      .sort((a, b) => b._stateMovement - a._stateMovement)[0] || null,
+    drop: movementRows
+      .filter((party) => party._stateMovement <= -4)
+      .sort((a, b) => a._stateMovement - b._stateMovement)[0] || null,
+  }
 }
 
 function buildStateOfPlayInsight(main, leader, second, third, gap) {
   if (!leader?.name || !second?.name || !Number.isFinite(Number(gap))) {
     return 'The latest loaded polling average gives the clearest view of the national race.'
+  }
+
+  const { surge, drop } = getStateMovements(main)
+  if (surge && drop) {
+    return `${surge.name} are surging (${formatMovementValue(surge._stateMovement)}) while ${drop.name} has dropped sharply (${formatMovementValue(drop._stateMovement)}).`
+  }
+  if (surge) {
+    return `${surge.name} are gaining momentum (${formatMovementValue(surge._stateMovement)}), the largest movement in the latest data.`
+  }
+  if (drop) {
+    return `${drop.name} has dropped sharply (${formatMovementValue(drop._stateMovement)}), the largest movement in the latest data.`
   }
 
   const gapText = formatPointValue(gap)
@@ -84,35 +124,38 @@ function buildStateOfPlayInsight(main, leader, second, third, gap) {
 }
 
 function buildStateWatchCue(main, leader, second, gap) {
-  const labour = main.find((party) => normalisePartyName(party.name) === 'labour' || party.abbr === 'LAB')
-  const conservative = main.find((party) => normalisePartyName(party.name).startsWith('conservative') || party.abbr === 'CON')
-  const green = main.find((party) => normalisePartyName(party.name).includes('green') || party.abbr === 'GRN')
+  const { surge, drop } = getStateMovements(main)
 
-  if (leader?.name && second?.name && Number(gap) > 5) {
+  if (surge) {
     return {
-      label: `Watch: ${leader.name} vs ${second.name} gap`,
+      label: `Watch: ${surge.name} momentum`,
+      color: surge.color,
+    }
+  }
+
+  if (drop) {
+    return {
+      label: `Watch: ${drop.name} decline`,
+      color: drop.color,
+    }
+  }
+
+  if (leader?.name && second?.name && Number(gap) <= 3) {
+    return {
+      label: 'Watch: tightening race',
       color: leader.color || second.color,
     }
   }
 
-  if (labour && conservative && Math.abs(Number(labour.pct) - Number(conservative.pct)) <= 2) {
-    return {
-      label: 'Watch: Labour/Conservative crossover',
-      color: conservative.color || labour.color,
-    }
-  }
-
-  if (green && Number(green.pct) >= 12) {
-    return {
-      label: 'Watch: Green vote share',
-      color: green.color,
-    }
-  }
-
-  return {
-    label: 'Watch: no party near 30%',
-    color: leader?.color || '#6b7280',
-  }
+  return leader?.name && second?.name
+    ? {
+        label: `Watch: ${leader.name} vs ${second.name} gap`,
+        color: leader.color || second.color,
+      }
+    : {
+        label: 'Watch: no party near 30%',
+        color: leader?.color || '#6b7280',
+      }
 }
 
 function buildStateProvenanceLine({ meta, pollContext }) {
