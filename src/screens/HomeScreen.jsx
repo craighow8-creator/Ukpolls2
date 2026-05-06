@@ -208,7 +208,43 @@ function buildStateWatchCue(main, leader, second, gap) {
     : {
         label: 'WATCH: no party near 30%',
         color: leader?.color || '#6b7280',
-      }
+    }
+}
+
+function buildStateIntelligenceFeed(main, leader, second, gap) {
+  const movementRows = main
+    .map((party) => ({ ...party, _stateMovement: getPartyMovementValue(party) }))
+    .filter((party) => party?.name && Number.isFinite(Number(party._stateMovement)))
+  const largestGain = [...movementRows].sort((a, b) => Number(b._stateMovement) - Number(a._stateMovement))[0] || null
+  const largestDrop = [...movementRows].sort((a, b) => Number(a._stateMovement) - Number(b._stateMovement))[0] || null
+  const leaderPct = Number(leader?.pct)
+  const gapValue = Number(gap)
+  const events = []
+
+  if (largestGain && Number(largestGain._stateMovement) > 0) {
+    events.push(`${largestGain.name} surge (${formatMovementValue(largestGain._stateMovement)}) — strongest movement`)
+  }
+
+  if (largestDrop && Number(largestDrop._stateMovement) < 0) {
+    events.push(`${largestDrop.name} decline (${formatMovementValue(largestDrop._stateMovement)}) — sharp drop`)
+  }
+
+  if (Number.isFinite(leaderPct) && leaderPct < 30) {
+    events.push('Fragmented race')
+  }
+
+  if (Number.isFinite(gapValue) && gapValue <= 3 && leader?.name && second?.name) {
+    events.push(`Tight race — top two within ${formatPointValue(gapValue)} pts`)
+  }
+
+  const maxMovement = movementRows.reduce((max, party) => Math.max(max, Math.abs(Number(party._stateMovement))), 0)
+  if (movementRows.length && maxMovement < 1) {
+    events.push('Stable polling environment')
+  } else if (leader?.name && Number.isFinite(gapValue) && gapValue > 3) {
+    events.push(`${leader.name} lead holding`)
+  }
+
+  return [...new Set(events)].slice(0, 5)
 }
 
 function getPollDateValue(poll) {
@@ -941,6 +977,7 @@ export default function HomeScreen({
   const stateInsight = buildStateOfPlayInsight(stateOfPlayRows, leader, second, third, gap)
   const stateStructureLine = buildStateStructureLine(stateOfPlayRows, leader, second, third, gap)
   const stateWatchCue = buildStateWatchCue(stateOfPlayRows, leader, second, gap)
+  const stateIntelligenceFeed = buildStateIntelligenceFeed(stateOfPlayRows, leader, second, gap)
   const stateProvenanceLine = buildStateProvenanceLine({ meta, pollContext })
   const stateConfidenceLine = buildStateConfidenceLine({ meta, pollContext })
 
@@ -1145,6 +1182,32 @@ export default function HomeScreen({
                   {stateWatchCue.label}
                 </Chip>
               </div>
+
+              {stateIntelligenceFeed.length ? (
+                <div
+                  style={{
+                    display: 'grid',
+                    gap: 4,
+                    maxWidth: 500,
+                    margin: '9px auto 0',
+                    textAlign: 'center',
+                  }}
+                >
+                  {stateIntelligenceFeed.map((item) => (
+                    <div
+                      key={item}
+                      style={{
+                        fontSize: 11.7,
+                        fontWeight: 700,
+                        lineHeight: 1.35,
+                        color: T.tl,
+                      }}
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
 
               <Divider T={T} />
 
