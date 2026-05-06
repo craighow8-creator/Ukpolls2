@@ -222,10 +222,338 @@ function formatAdminDateTime(value) {
   })
 }
 
+function formatAdminDate(value) {
+  if (!value) return 'Unknown'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleDateString('en-GB', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function daysSinceAdmin(value) {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return Math.floor((Date.now() - date.getTime()) / 86400000)
+}
+
+function firstPresent(...values) {
+  return values.find((value) => value !== null && value !== undefined && String(value).trim() !== '') || null
+}
+
+function compactNumber(value) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return value == null || value === '' ? 'Unknown' : String(value)
+  return new Intl.NumberFormat('en-GB').format(number)
+}
+
+function statusChipStyle(status) {
+  const value = String(status || '').toLowerCase()
+  const palette = {
+    ok: { color: '#4dd98a', background: 'rgba(77,217,138,0.14)', border: 'rgba(77,217,138,0.26)' },
+    review: { color: '#ffd88a', background: 'rgba(246,200,95,0.13)', border: 'rgba(246,200,95,0.26)' },
+    stale: { color: '#ff9aac', background: 'rgba(228,0,59,0.14)', border: 'rgba(228,0,59,0.28)' },
+    manual: { color: '#7dd8ea', background: 'rgba(18,183,212,0.12)', border: 'rgba(18,183,212,0.24)' },
+  }
+  return palette[value] || palette.review
+}
+
+function freshnessFromDate(value, { okDays = 3, staleDays = 14, manual = false } = {}) {
+  if (manual) return 'Manual'
+  const age = daysSinceAdmin(value)
+  if (age == null) return 'Review'
+  if (age <= okDays) return 'OK'
+  if (age > staleDays) return 'Stale'
+  return 'Review'
+}
+
+function latestPollDate(polls = []) {
+  return (Array.isArray(polls) ? polls : [])
+    .map((poll) => firstPresent(poll?.publishedAt, poll?.fieldworkEnd, poll?.fieldworkStart, poll?.date))
+    .filter(Boolean)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] || null
+}
+
+function extractMarketRows(predictionMarkets) {
+  if (Array.isArray(predictionMarkets)) return predictionMarkets
+  if (Array.isArray(predictionMarkets?.rows)) return predictionMarkets.rows
+  if (Array.isArray(predictionMarkets?.markets)) return predictionMarkets.markets
+  return []
+}
+
+function extractNewsItems(newsItems) {
+  if (Array.isArray(newsItems)) return newsItems
+  if (Array.isArray(newsItems?.items)) return newsItems.items
+  return []
+}
+
+function extractNewsMeta(newsItems) {
+  if (newsItems && typeof newsItems === 'object' && !Array.isArray(newsItems)) {
+    return newsItems.meta || newsItems
+  }
+  return {}
+}
+
 async function runSaves(tasks) {
   for (const task of tasks) {
     await Promise.resolve(task())
   }
+}
+
+function HealthStatusChip({ status }) {
+  const style = statusChipStyle(status)
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        borderRadius: 999,
+        padding: '5px 10px',
+        fontSize: 11,
+        fontWeight: 800,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: style.color,
+        background: style.background,
+        border: `1px solid ${style.border}`,
+      }}
+    >
+      {status}
+    </span>
+  )
+}
+
+function CommandList({ commands = [], note }) {
+  if (!commands.length && !note) return null
+  return (
+    <div style={{ marginTop: 14 }}>
+      {commands.length ? (
+        <div style={{ display: 'grid', gap: 8 }}>
+          {commands.map((command) => (
+            <code
+              key={command}
+              style={{
+                display: 'block',
+                background: 'rgba(0,0,0,0.22)',
+                border: `1px solid ${C.bdr}`,
+                borderRadius: 10,
+                padding: '9px 10px',
+                color: '#d8f5ff',
+                fontSize: 12,
+                overflowX: 'auto',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {command}
+            </code>
+          ))}
+        </div>
+      ) : null}
+      {note ? <div style={{ marginTop: 8, fontSize: 12, color: C.lo, lineHeight: 1.5 }}>{note}</div> : null}
+    </div>
+  )
+}
+
+function HealthCard({ title, status, summary, rows = [], commands = [], note }) {
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.bdr}`, borderRadius: 18, padding: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', marginBottom: 10 }}>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: C.hi }}>{title}</div>
+          {summary ? <div style={{ fontSize: 12, color: C.lo, lineHeight: 1.5, marginTop: 3 }}>{summary}</div> : null}
+        </div>
+        <HealthStatusChip status={status} />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+        {rows.map((row) => (
+          <div
+            key={`${title}-${row.label}`}
+            style={{
+              background: 'rgba(255,255,255,0.055)',
+              border: `1px solid ${C.bdr}`,
+              borderRadius: 12,
+              padding: '10px 11px',
+              minWidth: 0,
+            }}
+          >
+            <div style={{ fontSize: 10, fontWeight: 800, color: C.lo, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
+              {row.label}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.hi, lineHeight: 1.35, overflowWrap: 'anywhere' }}>
+              {row.value ?? 'Unknown'}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <CommandList commands={commands} note={note} />
+    </div>
+  )
+}
+
+function DataHealthTab({ data }) {
+  const ingestStatus = data?.ingestStatus && typeof data.ingestStatus === 'object' ? data.ingestStatus : null
+  const polls = Array.isArray(data?.pollsData) && data.pollsData.length
+    ? data.pollsData
+    : Array.isArray(data?.polls)
+      ? data.polls
+      : []
+  const pollLatestDate = latestPollDate(polls)
+  const pollStatus = String(ingestStatus?.status || '').toLowerCase() === 'error'
+    ? 'Stale'
+    : freshnessFromDate(ingestStatus?.lastRunAt || pollLatestDate, { okDays: 2, staleDays: 7 })
+
+  const predictionMarkets = data?.predictionMarkets
+  const marketRows = extractMarketRows(predictionMarkets)
+  const marketUpdatedAt = firstPresent(
+    predictionMarkets?.updatedAt,
+    predictionMarkets?.generatedAt,
+    predictionMarkets?.meta?.updatedAt,
+    predictionMarkets?.meta?.generatedAt,
+    marketRows[0]?.checkedAt,
+  )
+  const marketFailedSources = Array.isArray(predictionMarkets?.failedSources)
+    ? predictionMarkets.failedSources.length
+    : Array.isArray(predictionMarkets?.meta?.failedSources)
+      ? predictionMarkets.meta.failedSources.length
+      : 0
+  const marketStatus = marketFailedSources
+    ? 'Review'
+    : freshnessFromDate(marketUpdatedAt, { okDays: 3, staleDays: 7 })
+
+  const newsMeta = extractNewsMeta(data?.newsItems)
+  const newsItems = extractNewsItems(data?.newsItems)
+  const newsUpdatedAt = firstPresent(newsMeta?.updatedAt, newsMeta?.fetchedAt, newsItems[0]?.publishedAt)
+  const newsSources = newsMeta?.sourceCount || new Set(newsItems.map((item) => item?.source).filter(Boolean)).size
+  const newsStatus = freshnessFromDate(newsUpdatedAt, { okDays: 1, staleDays: 3 })
+
+  const migration = data?.migration && typeof data.migration === 'object' ? data.migration : {}
+  const migrationReviewedAt = firstPresent(migration?.meta?.reviewedAt, migration?.meta?.updatedAt)
+
+  const byElections = data?.byElections && typeof data.byElections === 'object' ? data.byElections : {}
+  const byElectionReviewedAt = firstPresent(byElections?.meta?.reviewedAt, byElections?.meta?.updatedAt)
+
+  const leaderRatings = data?.leaderRatings && typeof data.leaderRatings === 'object' ? data.leaderRatings : null
+  const sourcedLeaderCount = Number.isFinite(Number(leaderRatings?.count))
+    ? Number(leaderRatings.count)
+    : (Array.isArray(data?.leaders) ? data.leaders.filter((leader) => leader?.ratingSource === 'sourced').length : 0)
+  const leaderUpdatedAt = firstPresent(leaderRatings?.updatedAt, leaderRatings?.publishedAt, leaderRatings?.fieldworkDate)
+  const leaderUnmatchedCount = Array.isArray(leaderRatings?.unmatched) ? leaderRatings.unmatched.length : 0
+  const leaderStatus = leaderUnmatchedCount
+    ? 'Review'
+    : freshnessFromDate(leaderUpdatedAt, { okDays: 45, staleDays: 120 })
+
+  return (
+    <div style={{ display: 'grid', gap: 16 }}>
+      <div style={{ background: 'rgba(18,183,212,0.12)', border: '1px solid rgba(18,183,212,0.22)', borderRadius: 18, padding: '16px 18px' }}>
+        <div style={{ fontSize: 16, fontWeight: 800, color: C.hi, marginBottom: 5 }}>Data Health</div>
+        <div style={{ fontSize: 13, color: '#7dd8ea', lineHeight: 1.6 }}>
+          Read-only health view. Ingest actions are still run from CLI until server-side admin actions are added.
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+        <HealthCard
+          title="Polls"
+          status={pollStatus}
+          summary="Automated poll ingest status and latest loaded poll freshness."
+          rows={[
+            { label: 'Run status', value: ingestStatus?.status || 'Unknown' },
+            { label: 'Last run', value: formatAdminDateTime(ingestStatus?.lastRunAt) },
+            { label: 'Rows accepted', value: compactNumber(ingestStatus?.totalFetched ?? polls.length) },
+            { label: 'Rows dropped', value: compactNumber(ingestStatus?.droppedInvalidRows) },
+            { label: 'Latest poll date', value: formatAdminDate(pollLatestDate) },
+            { label: 'API base', value: ingestStatus?.apiBase || 'Unknown' },
+          ]}
+          commands={[
+            'npm run polls:health:remote',
+            'npm run polls:import:remote',
+          ]}
+        />
+
+        <HealthCard
+          title="Political markets"
+          status={marketStatus}
+          summary="Public market signal feed; informational only, not advice."
+          rows={[
+            { label: 'Source', value: predictionMarkets?.source || predictionMarkets?.meta?.source || 'Polymarket' },
+            { label: 'Updated/generated', value: formatAdminDateTime(marketUpdatedAt) },
+            { label: 'Current rows', value: compactNumber(marketRows.length) },
+            { label: 'Failed sources', value: compactNumber(marketFailedSources) },
+          ]}
+          commands={[
+            'npm run political-markets:health:remote',
+            'npm run political-markets:import:remote',
+          ]}
+        />
+
+        <HealthCard
+          title="News"
+          status={newsStatus}
+          summary="Worker-fetched politics feed cache."
+          rows={[
+            { label: 'Fetched/updated', value: formatAdminDateTime(newsUpdatedAt) },
+            { label: 'Stories', value: compactNumber(newsMeta?.storyCount ?? newsItems.length) },
+            { label: 'Sources', value: compactNumber(newsSources) },
+          ]}
+          note="Worker refreshes news via /api/news; no CLI health script yet."
+        />
+
+        <HealthCard
+          title="Migration"
+          status="Manual"
+          summary="Official statistics import; maintained as latest official estimate, not live."
+          rows={[
+            { label: 'ONS period', value: migration?.fetchYear || 'Unknown' },
+            { label: 'Net migration', value: compactNumber(migration?.netTotal) },
+            { label: 'Reviewed', value: formatAdminDate(migrationReviewedAt) },
+            { label: 'Historical rows', value: compactNumber(Array.isArray(migration?.historicalTrend) ? migration.historicalTrend.length : 0) },
+            { label: 'Source type', value: migration?.meta?.sourceType || 'Unknown' },
+          ]}
+          commands={[
+            'npm run migration:health:remote',
+            'npm run migration:import:remote',
+          ]}
+        />
+
+        <HealthCard
+          title="By-elections"
+          status={freshnessFromDate(byElectionReviewedAt, { okDays: 60, staleDays: 180, manual: !byElectionReviewedAt })}
+          summary="Maintained Westminster by-election tracker."
+          rows={[
+            { label: 'Scope', value: byElections?.meta?.scope || 'Unknown' },
+            { label: 'Upcoming', value: compactNumber(Array.isArray(byElections?.upcoming) ? byElections.upcoming.length : 0) },
+            { label: 'Recent', value: compactNumber(Array.isArray(byElections?.recent) ? byElections.recent.length : 0) },
+            { label: 'Reviewed/updated', value: formatAdminDate(byElectionReviewedAt) },
+            { label: 'Source', value: byElections?.meta?.sourceType || byElections?.meta?.source || 'Unknown' },
+          ]}
+          commands={[
+            'npm run byelections:import:remote',
+          ]}
+        />
+
+        <HealthCard
+          title="Leader ratings"
+          status={leaderStatus}
+          summary="Imported favourability dataset merged onto maintained leader profiles."
+          rows={[
+            { label: 'Sourced leaders', value: compactNumber(sourcedLeaderCount) },
+            { label: 'Updated/published', value: formatAdminDate(leaderUpdatedAt) },
+            { label: 'Unmatched rows', value: compactNumber(leaderUnmatchedCount) },
+            { label: 'Source', value: leaderRatings?.source || 'Maintained profiles' },
+          ]}
+          commands={[
+            'npm run leader-ratings:health:remote',
+            'npm run leader-ratings:import:remote',
+          ]}
+        />
+      </div>
+    </div>
+  )
 }
 
 // ── Login ─────────────────────────────────────────────────────────
@@ -1145,7 +1473,7 @@ function MetaTab({ data, setData, ts, onAfterSave }) {
 export default function AdminApp() {
   const [user, setUser] = useState(null)
   const [data, setData] = useState(null)
-  const [tab, setTab] = useState('polls')
+  const [tab, setTab] = useState('dataHealth')
   const [ts, setTs] = useState({})
   const [loadError, setLoadError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -1243,6 +1571,7 @@ export default function AdminApp() {
   }
 
   const TABS = [
+    { k: 'dataHealth', label: 'Data Health' },
     { k: 'polls', label: 'Polls' },
     { k: 'pollImport', label: 'Poll Import' },
     { k: 'elections', label: 'Elections' },
@@ -1389,6 +1718,7 @@ export default function AdminApp() {
       </div>
 
       <div style={{ padding: '20px' }}>
+        {tab === 'dataHealth' && <DataHealthTab data={data} />}
         {tab === 'polls' && <PollsTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
         {tab === 'pollImport' && <PollImportTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
         {tab === 'elections' && <ElectionsTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
