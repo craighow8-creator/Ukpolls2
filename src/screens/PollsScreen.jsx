@@ -63,7 +63,8 @@ function parseDateish(value) {
     return Number.isNaN(d.getTime()) ? null : d
   }
 
-  return null
+  const fallback = new Date(text)
+  return Number.isNaN(fallback.getTime()) ? null : fallback
 }
 
 function keepLatestPollPerPollster(polls) {
@@ -133,6 +134,27 @@ function shortPartyName(value) {
 function formatGap(value) {
   if (value == null) return '0'
   return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+function formatSignedMovement(value) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return ''
+  return `${number > 0 ? '+' : ''}${number.toFixed(1)}`
+}
+
+function formatRelativePollTime(value) {
+  const parsed = parseDateish(value)
+  if (!parsed) return null
+  const diffMs = Date.now() - parsed.getTime()
+  if (diffMs < 0) return 'just now'
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 60) return `${days}d ago`
+  return formatUKDate(value)
 }
 
 function formatPartyList(names = []) {
@@ -280,6 +302,95 @@ function buildRaceStateSummary(parties = [], trendSeries = []) {
   }
 
   return { headline, subline }
+}
+
+function getSnapshotMovements(parties = [], trendSeries = []) {
+  const rows = [...(Array.isArray(parties) ? parties : [])]
+    .map((party) => {
+      const signal = getPartyTrendSignal(party, trendSeries)
+      const movement = Number(signal?.change)
+      return Number.isFinite(movement) ? { ...party, movement } : null
+    })
+    .filter(Boolean)
+
+  return {
+    surge: rows
+      .filter((party) => party.movement >= 4)
+      .sort((a, b) => b.movement - a.movement)[0] || null,
+    drop: rows
+      .filter((party) => party.movement <= -4)
+      .sort((a, b) => a.movement - b.movement)[0] || null,
+  }
+}
+
+function latestPollDateForBriefing(polls = []) {
+  return (Array.isArray(polls) ? polls : [])
+    .map(displayDate)
+    .filter(Boolean)
+    .sort((a, b) => (parseDateish(b)?.getTime() || 0) - (parseDateish(a)?.getTime() || 0))[0] || null
+}
+
+function buildSnapshotProvenance({ polls = [], pollContext = {}, dataState = {}, meta = {} }) {
+  const pollCount = Number(pollContext?.sourcePollCount) || (Array.isArray(polls) ? polls.length : 0)
+  const candidateDate =
+    pollContext?.updatedAt ||
+    pollContext?.generatedAt ||
+    pollContext?.checkedAt ||
+    pollContext?.latestPollDate ||
+    pollContext?.averageUpdatedAt ||
+    pollContext?.meta?.updatedAt ||
+    pollContext?.meta?.generatedAt ||
+    dataState?.polls?.updatedAt ||
+    dataState?.trends?.updatedAt ||
+    meta?.polls?.updatedAt ||
+    meta?.polling?.updatedAt ||
+    meta?.fetchDate ||
+    latestPollDateForBriefing(polls)
+  const base = pollCount ? `Based on ${pollCount}-poll average` : 'Based on latest polling average'
+  const refreshed = formatRelativePollTime(candidateDate)
+  return refreshed ? `${base} · refreshed ${refreshed}` : base
+}
+
+function buildSnapshotBriefing({ parties = [], trendSeries = [], pollContext = {}, polls = [], dataState = {}, meta = {} }) {
+  const ranked = [...(Array.isArray(parties) ? parties : [])]
+    .filter((party) => safeNumber(party?.pct) != null)
+    .sort((a, b) => (safeNumber(b?.pct) || 0) - (safeNumber(a?.pct) || 0))
+  const leader = ranked[0]
+  const second = ranked[1]
+  const { surge, drop } = getSnapshotMovements(ranked, trendSeries)
+  const chips = []
+
+  if (leader) {
+    chips.push({ label: `${shortPartyName(leader.name)} ${leader.pct}%`, color: leader.color })
+  }
+  if (second) {
+    chips.push({ label: `${shortPartyName(second.name)} ${second.pct}%`, color: second.color, subtle: true })
+  }
+
+  let text = 'The latest polling picture is still taking shape.'
+  let movementChip = null
+
+  if (surge && drop) {
+    text = `Momentum shift: ${surge.name} (${formatSignedMovement(surge.movement)}) surging · ${drop.name} (${formatSignedMovement(drop.movement)}) weakening`
+    movementChip = { label: `${shortPartyName(surge.name)} momentum`, color: surge.color }
+  } else if (surge) {
+    text = `${surge.name} gaining momentum (${formatSignedMovement(surge.movement)}), the largest movement in the latest data`
+    movementChip = { label: `${shortPartyName(surge.name)} momentum`, color: surge.color }
+  } else if (drop) {
+    text = `${drop.name} weakening (${formatSignedMovement(drop.movement)}), the sharpest movement in the latest data`
+    movementChip = { label: `${shortPartyName(drop.name)} weakening`, color: drop.color }
+  } else if (leader && second) {
+    const gap = +((safeNumber(leader?.pct) || 0) - (safeNumber(second?.pct) || 0)).toFixed(1)
+    text = `${shortPartyName(leader.name)} lead ${shortPartyName(second.name)} by ${formatGap(gap)} points in the latest polling picture.`
+  }
+
+  if (movementChip) chips.push({ ...movementChip, subtle: true })
+
+  return {
+    text,
+    chips: chips.slice(0, 3),
+    provenance: buildSnapshotProvenance({ polls, pollContext, dataState, meta }),
+  }
 }
 
 function findPreviousPollForPollster(poll, polls = []) {
@@ -1088,7 +1199,9 @@ function IntelligenceLine({ T, label, text, subtle = false }) {
   )
 }
 
-function buildMobileBriefingText({ raceState, topTwo = [], intelligence }) {
+function buildMobileBriefingText({ raceState, topTwo = [], intelligence, snapshotBriefing = null }) {
+  if (snapshotBriefing?.text) return snapshotBriefing.text
+
   const leader = topTwo[0]
   const second = topTwo[1]
   const leaderPct = safeNumber(leader?.pct)
@@ -1104,7 +1217,9 @@ function buildMobileBriefingText({ raceState, topTwo = [], intelligence }) {
   return raceState?.subline || intelligence?.confidenceLine || 'The latest polling picture is still taking shape.'
 }
 
-function buildMobileBriefingChips(topTwo = []) {
+function buildMobileBriefingChips(topTwo = [], snapshotBriefing = null) {
+  if (Array.isArray(snapshotBriefing?.chips) && snapshotBriefing.chips.length) return snapshotBriefing.chips
+
   const ranked = [...topTwo]
   const chips = []
   const leader = ranked[0]
@@ -1162,13 +1277,22 @@ function useNarrowPollingBriefing() {
   return isNarrow
 }
 
-function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatters = '' }) {
+function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatters = '', snapshotBriefing = null }) {
   const isNarrow = useNarrowPollingBriefing()
   if (!intelligence) return null
   const fallbackHeadline = topTwo.length >= 1 ? `${topTwo[0].name} lead the current picture` : 'Current polling picture'
   const fallbackSubline = topTwo.length >= 2 ? `${topTwo[0].name} remain ahead of ${topTwo[1].name}.` : 'Limited recent polling reduces certainty.'
-  const mobileBriefing = buildMobileBriefingText({ raceState, topTwo, intelligence })
-  const mobileChips = buildMobileBriefingChips(topTwo)
+  const mobileBriefing = buildMobileBriefingText({ raceState, topTwo, intelligence, snapshotBriefing })
+  const mobileChips = buildMobileBriefingChips(topTwo, snapshotBriefing)
+  const briefingText = snapshotBriefing?.text || raceState?.subline || fallbackSubline
+  const briefingChips = Array.isArray(snapshotBriefing?.chips) && snapshotBriefing.chips.length
+    ? snapshotBriefing.chips
+    : topTwo.map((party, index) => ({
+        label: `${party.abbr} ${party.pct}%`,
+        color: party.color,
+        subtle: index > 0,
+      })).slice(0, 2)
+  const provenanceLine = snapshotBriefing?.provenance || 'Based on latest polling data'
 
   return (
     <div
@@ -1229,7 +1353,7 @@ function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatter
             marginTop: 7,
           }}
         >
-          Based on latest polling data
+          {provenanceLine}
         </div>
       </div>
       ) : (
@@ -1248,49 +1372,34 @@ function PollBriefingCard({ T, raceState, topTwo = [], intelligence, whyItMatter
         {raceState?.headline || fallbackHeadline}
       </div>
 
-      {raceState?.subline ? (
-        <div
-          style={{
-            fontSize: 12.5,
-            fontWeight: 600,
-            color: T.tl,
-            lineHeight: 1.5,
-            textAlign: 'center',
-            marginTop: 6,
-            maxWidth: 680,
-            marginLeft: 'auto',
-            marginRight: 'auto',
-          }}
-        >
-          {raceState.subline}
-        </div>
-      ) : (
-        <div
-          style={{
-            fontSize: 12.5,
-            fontWeight: 600,
-            color: T.tl,
-            lineHeight: 1.5,
-            textAlign: 'center',
-            marginTop: 6,
-            maxWidth: 680,
-            marginLeft: 'auto',
-            marginRight: 'auto',
-          }}
-        >
-          {fallbackSubline}
-        </div>
-      )}
+      <div
+        style={{
+          fontSize: 12.5,
+          fontWeight: 600,
+          color: T.tl,
+          lineHeight: 1.5,
+          textAlign: 'center',
+          marginTop: 6,
+          maxWidth: 680,
+          marginLeft: 'auto',
+          marginRight: 'auto',
+        }}
+      >
+        {briefingText}
+      </div>
 
-      {topTwo.length === 2 ? (
+      {briefingChips.length ? (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-          <Badge color={topTwo[0].color}>{topTwo[0].abbr} {topTwo[0].pct}%</Badge>
-          <Badge color={topTwo[1].color} subtle>{topTwo[1].abbr} {topTwo[1].pct}%</Badge>
+          {briefingChips.map((chip, index) => (
+            <Badge key={chip.label} color={chip.color || T.pr} subtle={chip.subtle ?? index > 0}>
+              {chip.label}
+            </Badge>
+          ))}
         </div>
       ) : null}
 
+      <IntelligenceLine T={T} label="Provenance" text={provenanceLine} />
       <IntelligenceLine T={T} label="Confidence" text={intelligence.confidenceLine} />
-      <IntelligenceLine T={T} label="What changed" text={intelligence.whatChangedLine} />
       {intelligence.disagreementNote ? <IntelligenceLine T={T} label="Disagreement" text={intelligence.disagreementNote} subtle /> : null}
       {whyItMatters ? <IntelligenceLine T={T} label="Why it matters" text={whyItMatters} subtle /> : null}
       </div>
@@ -2210,6 +2319,17 @@ export default function PollsScreen({ T, parties, polls, meta, nav, pollContext 
     }),
     [allPolls, mainParties, latestLivePoll, latestPolls, pollContext, raceState, pollSpread, pollHouseEffects],
   )
+  const snapshotBriefing = useMemo(
+    () => buildSnapshotBriefing({
+      parties: mainParties,
+      trendSeries: pollContext?.trendSeries || [],
+      pollContext,
+      polls: allPolls,
+      dataState,
+      meta,
+    }),
+    [mainParties, pollContext, allPolls, dataState, meta],
+  )
 
   const topTwo = mainParties.slice(0, 2)
 
@@ -2237,6 +2357,7 @@ export default function PollsScreen({ T, parties, polls, meta, nav, pollContext 
                   topTwo={topTwo}
                   intelligence={pollingIntelligence}
                   whyItMatters={whyThisMatters[0] || ''}
+                  snapshotBriefing={snapshotBriefing}
                 />
 
                 <HeroSnapshot T={T} parties={mainParties} latestLivePoll={latestLivePoll} nav={nav} />
