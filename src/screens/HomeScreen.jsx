@@ -49,6 +49,21 @@ function formatHomePollDate(value) {
   return text || null
 }
 
+function formatRelativeHomeTime(value) {
+  const parsed = parseMarketDate(value)
+  if (!parsed) return null
+  const diffMs = Date.now() - parsed.getTime()
+  if (diffMs < 0) return 'just now'
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 60) return `${days}d ago`
+  return formatMarketDate(parsed)
+}
+
 function formatPointValue(value) {
   const numeric = Number(value)
   if (!Number.isFinite(numeric)) return null
@@ -101,18 +116,18 @@ function getStateMovements(main) {
 
 function buildStateOfPlayInsight(main, leader, second, third, gap) {
   if (!leader?.name || !second?.name || !Number.isFinite(Number(gap))) {
-    return 'The latest loaded polling average gives the clearest view of the national race.'
+    return 'Briefing: Latest loaded average is the clearest national signal'
   }
 
   const { surge, drop } = getStateMovements(main)
   if (surge && drop) {
-    return `${surge.name} are surging (${formatMovementValue(surge._stateMovement)}) while ${drop.name} has dropped sharply (${formatMovementValue(drop._stateMovement)}).`
+    return `Momentum shift: ${surge.name} (${formatMovementValue(surge._stateMovement)}) surging · ${drop.name} (${formatMovementValue(drop._stateMovement)}) weakening`
   }
   if (surge) {
-    return `${surge.name} are gaining momentum (${formatMovementValue(surge._stateMovement)}), the largest movement in the latest data.`
+    return `Momentum shift: ${surge.name} (${formatMovementValue(surge._stateMovement)}) building fastest`
   }
   if (drop) {
-    return `${drop.name} has dropped sharply (${formatMovementValue(drop._stateMovement)}), the largest movement in the latest data.`
+    return `Momentum shift: ${drop.name} (${formatMovementValue(drop._stateMovement)}) weakening fastest`
   }
 
   const gapText = formatPointValue(gap)
@@ -124,14 +139,41 @@ function buildStateOfPlayInsight(main, leader, second, third, gap) {
     : null
 
   if (Number(leader.pct) < 30 && topThreeSpread) {
-    return `The race is fragmented: no party is above 30%, and the top three are separated by ${topThreeSpread} points.`
+    return `Fragmented race: no party above 30% · top three within ${topThreeSpread} pts`
   }
 
   if (third?.name && thirdGap) {
-    return `${leader.name} lead ${second.name} by ${gapText} points, with ${third.name} a further ${thirdGap} points behind.`
+    return `Race shape: ${leader.name} lead ${second.name} by ${gapText} pts · ${third.name} ${thirdGap} pts back`
   }
 
-  return `${leader.name} lead ${second.name} by ${gapText} points in the latest loaded average.`
+  return `Race shape: ${leader.name} lead ${second.name} by ${gapText} pts`
+}
+
+function buildStateStructureLine(main, leader, second, third, gap) {
+  const leaderPct = Number(leader?.pct)
+  const secondPct = Number(second?.pct)
+  const thirdPct = Number(third?.pct)
+  const topThreeSpread = Number.isFinite(leaderPct) && Number.isFinite(thirdPct)
+    ? formatPointValue(leaderPct - thirdPct)
+    : null
+  const minorShare = main
+    .slice(3)
+    .reduce((sum, party) => sum + (Number(party?.pct) || 0), 0)
+  const gapText = formatPointValue(gap)
+
+  if (Number.isFinite(leaderPct) && leaderPct < 30 && topThreeSpread) {
+    return `Fragmented race · No party above 30% · Top 3 within ${topThreeSpread} pts`
+  }
+  if (Number.isFinite(Number(gap)) && Number(gap) <= 3) {
+    return `Race tightening · Top two within ${gapText} pts${topThreeSpread ? ` · Top 3 within ${topThreeSpread} pts` : ''}`
+  }
+  if (minorShare >= 25) {
+    return `Two-party compression · Minor parties holding ${Math.round(minorShare)}%+`
+  }
+  if (second?.name && third?.name && Number.isFinite(secondPct) && Number.isFinite(thirdPct)) {
+    return `${leader.name || 'Leader'} ahead · ${second.name} chasing · ${third.name} still competitive`
+  }
+  return 'Rolling average · National vote share · Seat picture remains modelled'
 }
 
 function buildStateWatchCue(main, leader, second, gap) {
@@ -139,37 +181,112 @@ function buildStateWatchCue(main, leader, second, gap) {
 
   if (surge) {
     return {
-      label: `Watch: ${surge.name} momentum`,
+      label: `WATCH: ${surge.name} momentum building`,
       color: surge.color,
     }
   }
 
   if (drop) {
     return {
-      label: `Watch: ${drop.name} decline`,
+      label: `WATCH: ${drop.name} weakening`,
       color: drop.color,
     }
   }
 
   if (leader?.name && second?.name && Number(gap) <= 3) {
     return {
-      label: 'Watch: tightening race',
+      label: `WATCH: ${leader.name}-${second.name} gap narrowing`,
       color: leader.color || second.color,
     }
   }
 
   return leader?.name && second?.name
     ? {
-        label: `Watch: ${leader.name} vs ${second.name} gap`,
+        label: `WATCH: ${leader.name}-${second.name} gap`,
         color: leader.color || second.color,
       }
     : {
-        label: 'Watch: no party near 30%',
+        label: 'WATCH: no party near 30%',
         color: leader?.color || '#6b7280',
       }
 }
 
+function getPollDateValue(poll) {
+  return poll?.publishedAt || poll?.fieldworkEnd || poll?.fieldworkStart || poll?.date || null
+}
+
+function getPollRowsForHome(pollContext) {
+  if (Array.isArray(pollContext?.allPollsSorted)) return pollContext.allPollsSorted
+  if (Array.isArray(pollContext?.latestPollsByPollster)) return pollContext.latestPollsByPollster
+  return []
+}
+
+function buildStatePollingMeta({ meta, pollContext }) {
+  const pollRows = getPollRowsForHome(pollContext)
+  const latestPolls = Array.isArray(pollContext?.latestPollsByPollster)
+    ? pollContext.latestPollsByPollster
+    : pollRows
+  const latestPollDate = latestPolls
+    .map(getPollDateValue)
+    .filter(Boolean)
+    .sort((a, b) => (parseMarketDate(b)?.getTime() || 0) - (parseMarketDate(a)?.getTime() || 0))[0]
+  const candidateDate =
+    pollContext?.updatedAt ||
+    pollContext?.generatedAt ||
+    pollContext?.checkedAt ||
+    pollContext?.latestPollDate ||
+    pollContext?.averageUpdatedAt ||
+    pollContext?.meta?.updatedAt ||
+    pollContext?.meta?.generatedAt ||
+    latestPollDate ||
+    meta?.polls?.updatedAt ||
+    meta?.polling?.updatedAt ||
+    meta?.fetchDate ||
+    meta?.updatedAt
+  const pollCount = Number(pollContext?.sourcePollCount) || pollRows.length || latestPolls.length || 0
+  const pollsterRows = latestPolls.length ? latestPolls : pollRows
+  const pollsters = [...new Set(
+    pollsterRows
+      .map((poll) => String(poll?.pollster || '').trim())
+      .filter(Boolean)
+  )].slice(0, 3)
+  const latestAgeDays = latestPollDate
+    ? Math.floor((Date.now() - (parseMarketDate(latestPollDate)?.getTime() || Date.now())) / 86400000)
+    : null
+  const recentPollCount = pollRows.filter((poll) => {
+    const parsed = parseMarketDate(getPollDateValue(poll))
+    if (!parsed) return false
+    return (Date.now() - parsed.getTime()) <= 14 * 86400000
+  }).length
+  const pollsterCount = Number(pollContext?.pollsterCount) || pollsters.length
+  const confidence = latestAgeDays != null && latestAgeDays <= 7 && recentPollCount >= 6 && pollsterCount >= 4
+    ? 'High'
+    : latestAgeDays != null && latestAgeDays <= 21 && recentPollCount >= 3
+      ? 'Medium'
+      : 'Low'
+
+  return {
+    updatedAgo: formatRelativeHomeTime(candidateDate),
+    pollCount,
+    sources: pollsters,
+    confidence,
+  }
+}
+
 function buildStateProvenanceLine({ meta, pollContext }) {
+  const pollingMeta = buildStatePollingMeta({ meta, pollContext })
+  const sources = pollingMeta.sources.length ? pollingMeta.sources.join(', ') : 'loaded poll feed'
+  const updated = pollingMeta.updatedAgo ? `Updated ${pollingMeta.updatedAgo}` : 'Updated from latest loaded data'
+  const polls = pollingMeta.pollCount ? `${pollingMeta.pollCount} polls` : 'poll count pending'
+  return `${updated} · ${polls} · Sources: ${sources}`
+}
+
+function buildStateConfidenceLine({ meta, pollContext }) {
+  const pollingMeta = buildStatePollingMeta({ meta, pollContext })
+  return `Based on rolling poll average · Confidence: ${pollingMeta.confidence}`
+}
+
+function buildStateLegacyProvenanceLine({ meta, pollContext }) {
   const candidateDate =
     pollContext?.updatedAt ||
     pollContext?.generatedAt ||
@@ -822,8 +939,10 @@ export default function HomeScreen({
         }
 
   const stateInsight = buildStateOfPlayInsight(stateOfPlayRows, leader, second, third, gap)
+  const stateStructureLine = buildStateStructureLine(stateOfPlayRows, leader, second, third, gap)
   const stateWatchCue = buildStateWatchCue(stateOfPlayRows, leader, second, gap)
   const stateProvenanceLine = buildStateProvenanceLine({ meta, pollContext })
+  const stateConfidenceLine = buildStateConfidenceLine({ meta, pollContext })
 
   return (
     <div style={{ position: 'relative', minHeight: '100%', background: T.sf }}>
@@ -903,6 +1022,19 @@ export default function HomeScreen({
           <LargeCard T={T} onClick={() => nav('polls')}>
             <div style={pL}>
               <Lbl T={T}>State of Play</Lbl>
+              <div
+                style={{
+                  fontSize: 11.5,
+                  fontWeight: 750,
+                  color: T.tl,
+                  textAlign: 'center',
+                  marginTop: -2,
+                  marginBottom: 12,
+                  lineHeight: 1.35,
+                }}
+              >
+                {stateProvenanceLine}
+              </div>
 
               <div
                 style={{
@@ -983,6 +1115,20 @@ export default function HomeScreen({
                 }}
               >
                 {stateInsight}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 12.2,
+                  fontWeight: 700,
+                  lineHeight: 1.35,
+                  color: T.tl,
+                  textAlign: 'center',
+                  maxWidth: 520,
+                  margin: '5px auto 0',
+                }}
+              >
+                {stateStructureLine}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
@@ -1090,7 +1236,7 @@ export default function HomeScreen({
                   marginTop: 8,
                 }}
               >
-                {stateProvenanceLine}
+                {stateConfidenceLine}
               </div>
 
               <Cta T={T}>Open the full race →</Cta>
