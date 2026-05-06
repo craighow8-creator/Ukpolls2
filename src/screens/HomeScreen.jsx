@@ -41,6 +41,100 @@ function formatMarketDate(value) {
   return `${day}-${month}-${parsed.getFullYear()}`
 }
 
+function formatHomePollDate(value) {
+  if (!value) return null
+  const parsed = parseMarketDate(value)
+  if (parsed) return formatMarketDate(parsed)
+  const text = String(value).trim()
+  return text || null
+}
+
+function formatPointValue(value) {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return null
+  return numeric.toFixed(1).replace(/\.0$/, '.0')
+}
+
+function normalisePartyName(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z]/g, '')
+}
+
+function buildStateOfPlayInsight(main, leader, second, third, gap) {
+  if (!leader?.name || !second?.name || !Number.isFinite(Number(gap))) {
+    return 'The latest loaded polling average gives the clearest view of the national race.'
+  }
+
+  const gapText = formatPointValue(gap)
+  const thirdGap = third?.name && Number.isFinite(Number(second?.pct)) && Number.isFinite(Number(third?.pct))
+    ? formatPointValue(Number(second.pct) - Number(third.pct))
+    : null
+  const topThreeSpread = third?.name && Number.isFinite(Number(leader?.pct)) && Number.isFinite(Number(third?.pct))
+    ? formatPointValue(Number(leader.pct) - Number(third.pct))
+    : null
+
+  if (Number(leader.pct) < 30 && topThreeSpread) {
+    return `The race is fragmented: no party is above 30%, and the top three are separated by ${topThreeSpread} points.`
+  }
+
+  if (third?.name && thirdGap) {
+    return `${leader.name} lead ${second.name} by ${gapText} points, with ${third.name} a further ${thirdGap} points behind.`
+  }
+
+  return `${leader.name} lead ${second.name} by ${gapText} points in the latest loaded average.`
+}
+
+function buildStateWatchCue(main, leader, second, gap) {
+  const labour = main.find((party) => normalisePartyName(party.name) === 'labour' || party.abbr === 'LAB')
+  const conservative = main.find((party) => normalisePartyName(party.name).startsWith('conservative') || party.abbr === 'CON')
+  const green = main.find((party) => normalisePartyName(party.name).includes('green') || party.abbr === 'GRN')
+
+  if (leader?.name && second?.name && Number(gap) > 5) {
+    return {
+      label: `Watch: ${leader.name} vs ${second.name} gap`,
+      color: leader.color || second.color,
+    }
+  }
+
+  if (labour && conservative && Math.abs(Number(labour.pct) - Number(conservative.pct)) <= 2) {
+    return {
+      label: 'Watch: Labour/Conservative crossover',
+      color: conservative.color || labour.color,
+    }
+  }
+
+  if (green && Number(green.pct) >= 12) {
+    return {
+      label: 'Watch: Green vote share',
+      color: green.color,
+    }
+  }
+
+  return {
+    label: 'Watch: no party near 30%',
+    color: leader?.color || '#6b7280',
+  }
+}
+
+function buildStateProvenanceLine({ meta, pollContext }) {
+  const candidateDate =
+    pollContext?.updatedAt ||
+    pollContext?.generatedAt ||
+    pollContext?.checkedAt ||
+    pollContext?.latestPollDate ||
+    pollContext?.averageUpdatedAt ||
+    pollContext?.meta?.updatedAt ||
+    pollContext?.meta?.generatedAt ||
+    meta?.polls?.updatedAt ||
+    meta?.polling?.updatedAt ||
+    meta?.fetchDate ||
+    meta?.updatedAt
+
+  const formatted = formatHomePollDate(candidateDate)
+  return formatted
+    ? `Latest polling average · updated ${formatted}`
+    : 'Based on latest loaded poll average'
+}
+
 function extractPredictionMarketRows(predictionMarkets) {
   const payload = Array.isArray(predictionMarkets) ? { rows: predictionMarkets } : predictionMarkets
   if (!payload || typeof payload !== 'object') return []
@@ -672,6 +766,10 @@ export default function HomeScreen({
           accent: T.pr,
         }
 
+  const stateInsight = buildStateOfPlayInsight(main, leader, second, third, gap)
+  const stateWatchCue = buildStateWatchCue(main, leader, second, gap)
+  const stateProvenanceLine = buildStateProvenanceLine({ meta, pollContext })
+
   return (
     <div style={{ position: 'relative', minHeight: '100%', background: T.sf }}>
       <div
@@ -818,6 +916,35 @@ export default function HomeScreen({
                 <Chip color={leader.color}>{gap}pt gap</Chip>
               </div>
 
+              <div
+                style={{
+                  fontSize: 13.5,
+                  fontWeight: 650,
+                  lineHeight: 1.42,
+                  color: T.tm,
+                  textAlign: 'center',
+                  maxWidth: 520,
+                  margin: '9px auto 0',
+                }}
+              >
+                {stateInsight}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+                <Chip
+                  color={stateWatchCue.color || leader.color}
+                  style={{
+                    fontSize: 10.5,
+                    borderRadius: 999,
+                    padding: '3px 8px',
+                    letterSpacing: '0.03em',
+                    textTransform: 'none',
+                  }}
+                >
+                  {stateWatchCue.label}
+                </Chip>
+              </div>
+
               <Divider T={T} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
@@ -897,6 +1024,18 @@ export default function HomeScreen({
                       {p.abbr} {p.seats}
                     </div>
                   ))}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  color: T.tl,
+                  textAlign: 'center',
+                  marginTop: 8,
+                }}
+              >
+                {stateProvenanceLine}
               </div>
 
               <Cta T={T}>Open the full race →</Cta>
