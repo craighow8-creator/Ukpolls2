@@ -786,7 +786,9 @@ export async function getData() {
     const [remoteRes, latest] = await Promise.all([
       fetchWithTimeout(`${API_BASE}/api/data`, { cache: 'no-store' }),
       fetchLatestPolls().catch((e) => {
-        console.warn('Store: live polls fetch failed, falling back', e)
+        if (import.meta.env.DEV) {
+          console.warn('Store: live polls fetch failed, falling back', e)
+        }
         return []
       }),
     ])
@@ -794,7 +796,9 @@ export async function getData() {
     remote = await parseJsonResponse(remoteRes, 'Data load')
     livePolls = normalisePollArray(latest, []).filter(isDisplaySafePoll)
   } catch (e) {
-    console.warn('Store: remote load failed, using local/default fallback', e)
+    if (import.meta.env.DEV) {
+      console.warn('Store: remote load failed, using local/default fallback', e)
+    }
     return {
       ...local,
       dataState: buildDefaultSectionState(defaults),
