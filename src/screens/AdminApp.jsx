@@ -332,6 +332,36 @@ function newsActionCounts(action) {
   return `Stories ${compactNumber(action.itemCount)} · sources ${compactNumber(action.sourceCount)}`
 }
 
+function fullRefreshCounts(action) {
+  if (!action) return 'No action yet'
+  const polls = action.steps?.polls || {}
+  const markets = action.steps?.markets || {}
+  const news = action.steps?.news || {}
+  return `Polls ${compactNumber(polls.acceptedCount)} accepted · ${compactNumber(polls.droppedCount)} dropped · markets ${compactNumber(markets.marketCount)} · news ${compactNumber(news.itemCount)}`
+}
+
+function formatDurationMs(value) {
+  const ms = Number(value)
+  if (!Number.isFinite(ms)) return 'Duration pending'
+  if (ms < 1000) return `${Math.max(0, Math.round(ms))}ms`
+  return `${Math.round((ms / 1000) * 10) / 10}s`
+}
+
+function formatDelta(value) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return ''
+  return `${number > 0 ? '+' : ''}${number.toFixed(1)}`
+}
+
+function getTopPollDiffMovers(diff, limit = 6) {
+  return Array.isArray(diff?.parties)
+    ? [...diff.parties]
+        .filter((row) => row?.name && Number.isFinite(Number(row.delta)))
+        .sort((a, b) => Math.abs(Number(b.delta)) - Math.abs(Number(a.delta)))
+        .slice(0, limit)
+    : []
+}
+
 async function runSaves(tasks) {
   for (const task of tasks) {
     await Promise.resolve(task())
@@ -465,7 +495,48 @@ function HealthCard({ title, status, summary, rows = [], commands = [], note, ac
   )
 }
 
+function PollDiffSummary({ diff }) {
+  const movers = getTopPollDiffMovers(diff)
+  if (!movers.length) return null
+
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.bdr}`, borderRadius: 18, padding: 18 }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: C.hi }}>Change since last refresh</div>
+      <div style={{ fontSize: 12, color: C.lo, lineHeight: 1.5, marginTop: 3 }}>
+        Poll average movement computed from stored polls before and after the last full refresh.
+      </div>
+      <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+        {movers.map((row) => {
+          const delta = Number(row.delta)
+          return (
+            <div
+              key={row.key || row.name}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: 12,
+                alignItems: 'center',
+                padding: '9px 10px',
+                borderRadius: 12,
+                background: 'rgba(255,255,255,0.055)',
+                border: `1px solid ${C.bdr}`,
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 750, color: C.hi }}>{row.name}</span>
+              <span style={{ fontSize: 13, fontWeight: 850, color: delta >= 0 ? '#9ff0c0' : '#ffb8c6' }}>
+                {formatDelta(delta)}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function DataHealthTab({ data, onRefreshData }) {
+  const [fullRefreshRunning, setFullRefreshRunning] = useState(false)
+  const [fullRefreshResult, setFullRefreshResult] = useState(null)
   const [marketsRefreshing, setMarketsRefreshing] = useState(false)
   const [marketsRefreshResult, setMarketsRefreshResult] = useState(null)
   const [pollIngestRunning, setPollIngestRunning] = useState(false)
@@ -480,6 +551,7 @@ function DataHealthTab({ data, onRefreshData }) {
   const pollAction = getAdminAction(adminActions, 'poll-ingest')
   const marketsAction = getAdminAction(adminActions, 'markets-refresh')
   const newsAction = getAdminAction(adminActions, 'news-refresh')
+  const fullRefreshAction = getAdminAction(adminActions, 'full-refresh')
   const polls = Array.isArray(data?.pollsData) && data.pollsData.length
     ? data.pollsData
     : Array.isArray(data?.polls)
@@ -529,6 +601,7 @@ function DataHealthTab({ data, onRefreshData }) {
   const leaderStatus = leaderUnmatchedCount
     ? 'Needs review'
     : freshnessFromDate(leaderUpdatedAt, { okDays: 45, staleDays: 120 })
+  const fullRefreshDiff = fullRefreshResult?.payload?.diff || fullRefreshAction?.diff || null
 
   const getAdminActionKey = (label, setResult) => {
     let adminKey = sessionStorage.getItem('politiscope_admin_action_key') || ''
@@ -579,6 +652,46 @@ function DataHealthTab({ data, onRefreshData }) {
       setMarketsRefreshResult({ tone: 'error', message: error?.message || 'Market refresh failed.' })
     } finally {
       setMarketsRefreshing(false)
+    }
+  }
+
+  const runFullRefresh = async () => {
+    setFullRefreshResult(null)
+    const adminKey = getAdminActionKey('full refresh', setFullRefreshResult)
+    if (!adminKey) return
+    setFullRefreshRunning(true)
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/full-refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': adminKey,
+        },
+      })
+      const text = await response.text()
+      let payload = null
+      try {
+        payload = text ? JSON.parse(text) : null
+      } catch {
+        throw new Error(`Full refresh returned non-JSON response: ${text.slice(0, 180)}`)
+      }
+
+      if (!response.ok || payload?.ok === false) {
+        if (response.status === 401) sessionStorage.removeItem('politiscope_admin_action_key')
+        if (response.status === 409) throw new Error(payload?.error || 'Full refresh already running.')
+        throw new Error(payload?.error || `Full refresh failed with ${response.status}`)
+      }
+
+      setFullRefreshResult({
+        tone: 'success',
+        payload,
+        message: `${fullRefreshCounts(payload)} · duration ${formatDurationMs(payload.durationMs)}`,
+      })
+      await Promise.resolve(onRefreshData?.())
+    } catch (error) {
+      setFullRefreshResult({ tone: 'error', message: error?.message || 'Full refresh failed.' })
+    } finally {
+      setFullRefreshRunning(false)
     }
   }
 
@@ -666,7 +779,44 @@ function DataHealthTab({ data, onRefreshData }) {
         <div style={{ fontSize: 13, color: '#7dd8ea', lineHeight: 1.6 }}>
           Health view with protected refresh actions for selected feeds. Wider ingest actions still run from CLI.
         </div>
+        <div style={{ marginTop: 14, borderTop: '1px solid rgba(18,183,212,0.22)', paddingTop: 14 }}>
+          <button
+            onClick={runFullRefresh}
+            disabled={fullRefreshRunning}
+            style={{
+              background: fullRefreshRunning ? C.dim : '#12B7D4',
+              border: 'none',
+              borderRadius: 999,
+              padding: '10px 18px',
+              fontSize: 13,
+              fontWeight: 800,
+              color: '#fff',
+              cursor: fullRefreshRunning ? 'wait' : 'pointer',
+              fontFamily: "'Outfit', sans-serif",
+            }}
+          >
+            {fullRefreshRunning ? 'Running full refresh...' : 'Run full refresh'}
+          </button>
+          <div style={{ marginTop: 8, fontSize: 12, color: '#7dd8ea', lineHeight: 1.5 }}>
+            Runs polls → markets → news. Requires admin action key.
+          </div>
+          {(fullRefreshResult?.message || fullRefreshAction) ? (
+            <div
+              style={{
+                marginTop: 10,
+                fontSize: 12,
+                color: fullRefreshResult?.tone === 'error' || fullRefreshAction?.ok === false ? '#ffb8c6' : '#9ff0c0',
+                lineHeight: 1.5,
+                overflowWrap: 'anywhere',
+              }}
+            >
+              {fullRefreshResult?.message || `${fullRefreshCounts(fullRefreshAction)} · duration ${formatDurationMs(fullRefreshAction?.durationMs)}`}
+            </div>
+          ) : null}
+        </div>
       </div>
+
+      <PollDiffSummary diff={fullRefreshDiff} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
         <HealthCard
@@ -691,8 +841,8 @@ function DataHealthTab({ data, onRefreshData }) {
           ]}
           action={{
             label: 'Run poll ingest',
-            busyLabel: 'Running ingest...',
-            disabled: pollIngestRunning,
+            busyLabel: fullRefreshRunning ? 'Full refresh running...' : 'Running ingest...',
+            disabled: pollIngestRunning || fullRefreshRunning,
             onClick: runPollIngest,
             help: 'Uses Worker-side poll sources and validation. Requires admin action key.',
             message: pollIngestResult?.message,
@@ -720,8 +870,8 @@ function DataHealthTab({ data, onRefreshData }) {
           ]}
           action={{
             label: 'Refresh markets',
-            busyLabel: 'Refreshing...',
-            disabled: marketsRefreshing,
+            busyLabel: fullRefreshRunning ? 'Full refresh running...' : 'Refreshing...',
+            disabled: marketsRefreshing || fullRefreshRunning,
             onClick: refreshMarkets,
             help: 'Uses Worker-side configured UK market sources. Requires admin action key.',
             message: marketsRefreshResult?.message,
@@ -745,8 +895,8 @@ function DataHealthTab({ data, onRefreshData }) {
           note="Worker refreshes news via /api/news; no CLI health script yet."
           action={{
             label: 'Refresh news',
-            busyLabel: 'Refreshing...',
-            disabled: newsRefreshing,
+            busyLabel: fullRefreshRunning ? 'Full refresh running...' : 'Refreshing...',
+            disabled: newsRefreshing || fullRefreshRunning,
             onClick: refreshNews,
             help: 'Refreshes Worker news cache. Requires admin action key.',
             message: newsRefreshResult?.message,

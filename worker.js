@@ -3,6 +3,7 @@ import { runPollIngestForWorker } from './src/shared/pollIngestCore.js'
 import { runPolymarketPredictionRefresh } from './src/shared/predictionMarketsCore.js'
 
 let pollIngestRunning = false
+let fullRefreshRunning = false
 
 const worker = {
   async fetch(request, env) {
@@ -1397,6 +1398,157 @@ const worker = {
       }
     }
 
+    function requireAdminAction(request, env) {
+      const configuredAdminKey = String(env?.ADMIN_ACTION_KEY || '').trim()
+      if (!configuredAdminKey) {
+        return {
+          ok: false,
+          response: jsonResponse(
+            { ok: false, error: 'Admin action key is not configured' },
+            { status: 401 }
+          ),
+        }
+      }
+
+      const suppliedAdminKey = String(request.headers.get('x-admin-key') || '').trim()
+      if (!suppliedAdminKey || suppliedAdminKey !== configuredAdminKey) {
+        return {
+          ok: false,
+          response: jsonResponse(
+            { ok: false, error: 'Unauthorized' },
+            { status: 401 }
+          ),
+        }
+      }
+
+      return { ok: true }
+    }
+
+    function buildAdminPollStep(result, startedAt, startedMs) {
+      const polls = Array.isArray(result?.polls) ? result.polls : []
+      const dropped = Array.isArray(result?.dropped) ? result.dropped : []
+      const latestPollDate = polls
+        .map((poll) => poll?.publishedAt || poll?.fieldworkEnd || poll?.fieldworkStart || poll?.date || null)
+        .filter(Boolean)
+        .sort((a, b) => String(b).localeCompare(String(a)))[0] || null
+      const finishedAt = new Date().toISOString()
+
+      return {
+        ok: true,
+        section: 'pollsData',
+        startedAt,
+        finishedAt,
+        durationMs: Date.now() - startedMs,
+        totalFetched: result?.statusPayload?.totalFetched ?? polls.length,
+        acceptedCount: polls.length,
+        droppedCount: dropped.length,
+        pollsterCounts: result?.counts || result?.statusPayload?.countsByPollster || {},
+        latestPollDate,
+        warnings: [],
+      }
+    }
+
+    function buildAdminMarketsStep(payload, startedAt, startedMs) {
+      const rows = Array.isArray(payload?.rows)
+        ? payload.rows
+        : Array.isArray(payload?.markets)
+          ? payload.markets
+          : []
+      const failedSources = Array.isArray(payload?.failedSources)
+        ? payload.failedSources
+        : Array.isArray(payload?.meta?.failedSources)
+          ? payload.meta.failedSources
+          : []
+      const updatedAt =
+        payload?.updatedAt ||
+        payload?.generatedAt ||
+        payload?.meta?.updatedAt ||
+        payload?.meta?.generatedAt ||
+        new Date().toISOString()
+
+      return {
+        ok: true,
+        section: 'predictionMarkets',
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        updatedAt,
+        durationMs: Date.now() - startedMs,
+        marketCount: rows.length,
+        failedSourceCount: failedSources.length,
+        warnings: failedSources.map((source) => source?.reason || source?.id || 'Market source failed').filter(Boolean),
+      }
+    }
+
+    function buildAdminNewsStep(items, startedAt, startedMs, updatedAt = new Date().toISOString()) {
+      return {
+        ok: true,
+        section: 'newsItems',
+        startedAt,
+        finishedAt: updatedAt,
+        updatedAt,
+        durationMs: Date.now() - startedMs,
+        itemCount: Array.isArray(items) ? items.length : 0,
+        sourceCount: new Set((items || []).map((item) => item?.source).filter(Boolean)).size,
+        warnings: [],
+      }
+    }
+
+    function computePollSnapshotAverages(polls) {
+      const latestPolls = keepLatestPollPerPollster(
+        (Array.isArray(polls) ? polls : [])
+          .map((poll, index) => normalizePollRecord(poll, index))
+          .filter(Boolean)
+      )
+      const partyKeys = [
+        ['ref', 'Reform UK'],
+        ['lab', 'Labour'],
+        ['con', 'Conservative'],
+        ['grn', 'Green'],
+        ['ld', 'Liberal Democrats'],
+        ['rb', 'Restore Britain'],
+        ['snp', 'SNP'],
+      ]
+      const averages = new Map()
+
+      for (const [key, name] of partyKeys) {
+        const values = latestPolls.map((poll) => safeNumber(poll?.[key])).filter(Number.isFinite)
+        if (!values.length) continue
+        averages.set(key, {
+          key,
+          name,
+          average: Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 10) / 10,
+        })
+      }
+
+      return averages
+    }
+
+    function computePollDiff(previousPolls, nextPolls) {
+      if (!Array.isArray(previousPolls) || !previousPolls.length || !Array.isArray(nextPolls) || !nextPolls.length) {
+        return null
+      }
+
+      const before = computePollSnapshotAverages(previousPolls)
+      const after = computePollSnapshotAverages(nextPolls)
+      const parties = []
+
+      for (const [key, current] of after.entries()) {
+        const previous = before.get(key)
+        if (!previous || !Number.isFinite(previous.average) || !Number.isFinite(current.average)) continue
+        parties.push({
+          key,
+          name: current.name,
+          delta: Math.round((current.average - previous.average) * 10) / 10,
+        })
+      }
+
+      if (!parties.length) return null
+      return {
+        parties,
+        computedAt: new Date().toISOString(),
+      }
+    }
+
     async function ytFetch(url, apiKey) {
       const res = await fetch(url, {
         headers: {
@@ -1535,56 +1687,15 @@ const worker = {
       }
 
       if (request.method === 'POST' && url.pathname === '/api/admin/refresh-markets') {
-        const configuredAdminKey = String(env?.ADMIN_ACTION_KEY || '').trim()
-        if (!configuredAdminKey) {
-          return jsonResponse(
-            { ok: false, error: 'Admin action key is not configured' },
-            { status: 401 }
-          )
-        }
-
-        const suppliedAdminKey = String(request.headers.get('x-admin-key') || '').trim()
-        if (!suppliedAdminKey || suppliedAdminKey !== configuredAdminKey) {
-          return jsonResponse(
-            { ok: false, error: 'Unauthorized' },
-            { status: 401 }
-          )
-        }
+        const adminCheck = requireAdminAction(request, env)
+        if (!adminCheck.ok) return adminCheck.response
 
         const startedAt = new Date().toISOString()
         const startedMs = Date.now()
         try {
         const payload = await runPolymarketPredictionRefresh({ logger: console })
         await saveContentSection('predictionMarkets', payload)
-
-        const rows = Array.isArray(payload?.rows)
-          ? payload.rows
-          : Array.isArray(payload?.markets)
-            ? payload.markets
-            : []
-        const failedSources = Array.isArray(payload?.failedSources)
-          ? payload.failedSources
-          : Array.isArray(payload?.meta?.failedSources)
-            ? payload.meta.failedSources
-            : []
-        const updatedAt =
-          payload?.updatedAt ||
-          payload?.generatedAt ||
-          payload?.meta?.updatedAt ||
-          payload?.meta?.generatedAt ||
-          new Date().toISOString()
-
-        const result = {
-          ok: true,
-          section: 'predictionMarkets',
-          startedAt,
-          finishedAt: new Date().toISOString(),
-          updatedAt,
-          durationMs: Date.now() - startedMs,
-          marketCount: rows.length,
-          failedSourceCount: failedSources.length,
-          warnings: failedSources.map((source) => source?.reason || source?.id || 'Market source failed').filter(Boolean),
-        }
+        const result = buildAdminMarketsStep(payload, startedAt, startedMs)
         await recordAdminActionResult('markets-refresh', result)
         return jsonResponse(result)
         } catch (err) {
@@ -1605,21 +1716,8 @@ const worker = {
       }
 
       if (request.method === 'POST' && url.pathname === '/api/admin/ingest-polls') {
-        const configuredAdminKey = String(env?.ADMIN_ACTION_KEY || '').trim()
-        if (!configuredAdminKey) {
-          return jsonResponse(
-            { ok: false, error: 'Admin action key is not configured' },
-            { status: 401 }
-          )
-        }
-
-        const suppliedAdminKey = String(request.headers.get('x-admin-key') || '').trim()
-        if (!suppliedAdminKey || suppliedAdminKey !== configuredAdminKey) {
-          return jsonResponse(
-            { ok: false, error: 'Unauthorized' },
-            { status: 401 }
-          )
-        }
+        const adminCheck = requireAdminAction(request, env)
+        if (!adminCheck.ok) return adminCheck.response
 
         if (pollIngestRunning) {
           return jsonResponse(
@@ -1634,27 +1732,7 @@ const worker = {
 
         try {
           const result = await runPollIngestForWorker(env, null, console)
-          const polls = Array.isArray(result?.polls) ? result.polls : []
-          const dropped = Array.isArray(result?.dropped) ? result.dropped : []
-          const latestPollDate = polls
-            .map((poll) => poll?.publishedAt || poll?.fieldworkEnd || poll?.fieldworkStart || poll?.date || null)
-            .filter(Boolean)
-            .sort((a, b) => String(b).localeCompare(String(a)))[0] || null
-          const finishedAt = new Date().toISOString()
-
-          const responsePayload = {
-            ok: true,
-            section: 'pollsData',
-            startedAt,
-            finishedAt,
-            durationMs: Date.now() - startedMs,
-            totalFetched: result?.statusPayload?.totalFetched ?? polls.length,
-            acceptedCount: polls.length,
-            droppedCount: dropped.length,
-            pollsterCounts: result?.counts || result?.statusPayload?.countsByPollster || {},
-            latestPollDate,
-            warnings: [],
-          }
+          const responsePayload = buildAdminPollStep(result, startedAt, startedMs)
           await recordAdminActionResult('poll-ingest', responsePayload)
           return jsonResponse(responsePayload)
         } catch (err) {
@@ -1677,21 +1755,8 @@ const worker = {
       }
 
       if (request.method === 'POST' && url.pathname === '/api/admin/refresh-news') {
-        const configuredAdminKey = String(env?.ADMIN_ACTION_KEY || '').trim()
-        if (!configuredAdminKey) {
-          return jsonResponse(
-            { ok: false, error: 'Admin action key is not configured' },
-            { status: 401 }
-          )
-        }
-
-        const suppliedAdminKey = String(request.headers.get('x-admin-key') || '').trim()
-        if (!suppliedAdminKey || suppliedAdminKey !== configuredAdminKey) {
-          return jsonResponse(
-            { ok: false, error: 'Unauthorized' },
-            { status: 401 }
-          )
-        }
+        const adminCheck = requireAdminAction(request, env)
+        if (!adminCheck.ok) return adminCheck.response
 
         const startedAt = new Date().toISOString()
         const startedMs = Date.now()
@@ -1703,18 +1768,7 @@ const worker = {
             items,
           }
           await saveContentSection(NEWS_CACHE_SECTION, payload)
-          const sourceCount = new Set(items.map((item) => item?.source).filter(Boolean)).size
-          const result = {
-            ok: true,
-            section: 'newsItems',
-            startedAt,
-            finishedAt: updatedAt,
-            updatedAt,
-            durationMs: Date.now() - startedMs,
-            itemCount: items.length,
-            sourceCount,
-            warnings: [],
-          }
+          const result = buildAdminNewsStep(items, startedAt, startedMs, updatedAt)
           await recordAdminActionResult('news-refresh', result)
           return jsonResponse(result)
         } catch (err) {
@@ -1731,6 +1785,121 @@ const worker = {
           }
           await recordAdminActionResult('news-refresh', result)
           return jsonResponse(result, { status: 500 })
+        }
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/admin/full-refresh') {
+        const adminCheck = requireAdminAction(request, env)
+        if (!adminCheck.ok) return adminCheck.response
+
+        if (fullRefreshRunning) {
+          return jsonResponse(
+            { ok: false, error: 'Full refresh already running' },
+            { status: 409 }
+          )
+        }
+        if (pollIngestRunning) {
+          return jsonResponse(
+            { ok: false, error: 'Poll ingest already running' },
+            { status: 409 }
+          )
+        }
+
+        const startedAt = new Date().toISOString()
+        const startedMs = Date.now()
+        const steps = {}
+        let diff = null
+        let currentStep = null
+        let currentStepStartedAt = null
+        let currentStepStartedMs = null
+        fullRefreshRunning = true
+
+        try {
+          const previousPolls = await loadContentSection('pollsData')
+
+          const pollStartedAt = new Date().toISOString()
+          const pollStartedMs = Date.now()
+          currentStep = 'polls'
+          currentStepStartedAt = pollStartedAt
+          currentStepStartedMs = pollStartedMs
+          pollIngestRunning = true
+          try {
+            const pollResult = await runPollIngestForWorker(env, null, console)
+            steps.polls = buildAdminPollStep(pollResult, pollStartedAt, pollStartedMs)
+          } finally {
+            pollIngestRunning = false
+          }
+          await recordAdminActionResult('poll-ingest', steps.polls)
+
+          const nextPolls = await loadContentSection('pollsData')
+          diff = computePollDiff(previousPolls, Array.isArray(nextPolls) && nextPolls.length ? nextPolls : [])
+
+          const marketStartedAt = new Date().toISOString()
+          const marketStartedMs = Date.now()
+          currentStep = 'markets'
+          currentStepStartedAt = marketStartedAt
+          currentStepStartedMs = marketStartedMs
+          const marketPayload = await runPolymarketPredictionRefresh({ logger: console })
+          await saveContentSection('predictionMarkets', marketPayload)
+          steps.markets = buildAdminMarketsStep(marketPayload, marketStartedAt, marketStartedMs)
+          await recordAdminActionResult('markets-refresh', steps.markets)
+
+          const newsStartedAt = new Date().toISOString()
+          const newsStartedMs = Date.now()
+          currentStep = 'news'
+          currentStepStartedAt = newsStartedAt
+          currentStepStartedMs = newsStartedMs
+          const items = await fetchLiveNews(env)
+          const newsUpdatedAt = new Date().toISOString()
+          await saveContentSection(NEWS_CACHE_SECTION, {
+            fetchedAt: newsUpdatedAt,
+            items,
+          })
+          steps.news = buildAdminNewsStep(items, newsStartedAt, newsStartedMs, newsUpdatedAt)
+          await recordAdminActionResult('news-refresh', steps.news)
+
+          const finishedAt = new Date().toISOString()
+          const result = {
+            ok: true,
+            section: 'full-refresh',
+            startedAt,
+            finishedAt,
+            durationMs: Date.now() - startedMs,
+            steps,
+            diff,
+          }
+          await recordAdminActionResult('full-refresh', result)
+          return jsonResponse(result)
+        } catch (err) {
+          const finishedAt = new Date().toISOString()
+          if (currentStep && !steps[currentStep]) {
+            steps[currentStep] = {
+              ok: false,
+              startedAt: currentStepStartedAt || startedAt,
+              finishedAt,
+              durationMs: Date.now() - (currentStepStartedMs || startedMs),
+              error: err instanceof Error ? err.message : String(err),
+              warnings: [],
+            }
+            if (currentStep === 'polls') await recordAdminActionResult('poll-ingest', steps[currentStep])
+            if (currentStep === 'markets') await recordAdminActionResult('markets-refresh', steps[currentStep])
+            if (currentStep === 'news') await recordAdminActionResult('news-refresh', steps[currentStep])
+          }
+          const result = {
+            ok: false,
+            section: 'full-refresh',
+            startedAt,
+            finishedAt,
+            durationMs: Date.now() - startedMs,
+            steps,
+            diff,
+            error: err instanceof Error ? err.message : String(err),
+          }
+          await recordAdminActionResult('full-refresh', result)
+          return jsonResponse(result, { status: 500 })
+        } finally {
+          pollIngestRunning = false
+          fullRefreshRunning = false
         }
       }
 
