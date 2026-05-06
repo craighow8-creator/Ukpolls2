@@ -317,6 +317,52 @@ function warningCount(action) {
   return Array.isArray(action?.warnings) ? action.warnings.length : 0
 }
 
+function readableWarnings(value) {
+  return Array.isArray(value)
+    ? value
+        .map((warning) => (typeof warning === 'string' ? warning : warning?.message || warning?.error || ''))
+        .map((warning) => warning.trim())
+        .filter(Boolean)
+    : []
+}
+
+function finiteIssueNumber(...values) {
+  for (const value of values) {
+    const number = Number(value)
+    if (Number.isFinite(number)) return number
+  }
+  return null
+}
+
+function buildPollIssues({ ingestStatus, action }) {
+  const issues = []
+  const droppedCount = finiteIssueNumber(action?.droppedCount, ingestStatus?.droppedInvalidRows, ingestStatus?.droppedCount)
+  if (action?.ok === false && action?.error) issues.push(action.error)
+  if (droppedCount > 0) issues.push(`${compactNumber(droppedCount)} rows dropped`)
+  issues.push(...readableWarnings(action?.warnings))
+  return issues.slice(0, 3)
+}
+
+function buildMarketIssues({ failedSourceCount, action }) {
+  const issues = []
+  const failedCount = finiteIssueNumber(action?.failedSourceCount, failedSourceCount)
+  if (action?.ok === false && action?.error) issues.push(action.error)
+  if (failedCount > 0) issues.push(`${compactNumber(failedCount)} sources failed`)
+  issues.push(...readableWarnings(action?.warnings))
+  return issues.slice(0, 3)
+}
+
+function buildNewsIssues({ itemCount, sourceCount, action, warnings }) {
+  const issues = []
+  const stories = finiteIssueNumber(action?.itemCount, itemCount)
+  const sources = finiteIssueNumber(action?.sourceCount, sourceCount)
+  if (action?.ok === false && action?.error) issues.push(action.error)
+  if (stories === 0) issues.push('No stories returned')
+  if (sources !== null && sources > 0 && sources < 2) issues.push('Limited source coverage')
+  issues.push(...readableWarnings(action?.warnings), ...readableWarnings(warnings))
+  return issues.slice(0, 3)
+}
+
 function pollActionCounts(action) {
   if (!action) return 'No action yet'
   return `Fetched ${compactNumber(action.totalFetched)} · accepted ${compactNumber(action.acceptedCount)} · dropped ${compactNumber(action.droppedCount)}`
@@ -422,7 +468,7 @@ function CommandList({ commands = [], note }) {
   )
 }
 
-function HealthCard({ title, status, summary, rows = [], commands = [], note, action = null }) {
+function HealthCard({ title, status, summary, rows = [], issues = [], commands = [], note, action = null }) {
   return (
     <div style={{ background: C.card, border: `1px solid ${C.bdr}`, borderRadius: 18, padding: 18 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', marginBottom: 10 }}>
@@ -454,6 +500,19 @@ function HealthCard({ title, status, summary, rows = [], commands = [], note, ac
           </div>
         ))}
       </div>
+
+      {issues.length ? (
+        <div style={{ marginTop: 12, borderTop: `1px solid ${C.bdr}`, paddingTop: 12 }}>
+          <div style={{ fontSize: 10, fontWeight: 850, color: '#ffcf8a', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 7 }}>
+            Issues
+          </div>
+          <ul style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 5, color: '#ffd6a8', fontSize: 12, lineHeight: 1.45 }}>
+            {issues.slice(0, 3).map((issue, index) => (
+              <li key={`${title}-issue-${index}`}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <CommandList commands={commands} note={note} />
       {action ? (
@@ -585,6 +644,14 @@ function DataHealthTab({ data, onRefreshData }) {
   const newsUpdatedAt = firstPresent(newsMeta?.updatedAt, newsMeta?.fetchedAt, newsItems[0]?.publishedAt)
   const newsSources = newsMeta?.sourceCount || new Set(newsItems.map((item) => item?.source).filter(Boolean)).size
   const newsStatus = freshnessFromDate(newsUpdatedAt, { okDays: 1, staleDays: 3 })
+  const pollIssues = buildPollIssues({ ingestStatus, action: pollAction })
+  const marketIssues = buildMarketIssues({ failedSourceCount: marketFailedSources, action: marketsAction })
+  const newsIssues = buildNewsIssues({
+    itemCount: newsMeta?.storyCount ?? newsItems.length,
+    sourceCount: newsSources,
+    action: newsAction,
+    warnings: newsMeta?.warnings,
+  })
 
   const migration = data?.migration && typeof data.migration === 'object' ? data.migration : {}
   const migrationReviewedAt = firstPresent(migration?.meta?.reviewedAt, migration?.meta?.updatedAt)
@@ -835,6 +902,7 @@ function DataHealthTab({ data, onRefreshData }) {
             { label: 'What changed', value: pollActionCounts(pollAction) },
             { label: 'Action warnings', value: compactNumber(warningCount(pollAction)) },
           ]}
+          issues={pollIssues}
           commands={[
             'npm run polls:health:remote',
             'npm run polls:import:remote',
@@ -864,6 +932,7 @@ function DataHealthTab({ data, onRefreshData }) {
             { label: 'What changed', value: marketActionCounts(marketsAction) },
             { label: 'Action warnings', value: compactNumber(warningCount(marketsAction)) },
           ]}
+          issues={marketIssues}
           commands={[
             'npm run political-markets:health:remote',
             'npm run political-markets:import:remote',
@@ -892,6 +961,7 @@ function DataHealthTab({ data, onRefreshData }) {
             { label: 'What changed', value: newsActionCounts(newsAction) },
             { label: 'Action warnings', value: compactNumber(warningCount(newsAction)) },
           ]}
+          issues={newsIssues}
           note="Worker refreshes news via /api/news; no CLI health script yet."
           action={{
             label: 'Refresh news',
