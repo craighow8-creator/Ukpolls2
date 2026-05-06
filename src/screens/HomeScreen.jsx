@@ -211,34 +211,6 @@ function buildStateWatchCue(main, leader, second, gap) {
     }
 }
 
-function buildStateIntelligenceFeed(main, leader, second, third, gap, pollContext) {
-  const leaderPct = Number(leader?.pct)
-  const secondPct = Number(second?.pct)
-  const thirdPct = Number(third?.pct)
-  const gapValue = Number(gap)
-  const events = []
-
-  if (Number.isFinite(leaderPct) && Number.isFinite(thirdPct)) {
-    events.push(`Top 3 spread: ${formatPointValue(leaderPct - thirdPct)} pts`)
-  }
-
-  if (second?.name && third?.name && Number.isFinite(secondPct) && Number.isFinite(thirdPct)) {
-    events.push(`${second.name} edge over ${third.name}: ${formatPointValue(secondPct - thirdPct)} pts`)
-  }
-
-  if (Number.isFinite(gapValue) && gapValue <= 3) {
-    events.push(`Tight race — top two within ${formatPointValue(gapValue)} pts`)
-  }
-
-  const pollRows = getPollRowsForHome(pollContext)
-  const pollCount = Number(pollContext?.sourcePollCount) || pollRows.length || 0
-  if (pollCount) {
-    events.push(`${pollCount} polls in current average`)
-  }
-
-  return [...new Set(events)].slice(0, 3)
-}
-
 function getPollDateValue(poll) {
   return poll?.publishedAt || poll?.fieldworkEnd || poll?.fieldworkStart || poll?.date || null
 }
@@ -303,10 +275,9 @@ function buildStatePollingMeta({ meta, pollContext }) {
 
 function buildStateProvenanceLine({ meta, pollContext }) {
   const pollingMeta = buildStatePollingMeta({ meta, pollContext })
-  const sources = pollingMeta.sources.length ? pollingMeta.sources.join(', ') : 'loaded poll feed'
   const updated = pollingMeta.updatedAgo ? `Refreshed ${pollingMeta.updatedAgo}` : 'Based on latest loaded data'
   const polls = pollingMeta.pollCount ? `${pollingMeta.pollCount} polls` : 'poll count pending'
-  return `${updated} · ${polls} · Sources: ${sources}`
+  return `${updated} · ${polls}`
 }
 
 function buildStateConfidenceLine({ meta, pollContext }) {
@@ -967,9 +938,7 @@ export default function HomeScreen({
         }
 
   const stateInsight = buildStateOfPlayInsight(stateOfPlayRows, leader, second, third, gap)
-  const stateStructureLine = buildStateStructureLine(stateOfPlayRows, leader, second, third, gap)
   const stateWatchCue = buildStateWatchCue(stateOfPlayRows, leader, second, gap)
-  const stateIntelligenceFeed = buildStateIntelligenceFeed(stateOfPlayRows, leader, second, third, gap, pollContext)
   const stateProvenanceLine = buildStateProvenanceLine({ meta, pollContext })
   const stateConfidenceLine = buildStateConfidenceLine({ meta, pollContext })
 
@@ -1146,20 +1115,6 @@ export default function HomeScreen({
                 {stateInsight}
               </div>
 
-              <div
-                style={{
-                  fontSize: 12.2,
-                  fontWeight: 700,
-                  lineHeight: 1.35,
-                  color: T.tl,
-                  textAlign: 'center',
-                  maxWidth: 520,
-                  margin: '5px auto 0',
-                }}
-              >
-                {stateStructureLine}
-              </div>
-
               <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
                 <Chip
                   color={stateWatchCue.color || leader.color}
@@ -1174,32 +1129,6 @@ export default function HomeScreen({
                   {stateWatchCue.label}
                 </Chip>
               </div>
-
-              {stateIntelligenceFeed.length ? (
-                <div
-                  style={{
-                    display: 'grid',
-                    gap: 4,
-                    maxWidth: 500,
-                    margin: '9px auto 0',
-                    textAlign: 'center',
-                  }}
-                >
-                  {stateIntelligenceFeed.map((item) => (
-                    <div
-                      key={item}
-                      style={{
-                        fontSize: 11.7,
-                        fontWeight: 700,
-                        lineHeight: 1.35,
-                        color: T.tl,
-                      }}
-                    >
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
 
               <Divider T={T} />
 
