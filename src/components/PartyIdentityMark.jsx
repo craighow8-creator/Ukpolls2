@@ -24,11 +24,6 @@ function localEmblemPath(value) {
   return path.startsWith('/party-emblems/') ? path : null
 }
 
-function parseWatermarkPosition(value = '50% 50%') {
-  const [x = '50%', y = '50%'] = String(value || '50% 50%').split(/\s+/)
-  return { x, y }
-}
-
 export function getPartyIdentity({ party, name, key, abbr, color, emblemPath } = {}) {
   const raw = party || name || key || ''
   const configured = getConfiguredPartyIdentity(raw)
@@ -43,11 +38,6 @@ export function getPartyIdentity({ party, name, key, abbr, color, emblemPath } =
     emblemPath: localEmblemPath(emblemPath) || localEmblemPath(resolved?.emblemPath),
     usageNote: configured?.usageNote || 'Shown for identification and editorial context only.',
     markType: configured?.markType || 'fallback',
-    watermarkOpacity: configured?.watermarkOpacity ?? 0.08,
-    watermarkScale: configured?.watermarkScale ?? 0.78,
-    watermarkPosition: configured?.watermarkPosition || '50% 50%',
-    watermarkFilter: configured?.watermarkFilter || null,
-    watermarkBlendMode: configured?.watermarkBlendMode || 'multiply',
     logoCardBackground: configured?.logoCardBackground || null,
     logoCardPadding: configured?.logoCardPadding ?? 0,
     cardBackground: configured?.cardBackground || configured?.color || null,
@@ -73,52 +63,6 @@ export default function PartyIdentityMark({
   style = {},
 }) {
   const identity = getPartyIdentity({ party, name, key: partyKey, abbr, color, emblemPath })
-  if (variant === 'watermark') {
-    if (!identity.emblemPath) return null
-    const scale = identity.watermarkScale || 0.78
-    const size = `${Math.max(48, Math.min(94, scale * 100))}%`
-    const { x, y } = parseWatermarkPosition(identity.watermarkPosition)
-    return (
-      <span
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          overflow: 'hidden',
-          ...style,
-        }}
-      >
-        <span
-          style={{
-            position: 'absolute',
-            left: x,
-            top: y,
-            width: size,
-            height: size,
-            transform: 'translate(-50%, -50%)',
-            background: identity.color,
-            opacity: identity.watermarkOpacity,
-            mixBlendMode: identity.watermarkBlendMode,
-            filter:
-              identity.watermarkFilter ||
-              (identity.markType === 'emblem'
-                ? 'brightness(0.96) contrast(1.08)'
-                : 'brightness(0.98) contrast(1.12)'),
-            WebkitMaskImage: `url(${identity.emblemPath})`,
-            maskImage: `url(${identity.emblemPath})`,
-            WebkitMaskRepeat: 'no-repeat',
-            maskRepeat: 'no-repeat',
-            WebkitMaskPosition: 'center',
-            maskPosition: 'center',
-            WebkitMaskSize: 'contain',
-            maskSize: 'contain',
-          }}
-        />
-      </span>
-    )
-  }
-
   if (variant === 'heroLogo') {
     const isNeutral = cleanKey(identity.name) === 'would not vote' || identity.color === '#6b7280'
     const logoScale = Math.max(0.48, Math.min(1.08, identity.heroLogoScale || 0.92))
