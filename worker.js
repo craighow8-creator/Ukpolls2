@@ -2,6 +2,8 @@ import { buildElectionsIntelligencePayload, buildMayorsIntelligencePayload, buil
 import { runPollIngestForWorker } from './src/shared/pollIngestCore.js'
 import { runPolymarketPredictionRefresh } from './src/shared/predictionMarketsCore.js'
 
+let pollIngestRunning = false
+
 const worker = {
   async fetch(request, env) {
     const url = new URL(request.url)
@@ -1556,6 +1558,62 @@ const worker = {
           marketCount: rows.length,
           failedSourceCount: failedSources.length,
         })
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/admin/ingest-polls') {
+        const configuredAdminKey = String(env?.ADMIN_ACTION_KEY || '').trim()
+        if (!configuredAdminKey) {
+          return jsonResponse(
+            { ok: false, error: 'Admin action key is not configured' },
+            { status: 401 }
+          )
+        }
+
+        const suppliedAdminKey = String(request.headers.get('x-admin-key') || '').trim()
+        if (!suppliedAdminKey || suppliedAdminKey !== configuredAdminKey) {
+          return jsonResponse(
+            { ok: false, error: 'Unauthorized' },
+            { status: 401 }
+          )
+        }
+
+        if (pollIngestRunning) {
+          return jsonResponse(
+            { ok: false, error: 'Poll ingest already running' },
+            { status: 409 }
+          )
+        }
+
+        const startedAt = new Date().toISOString()
+        const startedMs = Date.now()
+        pollIngestRunning = true
+
+        try {
+          const result = await runPollIngestForWorker(env, null, console)
+          const polls = Array.isArray(result?.polls) ? result.polls : []
+          const dropped = Array.isArray(result?.dropped) ? result.dropped : []
+          const latestPollDate = polls
+            .map((poll) => poll?.publishedAt || poll?.fieldworkEnd || poll?.fieldworkStart || poll?.date || null)
+            .filter(Boolean)
+            .sort((a, b) => String(b).localeCompare(String(a)))[0] || null
+          const finishedAt = new Date().toISOString()
+
+          return jsonResponse({
+            ok: true,
+            section: 'pollsData',
+            startedAt,
+            finishedAt,
+            durationMs: Date.now() - startedMs,
+            totalFetched: result?.statusPayload?.totalFetched ?? polls.length,
+            acceptedCount: polls.length,
+            droppedCount: dropped.length,
+            pollsterCounts: result?.counts || result?.statusPayload?.countsByPollster || {},
+            latestPollDate,
+            warnings: [],
+          })
+        } finally {
+          pollIngestRunning = false
+        }
       }
 
       if (request.method === 'GET' && url.pathname === '/api/parliament-video') {

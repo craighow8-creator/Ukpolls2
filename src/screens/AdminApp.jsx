@@ -434,6 +434,8 @@ function HealthCard({ title, status, summary, rows = [], commands = [], note, ac
 function DataHealthTab({ data, onRefreshData }) {
   const [marketsRefreshing, setMarketsRefreshing] = useState(false)
   const [marketsRefreshResult, setMarketsRefreshResult] = useState(null)
+  const [pollIngestRunning, setPollIngestRunning] = useState(false)
+  const [pollIngestResult, setPollIngestResult] = useState(null)
 
   const ingestStatus = data?.ingestStatus && typeof data.ingestStatus === 'object' ? data.ingestStatus : null
   const polls = Array.isArray(data?.pollsData) && data.pollsData.length
@@ -486,19 +488,24 @@ function DataHealthTab({ data, onRefreshData }) {
     ? 'Review'
     : freshnessFromDate(leaderUpdatedAt, { okDays: 45, staleDays: 120 })
 
-  const refreshMarkets = async () => {
-    setMarketsRefreshResult(null)
+  const getAdminActionKey = (label, setResult) => {
     let adminKey = sessionStorage.getItem('politiscope_admin_action_key') || ''
     if (!adminKey) {
-      adminKey = window.prompt('Enter admin action key for market refresh:') || ''
+      adminKey = window.prompt(`Enter admin action key for ${label}:`) || ''
       adminKey = adminKey.trim()
       if (!adminKey) {
-        setMarketsRefreshResult({ tone: 'error', message: 'Refresh cancelled: admin action key is required.' })
-        return
+        setResult({ tone: 'error', message: 'Action cancelled: admin action key is required.' })
+        return null
       }
       sessionStorage.setItem('politiscope_admin_action_key', adminKey)
     }
+    return adminKey
+  }
 
+  const refreshMarkets = async () => {
+    setMarketsRefreshResult(null)
+    const adminKey = getAdminActionKey('market refresh', setMarketsRefreshResult)
+    if (!adminKey) return
     setMarketsRefreshing(true)
     try {
       const response = await fetch(`${API_BASE}/api/admin/refresh-markets`, {
@@ -533,6 +540,45 @@ function DataHealthTab({ data, onRefreshData }) {
     }
   }
 
+  const runPollIngest = async () => {
+    setPollIngestResult(null)
+    const adminKey = getAdminActionKey('poll ingest', setPollIngestResult)
+    if (!adminKey) return
+    setPollIngestRunning(true)
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/ingest-polls`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': adminKey,
+        },
+      })
+      const text = await response.text()
+      let payload = null
+      try {
+        payload = text ? JSON.parse(text) : null
+      } catch {
+        throw new Error(`Poll ingest returned non-JSON response: ${text.slice(0, 180)}`)
+      }
+
+      if (!response.ok || payload?.ok === false) {
+        if (response.status === 401) sessionStorage.removeItem('politiscope_admin_action_key')
+        if (response.status === 409) throw new Error('Poll ingest already running.')
+        throw new Error(payload?.error || `Poll ingest failed with ${response.status}`)
+      }
+
+      setPollIngestResult({
+        tone: 'success',
+        message: `Fetched ${compactNumber(payload.totalFetched)} · accepted ${compactNumber(payload.acceptedCount)} · dropped ${compactNumber(payload.droppedCount)} · latest ${formatAdminDate(payload.latestPollDate)}`,
+      })
+      await Promise.resolve(onRefreshData?.())
+    } catch (error) {
+      setPollIngestResult({ tone: 'error', message: error?.message || 'Poll ingest failed.' })
+    } finally {
+      setPollIngestRunning(false)
+    }
+  }
+
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={{ background: 'rgba(18,183,212,0.12)', border: '1px solid rgba(18,183,212,0.22)', borderRadius: 18, padding: '16px 18px' }}>
@@ -559,6 +605,15 @@ function DataHealthTab({ data, onRefreshData }) {
             'npm run polls:health:remote',
             'npm run polls:import:remote',
           ]}
+          action={{
+            label: 'Run poll ingest',
+            busyLabel: 'Running ingest...',
+            disabled: pollIngestRunning,
+            onClick: runPollIngest,
+            help: 'Uses Worker-side poll sources and validation. Requires admin action key.',
+            message: pollIngestResult?.message,
+            tone: pollIngestResult?.tone,
+          }}
         />
 
         <HealthCard
