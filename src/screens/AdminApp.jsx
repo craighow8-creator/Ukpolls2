@@ -298,6 +298,36 @@ function extractNewsMeta(newsItems) {
   return {}
 }
 
+function getAdminAction(actions, key) {
+  return actions && typeof actions === 'object' && actions[key] && typeof actions[key] === 'object'
+    ? actions[key]
+    : null
+}
+
+function adminActionResultLabel(action) {
+  if (!action) return 'Unknown'
+  return action.ok === false ? 'Failed' : 'OK'
+}
+
+function warningCount(action) {
+  return Array.isArray(action?.warnings) ? action.warnings.length : 0
+}
+
+function pollActionCounts(action) {
+  if (!action) return 'Unknown'
+  return `Fetched ${compactNumber(action.totalFetched)} · accepted ${compactNumber(action.acceptedCount)} · dropped ${compactNumber(action.droppedCount)}`
+}
+
+function marketActionCounts(action) {
+  if (!action) return 'Unknown'
+  return `Markets ${compactNumber(action.marketCount)} · failed sources ${compactNumber(action.failedSourceCount)}`
+}
+
+function newsActionCounts(action) {
+  if (!action) return 'Unknown'
+  return `Stories ${compactNumber(action.itemCount)} · sources ${compactNumber(action.sourceCount)}`
+}
+
 async function runSaves(tasks) {
   for (const task of tasks) {
     await Promise.resolve(task())
@@ -436,8 +466,16 @@ function DataHealthTab({ data, onRefreshData }) {
   const [marketsRefreshResult, setMarketsRefreshResult] = useState(null)
   const [pollIngestRunning, setPollIngestRunning] = useState(false)
   const [pollIngestResult, setPollIngestResult] = useState(null)
+  const [newsRefreshing, setNewsRefreshing] = useState(false)
+  const [newsRefreshResult, setNewsRefreshResult] = useState(null)
 
   const ingestStatus = data?.ingestStatus && typeof data.ingestStatus === 'object' ? data.ingestStatus : null
+  const adminActions = data?.adminActionStatus?.actions && typeof data.adminActionStatus.actions === 'object'
+    ? data.adminActionStatus.actions
+    : {}
+  const pollAction = getAdminAction(adminActions, 'poll-ingest')
+  const marketsAction = getAdminAction(adminActions, 'markets-refresh')
+  const newsAction = getAdminAction(adminActions, 'news-refresh')
   const polls = Array.isArray(data?.pollsData) && data.pollsData.length
     ? data.pollsData
     : Array.isArray(data?.polls)
@@ -579,6 +617,44 @@ function DataHealthTab({ data, onRefreshData }) {
     }
   }
 
+  const refreshNews = async () => {
+    setNewsRefreshResult(null)
+    const adminKey = getAdminActionKey('news refresh', setNewsRefreshResult)
+    if (!adminKey) return
+    setNewsRefreshing(true)
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/refresh-news`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': adminKey,
+        },
+      })
+      const text = await response.text()
+      let payload = null
+      try {
+        payload = text ? JSON.parse(text) : null
+      } catch {
+        throw new Error(`News refresh returned non-JSON response: ${text.slice(0, 180)}`)
+      }
+
+      if (!response.ok || payload?.ok === false) {
+        if (response.status === 401) sessionStorage.removeItem('politiscope_admin_action_key')
+        throw new Error(payload?.error || `News refresh failed with ${response.status}`)
+      }
+
+      setNewsRefreshResult({
+        tone: 'success',
+        message: `Stories ${compactNumber(payload.itemCount)} · sources ${compactNumber(payload.sourceCount)} · updated ${formatAdminDateTime(payload.updatedAt)}`,
+      })
+      await Promise.resolve(onRefreshData?.())
+    } catch (error) {
+      setNewsRefreshResult({ tone: 'error', message: error?.message || 'News refresh failed.' })
+    } finally {
+      setNewsRefreshing(false)
+    }
+  }
+
   return (
     <div style={{ display: 'grid', gap: 16 }}>
       <div style={{ background: 'rgba(18,183,212,0.12)', border: '1px solid rgba(18,183,212,0.22)', borderRadius: 18, padding: '16px 18px' }}>
@@ -600,6 +676,10 @@ function DataHealthTab({ data, onRefreshData }) {
             { label: 'Rows dropped', value: compactNumber(ingestStatus?.droppedInvalidRows) },
             { label: 'Latest poll date', value: formatAdminDate(pollLatestDate) },
             { label: 'API base', value: ingestStatus?.apiBase || 'Unknown' },
+            { label: 'Last action', value: formatAdminDateTime(pollAction?.finishedAt || pollAction?.updatedAt) },
+            { label: 'Action result', value: adminActionResultLabel(pollAction) },
+            { label: 'What changed', value: pollActionCounts(pollAction) },
+            { label: 'Action warnings', value: compactNumber(warningCount(pollAction)) },
           ]}
           commands={[
             'npm run polls:health:remote',
@@ -625,6 +705,10 @@ function DataHealthTab({ data, onRefreshData }) {
             { label: 'Updated/generated', value: formatAdminDateTime(marketUpdatedAt) },
             { label: 'Current rows', value: compactNumber(marketRows.length) },
             { label: 'Failed sources', value: compactNumber(marketFailedSources) },
+            { label: 'Last action', value: formatAdminDateTime(marketsAction?.finishedAt || marketsAction?.updatedAt) },
+            { label: 'Action result', value: adminActionResultLabel(marketsAction) },
+            { label: 'What changed', value: marketActionCounts(marketsAction) },
+            { label: 'Action warnings', value: compactNumber(warningCount(marketsAction)) },
           ]}
           commands={[
             'npm run political-markets:health:remote',
@@ -649,8 +733,21 @@ function DataHealthTab({ data, onRefreshData }) {
             { label: 'Fetched/updated', value: formatAdminDateTime(newsUpdatedAt) },
             { label: 'Stories', value: compactNumber(newsMeta?.storyCount ?? newsItems.length) },
             { label: 'Sources', value: compactNumber(newsSources) },
+            { label: 'Last action', value: formatAdminDateTime(newsAction?.finishedAt || newsAction?.updatedAt) },
+            { label: 'Action result', value: adminActionResultLabel(newsAction) },
+            { label: 'What changed', value: newsActionCounts(newsAction) },
+            { label: 'Action warnings', value: compactNumber(warningCount(newsAction)) },
           ]}
           note="Worker refreshes news via /api/news; no CLI health script yet."
+          action={{
+            label: 'Refresh news',
+            busyLabel: 'Refreshing...',
+            disabled: newsRefreshing,
+            onClick: refreshNews,
+            help: 'Refreshes Worker news cache. Requires admin action key.',
+            message: newsRefreshResult?.message,
+            tone: newsRefreshResult?.tone,
+          }}
         />
 
         <HealthCard
@@ -1657,7 +1754,15 @@ export default function AdminApp() {
 
     try {
       const d = await Promise.resolve(getData())
-      setData(d)
+      let adminActionStatus = null
+      try {
+        const response = await fetch(`${API_BASE}/api/data`, { cache: 'no-store' })
+        const remote = await response.json().catch(() => null)
+        adminActionStatus = remote?.adminActionStatus || null
+      } catch {
+        adminActionStatus = null
+      }
+      setData({ ...d, adminActionStatus })
       refreshTimestamps()
     } catch (e) {
       setLoadError(e?.message || 'Failed to load admin data.')

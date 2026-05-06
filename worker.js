@@ -1377,6 +1377,26 @@ const worker = {
       ).run()
     }
 
+    async function recordAdminActionResult(actionName, result) {
+      try {
+        const now = new Date().toISOString()
+        const existing = await loadContentSection('adminActionStatus')
+        const actions = existing?.actions && typeof existing.actions === 'object' ? existing.actions : {}
+        await saveContentSection('adminActionStatus', {
+          updatedAt: now,
+          actions: {
+            ...actions,
+            [actionName]: {
+              ...result,
+              updatedAt: result?.updatedAt || result?.finishedAt || now,
+            },
+          },
+        })
+      } catch (err) {
+        console.warn('[worker] failed to record admin action result', actionName, err)
+      }
+    }
+
     async function ytFetch(url, apiKey) {
       const res = await fetch(url, {
         headers: {
@@ -1531,6 +1551,9 @@ const worker = {
           )
         }
 
+        const startedAt = new Date().toISOString()
+        const startedMs = Date.now()
+        try {
         const payload = await runPolymarketPredictionRefresh({ logger: console })
         await saveContentSection('predictionMarkets', payload)
 
@@ -1551,13 +1574,34 @@ const worker = {
           payload?.meta?.generatedAt ||
           new Date().toISOString()
 
-        return jsonResponse({
+        const result = {
           ok: true,
           section: 'predictionMarkets',
+          startedAt,
+          finishedAt: new Date().toISOString(),
           updatedAt,
+          durationMs: Date.now() - startedMs,
           marketCount: rows.length,
           failedSourceCount: failedSources.length,
-        })
+          warnings: failedSources.map((source) => source?.reason || source?.id || 'Market source failed').filter(Boolean),
+        }
+        await recordAdminActionResult('markets-refresh', result)
+        return jsonResponse(result)
+        } catch (err) {
+          const finishedAt = new Date().toISOString()
+          const result = {
+            ok: false,
+            section: 'predictionMarkets',
+            startedAt,
+            finishedAt,
+            updatedAt: finishedAt,
+            durationMs: Date.now() - startedMs,
+            error: err instanceof Error ? err.message : String(err),
+            warnings: [],
+          }
+          await recordAdminActionResult('markets-refresh', result)
+          return jsonResponse(result, { status: 500 })
+        }
       }
 
       if (request.method === 'POST' && url.pathname === '/api/admin/ingest-polls') {
@@ -1598,7 +1642,7 @@ const worker = {
             .sort((a, b) => String(b).localeCompare(String(a)))[0] || null
           const finishedAt = new Date().toISOString()
 
-          return jsonResponse({
+          const responsePayload = {
             ok: true,
             section: 'pollsData',
             startedAt,
@@ -1610,9 +1654,83 @@ const worker = {
             pollsterCounts: result?.counts || result?.statusPayload?.countsByPollster || {},
             latestPollDate,
             warnings: [],
-          })
+          }
+          await recordAdminActionResult('poll-ingest', responsePayload)
+          return jsonResponse(responsePayload)
+        } catch (err) {
+          const finishedAt = new Date().toISOString()
+          const responsePayload = {
+            ok: false,
+            section: 'pollsData',
+            startedAt,
+            finishedAt,
+            updatedAt: finishedAt,
+            durationMs: Date.now() - startedMs,
+            error: err instanceof Error ? err.message : String(err),
+            warnings: [],
+          }
+          await recordAdminActionResult('poll-ingest', responsePayload)
+          return jsonResponse(responsePayload, { status: 500 })
         } finally {
           pollIngestRunning = false
+        }
+      }
+
+      if (request.method === 'POST' && url.pathname === '/api/admin/refresh-news') {
+        const configuredAdminKey = String(env?.ADMIN_ACTION_KEY || '').trim()
+        if (!configuredAdminKey) {
+          return jsonResponse(
+            { ok: false, error: 'Admin action key is not configured' },
+            { status: 401 }
+          )
+        }
+
+        const suppliedAdminKey = String(request.headers.get('x-admin-key') || '').trim()
+        if (!suppliedAdminKey || suppliedAdminKey !== configuredAdminKey) {
+          return jsonResponse(
+            { ok: false, error: 'Unauthorized' },
+            { status: 401 }
+          )
+        }
+
+        const startedAt = new Date().toISOString()
+        const startedMs = Date.now()
+        try {
+          const items = await fetchLiveNews(env)
+          const updatedAt = new Date().toISOString()
+          const payload = {
+            fetchedAt: updatedAt,
+            items,
+          }
+          await saveContentSection(NEWS_CACHE_SECTION, payload)
+          const sourceCount = new Set(items.map((item) => item?.source).filter(Boolean)).size
+          const result = {
+            ok: true,
+            section: 'newsItems',
+            startedAt,
+            finishedAt: updatedAt,
+            updatedAt,
+            durationMs: Date.now() - startedMs,
+            itemCount: items.length,
+            sourceCount,
+            warnings: [],
+          }
+          await recordAdminActionResult('news-refresh', result)
+          return jsonResponse(result)
+        } catch (err) {
+          const finishedAt = new Date().toISOString()
+          const result = {
+            ok: false,
+            section: 'newsItems',
+            startedAt,
+            finishedAt,
+            updatedAt: finishedAt,
+            durationMs: Date.now() - startedMs,
+            error: err instanceof Error ? err.message : String(err),
+            warnings: [],
+          }
+          await recordAdminActionResult('news-refresh', result)
+          return jsonResponse(result, { status: 500 })
         }
       }
 
@@ -5312,6 +5430,7 @@ const worker = {
         const ingestStatus = await loadContentSection('ingestStatus')
         const demographics = await loadContentSection('demographics')
         const newsItems = await loadContentSection('newsItems')
+        const adminActionStatus = await loadContentSection('adminActionStatus')
         const mergedCouncilData = await loadMergedCouncilData()
         const electionsIntelligence = await loadElectionsIntelligence()
 
@@ -5354,6 +5473,7 @@ const worker = {
           milestones: milestones || [],
           pollsData: pollsData || [],
           ingestStatus: ingestStatus || null,
+          adminActionStatus: adminActionStatus || null,
           demographics: demographics || null,
           newsItems: newsItems || [],
           councilRegistry: mergedCouncilData.registry || [],
