@@ -1427,6 +1427,11 @@ const worker = {
     function buildAdminPollStep(result, startedAt, startedMs) {
       const polls = Array.isArray(result?.polls) ? result.polls : []
       const dropped = Array.isArray(result?.dropped) ? result.dropped : []
+      const overwriteResult = result?.overwriteResult || {}
+      const warnings = [
+        ...(Array.isArray(result?.statusPayload?.warnings) ? result.statusPayload.warnings : []),
+        ...(Array.isArray(overwriteResult?.warnings) ? overwriteResult.warnings : []),
+      ].filter(Boolean)
       const latestPollDate = polls
         .map((poll) => poll?.publishedAt || poll?.fieldworkEnd || poll?.fieldworkStart || poll?.date || null)
         .filter(Boolean)
@@ -1434,7 +1439,7 @@ const worker = {
       const finishedAt = new Date().toISOString()
 
       return {
-        ok: true,
+        ok: !overwriteResult?.preserved,
         section: 'pollsData',
         startedAt,
         finishedAt,
@@ -1444,7 +1449,12 @@ const worker = {
         droppedCount: dropped.length,
         pollsterCounts: result?.counts || result?.statusPayload?.countsByPollster || {},
         latestPollDate,
-        warnings: [],
+        preserved: Boolean(overwriteResult?.preserved),
+        partial: Boolean(overwriteResult?.partial || result?.statusPayload?.status === 'partial'),
+        existingRows: overwriteResult?.existingRows ?? null,
+        newRows: overwriteResult?.newRows ?? polls.length,
+        sourceStatus: Array.isArray(result?.sourceStatus) ? result.sourceStatus : result?.statusPayload?.sourceStatus || [],
+        warnings,
       }
     }
 

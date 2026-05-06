@@ -310,6 +310,7 @@ function getAdminAction(actions, key) {
 
 function adminActionResultLabel(action) {
   if (!action) return 'No action yet'
+  if (action.preserved || action.partial) return 'Partial · preserved'
   return action.ok === false ? 'Failed' : 'OK'
 }
 
@@ -337,9 +338,22 @@ function finiteIssueNumber(...values) {
 function buildPollIssues({ ingestStatus, action }) {
   const issues = []
   const droppedCount = finiteIssueNumber(action?.droppedCount, ingestStatus?.droppedInvalidRows, ingestStatus?.droppedCount)
-  if (action?.ok === false && action?.error) issues.push(action.error)
+  if (action?.preserved || ingestStatus?.preserved || ingestStatus?.status === 'partial') {
+    issues.push('Partial ingest preserved existing poll data')
+  } else if (action?.ok === false && action?.error) {
+    issues.push(action.error)
+  }
   if (droppedCount > 0) issues.push(`${compactNumber(droppedCount)} rows dropped`)
-  issues.push(...readableWarnings(action?.warnings))
+  issues.push(...readableWarnings(action?.warnings), ...readableWarnings(ingestStatus?.warnings))
+  const sourceStatus = Array.isArray(action?.sourceStatus)
+    ? action.sourceStatus
+    : Array.isArray(ingestStatus?.sourceStatus)
+      ? ingestStatus.sourceStatus
+      : []
+  const weakSources = sourceStatus
+    .filter((source) => source?.status === 'failed' || source?.status === 'empty' || source?.zeroRows)
+    .map((source) => `${source.source || 'Source'} ${source.status || 'needs review'}`)
+  issues.push(...weakSources)
   return issues.slice(0, 3)
 }
 
@@ -365,7 +379,20 @@ function buildNewsIssues({ itemCount, sourceCount, action, warnings }) {
 
 function pollActionCounts(action) {
   if (!action) return 'No action yet'
+  if (action.preserved) {
+    return `Preserved existing ${compactNumber(action.existingRows)} rows · candidate ${compactNumber(action.newRows)} rows`
+  }
   return `Fetched ${compactNumber(action.totalFetched)} · accepted ${compactNumber(action.acceptedCount)} · dropped ${compactNumber(action.droppedCount)}`
+}
+
+function sourceStatusSummary(sourceStatus) {
+  const rows = Array.isArray(sourceStatus) ? sourceStatus : []
+  if (!rows.length) return 'Not recorded'
+  const weak = rows.filter((source) => source?.status === 'failed' || source?.status === 'empty' || source?.zeroRows)
+  if (weak.length) {
+    return weak.slice(0, 3).map((source) => `${source.source}: ${source.status}`).join(' · ')
+  }
+  return `${rows.length} sources checked`
 }
 
 function marketActionCounts(action) {
@@ -383,7 +410,10 @@ function fullRefreshCounts(action) {
   const polls = action.steps?.polls || {}
   const markets = action.steps?.markets || {}
   const news = action.steps?.news || {}
-  return `Polls ${compactNumber(polls.acceptedCount)} accepted · ${compactNumber(polls.droppedCount)} dropped · markets ${compactNumber(markets.marketCount)} · news ${compactNumber(news.itemCount)}`
+  const pollText = polls.preserved
+    ? `polls preserved ${compactNumber(polls.existingRows)}`
+    : `Polls ${compactNumber(polls.acceptedCount)} accepted · ${compactNumber(polls.droppedCount)} dropped`
+  return `${pollText} · markets ${compactNumber(markets.marketCount)} · news ${compactNumber(news.itemCount)}`
 }
 
 function formatDurationMs(value) {
@@ -540,7 +570,7 @@ function HealthCard({ title, status, summary, rows = [], issues = [], commands =
               style={{
                 marginTop: 10,
                 fontSize: 12,
-                color: action.tone === 'error' ? '#ffb8c6' : '#9ff0c0',
+                color: action.tone === 'error' ? '#ffb8c6' : action.tone === 'warning' ? '#ffd6a8' : '#9ff0c0',
                 lineHeight: 1.5,
                 overflowWrap: 'anywhere',
               }}
@@ -617,7 +647,7 @@ function DataHealthTab({ data, onRefreshData }) {
       ? data.polls
       : []
   const pollLatestDate = latestPollDate(polls)
-  const pollStatus = String(ingestStatus?.status || '').toLowerCase() === 'error'
+  const pollStatus = ['error', 'partial'].includes(String(ingestStatus?.status || '').toLowerCase()) || ingestStatus?.preserved
     ? 'Needs review'
     : freshnessFromDate(ingestStatus?.lastRunAt || pollLatestDate, { okDays: 2, staleDays: 7 })
 
@@ -783,16 +813,23 @@ function DataHealthTab({ data, onRefreshData }) {
         throw new Error(`Poll ingest returned non-JSON response: ${text.slice(0, 180)}`)
       }
 
-      if (!response.ok || payload?.ok === false) {
+      if (!response.ok || (payload?.ok === false && !payload?.preserved && !payload?.partial)) {
         if (response.status === 401) sessionStorage.removeItem('politiscope_admin_action_key')
         if (response.status === 409) throw new Error('Poll ingest already running.')
         throw new Error(payload?.error || `Poll ingest failed with ${response.status}`)
       }
 
-      setPollIngestResult({
-        tone: 'success',
-        message: `Fetched ${compactNumber(payload.totalFetched)} · accepted ${compactNumber(payload.acceptedCount)} · dropped ${compactNumber(payload.droppedCount)} · latest ${formatAdminDate(payload.latestPollDate)}`,
-      })
+      if (payload?.preserved || payload?.partial) {
+        setPollIngestResult({
+          tone: 'warning',
+          message: `Partial ingest preserved existing poll data · existing ${compactNumber(payload.existingRows)} rows · candidate ${compactNumber(payload.newRows)}`,
+        })
+      } else {
+        setPollIngestResult({
+          tone: 'success',
+          message: `Fetched ${compactNumber(payload.totalFetched)} · accepted ${compactNumber(payload.acceptedCount)} · dropped ${compactNumber(payload.droppedCount)} · latest ${formatAdminDate(payload.latestPollDate)}`,
+        })
+      }
       await Promise.resolve(onRefreshData?.())
     } catch (error) {
       setPollIngestResult({ tone: 'error', message: error?.message || 'Poll ingest failed.' })
@@ -900,6 +937,7 @@ function DataHealthTab({ data, onRefreshData }) {
             { label: 'Last action', value: formatAdminDateTime(pollAction?.finishedAt || pollAction?.updatedAt) },
             { label: 'Action result', value: adminActionResultLabel(pollAction) },
             { label: 'What changed', value: pollActionCounts(pollAction) },
+            { label: 'Source diagnostics', value: sourceStatusSummary(pollAction?.sourceStatus || ingestStatus?.sourceStatus) },
             { label: 'Action warnings', value: compactNumber(warningCount(pollAction)) },
           ]}
           issues={pollIssues}

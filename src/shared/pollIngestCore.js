@@ -154,14 +154,30 @@ function logFreshnessCheck(polls, logger = console) {
 }
 
 async function fetchSource(label, fetcher, logger = console) {
+  const startedAt = Date.now()
   try {
     logger.log(`Fetching ${label}...`)
     const result = await fetcher()
-    if (Array.isArray(result)) return result.filter(Boolean)
-    return result ? [result] : []
+    const rows = Array.isArray(result) ? result.filter(Boolean) : result ? [result] : []
+    return {
+      source: label,
+      rows,
+      status: rows.length ? 'ok' : 'empty',
+      durationMs: Date.now() - startedAt,
+      warnings: rows.length ? [] : ['Source returned zero rows'],
+      zeroRows: rows.length === 0,
+    }
   } catch (err) {
-    logger.warn(`[ingest-polls] WARNING: ${label} failed`, err?.message || err)
-    return []
+    const message = err?.message || String(err)
+    logger.warn(`[ingest-polls] WARNING: ${label} failed`, message)
+    return {
+      source: label,
+      rows: [],
+      status: 'failed',
+      durationMs: Date.now() - startedAt,
+      warnings: [message],
+      zeroRows: true,
+    }
   }
 }
 
@@ -206,6 +222,77 @@ async function defaultOverwritePolls({ env, polls }) {
   return { ok: true }
 }
 
+function countPollsterRows(polls, pollsterName) {
+  const wanted = String(pollsterName || '').trim().toLowerCase()
+  return (Array.isArray(polls) ? polls : []).filter(
+    (poll) => String(poll?.pollster || '').trim().toLowerCase() === wanted
+  ).length
+}
+
+function buildPartialOverwriteGuard({ existingPolls, polls, sourceStatus }) {
+  const existingRows = Array.isArray(existingPolls) ? existingPolls.length : 0
+  const newRows = Array.isArray(polls) ? polls.length : 0
+  const warnings = []
+
+  if (existingRows >= 150 && newRows < existingRows * 0.75) {
+    warnings.push(`New poll ingest returned ${newRows} rows, below 75% of existing ${existingRows} rows`)
+  }
+
+  if (newRows < 150) {
+    warnings.push(`New poll ingest returned ${newRows} rows, below the Worker full-ingest safety floor of 150`)
+  }
+
+  const existingMoreInCommonRows = countPollsterRows(existingPolls, 'More in Common')
+  const newMoreInCommonRows = countPollsterRows(polls, 'More in Common')
+  const moreInCommonSource = (sourceStatus || []).find(
+    (source) => String(source?.source || '').trim().toLowerCase() === 'more in common'
+  )
+  if (existingMoreInCommonRows > 0 && (newMoreInCommonRows === 0 || moreInCommonSource?.zeroRows)) {
+    warnings.push('More in Common returned zero rows while existing data has More in Common coverage')
+  }
+
+  return {
+    partial: warnings.length > 0,
+    existingRows,
+    newRows,
+    warnings,
+  }
+}
+
+async function guardedWorkerOverwritePolls({ env, polls, sourceStatus }) {
+  if (!env?.DB) {
+    throw new Error('Missing DB binding')
+  }
+
+  const existingResult = await env.DB.prepare('SELECT data FROM content WHERE section = ?').bind('pollsData').first()
+  let existingPolls = []
+  if (existingResult?.data) {
+    try {
+      const parsed = JSON.parse(existingResult.data)
+      existingPolls = Array.isArray(parsed) ? parsed : []
+    } catch {
+      existingPolls = []
+    }
+  }
+
+  const guard = buildPartialOverwriteGuard({ existingPolls, polls, sourceStatus })
+  if (guard.partial) {
+    return {
+      ok: false,
+      preserved: true,
+      partial: true,
+      existingRows: guard.existingRows,
+      newRows: guard.newRows,
+      warnings: [
+        'Worker ingest produced partial coverage; existing pollsData was preserved.',
+        ...guard.warnings,
+      ],
+    }
+  }
+
+  return defaultOverwritePolls({ env, polls })
+}
+
 export async function runPollIngest({
   env = null,
   logger = console,
@@ -225,8 +312,16 @@ export async function runPollIngest({
   const sourceResults = await Promise.all(
     sourceSpecs.map(([label, fetcher]) => fetchSource(label, fetcher, logger))
   )
+  const sourceStatus = sourceResults.map(({ source, status, rows, durationMs, warnings, zeroRows }) => ({
+    source,
+    status,
+    rows: Array.isArray(rows) ? rows.length : 0,
+    durationMs,
+    warnings: Array.isArray(warnings) ? warnings : [],
+    zeroRows: Boolean(zeroRows),
+  }))
 
-  const deduped = dedupePolls(sourceResults.flat())
+  const deduped = dedupePolls(sourceResults.flatMap((result) => result.rows || []))
   const releaseOnly = deduped.filter((poll) =>
     RELEASE_POLLSTERS.has(String(poll?.pollster || '').trim().toLowerCase())
   )
@@ -258,21 +353,28 @@ export async function runPollIngest({
     await persistCanonicalOutputs({ polls, counts, dropped, now })
   }
 
-  logger.log(`Fetched ${polls.length} poll record(s) after filtering + dedupe:`)
-  logger.log(JSON.stringify(polls, null, 2))
+  logger.log(`Fetched ${polls.length} poll record(s) after filtering + dedupe.`)
+  if (env?.POLITISCOPE_DEBUG_INGEST === '1') {
+    logger.log(JSON.stringify(polls, null, 2))
+  }
 
   logger.log('Overwriting Worker pollsData...')
-  const overwriteResult = await overwritePolls({ env, polls })
+  const overwriteResult = await overwritePolls({ env, polls, sourceStatus, counts, dropped })
+  const preserved = Boolean(overwriteResult?.preserved)
+  const statusWarnings = Array.isArray(overwriteResult?.warnings) ? overwriteResult.warnings : []
 
   const statusPayload = {
     lastRunAt: now.toISOString(),
-    status: 'success',
+    status: preserved ? 'partial' : 'success',
     apiBase,
     totalFetched: polls.length,
     droppedInvalidRows: dropped.length,
-    overwriteOk: Boolean(overwriteResult?.ok),
+    overwriteOk: Boolean(overwriteResult?.ok) && !preserved,
+    preserved,
     overwriteResult,
     countsByPollster: counts,
+    sourceStatus,
+    warnings: statusWarnings,
     error: null,
   }
 
@@ -290,11 +392,11 @@ export async function runPollIngest({
   logger.log(`- Overwrite result: ${JSON.stringify(overwriteResult)}`)
   logger.log(`- Finished at: ${new Date().toISOString()}`)
 
-  return { ok: true, polls, counts, dropped, overwriteResult, statusPayload }
+  return { ok: !preserved, polls, counts, dropped, sourceStatus, overwriteResult, statusPayload }
 }
 
 export async function runPollIngestForWorker(env, ctx, logger = console) {
-  const result = await runPollIngest({ env, logger })
+  const result = await runPollIngest({ env, logger, overwritePolls: guardedWorkerOverwritePolls })
   if (ctx?.waitUntil) {
     ctx.waitUntil(Promise.resolve(result))
   }
