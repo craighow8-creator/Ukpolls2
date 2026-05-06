@@ -69,20 +69,20 @@ const SECTION_MAP = {
 }
 
 const SECTION_STATE_MAP = {
-  polls: { label: 'Live', tone: 'live' },
+  polls: { label: 'Refreshed recently', tone: 'live' },
   trends: { label: 'Derived', tone: 'derived' },
-  leaders: { label: 'Maintained', tone: 'maintained' },
-  betting: { label: 'Static', tone: 'static' },
-  predictionMarkets: { label: 'Live', tone: 'live' },
-  elections: { label: 'Live / maintained', tone: 'semi-live' },
-  byElections: { label: 'Maintained', tone: 'maintained' },
-  migration: { label: 'Static', tone: 'static' },
+  leaders: { label: 'Maintained dataset', tone: 'maintained' },
+  betting: { label: 'Archived snapshot', tone: 'static' },
+  predictionMarkets: { label: 'Refreshed recently', tone: 'live' },
+  elections: { label: 'Maintained dataset', tone: 'maintained' },
+  byElections: { label: 'Maintained dataset', tone: 'maintained' },
+  migration: { label: 'Latest official estimate', tone: 'maintained' },
   demographics: { label: 'Static', tone: 'static' },
-  newsItems: { label: 'Live', tone: 'live' },
-  councilRegistry: { label: 'Maintained', tone: 'maintained' },
-  councilStatus: { label: 'Maintained', tone: 'maintained' },
-  councilEditorial: { label: 'Maintained', tone: 'maintained' },
-  parliament: { label: 'Semi-live', tone: 'semi-live' },
+  newsItems: { label: 'Refreshed recently', tone: 'live' },
+  councilRegistry: { label: 'Maintained dataset', tone: 'maintained' },
+  councilStatus: { label: 'Maintained dataset', tone: 'maintained' },
+  councilEditorial: { label: 'Maintained dataset', tone: 'maintained' },
+  parliament: { label: 'Refreshed recently', tone: 'semi-live' },
 }
 
 const REMOTE_FETCH_TIMEOUT_MS = 8000
@@ -203,7 +203,7 @@ function safeCacheSection(key, value, options) {
 }
 
 function makeSectionState(section, { updatedAt = null, source = null, mode = null, fallback = false, maintained = false } = {}) {
-  const base = SECTION_STATE_MAP[section] || { label: 'Unknown', tone: 'quiet' }
+  const base = SECTION_STATE_MAP[section] || { label: 'Needs review', tone: 'quiet' }
   return {
     section,
     label: base.label,
@@ -213,6 +213,68 @@ function makeSectionState(section, { updatedAt = null, source = null, mode = nul
     fallback: !!fallback,
     maintained: !!maintained,
   }
+}
+
+function getPredictionMarketsUpdatedAt(predictionMarkets) {
+  if (!predictionMarkets || typeof predictionMarkets !== 'object') return null
+  const rows = Array.isArray(predictionMarkets.rows)
+    ? predictionMarkets.rows
+    : Array.isArray(predictionMarkets.markets)
+      ? predictionMarkets.markets
+      : []
+  return predictionMarkets.updatedAt ||
+    predictionMarkets.generatedAt ||
+    predictionMarkets.checkedAt ||
+    predictionMarkets.meta?.updatedAt ||
+    predictionMarkets.meta?.generatedAt ||
+    predictionMarkets.meta?.checkedAt ||
+    rows[0]?.checkedAt ||
+    rows[0]?.updatedAt ||
+    null
+}
+
+function getByElectionReviewedAt(byElections) {
+  return byElections?.meta?.reviewedAt || byElections?.meta?.updatedAt || null
+}
+
+function getMigrationReviewedAt(migration) {
+  return migration?.meta?.reviewedAt || migration?.meta?.updatedAt || migration?.reviewedAt || migration?.updatedAt || null
+}
+
+function getMigrationSourceLabel(migration) {
+  return migration?.meta?.sourceType || migration?.sourceType || 'ONS migration statistics'
+}
+
+function normaliseNewsStatePayload(newsItems, fallback = []) {
+  if (Array.isArray(newsItems)) return newsItems
+  if (newsItems && typeof newsItems === 'object') {
+    const items = Array.isArray(newsItems.items)
+      ? newsItems.items
+      : Array.isArray(newsItems.newsItems)
+        ? newsItems.newsItems
+        : []
+    return { ...newsItems, items }
+  }
+  return fallback
+}
+
+function getNewsUpdatedAt(newsItems, newsFallback = null) {
+  const payload = newsItems && typeof newsItems === 'object' ? newsItems : {}
+  const items = Array.isArray(payload.items)
+    ? payload.items
+    : Array.isArray(newsItems)
+      ? newsItems
+      : []
+  return payload.fetchedAt ||
+    payload.updatedAt ||
+    payload.meta?.fetchedAt ||
+    payload.meta?.updatedAt ||
+    newsFallback?.fetchedAt ||
+    newsFallback?.meta?.fetchedAt ||
+    newsFallback?.meta?.updatedAt ||
+    items[0]?.publishedAt ||
+    items[0]?.updatedAt ||
+    null
 }
 
 function getDefaultData() {
@@ -512,7 +574,7 @@ function normaliseRemote(remote, defaults) {
     policyRecords: withFallbackArray(remote?.policyRecords, defaults.policyRecords),
     policyTaxonomy: mergeObject(defaults.policyTaxonomy, withFallbackObject(remote?.policyTaxonomy, {})),
     policyDelivery: withFallbackArray(remote?.policyDelivery, defaults.policyDelivery),
-    newsItems: withFallbackArray(remote?.newsItems || remote?.news, defaults.newsItems),
+    newsItems: normaliseNewsStatePayload(remote?.newsItems || remote?.news, defaults.newsItems),
     councilRegistry: withFallbackArray(remote?.councilRegistry, defaults.councilRegistry),
     councilStatus: withFallbackArray(remote?.councilStatus, defaults.councilStatus),
     councilEditorial: withFallbackArray(remote?.councilEditorial, defaults.councilEditorial),
@@ -533,12 +595,25 @@ function buildDefaultSectionState(defaults) {
     trends: makeSectionState('trends', { updatedAt: defaults?.meta?.fetchDate || null, source: 'Derived from polls', fallback: true }),
     leaders: makeSectionState('leaders', { source: 'Maintained editorial data', maintained: true, fallback: true }),
     betting: makeSectionState('betting', { source: 'Maintained editorial data', maintained: true, fallback: true }),
-    predictionMarkets: makeSectionState('predictionMarkets', { source: 'Polymarket', fallback: true }),
+    predictionMarkets: makeSectionState('predictionMarkets', {
+      updatedAt: getPredictionMarketsUpdatedAt(defaults?.predictionMarkets),
+      source: 'Polymarket',
+      fallback: true,
+    }),
     elections: makeSectionState('elections', { source: 'Maintained election intelligence', maintained: true, fallback: true }),
     byElections: makeSectionState('byElections', { source: 'Maintained tracker', maintained: true, fallback: true }),
-    migration: makeSectionState('migration', { source: 'Static reference data', fallback: true }),
+    migration: makeSectionState('migration', {
+      updatedAt: getMigrationReviewedAt(defaults?.migration),
+      source: getMigrationSourceLabel(defaults?.migration),
+      maintained: true,
+      fallback: true,
+    }),
     demographics: makeSectionState('demographics', { source: 'Static reference data', fallback: true }),
-    newsItems: makeSectionState('newsItems', { source: 'Worker live fetch', fallback: true }),
+    newsItems: makeSectionState('newsItems', {
+      updatedAt: getNewsUpdatedAt(defaults?.newsItems),
+      source: 'News feed cache',
+      fallback: true,
+    }),
     councilRegistry: makeSectionState('councilRegistry', { source: 'Maintained council registry', maintained: true, fallback: true }),
     councilStatus: makeSectionState('councilStatus', { source: 'Maintained council status', maintained: true, fallback: true }),
     councilEditorial: makeSectionState('councilEditorial', { source: 'Maintained council editorial', maintained: true, fallback: true }),
@@ -571,17 +646,21 @@ function buildRemoteSectionState(remote) {
     }),
     betting: makeSectionState('betting', { source: remote?.betting?.source || 'Maintained editorial odds', maintained: true }),
     predictionMarkets: makeSectionState('predictionMarkets', {
-      updatedAt: remote?.predictionMarkets?.updatedAt || remote?.predictionMarkets?.meta?.updatedAt || null,
+      updatedAt: getPredictionMarketsUpdatedAt(remote?.predictionMarkets),
       source: remote?.predictionMarkets?.source || 'Polymarket',
       fallback: false,
     }),
     elections: makeSectionState('elections', { source: 'Election intelligence', maintained: true }),
-    byElections: makeSectionState('byElections', { updatedAt: remote?.byElections?.meta?.updatedAt || null, source: 'By-election tracker', maintained: true }),
-    migration: makeSectionState('migration', { source: 'Static reference data', fallback: true }),
+    byElections: makeSectionState('byElections', { updatedAt: getByElectionReviewedAt(remote?.byElections), source: 'By-election tracker', maintained: true }),
+    migration: makeSectionState('migration', {
+      updatedAt: getMigrationReviewedAt(remote?.migration),
+      source: getMigrationSourceLabel(remote?.migration),
+      maintained: true,
+    }),
     demographics: makeSectionState('demographics', { source: 'Static reference data', fallback: true }),
     newsItems: makeSectionState('newsItems', {
-      updatedAt: remote?.newsItems?.meta?.updatedAt || remote?.news?.meta?.updatedAt || remote?.news?.fetchedAt || null,
-      source: 'Live news feed',
+      updatedAt: getNewsUpdatedAt(remote?.newsItems, remote?.news),
+      source: 'News feed cache',
       fallback: false,
     }),
     councilRegistry: makeSectionState('councilRegistry', { updatedAt: remote?.councilRegistry?.meta?.updatedAt || null, source: 'Council registry', maintained: true }),
@@ -782,7 +861,7 @@ export async function getData() {
     policyRecords: withFallbackArray(readJson(KEYS.policyRecords, null), normalised.policyRecords),
     policyTaxonomy: mergeObject(normalised.policyTaxonomy, readJson(KEYS.policyTaxonomy, null)),
     policyDelivery: withFallbackArray(readJson(KEYS.policyDelivery, null), normalised.policyDelivery),
-    newsItems: withFallbackArray(readJson(KEYS.newsItems, null), normalised.newsItems),
+    newsItems: readJson(KEYS.newsItems, null) || normalised.newsItems,
     councilRegistry: withFallbackArray(normalised.councilRegistry, readJson(KEYS.councilRegistry, null)),
     councilStatus: withFallbackArray(normalised.councilStatus, readJson(KEYS.councilStatus, null)),
     councilEditorial: withFallbackArray(normalised.councilEditorial, readJson(KEYS.councilEditorial, null)),
@@ -801,11 +880,11 @@ export async function getData() {
         source: 'Polling trend model',
       }),
       newsItems: makeSectionState('newsItems', {
-        updatedAt: normalised.newsItems?.updatedAt || remote?.newsItems?.meta?.updatedAt || remote?.news?.fetchedAt || null,
-        source: 'Live news feed',
+        updatedAt: getNewsUpdatedAt(normalised.newsItems, remote?.news),
+        source: 'News feed cache',
       }),
       byElections: makeSectionState('byElections', {
-        updatedAt: normalised.byElections?.meta?.updatedAt || null,
+        updatedAt: getByElectionReviewedAt(normalised.byElections),
         source: 'By-election tracker',
         maintained: true,
       }),
@@ -835,10 +914,14 @@ export async function getData() {
       }),
       betting: makeSectionState('betting', { source: 'Maintained editorial odds', maintained: true }),
       predictionMarkets: makeSectionState('predictionMarkets', {
-        updatedAt: normalised.predictionMarkets?.updatedAt || normalised.predictionMarkets?.meta?.updatedAt || null,
+        updatedAt: getPredictionMarketsUpdatedAt(normalised.predictionMarkets),
         source: 'Polymarket',
       }),
-      migration: makeSectionState('migration', { source: 'Static reference data', fallback: true }),
+      migration: makeSectionState('migration', {
+        updatedAt: getMigrationReviewedAt(normalised.migration),
+        source: getMigrationSourceLabel(normalised.migration),
+        maintained: true,
+      }),
       demographics: makeSectionState('demographics', { source: 'Static reference data', fallback: true }),
     },
   }

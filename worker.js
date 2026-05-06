@@ -5444,6 +5444,43 @@ const worker = {
             ? parsedElectionRows[0].data
             : {}
 
+        const predictionMarketRows = Array.isArray(predictionMarkets?.rows)
+          ? predictionMarkets.rows
+          : Array.isArray(predictionMarkets?.markets)
+            ? predictionMarkets.markets
+            : []
+        const predictionMarketsUpdatedAt =
+          predictionMarkets?.updatedAt ||
+          predictionMarkets?.generatedAt ||
+          predictionMarkets?.checkedAt ||
+          predictionMarkets?.meta?.updatedAt ||
+          predictionMarkets?.meta?.generatedAt ||
+          predictionMarkets?.meta?.checkedAt ||
+          predictionMarketRows[0]?.checkedAt ||
+          predictionMarketRows[0]?.updatedAt ||
+          null
+        const byElectionsReviewedAt = byElections?.meta?.reviewedAt || byElections?.meta?.updatedAt || null
+        const migrationReviewedAt =
+          migration?.meta?.reviewedAt ||
+          migration?.meta?.updatedAt ||
+          migration?.reviewedAt ||
+          migration?.updatedAt ||
+          null
+        const migrationSource = migration?.meta?.sourceType || migration?.sourceType || 'ONS migration statistics'
+        const newsRows = Array.isArray(newsItems?.items)
+          ? newsItems.items
+          : Array.isArray(newsItems)
+            ? newsItems
+            : []
+        const newsUpdatedAt =
+          newsItems?.fetchedAt ||
+          newsItems?.updatedAt ||
+          newsItems?.meta?.fetchedAt ||
+          newsItems?.meta?.updatedAt ||
+          newsRows[0]?.publishedAt ||
+          newsRows[0]?.updatedAt ||
+          null
+
         return jsonResponse({
           polls: polls.results || [],
           leaders: mergedLeaders,
@@ -5483,7 +5520,7 @@ const worker = {
           dataState: {
             polls: {
               section: 'polls',
-              label: ingestStatus?.status === 'success' ? 'Live' : 'Cached',
+              label: ingestStatus?.status === 'success' ? 'Refreshed recently' : 'Needs review',
               tone: ingestStatus?.status === 'success' ? 'live' : 'cached',
               updatedAt: ingestStatus?.lastRunAt || metaObj?.fetchDate || null,
               source: ingestStatus?.status === 'success' ? 'Cloudflare cron ingest to D1' : 'D1 poll store',
@@ -5516,33 +5553,35 @@ const worker = {
             },
             predictionMarkets: {
               section: 'predictionMarkets',
-              label: 'Live',
+              label: 'Refreshed recently',
               tone: 'live',
+              updatedAt: predictionMarketsUpdatedAt,
               source: 'Polymarket',
               fallback: true,
             },
             elections: {
               section: 'elections',
-              label: 'Semi-live',
-              tone: 'semi-live',
+              label: 'Maintained dataset',
+              tone: 'maintained',
               updatedAt: electionsIntelligence?.mayors?.meta?.updatedAt || electionsIntelligence?.devolved?.meta?.updatedAt || null,
               source: 'D1 election intelligence',
               maintained: true,
             },
             byElections: {
               section: 'byElections',
-              label: byElections?.meta?.updatedAt ? 'Maintained' : 'Static',
-              tone: byElections?.meta?.updatedAt ? 'maintained' : 'static',
-              updatedAt: byElections?.meta?.updatedAt || null,
-              source: byElections?.meta?.source || 'D1 by-election tracker',
+              label: 'Maintained dataset',
+              tone: 'maintained',
+              updatedAt: byElectionsReviewedAt,
+              source: byElections?.meta?.sourceType || byElections?.meta?.source || 'D1 by-election tracker',
               maintained: true,
             },
             migration: {
               section: 'migration',
-              label: 'Static',
-              tone: 'static',
-              source: 'Static reference data',
-              fallback: true,
+              label: 'Latest official estimate',
+              tone: 'maintained',
+              updatedAt: migrationReviewedAt,
+              source: migrationSource,
+              maintained: true,
             },
             demographics: {
               section: 'demographics',
@@ -5553,10 +5592,10 @@ const worker = {
             },
             newsItems: {
               section: 'newsItems',
-              label: 'Live',
+              label: 'Refreshed recently',
               tone: 'live',
-              updatedAt: newsItems?.meta?.updatedAt || newsItems?.[0]?.publishedAt || null,
-              source: 'Worker live fetch',
+              updatedAt: newsUpdatedAt,
+              source: 'News feed cache',
             },
             councilRegistry: {
               section: 'councilRegistry',

@@ -77,7 +77,7 @@ function migrationEstimateLabel(M = {}) {
 }
 
 function migrationProvenanceText(section, M = {}) {
-  const reviewedAt = formatReviewDate(section?.updatedAt || M.reviewedAt || M.updatedAt)
+  const reviewedAt = formatReviewDate(section?.updatedAt || M.meta?.reviewedAt || M.reviewedAt || M.meta?.updatedAt || M.updatedAt)
   const parts = []
   if (reviewedAt) parts.push(`Reviewed ${reviewedAt}`)
   parts.push('ONS migration statistics')

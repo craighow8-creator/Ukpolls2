@@ -18,8 +18,20 @@ function freshnessText(section, updatedAt) {
     return `Polling data refreshed ${updatedAt}`
   }
 
-  if (section.section === 'newsItems' || section.section === 'predictionMarkets') {
-    return `Latest data checked ${updatedAt}`
+  if (section.section === 'newsItems') {
+    return `Refreshed ${updatedAt}`
+  }
+
+  if (section.section === 'predictionMarkets') {
+    return `Market signals checked ${updatedAt}`
+  }
+
+  if (section.section === 'migration') {
+    return `Latest official estimate reviewed ${updatedAt}`
+  }
+
+  if (section.section === 'byElections' || section.section === 'elections' || section.section === 'electionsIntelligence') {
+    return `Reviewed ${updatedAt}`
   }
 
   return `Updated ${updatedAt}`
@@ -41,7 +53,7 @@ function publicSourceLabel(section) {
 
   if (section.section === 'polls') return 'Polling feed'
   if (section.section === 'trends') return 'Polling trend model'
-  if (section.section === 'newsItems') return 'Live news feed'
+  if (section.section === 'newsItems') return 'News feed cache'
   if (section.section === 'byElections') return 'By-election tracker'
   if (section.section === 'councilRegistry' || section.section === 'councilStatus' || section.section === 'councilEditorial') {
     return 'Council data'

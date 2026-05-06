@@ -160,13 +160,13 @@ export function getNewsFreshnessState(meta = {}) {
     isLive: tone === 'live',
     statusLabel:
       tone === 'live'
-        ? 'LIVE FEED'
+        ? 'REFRESHED FEED'
         : tone === 'recent'
           ? 'LATEST FEED'
           : tone === 'stale'
-            ? 'LATEST UPDATE'
+            ? 'NEEDS REVIEW'
             : 'NEWS FEED',
-    shortLabel: tone === 'live' ? 'LIVE' : 'LATEST',
+    shortLabel: tone === 'live' ? 'Refreshed recently' : tone === 'stale' ? 'Needs review' : 'Latest',
   }
 }
 
@@ -257,7 +257,7 @@ export function buildHomeNewsBriefing(payload) {
   }
 
   const liveParts = []
-  if (freshness.relativeTime) liveParts.push(`Updated ${freshness.relativeTime}`)
+  if (freshness.relativeTime) liveParts.push(`Refreshed ${freshness.relativeTime}`)
   if (meta.sourceCount) liveParts.push(`${meta.sourceCount} sources`)
   if (sourceLine) liveParts.push(sourceLine)
   if (meta.storyCount) liveParts.push(`${meta.storyCount} stories`)
@@ -268,16 +268,16 @@ export function buildHomeNewsBriefing(payload) {
     sourceLine,
     statusLabel: freshness.statusLabel,
     statusTone: freshness.tone,
-    tag: latest.tagDisplay || 'Live',
+    tag: latest.tagDisplay || freshness.shortLabel,
     sourceCount: meta.sourceCount || sources.length,
     storyCount: meta.storyCount || items.length,
-    freshnessLabel: freshness.relativeTime ? `Updated ${freshness.relativeTime}` : '',
+    freshnessLabel: freshness.relativeTime ? `Refreshed ${freshness.relativeTime}` : '',
     teaser:
       latest.displaySummary ||
       (freshness.isLive
         ? 'Track the latest UK political reporting from approved sources.'
         : 'Stories refresh regularly from approved UK politics sources.'),
-    ctaLabel: freshness.isLive ? 'Open live feed' : 'Open news feed',
+    ctaLabel: 'Open news feed',
   }
 }
 
@@ -287,12 +287,12 @@ export function getNewsErrorState(payload, hasCachedItems = false) {
   const suffix = freshness.relativeTime ? ` from ${freshness.relativeTime}` : ''
 
   return {
-    title: 'Live feed temporarily unavailable',
+    title: 'News feed temporarily unavailable',
     body: hasCachedItems
       ? `Showing the last available update${suffix}. Try again shortly.`
       : `Try again shortly${suffix ? `, or check back after the feed refreshes` : ''}.`,
     banner: hasCachedItems
-      ? `Live refresh temporarily unavailable. Showing the last available update${suffix}.`
-      : 'Live refresh temporarily unavailable. Try again shortly.',
+      ? `News refresh temporarily unavailable. Showing the last available update${suffix}.`
+      : 'News refresh temporarily unavailable. Try again shortly.',
   }
 }

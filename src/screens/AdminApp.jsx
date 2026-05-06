@@ -196,22 +196,22 @@ function getPollUsableDate(poll) {
 
 function getFreshnessStatus(daysOld, options = {}) {
   const checkedRecently = !!options.checkedRecently
-  if (daysOld == null) return { label: 'Missing', color: '#8f9bb3' }
-  if (daysOld <= 3) return { label: 'Current', color: '#4dd98a' }
-  if (daysOld <= 7) return { label: 'Aging', color: '#f6c85f' }
-  if (checkedRecently) return { label: 'Checked', color: '#5fb6ff' }
-  return { label: 'Stale', color: '#ff6b8a' }
+  if (daysOld == null) return { label: 'Needs review', color: '#8f9bb3' }
+  if (daysOld <= 3) return { label: 'Refreshed recently', color: '#4dd98a' }
+  if (daysOld <= 7) return { label: 'Needs review', color: '#f6c85f' }
+  if (checkedRecently) return { label: 'Reviewed', color: '#5fb6ff' }
+  return { label: 'Needs review', color: '#ff6b8a' }
 }
 
 function getIngestRunStatus(status) {
   const value = String(status || '').trim().toLowerCase()
   if (value === 'success') return { label: 'Success', color: '#4dd98a' }
   if (value === 'error') return { label: 'Error', color: '#ff6b8a' }
-  return { label: 'Unknown', color: '#8f9bb3' }
+  return { label: 'Needs review', color: '#8f9bb3' }
 }
 
 function formatAdminDateTime(value) {
-  if (!value) return 'Unknown'
+  if (!value) return 'No timestamp'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return String(value)
   return date.toLocaleString('en-GB', {
@@ -224,7 +224,7 @@ function formatAdminDateTime(value) {
 }
 
 function formatAdminDate(value) {
-  if (!value) return 'Unknown'
+  if (!value) return 'No timestamp'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return String(value)
   return date.toLocaleDateString('en-GB', {
@@ -247,7 +247,7 @@ function firstPresent(...values) {
 
 function compactNumber(value) {
   const number = Number(value)
-  if (!Number.isFinite(number)) return value == null || value === '' ? 'Unknown' : String(value)
+  if (!Number.isFinite(number)) return value == null || value === '' ? 'Not loaded' : String(value)
   return new Intl.NumberFormat('en-GB').format(number)
 }
 
@@ -255,20 +255,24 @@ function statusChipStyle(status) {
   const value = String(status || '').toLowerCase()
   const palette = {
     ok: { color: '#4dd98a', background: 'rgba(77,217,138,0.14)', border: 'rgba(77,217,138,0.26)' },
+    'refreshed recently': { color: '#4dd98a', background: 'rgba(77,217,138,0.14)', border: 'rgba(77,217,138,0.26)' },
     review: { color: '#ffd88a', background: 'rgba(246,200,95,0.13)', border: 'rgba(246,200,95,0.26)' },
+    'needs review': { color: '#ffd88a', background: 'rgba(246,200,95,0.13)', border: 'rgba(246,200,95,0.26)' },
     stale: { color: '#ff9aac', background: 'rgba(228,0,59,0.14)', border: 'rgba(228,0,59,0.28)' },
     manual: { color: '#7dd8ea', background: 'rgba(18,183,212,0.12)', border: 'rgba(18,183,212,0.24)' },
+    'maintained dataset': { color: '#7dd8ea', background: 'rgba(18,183,212,0.12)', border: 'rgba(18,183,212,0.24)' },
+    'latest official estimate': { color: '#7dd8ea', background: 'rgba(18,183,212,0.12)', border: 'rgba(18,183,212,0.24)' },
   }
   return palette[value] || palette.review
 }
 
 function freshnessFromDate(value, { okDays = 3, staleDays = 14, manual = false } = {}) {
-  if (manual) return 'Manual'
+  if (manual) return 'Maintained dataset'
   const age = daysSinceAdmin(value)
-  if (age == null) return 'Review'
-  if (age <= okDays) return 'OK'
-  if (age > staleDays) return 'Stale'
-  return 'Review'
+  if (age == null) return 'Needs review'
+  if (age <= okDays) return 'Refreshed recently'
+  if (age > staleDays) return 'Needs review'
+  return 'Needs review'
 }
 
 function latestPollDate(polls = []) {
@@ -305,7 +309,7 @@ function getAdminAction(actions, key) {
 }
 
 function adminActionResultLabel(action) {
-  if (!action) return 'Unknown'
+  if (!action) return 'No action yet'
   return action.ok === false ? 'Failed' : 'OK'
 }
 
@@ -314,17 +318,17 @@ function warningCount(action) {
 }
 
 function pollActionCounts(action) {
-  if (!action) return 'Unknown'
+  if (!action) return 'No action yet'
   return `Fetched ${compactNumber(action.totalFetched)} · accepted ${compactNumber(action.acceptedCount)} · dropped ${compactNumber(action.droppedCount)}`
 }
 
 function marketActionCounts(action) {
-  if (!action) return 'Unknown'
+  if (!action) return 'No action yet'
   return `Markets ${compactNumber(action.marketCount)} · failed sources ${compactNumber(action.failedSourceCount)}`
 }
 
 function newsActionCounts(action) {
-  if (!action) return 'Unknown'
+  if (!action) return 'No action yet'
   return `Stories ${compactNumber(action.itemCount)} · sources ${compactNumber(action.sourceCount)}`
 }
 
@@ -415,7 +419,7 @@ function HealthCard({ title, status, summary, rows = [], commands = [], note, ac
               {row.label}
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, color: C.hi, lineHeight: 1.35, overflowWrap: 'anywhere' }}>
-              {row.value ?? 'Unknown'}
+              {row.value ?? 'Not loaded'}
             </div>
           </div>
         ))}
@@ -483,7 +487,7 @@ function DataHealthTab({ data, onRefreshData }) {
       : []
   const pollLatestDate = latestPollDate(polls)
   const pollStatus = String(ingestStatus?.status || '').toLowerCase() === 'error'
-    ? 'Stale'
+    ? 'Needs review'
     : freshnessFromDate(ingestStatus?.lastRunAt || pollLatestDate, { okDays: 2, staleDays: 7 })
 
   const predictionMarkets = data?.predictionMarkets
@@ -501,7 +505,7 @@ function DataHealthTab({ data, onRefreshData }) {
       ? predictionMarkets.meta.failedSources.length
       : 0
   const marketStatus = marketFailedSources
-    ? 'Review'
+    ? 'Needs review'
     : freshnessFromDate(marketUpdatedAt, { okDays: 3, staleDays: 7 })
 
   const newsMeta = extractNewsMeta(data?.newsItems)
@@ -523,7 +527,7 @@ function DataHealthTab({ data, onRefreshData }) {
   const leaderUpdatedAt = firstPresent(leaderRatings?.updatedAt, leaderRatings?.publishedAt, leaderRatings?.fieldworkDate)
   const leaderUnmatchedCount = Array.isArray(leaderRatings?.unmatched) ? leaderRatings.unmatched.length : 0
   const leaderStatus = leaderUnmatchedCount
-    ? 'Review'
+    ? 'Needs review'
     : freshnessFromDate(leaderUpdatedAt, { okDays: 45, staleDays: 120 })
 
   const getAdminActionKey = (label, setResult) => {
@@ -568,7 +572,7 @@ function DataHealthTab({ data, onRefreshData }) {
 
       setMarketsRefreshResult({
         tone: 'success',
-        message: `Updated ${formatAdminDateTime(payload.updatedAt)} · ${compactNumber(payload.marketCount)} rows · ${compactNumber(payload.failedSourceCount)} failed sources`,
+        message: `Refreshed ${formatAdminDateTime(payload.updatedAt)} · ${compactNumber(payload.marketCount)} rows · ${compactNumber(payload.failedSourceCount)} failed sources`,
       })
       await Promise.resolve(onRefreshData?.())
     } catch (error) {
@@ -645,7 +649,7 @@ function DataHealthTab({ data, onRefreshData }) {
 
       setNewsRefreshResult({
         tone: 'success',
-        message: `Stories ${compactNumber(payload.itemCount)} · sources ${compactNumber(payload.sourceCount)} · updated ${formatAdminDateTime(payload.updatedAt)}`,
+        message: `Stories ${compactNumber(payload.itemCount)} · sources ${compactNumber(payload.sourceCount)} · refreshed ${formatAdminDateTime(payload.updatedAt)}`,
       })
       await Promise.resolve(onRefreshData?.())
     } catch (error) {
@@ -660,7 +664,7 @@ function DataHealthTab({ data, onRefreshData }) {
       <div style={{ background: 'rgba(18,183,212,0.12)', border: '1px solid rgba(18,183,212,0.22)', borderRadius: 18, padding: '16px 18px' }}>
         <div style={{ fontSize: 16, fontWeight: 800, color: C.hi, marginBottom: 5 }}>Data Health</div>
         <div style={{ fontSize: 13, color: '#7dd8ea', lineHeight: 1.6 }}>
-          Read-only health view. Ingest actions are still run from CLI until server-side admin actions are added.
+          Health view with protected refresh actions for selected feeds. Wider ingest actions still run from CLI.
         </div>
       </div>
 
@@ -670,12 +674,12 @@ function DataHealthTab({ data, onRefreshData }) {
           status={pollStatus}
           summary="Automated poll ingest status and latest loaded poll freshness."
           rows={[
-            { label: 'Run status', value: ingestStatus?.status || 'Unknown' },
+            { label: 'Run status', value: ingestStatus?.status || 'Needs review' },
             { label: 'Last run', value: formatAdminDateTime(ingestStatus?.lastRunAt) },
             { label: 'Rows accepted', value: compactNumber(ingestStatus?.totalFetched ?? polls.length) },
             { label: 'Rows dropped', value: compactNumber(ingestStatus?.droppedInvalidRows) },
             { label: 'Latest poll date', value: formatAdminDate(pollLatestDate) },
-            { label: 'API base', value: ingestStatus?.apiBase || 'Unknown' },
+            { label: 'API base', value: ingestStatus?.apiBase || 'Not loaded' },
             { label: 'Last action', value: formatAdminDateTime(pollAction?.finishedAt || pollAction?.updatedAt) },
             { label: 'Action result', value: adminActionResultLabel(pollAction) },
             { label: 'What changed', value: pollActionCounts(pollAction) },
@@ -752,14 +756,14 @@ function DataHealthTab({ data, onRefreshData }) {
 
         <HealthCard
           title="Migration"
-          status="Manual"
+          status="Latest official estimate"
           summary="Official statistics import; maintained as latest official estimate, not live."
           rows={[
-            { label: 'ONS period', value: migration?.fetchYear || 'Unknown' },
+            { label: 'ONS period', value: migration?.fetchYear || 'Not loaded' },
             { label: 'Net migration', value: compactNumber(migration?.netTotal) },
             { label: 'Reviewed', value: formatAdminDate(migrationReviewedAt) },
             { label: 'Historical rows', value: compactNumber(Array.isArray(migration?.historicalTrend) ? migration.historicalTrend.length : 0) },
-            { label: 'Source type', value: migration?.meta?.sourceType || 'Unknown' },
+            { label: 'Source type', value: migration?.meta?.sourceType || 'Not loaded' },
           ]}
           commands={[
             'npm run migration:health:remote',
@@ -772,11 +776,11 @@ function DataHealthTab({ data, onRefreshData }) {
           status={freshnessFromDate(byElectionReviewedAt, { okDays: 60, staleDays: 180, manual: !byElectionReviewedAt })}
           summary="Maintained Westminster by-election tracker."
           rows={[
-            { label: 'Scope', value: byElections?.meta?.scope || 'Unknown' },
+            { label: 'Scope', value: byElections?.meta?.scope || 'Not loaded' },
             { label: 'Upcoming', value: compactNumber(Array.isArray(byElections?.upcoming) ? byElections.upcoming.length : 0) },
             { label: 'Recent', value: compactNumber(Array.isArray(byElections?.recent) ? byElections.recent.length : 0) },
             { label: 'Reviewed/updated', value: formatAdminDate(byElectionReviewedAt) },
-            { label: 'Source', value: byElections?.meta?.sourceType || byElections?.meta?.source || 'Unknown' },
+            { label: 'Source', value: byElections?.meta?.sourceType || byElections?.meta?.source || 'Not loaded' },
           ]}
           commands={[
             'npm run byelections:import:remote',
@@ -1242,7 +1246,7 @@ function PollImportTab({ data, setData, ts, onAfterSave }) {
               </span>
             </div>
             <div style={{ fontSize: 12, color: C.mid, lineHeight: 1.7 }}>
-              <div>API base: {ingestStatus.apiBase || 'Unknown'}</div>
+              <div>API base: {ingestStatus.apiBase || 'Not loaded'}</div>
               <div>Total fetched: {ingestStatus.totalFetched ?? '—'}</div>
               <div>Dropped invalid rows: {ingestStatus.droppedInvalidRows ?? '—'}</div>
               <div>Overwrite result: {ingestStatus.overwriteOk ? 'OK' : 'Failed'}</div>
@@ -1846,7 +1850,7 @@ export default function AdminApp() {
   const ingestBannerMessage = showIngestError
     ? 'Poll ingest failed on the last run'
     : showIngestStale
-      ? 'Poll ingest looks stale'
+      ? 'Poll ingest needs review'
       : ''
   const ingestBannerTone = showIngestError
     ? {
@@ -1939,7 +1943,7 @@ export default function AdminApp() {
           >
             <div style={{ fontWeight: 700, marginBottom: 4 }}>{ingestBannerMessage}</div>
             <div>Last run: {formatAdminDateTime(ingestStatus?.lastRunAt)}</div>
-            <div>API base: {ingestStatus?.apiBase || 'Unknown'}</div>
+            <div>API base: {ingestStatus?.apiBase || 'Not loaded'}</div>
             {ingestStatus?.droppedInvalidRows != null ? (
               <div>Dropped invalid rows: {ingestStatus.droppedInvalidRows}</div>
             ) : null}

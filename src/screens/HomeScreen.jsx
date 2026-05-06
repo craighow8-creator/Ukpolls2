@@ -276,7 +276,7 @@ function buildStatePollingMeta({ meta, pollContext }) {
 function buildStateProvenanceLine({ meta, pollContext }) {
   const pollingMeta = buildStatePollingMeta({ meta, pollContext })
   const sources = pollingMeta.sources.length ? pollingMeta.sources.join(', ') : 'loaded poll feed'
-  const updated = pollingMeta.updatedAgo ? `Updated ${pollingMeta.updatedAgo}` : 'Updated from latest loaded data'
+  const updated = pollingMeta.updatedAgo ? `Refreshed ${pollingMeta.updatedAgo}` : 'Based on latest loaded data'
   const polls = pollingMeta.pollCount ? `${pollingMeta.pollCount} polls` : 'poll count pending'
   return `${updated} · ${polls} · Sources: ${sources}`
 }
@@ -302,7 +302,7 @@ function buildStateLegacyProvenanceLine({ meta, pollContext }) {
 
   const formatted = formatHomePollDate(candidateDate)
   return formatted
-    ? `Latest polling average · updated ${formatted}`
+    ? `Latest polling average · refreshed ${formatted}`
     : 'Based on latest loaded poll average'
 }
 
@@ -347,14 +347,14 @@ function buildMarketTileState(predictionMarkets) {
 
     return isStale
       ? {
-          headline: 'Market signals',
+          headline: 'Needs review',
           subcopy: latestCheckedAt
             ? `Last checked ${formatMarketDate(latestCheckedAt)} · treat as context`
             : 'Treat as context',
           color: '#8A5A00',
         }
       : {
-          headline: 'Live signals',
+          headline: 'Refreshed recently',
           subcopy: 'Public market prices · not advice',
           color: '#067647',
         }
@@ -362,7 +362,7 @@ function buildMarketTileState(predictionMarkets) {
 
   if (archivedRows.length) {
     return {
-      headline: 'Archived',
+      headline: 'Archived snapshot',
       subcopy: 'Historical market signals · not current pricing',
       color: '#8A5A00',
     }

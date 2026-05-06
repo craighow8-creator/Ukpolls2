@@ -122,8 +122,8 @@ function NewsHero({ T, meta, heroItem, loading }) {
   const freshness = getNewsFreshnessState(meta)
   const sourceSummary = formatNewsSourceList(meta?.sources || [], 4)
   const liveColor = freshness.tone === 'live' ? '#E4003B' : freshness.tone === 'stale' ? T.tl : T.pr
-  const title = freshness.isLive ? 'UK politics live' : 'UK politics wire'
-  const updatedLine = freshness.relativeTime ? `Updated ${freshness.relativeTime}` : 'Monitoring the latest available feed'
+  const title = 'UK politics feed'
+  const updatedLine = freshness.relativeTime ? `Refreshed ${freshness.relativeTime}` : 'Monitoring the latest available feed'
   const leadContext = cleanNewsDisplayText(heroItem?.displaySummary || heroItem?.summaryDisplay, { maxLength: 180 })
   const summaryLine = sourceSummary
     ? `${sourceSummary}${meta?.storyCount ? ` · ${meta.storyCount} stories in view` : ''}`
@@ -464,7 +464,7 @@ export function NewsScreen({ T, news, dataState = {} }) {
           <div style={{ marginTop: 14 }}>
             <EmptyState
               T={T}
-              title="Loading live politics feed"
+              title="Loading politics feed"
               body="Pulling the latest UK politics stories now."
             />
           </div>
@@ -488,7 +488,7 @@ export function NewsScreen({ T, news, dataState = {} }) {
           <div style={{ marginTop: 14 }}>
             <EmptyState
               T={T}
-              title="No live stories found"
+              title="No current stories found"
               body="No matching UK politics stories are available from the current source list right now."
             />
           </div>

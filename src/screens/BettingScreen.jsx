@@ -168,7 +168,7 @@ function statusStyles(status) {
       color: '#067647',
       background: '#12B76A16',
       border: '#12B76A30',
-      label: 'Fresh',
+      label: 'Refreshed recently',
     }
   }
   if (key === 'stale') {
@@ -176,14 +176,14 @@ function statusStyles(status) {
       color: '#8A5A00',
       background: '#F59E0B18',
       border: '#F59E0B36',
-      label: 'Stale',
+      label: 'Needs review',
     }
   }
   return {
     color: '#475467',
     background: 'rgba(71,84,103,0.08)',
     border: 'rgba(71,84,103,0.18)',
-    label: status || 'Maintained',
+    label: status || 'Maintained dataset',
   }
 }
 
@@ -217,7 +217,7 @@ function groupByMarket(rows = []) {
       id: key,
       displayName: readableMarketName(row.marketName),
       electionType: row.electionType || 'general-election',
-      source: row.source || 'Unknown source',
+      source: row.source || 'Source not recorded',
       checkedAt: row.checkedAt || '',
       freshnessStatus: row.freshnessStatus || '',
       outcomes: [],
@@ -415,7 +415,7 @@ export default function BettingScreen({ T, predictionMarkets }) {
   const currentGroups = groupByMarket(currentRows)
   const archivedGroups = groupByMarket(archivedRows)
   const staleCount = [...currentRows, ...archivedRows].filter((row) => row.freshnessStatus === 'stale').length
-  const sourceStatus = currentRows.length ? `LIVE SOURCE · ${currentRows[0]?.source || 'Polymarket'}` : 'ARCHIVE · Maintained snapshot'
+  const sourceStatus = currentRows.length ? `REFRESHED SOURCE · ${currentRows[0]?.source || 'Polymarket'}` : 'ARCHIVE · Maintained snapshot'
 
   return (
     <div
@@ -482,7 +482,7 @@ export default function BettingScreen({ T, predictionMarkets }) {
             {[
               ['Current', currentGroups.length],
               ['Archived', archivedGroups.length],
-              ['Stale rows', staleCount],
+              ['Needs review', staleCount],
             ].map(([label, value]) => (
               <div
                 key={label}
