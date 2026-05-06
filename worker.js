@@ -5382,7 +5382,7 @@ const worker = {
         const { section, payload } = body || {}
 
         if (!section) {
-          return new Response('Missing section', { status: 400, headers: corsHeaders })
+          return jsonResponse({ ok: false, error: 'Missing section' }, { status: 400 })
         }
 
         if (section === 'meta') {
@@ -5393,7 +5393,7 @@ const worker = {
             ).bind(key, String(value ?? '')).run()
           }
 
-          return new Response('ok', { headers: corsHeaders })
+          return jsonResponse({ ok: true, section })
         }
 
         if (section === 'polls') {
@@ -5412,7 +5412,7 @@ const worker = {
             ).run()
           }
 
-          return new Response('ok', { headers: corsHeaders })
+          return jsonResponse({ ok: true, section })
         }
 
         if (section === 'leaders') {
@@ -5431,7 +5431,7 @@ const worker = {
             ).run()
           }
 
-          return new Response('ok', { headers: corsHeaders })
+          return jsonResponse({ ok: true, section })
         }
 
         if (section === 'elections') {
@@ -5448,7 +5448,7 @@ const worker = {
             ).run()
           }
 
-          return new Response('ok', { headers: corsHeaders })
+          return jsonResponse({ ok: true, section })
         }
 
         if (
@@ -5472,10 +5472,10 @@ const worker = {
           ].includes(section)
         ) {
           await saveContentSection(section, payload)
-          return new Response('ok', { headers: corsHeaders })
+          return jsonResponse({ ok: true, section })
         }
 
-        return new Response('Unknown section', { status: 400, headers: corsHeaders })
+        return jsonResponse({ ok: false, error: 'Unknown section', section }, { status: 400 })
       }
       if (request.method === 'GET' && url.pathname === '/api/predictions') {
         const refresh = url.searchParams.get('refresh') === '1'
