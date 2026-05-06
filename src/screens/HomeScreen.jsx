@@ -65,8 +65,19 @@ function normalisePartyName(value) {
   return String(value || '').toLowerCase().replace(/[^a-z]/g, '')
 }
 
+function getStateOfPlayMovement(row) {
+  const raw = row?._stateMovement
+  if (raw == null || raw === '') return null
+  const numeric = typeof raw === 'string'
+    ? Number(raw.replace(/[^\d.+-]/g, ''))
+    : Number(raw)
+  return Number.isFinite(numeric) ? numeric : null
+}
+
 function getPartyMovementValue(party) {
-  const candidates = [party?.change, party?._stateMovement, party?.recentDelta, party?.trendDelta, party?._recentDelta]
+  const stateMovement = getStateOfPlayMovement(party)
+  if (stateMovement != null) return stateMovement
+  const candidates = [party?.recentDelta, party?.trendDelta, party?._recentDelta, party?.change]
   for (const candidate of candidates) {
     const numeric = Number(candidate)
     if (Number.isFinite(numeric)) return numeric
@@ -762,6 +773,7 @@ export default function HomeScreen({
   const activeElectionSignal =
     homeElectionBriefing.signals[electionSignalIndex % homeElectionBriefing.signals.length] || homeElectionBriefing.signals[0] || null
   const electionsHeadline = homeElectionBriefing.headline
+  const stateOfPlayRows = main.map((p) => ({ ...p, _stateMovement: trendDelta(p.name) }))
 
   const risingParty = [...main]
     .map((p) => ({ ...p, _recentDelta: recentDeltaFor(p) }))
@@ -809,8 +821,8 @@ export default function HomeScreen({
           accent: T.pr,
         }
 
-  const stateInsight = buildStateOfPlayInsight(main, leader, second, third, gap)
-  const stateWatchCue = buildStateWatchCue(main, leader, second, gap)
+  const stateInsight = buildStateOfPlayInsight(stateOfPlayRows, leader, second, third, gap)
+  const stateWatchCue = buildStateWatchCue(stateOfPlayRows, leader, second, gap)
   const stateProvenanceLine = buildStateProvenanceLine({ meta, pollContext })
 
   return (
@@ -991,8 +1003,8 @@ export default function HomeScreen({
               <Divider T={T} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                {main.slice(0, 6).map((p, i) => {
-                  const d = trendDelta(p.name)
+                {stateOfPlayRows.slice(0, 6).map((p, i) => {
+                  const d = getStateOfPlayMovement(p)
                   return (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ fontSize: 13, fontWeight: 800, color: p.color, width: 28, flexShrink: 0 }}>
