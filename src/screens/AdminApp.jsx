@@ -1748,8 +1748,8 @@ export default function AdminApp() {
     }
   }
 
-  const loadAdminData = async () => {
-    setIsLoading(true)
+  const loadAdminData = async ({ silent = false } = {}) => {
+    if (!silent) setIsLoading(true)
     setLoadError('')
 
     try {
@@ -1766,11 +1766,13 @@ export default function AdminApp() {
       refreshTimestamps()
     } catch (e) {
       setLoadError(e?.message || 'Failed to load admin data.')
-      setData(null)
+      if (!silent) setData(null)
     } finally {
-      setIsLoading(false)
+      if (!silent) setIsLoading(false)
     }
   }
+
+  const refreshAdminDataInPlace = () => loadAdminData({ silent: true })
 
   useEffect(() => {
     if (!user) return
@@ -1973,7 +1975,7 @@ export default function AdminApp() {
       </div>
 
       <div style={{ padding: '20px' }}>
-        {tab === 'dataHealth' && <DataHealthTab data={data} onRefreshData={loadAdminData} />}
+        {tab === 'dataHealth' && <DataHealthTab data={data} onRefreshData={refreshAdminDataInPlace} />}
         {tab === 'polls' && <PollsTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
         {tab === 'pollImport' && <PollImportTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
         {tab === 'elections' && <ElectionsTab data={data} setData={setData} ts={ts} onAfterSave={refreshTimestamps} />}
