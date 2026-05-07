@@ -24,6 +24,18 @@ function getNewsPayloadFreshnessMs(payload) {
   return Number.isFinite(ts) ? ts : null
 }
 
+function getNewsPayloadRichness(payload) {
+  const normalised = normaliseNewsPayload(payload)
+  return {
+    narratives: normalised.narrativeSignals.length,
+    clusters: normalised.clusteredStories.length,
+    items: normalised.items.length,
+    total: normalised.narrativeSignals.length * 1000 +
+      normalised.clusteredStories.length * 10 +
+      normalised.items.length,
+  }
+}
+
 function shouldUseIncomingNewsPayload(incoming, current) {
   const nextPayload = normaliseNewsPayload(incoming)
   if (!nextPayload.items.length) return false
@@ -37,7 +49,16 @@ function shouldUseIncomingNewsPayload(incoming, current) {
   if (nextTs == null && currentTs == null) return true
   if (nextTs == null) return false
   if (currentTs == null) return true
-  return nextTs >= currentTs
+  if (nextTs > currentTs) return true
+  if (nextTs < currentTs) return false
+
+  const nextRichness = getNewsPayloadRichness(nextPayload)
+  const currentRichness = getNewsPayloadRichness(currentPayload)
+
+  if (currentRichness.narratives > 0 && nextRichness.narratives === 0) return false
+  if (currentRichness.clusters > 0 && nextRichness.clusters === 0) return false
+
+  return nextRichness.total >= currentRichness.total
 }
 
 function Badge({ children, color, subtle = false, style }) {

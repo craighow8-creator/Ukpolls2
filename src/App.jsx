@@ -253,11 +253,7 @@ export default function App() {
     appData?.news && typeof appData.news === 'object' && !Array.isArray(appData.news)
       ? appData.news
       : appData?.newsItems && typeof appData.newsItems === 'object' && !Array.isArray(appData.newsItems)
-        ? {
-            items: Array.isArray(appData.newsItems.items) ? appData.newsItems.items : [],
-            meta: appData.newsItems.meta || null,
-            fetchedAt: appData.newsItems.fetchedAt || null,
-          }
+        ? appData.newsItems
         : { items: Array.isArray(appData?.newsItems) ? appData.newsItems : [], meta: null }
   const MILESTONES = appData?.milestones || []
   const COUNCIL_REGISTRY = appData?.councilRegistry || []
