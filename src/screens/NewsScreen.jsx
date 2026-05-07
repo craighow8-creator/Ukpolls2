@@ -268,7 +268,9 @@ function CoverageLens({ T, item, color }) {
       ? [item.sourceDisplay]
       : []
   const spread = item.coverageSpread && typeof item.coverageSpread === 'object' ? item.coverageSpread : {}
-  const articles = Array.isArray(item.clusterArticles) ? item.clusterArticles : []
+  const articles = Array.isArray(item.clusterArticles)
+    ? item.clusterArticles.filter((article) => article?.url && article.url !== item.url)
+    : []
   const articleCount = Number(item.clusterStoryCount) || articles.length || 1
   const sourceCount = sources.length
 
@@ -278,45 +280,50 @@ function CoverageLens({ T, item, color }) {
     ['Public service', spread.publicServiceCount],
     ['Centre-left', spread.leftCount],
     ['Centre', spread.centreCount],
-    ['Centre-right / right', spread.rightCount],
+    ['Centre-right', spread.rightCount],
     ['Opinion-heavy', spread.opinionHeavyCount],
   ].filter(([, count]) => Number(count) > 0)
+  const otherSources = articles
+    .map((article) => normaliseNewsSourceName(article.source))
+    .filter((source) => source && source !== item.sourceDisplay)
+  const uniqueOtherSources = [...new Set(otherSources)]
+  const relatedLabel = uniqueOtherSources.length === 1
+    ? `Also covered by ${uniqueOtherSources[0]}`
+    : `${articles.length} related reports`
 
   return (
     <div
       onClick={(event) => event.stopPropagation()}
       style={{
-        marginTop: 12,
-        borderRadius: 14,
-        padding: '10px 11px',
-        background: `${color}0C`,
-        border: `1px solid ${color}1E`,
+        marginTop: 11,
+        paddingTop: 10,
+        borderTop: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
       }}
     >
-      <div style={{ fontSize: 11, fontWeight: 850, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
-        Coverage lens
-      </div>
-      <div style={{ fontSize: 12.5, fontWeight: 750, color: T.th, marginTop: 6, lineHeight: 1.45 }}>
-        {sourceCount > 1 ? `${sourceCount} outlets covering this` : 'Single-source story'}
-      </div>
-      {sources.length ? (
-        <div style={{ fontSize: 12.5, fontWeight: 650, color: T.tm, marginTop: 5, lineHeight: 1.45 }}>
-          Covered by: {sources.join(' · ')}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'baseline' }}>
+        <div style={{ fontSize: 11, fontWeight: 850, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
+          Coverage lens
         </div>
-      ) : null}
+        <div style={{ fontSize: 12.5, fontWeight: 750, color: T.th, lineHeight: 1.45 }}>
+          {sourceCount > 1 ? `${sourceCount} outlets` : 'Single source'}
+        </div>
+        {sources.length ? (
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: T.tm, lineHeight: 1.45 }}>
+            {sources.join(' · ')}
+          </div>
+        ) : null}
+      </div>
+
       {spreadRows.length ? (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 10px', marginTop: 7 }}>
           {spreadRows.map(([label, count]) => (
             <span
               key={label}
               style={{
                 fontSize: 11.5,
-                fontWeight: 750,
-                color: T.tm,
-                border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
-                background: T.sf,
-                borderRadius: 999,
-                padding: '3px 7px',
+                fontWeight: 700,
+                color: T.tl,
+                lineHeight: 1.35,
               }}
             >
               {label} {'●'.repeat(Math.min(Number(count) || 0, 4))}
@@ -334,7 +341,7 @@ function CoverageLens({ T, item, color }) {
               setExpanded((value) => !value)
             }}
             style={{
-              marginTop: 9,
+              marginTop: 8,
               border: 0,
               background: 'transparent',
               color,
@@ -346,11 +353,11 @@ function CoverageLens({ T, item, color }) {
               cursor: 'pointer',
             }}
           >
-            {expanded ? 'Hide linked articles' : `Show ${Math.min(articles.length, 5)} linked articles`}
+            {expanded ? 'Hide related reports' : relatedLabel}
           </button>
 
           {expanded ? (
-            <div style={{ marginTop: 8, display: 'grid', gap: 6 }}>
+            <div style={{ marginTop: 7, display: 'grid', gap: 5 }}>
               {articles.slice(0, 5).map((article, index) => (
                 <a
                   key={`${article.url || article.title}-${index}`}
@@ -359,14 +366,14 @@ function CoverageLens({ T, item, color }) {
                   rel="noreferrer"
                   onClick={(event) => event.stopPropagation()}
                   style={{
-                    color: T.th,
+                    color: T.tm,
                     textDecoration: 'none',
                     fontSize: 12.5,
-                    fontWeight: 700,
+                    fontWeight: 650,
                     lineHeight: 1.4,
                   }}
                 >
-                  {normaliseNewsSourceName(article.source)} · {cleanNewsDisplayText(article.title, { maxLength: 120 })}
+                  {normaliseNewsSourceName(article.source)} · {cleanNewsDisplayText(article.title, { maxLength: 105 })}
                 </a>
               ))}
             </div>
@@ -385,6 +392,9 @@ function NewsCard({ T, item, big = false }) {
   const source = item.sourceDisplay
   const tag = item.tagDisplay
   const smartTag = item.primarySmartTag || item.smartTags?.[0] || ''
+  const visibleSmartTag = smartTag && smartTag.toLowerCase() !== String(tag || '').toLowerCase()
+    ? smartTag
+    : ''
   const showWhyItMatters = Boolean(item.whyItMattersDisplay && (big || Number(item.importanceScore) >= 10))
   const showCoverageLens = Boolean(big || Number(item.importanceScore) >= 10)
   const compactMeta = [source, publishedLabel].filter(Boolean).join(' · ')
@@ -437,7 +447,7 @@ function NewsCard({ T, item, big = false }) {
           }}
         >
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            {smartTag ? (
+            {visibleSmartTag ? (
               <span
                 style={{
                   fontSize: 10.5,
@@ -451,7 +461,7 @@ function NewsCard({ T, item, big = false }) {
                   padding: '3px 8px',
                 }}
               >
-                {smartTag}
+                {visibleSmartTag}
               </span>
             ) : null}
 
@@ -523,18 +533,14 @@ function NewsCard({ T, item, big = false }) {
           </div>
         ) : null}
 
-        {showWhyItMatters ? (
+        {showWhyItMatters && item.whyItMattersDisplay !== 'A relevant Westminster story to watch.' ? (
           <div
             style={{
-              marginTop: big ? 10 : 8,
+              marginTop: big ? 9 : 7,
               fontSize: big ? 13 : 12.5,
-              fontWeight: 700,
-              color: T.th,
+              fontWeight: 600,
+              color: T.tm,
               lineHeight: 1.45,
-              background: `${color}0F`,
-              border: `1px solid ${color}1F`,
-              borderRadius: 12,
-              padding: big ? '9px 10px' : '8px 9px',
             }}
           >
             {item.whyItMattersDisplay}
