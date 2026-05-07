@@ -1281,17 +1281,24 @@ const worker = {
       )
     }
 
-    async function fetchBbcNews() {
+    const NEWS_PER_SOURCE_LIMIT = 6
+    const NEWS_TOTAL_LIMIT = 24
+    const GUARDIAN_NEWS_PAGE_SIZE = '25'
+
+    async function fetchBbcNewsDetailed() {
       const feedUrls = [
         'https://feeds.bbci.co.uk/news/politics/rss.xml',
         'https://feeds.bbci.co.uk/news/rss.xml',
       ]
+      let fetched = 0
+      const keptItems = []
 
       for (const feedUrl of feedUrls) {
         const xml = await fetchText(feedUrl)
         if (!xml) continue
 
         const blocks = String(xml).split(/<item\b/i).slice(1)
+        fetched += blocks.length
         if (!blocks.length) continue
 
         const items = blocks.map((block) => {
@@ -1346,17 +1353,37 @@ const worker = {
           }
         }).filter(Boolean)
 
-        if (items.length) return items
+        keptItems.push(...items)
       }
 
-      return []
+      const items = dedupeNewsItems(keptItems)
+      return {
+        source: 'BBC',
+        fetched,
+        kept: items.length,
+        items,
+      }
     }
 
-    async function fetchSkyNews() {
-      const xml = await fetchText('https://feeds.skynews.com/feeds/rss/politics.xml')
-      if (!xml) return []
+    async function fetchBbcNews() {
+      const result = await fetchBbcNewsDetailed()
+      return result.items
+    }
 
-      return parseRssItems(xml, 'Sky News')
+    async function fetchSkyNewsDetailed() {
+      const xml = await fetchText('https://feeds.skynews.com/feeds/rss/politics.xml')
+      if (!xml) {
+        return {
+          source: 'Sky',
+          fetched: 0,
+          kept: 0,
+          items: [],
+          error: 'Feed unavailable',
+        }
+      }
+
+      const parsedItems = parseRssItems(xml, 'Sky News')
+      const items = parsedItems
         .map((item) => {
           const title = stripTags(item.title || '')
           const description = stripTags(item.description || '')
@@ -1390,15 +1417,35 @@ const worker = {
           }
         })
         .filter(Boolean)
+
+      return {
+        source: 'Sky',
+        fetched: parsedItems.length,
+        kept: items.length,
+        items,
+      }
     }
 
-    async function fetchGuardianNews(env) {
-      if (!env.GUARDIAN_API_KEY) return []
+    async function fetchSkyNews() {
+      const result = await fetchSkyNewsDetailed()
+      return result.items
+    }
+
+    async function fetchGuardianNewsDetailed(env) {
+      if (!env.GUARDIAN_API_KEY) {
+        return {
+          source: 'Guardian',
+          fetched: 0,
+          kept: 0,
+          items: [],
+          error: 'Missing GUARDIAN_API_KEY',
+        }
+      }
 
       const apiUrl = new URL('https://content.guardianapis.com/search')
       apiUrl.searchParams.set('api-key', env.GUARDIAN_API_KEY)
       apiUrl.searchParams.set('section', 'politics')
-      apiUrl.searchParams.set('page-size', '10')
+      apiUrl.searchParams.set('page-size', GUARDIAN_NEWS_PAGE_SIZE)
       apiUrl.searchParams.set('order-by', 'newest')
       apiUrl.searchParams.set('show-fields', 'headline,trailText,shortUrl')
       apiUrl.searchParams.set(
@@ -1414,12 +1461,20 @@ const worker = {
           },
         })
 
-        if (!res.ok) return []
+        if (!res.ok) {
+          return {
+            source: 'Guardian',
+            fetched: 0,
+            kept: 0,
+            items: [],
+            error: `Guardian API returned ${res.status}`,
+          }
+        }
 
         const data = await res.json()
         const results = Array.isArray(data?.response?.results) ? data.response.results : []
 
-        return results
+        const items = results
           .map((item) => {
             const title = titleCase(item.fields?.headline || item.webTitle || '')
             const description = titleCase(item.fields?.trailText || '')
@@ -1456,19 +1511,40 @@ const worker = {
             }
           })
           .filter(Boolean)
+
+        return {
+          source: 'Guardian',
+          fetched: results.length,
+          kept: items.length,
+          items,
+        }
       } catch {
-        return []
+        return {
+          source: 'Guardian',
+          fetched: 0,
+          kept: 0,
+          items: [],
+          error: 'Guardian fetch failed',
+        }
       }
     }
 
-    async function fetchLiveNews(env) {
+    async function fetchGuardianNews(env) {
+      const result = await fetchGuardianNewsDetailed(env)
+      return result.items
+    }
+
+    async function fetchLiveNewsPayload(env) {
       const now = Date.now()
 
-      const bbcItems = await fetchBbcNews()
-      const guardianItems = await fetchGuardianNews(env)
-      const skyItems = await fetchSkyNews()
+      const sourceResults = await Promise.all([
+        fetchBbcNewsDetailed(),
+        fetchGuardianNewsDetailed(env),
+        fetchSkyNewsDetailed(),
+      ])
+      const allItems = sourceResults.flatMap((result) => result.items || [])
 
-      const ranked = [...bbcItems, ...guardianItems, ...skyItems]
+      const ranked = allItems
         .map(enrichNewsStory)
         .sort((a, b) => {
           const aTime = new Date(a.publishedAt || 0).getTime()
@@ -1496,9 +1572,33 @@ const worker = {
         })
 
       const deduped = dedupeNewsItems(ranked)
-      const balanced = capNewsItemsBySource(deduped, 3, 12)
+      const balanced = capNewsItemsBySource(deduped, NEWS_PER_SOURCE_LIMIT, NEWS_TOTAL_LIMIT)
+      const items = balanced.map(({ score, ...item }) => item)
+      const finalCounts = new Map()
+      for (const item of items) {
+        const source = String(item.source || '').trim() || 'Unknown'
+        finalCounts.set(source, (finalCounts.get(source) || 0) + 1)
+      }
 
-      return balanced.map(({ score, ...item }) => item)
+      const sourceDiagnostics = sourceResults.map((result) => ({
+        source: result.source,
+        fetched: result.fetched || 0,
+        kept: result.kept || 0,
+        final: finalCounts.get(result.items?.[0]?.source || `${result.source} News`) || finalCounts.get(result.source) || 0,
+        ...(result.error ? { error: result.error } : {}),
+      }))
+
+      return {
+        items,
+        sourceDiagnostics,
+        preCapCount: deduped.length,
+        finalCount: items.length,
+      }
+    }
+
+    async function fetchLiveNews(env) {
+      const payload = await fetchLiveNewsPayload(env)
+      return payload.items
     }
 
     const NEWS_CACHE_SECTION = 'newsItems'
@@ -1515,10 +1615,10 @@ const worker = {
       const hasContent = await tableExists('content')
 
       if (!hasContent) {
-        const items = await fetchLiveNews(env)
+        const livePayload = await fetchLiveNewsPayload(env)
         return {
           fetchedAt: new Date().toISOString(),
-          items,
+          ...livePayload,
         }
       }
 
@@ -1537,10 +1637,10 @@ const worker = {
         }
       }
 
-      const items = await fetchLiveNews(env)
+      const livePayload = await fetchLiveNewsPayload(env)
       const payload = {
         fetchedAt: new Date().toISOString(),
-        items,
+        ...livePayload,
       }
 
       await saveContentSection(NEWS_CACHE_SECTION, payload)
@@ -1886,6 +1986,9 @@ const worker = {
             latestPublishedAt,
             storyCount: items.length,
             itemCount: items.length,
+            preCapCount: payload?.preCapCount || items.length,
+            finalCount: payload?.finalCount || items.length,
+            sourceDiagnostics: Array.isArray(payload?.sourceDiagnostics) ? payload.sourceDiagnostics : [],
             sourceCount: new Set(items.map((item) => item.source).filter(Boolean)).size,
             sources: [...new Set(items.map((item) => item.source).filter(Boolean))],
             sourceType: 'live-fetch',
@@ -1968,14 +2071,19 @@ const worker = {
         const startedAt = new Date().toISOString()
         const startedMs = Date.now()
         try {
-          const items = await fetchLiveNews(env)
+          const livePayload = await fetchLiveNewsPayload(env)
           const updatedAt = new Date().toISOString()
           const payload = {
             fetchedAt: updatedAt,
-            items,
+            ...livePayload,
           }
           await saveContentSection(NEWS_CACHE_SECTION, payload)
-          const result = buildAdminNewsStep(items, startedAt, startedMs, updatedAt)
+          const result = {
+            ...buildAdminNewsStep(livePayload.items, startedAt, startedMs, updatedAt),
+            sourceDiagnostics: livePayload.sourceDiagnostics,
+            preCapCount: livePayload.preCapCount,
+            finalCount: livePayload.finalCount,
+          }
           await recordAdminActionResult('news-refresh', result)
           return jsonResponse(result)
         } catch (err) {
@@ -2056,13 +2164,18 @@ const worker = {
           currentStep = 'news'
           currentStepStartedAt = newsStartedAt
           currentStepStartedMs = newsStartedMs
-          const items = await fetchLiveNews(env)
+          const livePayload = await fetchLiveNewsPayload(env)
           const newsUpdatedAt = new Date().toISOString()
           await saveContentSection(NEWS_CACHE_SECTION, {
             fetchedAt: newsUpdatedAt,
-            items,
+            ...livePayload,
           })
-          steps.news = buildAdminNewsStep(items, newsStartedAt, newsStartedMs, newsUpdatedAt)
+          steps.news = {
+            ...buildAdminNewsStep(livePayload.items, newsStartedAt, newsStartedMs, newsUpdatedAt),
+            sourceDiagnostics: livePayload.sourceDiagnostics,
+            preCapCount: livePayload.preCapCount,
+            finalCount: livePayload.finalCount,
+          }
           await recordAdminActionResult('news-refresh', steps.news)
 
           const finishedAt = new Date().toISOString()
