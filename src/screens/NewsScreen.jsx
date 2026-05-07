@@ -10,6 +10,7 @@ import {
   formatRelativeNewsTime,
   getNewsErrorState,
   getNewsFreshnessState,
+  normaliseNewsSourceName,
   normaliseNewsPayload,
 } from '../utils/news'
 
@@ -259,6 +260,123 @@ function tagColor(tag, T) {
   }
 }
 
+function CoverageLens({ T, item, color }) {
+  const [expanded, setExpanded] = useState(false)
+  const sources = Array.isArray(item.clusterSources) && item.clusterSources.length
+    ? [...new Set(item.clusterSources)]
+    : item.sourceDisplay
+      ? [item.sourceDisplay]
+      : []
+  const spread = item.coverageSpread && typeof item.coverageSpread === 'object' ? item.coverageSpread : {}
+  const articles = Array.isArray(item.clusterArticles) ? item.clusterArticles : []
+  const articleCount = Number(item.clusterStoryCount) || articles.length || 1
+  const sourceCount = sources.length
+
+  if (!sourceCount && articleCount <= 1) return null
+
+  const spreadRows = [
+    ['Public service', spread.publicServiceCount],
+    ['Centre-left', spread.leftCount],
+    ['Centre', spread.centreCount],
+    ['Centre-right / right', spread.rightCount],
+    ['Opinion-heavy', spread.opinionHeavyCount],
+  ].filter(([, count]) => Number(count) > 0)
+
+  return (
+    <div
+      onClick={(event) => event.stopPropagation()}
+      style={{
+        marginTop: 12,
+        borderRadius: 14,
+        padding: '10px 11px',
+        background: `${color}0C`,
+        border: `1px solid ${color}1E`,
+      }}
+    >
+      <div style={{ fontSize: 11, fontWeight: 850, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl }}>
+        Coverage lens
+      </div>
+      <div style={{ fontSize: 12.5, fontWeight: 750, color: T.th, marginTop: 6, lineHeight: 1.45 }}>
+        {sourceCount > 1 ? `${sourceCount} outlets covering this` : 'Single-source story'}
+      </div>
+      {sources.length ? (
+        <div style={{ fontSize: 12.5, fontWeight: 650, color: T.tm, marginTop: 5, lineHeight: 1.45 }}>
+          Covered by: {sources.join(' · ')}
+        </div>
+      ) : null}
+      {spreadRows.length ? (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+          {spreadRows.map(([label, count]) => (
+            <span
+              key={label}
+              style={{
+                fontSize: 11.5,
+                fontWeight: 750,
+                color: T.tm,
+                border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                background: T.sf,
+                borderRadius: 999,
+                padding: '3px 7px',
+              }}
+            >
+              {label} {'●'.repeat(Math.min(Number(count) || 0, 4))}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {articles.length > 1 ? (
+        <>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              setExpanded((value) => !value)
+            }}
+            style={{
+              marginTop: 9,
+              border: 0,
+              background: 'transparent',
+              color,
+              fontSize: 12,
+              fontWeight: 850,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              padding: 0,
+              cursor: 'pointer',
+            }}
+          >
+            {expanded ? 'Hide linked articles' : `Show ${Math.min(articles.length, 5)} linked articles`}
+          </button>
+
+          {expanded ? (
+            <div style={{ marginTop: 8, display: 'grid', gap: 6 }}>
+              {articles.slice(0, 5).map((article, index) => (
+                <a
+                  key={`${article.url || article.title}-${index}`}
+                  href={article.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(event) => event.stopPropagation()}
+                  style={{
+                    color: T.th,
+                    textDecoration: 'none',
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {normaliseNewsSourceName(article.source)} · {cleanNewsDisplayText(article.title, { maxLength: 120 })}
+                </a>
+              ))}
+            </div>
+          ) : null}
+        </>
+      ) : null}
+    </div>
+  )
+}
+
 function NewsCard({ T, item, big = false }) {
   const color = tagColor(item.tagDisplay || item.tag, T)
   const publishedLabel = formatRelativeNewsTime(item.publishedAt) || 'Latest'
@@ -268,6 +386,7 @@ function NewsCard({ T, item, big = false }) {
   const tag = item.tagDisplay
   const smartTag = item.primarySmartTag || item.smartTags?.[0] || ''
   const showWhyItMatters = Boolean(item.whyItMattersDisplay && (big || Number(item.importanceScore) >= 10))
+  const showCoverageLens = Boolean(big || Number(item.importanceScore) >= 10)
   const compactMeta = [source, publishedLabel].filter(Boolean).join(' · ')
 
   return (
@@ -421,6 +540,8 @@ function NewsCard({ T, item, big = false }) {
             {item.whyItMattersDisplay}
           </div>
         ) : null}
+
+        {showCoverageLens ? <CoverageLens T={T} item={item} color={color} /> : null}
 
         {item.url && big ? (
           <div style={{ fontSize: 12, fontWeight: 800, color, letterSpacing: '0.06em', textTransform: 'uppercase', marginTop: 12 }}>

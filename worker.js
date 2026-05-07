@@ -928,6 +928,9 @@ const worker = {
         ['Ed Davey', ['ed davey', 'davey']],
         ['Zack Polanski', ['zack polanski', 'polanski']],
         ['local elections', ['local election', 'local elections']],
+        ['migration', ['migration', 'immigration', 'asylum', 'small boats', 'deportation', 'border']],
+        ['NHS', ['nhs', 'health service', 'health secretary']],
+        ['economy', ['economy', 'budget', 'tax', 'taxes', 'growth', 'inflation', 'chancellor']],
         ['Westminster', ['westminster']],
         ['council', ['council', 'councils', 'local authority']],
         ['mayor', ['mayor', 'mayoral']],
@@ -1062,6 +1065,260 @@ const worker = {
       return {
         ...story,
         ...analyseNewsStory(story),
+      }
+    }
+
+    const NEWS_CLUSTER_STOPWORDS = new Set([
+      'a', 'an', 'and', 'are', 'as', 'at', 'be', 'been', 'but', 'by', 'for', 'from',
+      'has', 'have', 'he', 'her', 'his', 'how', 'in', 'into', 'is', 'it', 'its', 'new',
+      'not', 'of', 'on', 'or', 'over', 'said', 'says', 'she', 'that', 'the', 'their',
+      'they', 'this', 'to', 'up', 'was', 'we', 'what', 'when', 'where', 'who', 'why',
+      'will', 'with', 'live', 'update', 'latest', 'analysis', 'opinion', 'breaking',
+      'today', 'watch', 'video', 'news', 'story', 'report', 'reports',
+    ])
+
+    const SOURCE_PROFILES = {
+      'BBC News': { medium: 'public-service', lens: 'centre', broadcaster: true, newspaper: false, opinionHeavy: false },
+      BBC: { medium: 'public-service', lens: 'centre', broadcaster: true, newspaper: false, opinionHeavy: false },
+      'The Guardian': { medium: 'broadsheet', lens: 'centre-left', broadcaster: false, newspaper: true, opinionHeavy: false },
+      Guardian: { medium: 'broadsheet', lens: 'centre-left', broadcaster: false, newspaper: true, opinionHeavy: false },
+      'Sky News': { medium: 'commercial-broadcaster', lens: 'centre-right', broadcaster: true, newspaper: false, opinionHeavy: false },
+      Sky: { medium: 'commercial-broadcaster', lens: 'centre-right', broadcaster: true, newspaper: false, opinionHeavy: false },
+      'Channel 4 News': { medium: 'public-service', lens: 'centre-left', broadcaster: true, newspaper: false, opinionHeavy: false },
+      'Channel 4': { medium: 'public-service', lens: 'centre-left', broadcaster: true, newspaper: false, opinionHeavy: false },
+      'GB News': { medium: 'opinion-heavy', lens: 'right-leaning', broadcaster: true, newspaper: false, opinionHeavy: true },
+    }
+
+    function normaliseNewsHeadline(value) {
+      return String(value || '')
+        .toLowerCase()
+        .replace(/['’]/g, '')
+        .replace(/[^a-z0-9\s-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    }
+
+    function getClusterKeywords(story) {
+      const text = normaliseNewsHeadline(`${story?.title || ''} ${story?.description || story?.summary || ''}`)
+      const tokens = text
+        .split(/\s+/)
+        .map((token) => token.trim())
+        .filter((token) => token.length > 2 && !NEWS_CLUSTER_STOPWORDS.has(token))
+
+      return [...new Set(tokens)].slice(0, 18)
+    }
+
+    function getClusterCandidates(story, keywords) {
+      const entities = Array.isArray(story?.entities) ? story.entities : []
+      return [...new Set([...entities, ...(keywords || []).slice(0, 8), story?.storyType].filter(Boolean))]
+    }
+
+    function buildNewsClusterKey(story, keywords) {
+      const entities = Array.isArray(story?.entities) ? story.entities.slice(0, 3) : []
+      const parts = [
+        story?.storyType || 'general-politics',
+        ...entities,
+        ...(keywords || []).slice(0, 4),
+      ]
+      return parts
+        .join('-')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 96) || 'general-politics'
+    }
+
+    function intersectCount(a = [], b = []) {
+      const left = new Set(a)
+      let count = 0
+      for (const value of b || []) {
+        if (left.has(value)) count += 1
+      }
+      return count
+    }
+
+    function storyTimestamp(story) {
+      const ts = new Date(story?.publishedAt || story?.updatedAt || 0).getTime()
+      return Number.isFinite(ts) ? ts : null
+    }
+
+    function shouldClusterStories(story, cluster) {
+      const lead = cluster?.lead
+      if (!story || !lead) return false
+      if (story.storyType && lead.storyType && story.storyType !== lead.storyType) {
+        const compatible = ['policy', 'economy', 'migration', 'local-government', 'campaign']
+        if (!compatible.includes(story.storyType) || !compatible.includes(lead.storyType)) return false
+      }
+
+      const storyTs = storyTimestamp(story)
+      const clusterTs = storyTimestamp(lead)
+      if (storyTs && clusterTs) {
+        const hours = Math.abs(storyTs - clusterTs) / 3600000
+        if (hours > 72) return false
+      }
+
+      const entityOverlap = intersectCount(story.entities || [], cluster.entities || [])
+      const keywordOverlap = intersectCount(story.clusterKeywords || [], cluster.keywords || [])
+      const hasMajorEntityOverlap = entityOverlap > 0
+      const hasStrongKeywordOverlap = keywordOverlap >= 2
+      const hasVeryStrongKeywordOverlap = keywordOverlap >= 4
+
+      return (hasMajorEntityOverlap && hasStrongKeywordOverlap) || hasVeryStrongKeywordOverlap
+    }
+
+    function buildCoverageSpread(sources = []) {
+      const uniqueSources = [...new Set(sources.filter(Boolean))]
+      const spread = {
+        publicServiceCount: 0,
+        leftCount: 0,
+        centreCount: 0,
+        rightCount: 0,
+        opinionHeavyCount: 0,
+        broadcasterCount: 0,
+        newspaperCount: 0,
+      }
+
+      for (const source of uniqueSources) {
+        const profile = SOURCE_PROFILES[source] || SOURCE_PROFILES[String(source || '').replace(/^The\s+/i, '')]
+        if (!profile) continue
+        if (profile.medium === 'public-service') spread.publicServiceCount += 1
+        if (profile.lens === 'centre-left') spread.leftCount += 1
+        if (profile.lens === 'centre') spread.centreCount += 1
+        if (profile.lens === 'centre-right' || profile.lens === 'right-leaning') spread.rightCount += 1
+        if (profile.opinionHeavy) spread.opinionHeavyCount += 1
+        if (profile.broadcaster) spread.broadcasterCount += 1
+        if (profile.newspaper) spread.newspaperCount += 1
+      }
+
+      return spread
+    }
+
+    function buildClusterSummary(cluster, sources) {
+      const count = cluster.articles.length
+      const lead = cluster.lead
+      if (count <= 1) return lead?.whyItMatters || 'Single-source story in the current politics feed.'
+      const sourceLine = sources.slice(0, 4).join(' · ')
+      return `Covered by ${count} articles across ${sources.length} source${sources.length === 1 ? '' : 's'}${sourceLine ? `: ${sourceLine}` : ''}.`
+    }
+
+    function buildNewsClusters(stories = []) {
+      const prepared = stories
+        .filter((story) => story && typeof story === 'object')
+        .map((story) => {
+          const normalisedHeadline = normaliseNewsHeadline(story.title)
+          const clusterKeywords = getClusterKeywords(story)
+          return {
+            ...story,
+            normalisedHeadline,
+            clusterKeywords,
+            clusterCandidates: getClusterCandidates(story, clusterKeywords),
+            clusterKey: buildNewsClusterKey(story, clusterKeywords),
+          }
+        })
+
+      const clusters = []
+      for (const story of prepared) {
+        let target = null
+        for (const cluster of clusters) {
+          if (shouldClusterStories(story, cluster)) {
+            target = cluster
+            break
+          }
+        }
+
+        if (!target) {
+          target = {
+            lead: story,
+            articles: [],
+            keywords: story.clusterKeywords || [],
+            entities: Array.isArray(story.entities) ? [...story.entities] : [],
+          }
+          clusters.push(target)
+        }
+
+        target.articles.push(story)
+        target.keywords = [...new Set([...(target.keywords || []), ...(story.clusterKeywords || [])])].slice(0, 24)
+        target.entities = [...new Set([...(target.entities || []), ...(story.entities || [])])]
+        const currentImportance = Number(target.lead?.importanceScore || target.lead?.score || 0)
+        const nextImportance = Number(story.importanceScore || story.score || 0)
+        if (nextImportance > currentImportance) target.lead = story
+      }
+
+      const itemClusterMeta = new Map()
+      const clusteredStories = clusters
+        .map((cluster, index) => {
+          const articles = [...cluster.articles].sort((a, b) => {
+            const importanceDiff = Number(b.importanceScore || b.score || 0) - Number(a.importanceScore || a.score || 0)
+            if (importanceDiff) return importanceDiff
+            return String(b.publishedAt || '').localeCompare(String(a.publishedAt || ''))
+          })
+          const lead = articles[0] || cluster.lead
+          const sources = [...new Set(articles.map((article) => article.source).filter(Boolean))]
+          const coverageSpread = buildCoverageSpread(sources)
+          const clusterUpdatedAt = articles
+            .map((article) => storyTimestamp(article))
+            .filter((ts) => ts != null)
+            .sort((a, b) => b - a)[0]
+          const tags = [...new Set(articles.flatMap((article) => Array.isArray(article.tags) ? article.tags : []).filter(Boolean))].slice(0, 5)
+          const entities = [...new Set(articles.flatMap((article) => Array.isArray(article.entities) ? article.entities : []).filter(Boolean))].slice(0, 8)
+          const clusterId = `cluster-${index + 1}-${lead.clusterKey || cluster.keywords?.[0] || 'story'}`
+          const clusterImportance = Math.round(
+            (Math.max(...articles.map((article) => Number(article.importanceScore || article.score || 0)), 0) + Math.min(sources.length, 4)) * 10
+          ) / 10
+          const meta = {
+            clusterId,
+            clusterTitle: lead.title || 'UK politics story',
+            clusterStoryCount: articles.length,
+            clusterSources: sources,
+            clusterImportance,
+            clusterTags: tags,
+            clusterEntities: entities,
+            clusterSummary: buildClusterSummary({ ...cluster, lead, articles }, sources),
+            clusterUpdatedAt: clusterUpdatedAt ? new Date(clusterUpdatedAt).toISOString() : lead.publishedAt || null,
+            coverageSpread,
+            broadlyCovered: sources.length >= 3,
+            narrowlyCovered: sources.length > 1 && sources.length < 3,
+            singleSourceStory: sources.length <= 1,
+          }
+
+          for (const article of articles) {
+            const key = article.url || article.title
+            if (key) itemClusterMeta.set(key, meta)
+          }
+
+          return {
+            ...meta,
+            articles,
+          }
+        })
+        .sort((a, b) => {
+          if (b.clusterImportance !== a.clusterImportance) return b.clusterImportance - a.clusterImportance
+          return String(b.clusterUpdatedAt || '').localeCompare(String(a.clusterUpdatedAt || ''))
+        })
+
+      const items = prepared.map((story) => {
+        const meta = itemClusterMeta.get(story.url || story.title)
+        return meta
+          ? {
+              ...story,
+              ...meta,
+              clusterArticles: clusteredStories.find((cluster) => cluster.clusterId === meta.clusterId)?.articles || [],
+            }
+          : story
+      })
+
+      const totalClusteredArticles = clusteredStories.reduce((sum, cluster) => sum + Math.max(0, cluster.clusterStoryCount - 1), 0)
+      return {
+        items,
+        clusteredStories,
+        clusterDiagnostics: {
+          totalRawStories: stories.length,
+          totalClusters: clusteredStories.length,
+          averageClusterSize: clusteredStories.length
+            ? Math.round((stories.length / clusteredStories.length) * 10) / 10
+            : 0,
+          duplicateCollapseCount: totalClusteredArticles,
+        },
       }
     }
 
@@ -1709,7 +1966,8 @@ const worker = {
         })
 
       const deduped = dedupeNewsItems(ranked)
-      const balanced = capNewsItemsBySource(deduped, NEWS_PER_SOURCE_LIMIT, NEWS_TOTAL_LIMIT)
+      const clustered = buildNewsClusters(deduped)
+      const balanced = capNewsItemsBySource(clustered.items, NEWS_PER_SOURCE_LIMIT, NEWS_TOTAL_LIMIT)
       const items = balanced.map(({ score, ...item }) => item)
       const finalCounts = new Map()
       for (const item of items) {
@@ -1727,6 +1985,12 @@ const worker = {
 
       return {
         items,
+        clusteredStories: clustered.clusteredStories,
+        clusterDiagnostics: {
+          ...clustered.clusterDiagnostics,
+          totalRawStories: ranked.length,
+          duplicateCollapseCount: Math.max(0, ranked.length - deduped.length),
+        },
         sourceDiagnostics,
         preCapCount: deduped.length,
         finalCount: items.length,
@@ -1767,11 +2031,21 @@ const worker = {
         cached.data.items.length > 0 &&
         isFreshEnough(cached.data.fetchedAt || cached.data.updatedAt || cached.updated_at)
       ) {
-        return {
+        const payload = {
           ...cached.data,
           fetchedAt: cached.data.fetchedAt || cached.data.updatedAt || cached.updated_at,
           items: cached.data.items.map(enrichNewsStory),
         }
+        if (!Array.isArray(payload.clusteredStories) || !payload.clusteredStories.length) {
+          const clustered = buildNewsClusters(payload.items)
+          return {
+            ...payload,
+            items: clustered.items,
+            clusteredStories: clustered.clusteredStories,
+            clusterDiagnostics: clustered.clusterDiagnostics,
+          }
+        }
+        return payload
       }
 
       const livePayload = await fetchLiveNewsPayload(env)
@@ -2117,6 +2391,7 @@ const worker = {
         const fetchedAt = payload?.fetchedAt || payload?.updatedAt || new Date().toISOString()
         return jsonResponse({
           items,
+          clusteredStories: Array.isArray(payload?.clusteredStories) ? payload.clusteredStories : [],
           meta: {
             fetchedAt,
             updatedAt: fetchedAt,
@@ -2125,6 +2400,7 @@ const worker = {
             itemCount: items.length,
             preCapCount: payload?.preCapCount || items.length,
             finalCount: payload?.finalCount || items.length,
+            clusterDiagnostics: payload?.clusterDiagnostics || null,
             sourceDiagnostics: Array.isArray(payload?.sourceDiagnostics) ? payload.sourceDiagnostics : [],
             sourceCount: new Set(items.map((item) => item.source).filter(Boolean)).size,
             sources: [...new Set(items.map((item) => item.source).filter(Boolean))],

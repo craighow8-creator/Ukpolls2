@@ -183,6 +183,7 @@ export function normaliseNewsPayload(payload) {
     : Array.isArray(base.newsItems)
       ? base.newsItems
       : []
+  const rawClusters = Array.isArray(base.clusteredStories) ? base.clusteredStories : []
 
   const items = [...rawItems]
     .filter((item) => item && typeof item === 'object')
@@ -211,9 +212,27 @@ export function normaliseNewsPayload(payload) {
         smartTags,
         primarySmartTag: cleanNewsDisplayText(item.primarySmartTag || smartTags[0] || '', { maxLength: 40 }),
         whyItMattersDisplay: cleanNewsDisplayText(item.whyItMatters, { maxLength: 150 }),
+        clusterSources: Array.isArray(item.clusterSources)
+          ? item.clusterSources.map((source) => normaliseNewsSourceName(source)).filter(Boolean)
+          : [],
+        clusterTitleDisplay: cleanNewsDisplayText(item.clusterTitle, { maxLength: 220 }),
+        clusterSummaryDisplay: cleanNewsDisplayText(item.clusterSummary, { maxLength: 180 }),
+        clusterArticles: Array.isArray(item.clusterArticles) ? item.clusterArticles : [],
       }
     })
     .sort((a, b) => String(b.publishedAt || '').localeCompare(String(a.publishedAt || '')))
+
+  const clusteredStories = rawClusters
+    .filter((cluster) => cluster && typeof cluster === 'object')
+    .map((cluster) => ({
+      ...cluster,
+      clusterTitleDisplay: cleanNewsDisplayText(cluster.clusterTitle, { maxLength: 220 }),
+      clusterSummaryDisplay: cleanNewsDisplayText(cluster.clusterSummary, { maxLength: 180 }),
+      clusterSources: Array.isArray(cluster.clusterSources)
+        ? cluster.clusterSources.map((source) => normaliseNewsSourceName(source)).filter(Boolean)
+        : [],
+      articles: Array.isArray(cluster.articles) ? cluster.articles : [],
+    }))
 
   const sourceNames = [...new Set(items.map((item) => item.sourceDisplay).filter(Boolean))]
   const latestPublishedAt = items[0]?.publishedAt || null
@@ -222,8 +241,10 @@ export function normaliseNewsPayload(payload) {
 
   return {
     items,
+    clusteredStories,
     meta: {
       ...meta,
+      clusterDiagnostics: base.clusterDiagnostics || meta.clusterDiagnostics || null,
       updatedAt,
       fetchedAt: base.fetchedAt || meta.fetchedAt || updatedAt,
       storyCount: Number.isFinite(meta.storyCount) ? meta.storyCount : items.length,
