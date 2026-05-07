@@ -195,6 +195,9 @@ export function normaliseNewsPayload(payload) {
       const summaryDisplay = cleanNewsDisplayText(item.summary || item.excerpt || item.body, { maxLength: 420 })
       const sourceDisplay = normaliseNewsSourceName(item.source || item.sourceName || item.publisher)
       const tagDisplay = normaliseNewsTag(item.tag || item.category || item.section)
+      const smartTags = Array.isArray(item.tags)
+        ? item.tags.map((tag) => cleanNewsDisplayText(tag, { maxLength: 40 })).filter(Boolean)
+        : []
 
       return {
         ...item,
@@ -204,6 +207,9 @@ export function normaliseNewsPayload(payload) {
         summaryDisplay,
         sourceDisplay,
         tagDisplay,
+        smartTags,
+        primarySmartTag: cleanNewsDisplayText(item.primarySmartTag || smartTags[0] || '', { maxLength: 40 }),
+        whyItMattersDisplay: cleanNewsDisplayText(item.whyItMatters, { maxLength: 150 }),
       }
     })
     .sort((a, b) => String(b.publishedAt || '').localeCompare(String(a.publishedAt || '')))

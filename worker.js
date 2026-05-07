@@ -885,6 +885,174 @@ const worker = {
       return ''
     }
 
+    function includesAny(text, terms) {
+      const t = String(text || '').toLowerCase()
+      return terms.some((term) => t.includes(term))
+    }
+
+    function pushUnique(target, value) {
+      if (!value || target.includes(value)) return
+      target.push(value)
+    }
+
+    function getStoryAgeHours(story) {
+      const ts = new Date(story?.publishedAt || story?.updatedAt || 0).getTime()
+      if (!Number.isFinite(ts)) return null
+      return Math.max(0, (Date.now() - ts) / 3600000)
+    }
+
+    function detectNewsEntities(text) {
+      const entityMatchers = [
+        ['Labour', ['labour', 'labour party']],
+        ['Conservative', ['conservative', 'conservatives', 'tory', 'tories']],
+        ['Reform UK', ['reform uk', 'reform party', 'reform']],
+        ['Liberal Democrats', ['liberal democrats', 'lib dem', 'lib dems']],
+        ['Green Party', ['green party', 'greens']],
+        ['SNP', ['snp', 'scottish national party']],
+        ['Plaid Cymru', ['plaid cymru', 'plaid']],
+        ['Keir Starmer', ['keir starmer', 'starmer']],
+        ['Nigel Farage', ['nigel farage', 'farage']],
+        ['Kemi Badenoch', ['kemi badenoch', 'badenoch']],
+        ['Ed Davey', ['ed davey', 'davey']],
+        ['Zack Polanski', ['zack polanski', 'polanski']],
+        ['local elections', ['local election', 'local elections']],
+        ['Westminster', ['westminster']],
+        ['council', ['council', 'councils', 'local authority']],
+        ['mayor', ['mayor', 'mayoral']],
+      ]
+
+      return entityMatchers
+        .filter(([, terms]) => includesAny(text, terms))
+        .map(([entity]) => entity)
+    }
+
+    function analyseNewsStory(story) {
+      const title = stripTags(story?.title || '')
+      const summary = stripTags(story?.summary || story?.description || story?.excerpt || '')
+      const source = stripTags(story?.source || story?.sourceName || '')
+      const category = stripTags(story?.category || story?.tag || '')
+      const text = `${title} ${summary} ${source} ${category}`.toLowerCase()
+      const entities = detectNewsEntities(text)
+      const tags = []
+      const ageHours = getStoryAgeHours(story)
+
+      const isElection = includesAny(text, ['election', 'by-election', 'byelection', 'local election', 'mayoral election', 'declaration', 'declared', 'seat gain', 'gain from'])
+      const isPolling = includesAny(text, ['poll', 'polling', 'survey', 'mrp', 'voting intention'])
+      const isLeadership = includesAny(text, ['leader', 'leadership', 'prime minister', 'minister resign', 'resigns', 'cabinet', 'shadow cabinet'])
+      const isScandal = includesAny(text, ['scandal', 'sleaze', 'investigation', 'inquiry', 'misconduct', 'fraud', 'expenses', 'suspended'])
+      const isEconomy = includesAny(text, ['economy', 'budget', 'tax', 'taxes', 'inflation', 'growth', 'spending', 'chancellor'])
+      const isMigration = includesAny(text, ['migration', 'immigration', 'asylum', 'small boats', 'deportation', 'border'])
+      const isLocal = includesAny(text, ['council', 'local authority', 'local government', 'mayor', 'mayoral'])
+      const isPolicy = includesAny(text, ['policy', 'pledge', 'plans', 'nhs', 'welfare', 'housing', 'net zero', 'energy', 'schools', 'benefits'])
+      const isCampaign = includesAny(text, ['campaign', 'campaigning', 'candidate', 'manifesto', 'leaflet'])
+      const hasMovement = includesAny(text, ['surge', 'breakthrough', 'gain', 'swing', 'lead', 'ahead', 'pressure', 'collapse', 'drop'])
+      const hasDeveloping = includesAny(text, ['breaking', 'live', 'developing', 'latest'])
+
+      let storyType = 'general-politics'
+      if (isElection && includesAny(text, ['result', 'declared', 'declaration', 'gain from', 'seat gain', 'wins', 'won'])) storyType = 'election-result'
+      else if (isPolling) storyType = 'polling'
+      else if (isLeadership) storyType = 'party-leadership'
+      else if (isScandal) storyType = 'scandal'
+      else if (isMigration) storyType = 'migration'
+      else if (isEconomy) storyType = 'economy'
+      else if (isLocal) storyType = 'local-government'
+      else if (isPolicy) storyType = 'policy'
+      else if (isCampaign) storyType = 'campaign'
+
+      let importanceScore = Number(story?.score) || 3
+      let urgencyScore = 0
+      let electionScore = 0
+      let pollImpactScore = 0
+
+      if (ageHours != null) {
+        if (ageHours <= 2) urgencyScore += 4
+        else if (ageHours <= 6) urgencyScore += 3
+        else if (ageHours <= 24) urgencyScore += 2
+        else if (ageHours <= 72) urgencyScore += 1
+      }
+
+      if (hasDeveloping) {
+        urgencyScore += 3
+        pushUnique(tags, hasDeveloping && text.includes('live') ? 'LIVE' : 'DEVELOPING')
+      }
+
+      if (storyType === 'election-result') {
+        importanceScore += 7
+        electionScore += 8
+        pushUnique(tags, 'ELECTIONS')
+        pushUnique(tags, 'SWING ALERT')
+      } else if (isElection) {
+        importanceScore += 4
+        electionScore += 5
+        pushUnique(tags, 'ELECTIONS')
+      }
+
+      if (isLocal || entities.includes('council') || entities.includes('mayor')) {
+        importanceScore += 2
+        electionScore += 2
+        pushUnique(tags, 'KEY BATTLEGROUND')
+      }
+
+      if (isPolling) {
+        importanceScore += 4
+        pollImpactScore += 7
+        pushUnique(tags, 'POLLING IMPACT')
+      }
+
+      if (storyType === 'party-leadership' || isScandal) {
+        importanceScore += 4
+        urgencyScore += 2
+        pushUnique(tags, storyType === 'party-leadership' ? 'LEADER WATCH' : 'PARTY PRESSURE')
+      }
+
+      if (isPolicy || isEconomy || isMigration) {
+        importanceScore += 2
+        pushUnique(tags, isPolicy ? 'POLICY SHIFT' : storyType === 'economy' ? 'POLICY SHIFT' : 'PARTY PRESSURE')
+      }
+
+      if (hasMovement) {
+        importanceScore += 2
+        pollImpactScore += 2
+      }
+
+      if (entities.length >= 2) importanceScore += Math.min(entities.length, 4)
+      if (entities.includes('Reform UK') && hasMovement) pushUnique(tags, 'REFORM SURGE')
+      if (entities.includes('Labour') && includesAny(text, ['pressure', 'defend', 'defence', 'loss', 'drop', 'weakening'])) pushUnique(tags, 'LABOUR DEFENCE')
+      if (entities.includes('Green Party') && includesAny(text, ['breakthrough', 'gain', 'surge', 'win', 'wins'])) pushUnique(tags, 'GREEN BREAKTHROUGH')
+
+      if (!tags.length && category) pushUnique(tags, String(category).toUpperCase())
+
+      let whyItMatters = 'A relevant Westminster story to watch.'
+      if (storyType === 'election-result') whyItMatters = 'Election-related story with possible council-control implications.'
+      else if (isPolling) whyItMatters = 'Could shift the reading of party momentum in the polling picture.'
+      else if (entities.includes('Reform UK')) whyItMatters = 'Relevant to Reform UK national momentum.'
+      else if (entities.includes('Labour')) whyItMatters = 'Could signal pressure on Labour in national or local battlegrounds.'
+      else if (storyType === 'party-leadership') whyItMatters = 'Leadership pressure can reshape party positioning quickly.'
+      else if (storyType === 'migration') whyItMatters = 'Migration remains a high-salience issue across party politics.'
+      else if (storyType === 'economy') whyItMatters = 'Economic policy can quickly affect party credibility and voter priorities.'
+      else if (storyType === 'local-government') whyItMatters = 'Local government stories can affect councils, services and election signals.'
+      else if (storyType === 'policy') whyItMatters = 'Policy movement helps explain where parties are trying to shift the argument.'
+
+      return {
+        storyType,
+        importanceScore: Math.round(Math.max(0, importanceScore) * 10) / 10,
+        urgencyScore: Math.round(Math.max(0, urgencyScore) * 10) / 10,
+        electionScore: Math.round(Math.max(0, electionScore) * 10) / 10,
+        pollImpactScore: Math.round(Math.max(0, pollImpactScore) * 10) / 10,
+        tags: tags.slice(0, 4),
+        entities,
+        whyItMatters: whyItMatters.slice(0, 140),
+      }
+    }
+
+    function enrichNewsStory(story) {
+      if (!story || typeof story !== 'object') return story
+      return {
+        ...story,
+        ...analyseNewsStory(story),
+      }
+    }
+
     function getHostname(rawUrl) {
       try {
         return new URL(rawUrl).hostname.replace(/^www\./, '').toLowerCase()
@@ -1301,6 +1469,7 @@ const worker = {
       const skyItems = await fetchSkyNews()
 
       const ranked = [...bbcItems, ...guardianItems, ...skyItems]
+        .map(enrichNewsStory)
         .sort((a, b) => {
           const aTime = new Date(a.publishedAt || 0).getTime()
           const bTime = new Date(b.publishedAt || 0).getTime()
@@ -1310,6 +1479,17 @@ const worker = {
 
           const aRank = (a.score || 0) - Math.min(aAgeHours * 0.12, 6)
           const bRank = (b.score || 0) - Math.min(bAgeHours * 0.12, 6)
+
+          const aImportance = Number.isFinite(Number(a.importanceScore)) ? Number(a.importanceScore) : null
+          const bImportance = Number.isFinite(Number(b.importanceScore)) ? Number(b.importanceScore) : null
+          if (aImportance != null || bImportance != null) {
+            const diff = (bImportance ?? bRank) - (aImportance ?? aRank)
+            if (diff !== 0) return diff
+          }
+
+          const aUrgency = Number.isFinite(Number(a.urgencyScore)) ? Number(a.urgencyScore) : 0
+          const bUrgency = Number.isFinite(Number(b.urgencyScore)) ? Number(b.urgencyScore) : 0
+          if (bUrgency !== aUrgency) return bUrgency - aUrgency
 
           if (bRank !== aRank) return bRank - aRank
           return String(b.publishedAt || '').localeCompare(String(a.publishedAt || ''))
@@ -1353,7 +1533,7 @@ const worker = {
         return {
           ...cached.data,
           fetchedAt: cached.data.fetchedAt || cached.data.updatedAt || cached.updated_at,
-          items: cached.data.items,
+          items: cached.data.items.map(enrichNewsStory),
         }
       }
 

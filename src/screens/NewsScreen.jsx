@@ -288,6 +288,8 @@ function NewsCard({ T, item, big = false }) {
   const title = item.displayHeadline || 'Latest UK politics update'
   const source = item.sourceDisplay
   const tag = item.tagDisplay
+  const smartTag = item.primarySmartTag || item.smartTags?.[0] || ''
+  const showWhyItMatters = Boolean(item.whyItMattersDisplay && (big || Number(item.importanceScore) >= 10))
   const compactMeta = [source, publishedLabel].filter(Boolean).join(' · ')
 
   return (
@@ -338,6 +340,24 @@ function NewsCard({ T, item, big = false }) {
           }}
         >
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            {smartTag ? (
+              <span
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 850,
+                  letterSpacing: '0.07em',
+                  textTransform: 'uppercase',
+                  color,
+                  background: `${color}18`,
+                  border: `1px solid ${color}35`,
+                  borderRadius: 999,
+                  padding: '3px 8px',
+                }}
+              >
+                {smartTag}
+              </span>
+            ) : null}
+
             {tag ? (
               <span
                 style={{
@@ -402,7 +422,25 @@ function NewsCard({ T, item, big = false }) {
               overflow: 'hidden',
             }}
           >
-            {summary}
+          {summary}
+          </div>
+        ) : null}
+
+        {showWhyItMatters ? (
+          <div
+            style={{
+              marginTop: big ? 10 : 8,
+              fontSize: big ? 13 : 12.5,
+              fontWeight: 700,
+              color: T.th,
+              lineHeight: 1.45,
+              background: `${color}0F`,
+              border: `1px solid ${color}1F`,
+              borderRadius: 12,
+              padding: big ? '9px 10px' : '8px 9px',
+            }}
+          >
+            {item.whyItMattersDisplay}
           </div>
         ) : null}
 
