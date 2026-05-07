@@ -1331,11 +1331,15 @@ const worker = {
       return (Date.now() - ts) < maxAgeMs
     }
 
-    async function getNewsItems() {
+    async function getNewsPayload() {
       const hasContent = await tableExists('content')
 
       if (!hasContent) {
-        return await fetchLiveNews(env)
+        const items = await fetchLiveNews(env)
+        return {
+          fetchedAt: new Date().toISOString(),
+          items,
+        }
       }
 
       const cached = await loadContentSectionRow(NEWS_CACHE_SECTION)
@@ -1344,9 +1348,13 @@ const worker = {
         cached?.data &&
         Array.isArray(cached.data.items) &&
         cached.data.items.length > 0 &&
-        isFreshEnough(cached.data.fetchedAt || cached.updated_at)
+        isFreshEnough(cached.data.fetchedAt || cached.data.updatedAt || cached.updated_at)
       ) {
-        return cached.data.items
+        return {
+          ...cached.data,
+          fetchedAt: cached.data.fetchedAt || cached.data.updatedAt || cached.updated_at,
+          items: cached.data.items,
+        }
       }
 
       const items = await fetchLiveNews(env)
@@ -1356,7 +1364,12 @@ const worker = {
       }
 
       await saveContentSection(NEWS_CACHE_SECTION, payload)
-      return items
+      return payload
+    }
+
+    async function getNewsItems() {
+      const payload = await getNewsPayload()
+      return Array.isArray(payload?.items) ? payload.items : []
     }
 
     async function saveContentSection(section, payload) {
@@ -1681,14 +1694,18 @@ const worker = {
         return jsonResponse({ items })
       }
       if (request.method === 'GET' && url.pathname === '/api/news') {
-        const items = await getNewsItems()
-        const updatedAt = items[0]?.publishedAt || new Date().toISOString()
+        const payload = await getNewsPayload()
+        const items = Array.isArray(payload?.items) ? payload.items : []
+        const latestPublishedAt = items[0]?.publishedAt || null
+        const fetchedAt = payload?.fetchedAt || payload?.updatedAt || new Date().toISOString()
         return jsonResponse({
           items,
           meta: {
-            updatedAt,
-            fetchedAt: updatedAt,
+            fetchedAt,
+            updatedAt: fetchedAt,
+            latestPublishedAt,
             storyCount: items.length,
+            itemCount: items.length,
             sourceCount: new Set(items.map((item) => item.source).filter(Boolean)).size,
             sources: [...new Set(items.map((item) => item.source).filter(Boolean))],
             sourceType: 'live-fetch',

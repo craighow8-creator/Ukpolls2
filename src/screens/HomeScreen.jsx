@@ -499,6 +499,30 @@ function getHomeNewsStoryMeta(story) {
   return [source, time].filter(Boolean).join(' · ')
 }
 
+function getNewsPayloadFreshnessMs(payload) {
+  const normalised = normaliseNewsPayload(payload)
+  const tsValue = normalised.meta?.fetchedAt || normalised.meta?.updatedAt
+  if (!tsValue) return null
+  const ts = new Date(tsValue).getTime()
+  return Number.isFinite(ts) ? ts : null
+}
+
+function shouldUseIncomingNewsPayload(incoming, current) {
+  const nextPayload = normaliseNewsPayload(incoming)
+  if (!nextPayload.items.length) return false
+
+  const currentPayload = normaliseNewsPayload(current)
+  if (!currentPayload.items.length) return true
+
+  const nextTs = getNewsPayloadFreshnessMs(nextPayload)
+  const currentTs = getNewsPayloadFreshnessMs(currentPayload)
+
+  if (nextTs == null && currentTs == null) return true
+  if (nextTs == null) return false
+  if (currentTs == null) return true
+  return nextTs >= currentTs
+}
+
 const Divider = ({ T }) => (
   <div style={{ height: 1, background: T.cardBorder || 'rgba(0,0,0,0.07)', margin: '11px 0' }} />
 )
@@ -786,7 +810,9 @@ export default function HomeScreen({
 
   React.useEffect(() => {
     if (initialNewsPayload.items.length) {
-      setHomeNewsPayload(initialNewsPayload)
+      setHomeNewsPayload((current) => (
+        shouldUseIncomingNewsPayload(initialNewsPayload, current) ? initialNewsPayload : current
+      ))
     }
   }, [initialNewsPayload])
 
@@ -796,13 +822,16 @@ export default function HomeScreen({
     async function loadHomeNews() {
       try {
         const res = await fetch(`${API_BASE}/api/news`, {
+          cache: 'no-store',
           headers: { Accept: 'application/json' },
         })
         const data = await parseJsonResponse(res, 'News request')
         const nextPayload = normaliseNewsPayload(data)
 
         if (!cancelled && nextPayload.items.length) {
-          setHomeNewsPayload(nextPayload)
+          setHomeNewsPayload((current) => (
+            shouldUseIncomingNewsPayload(nextPayload, current) ? nextPayload : current
+          ))
         }
       } catch {
         // Keep the existing app-data payload if the live news request is unavailable.

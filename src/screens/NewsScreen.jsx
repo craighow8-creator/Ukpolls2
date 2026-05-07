@@ -16,6 +16,30 @@ import {
 
 const TAP = { whileTap: { opacity: 0.76, scale: 0.992 }, transition: { duration: 0.08 } }
 
+function getNewsPayloadFreshnessMs(payload) {
+  const normalised = normaliseNewsPayload(payload)
+  const tsValue = normalised.meta?.fetchedAt || normalised.meta?.updatedAt
+  if (!tsValue) return null
+  const ts = new Date(tsValue).getTime()
+  return Number.isFinite(ts) ? ts : null
+}
+
+function shouldUseIncomingNewsPayload(incoming, current) {
+  const nextPayload = normaliseNewsPayload(incoming)
+  if (!nextPayload.items.length) return false
+
+  const currentPayload = normaliseNewsPayload(current)
+  if (!currentPayload.items.length) return true
+
+  const nextTs = getNewsPayloadFreshnessMs(nextPayload)
+  const currentTs = getNewsPayloadFreshnessMs(currentPayload)
+
+  if (nextTs == null && currentTs == null) return true
+  if (nextTs == null) return false
+  if (currentTs == null) return true
+  return nextTs >= currentTs
+}
+
 function Badge({ children, color, subtle = false, style }) {
   return (
     <span
@@ -399,7 +423,11 @@ export function NewsScreen({ T, news, dataState = {} }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (initialPayload.items.length) setPayload(initialPayload)
+    if (initialPayload.items.length) {
+      setPayload((current) => (
+        shouldUseIncomingNewsPayload(initialPayload, current) ? initialPayload : current
+      ))
+    }
   }, [initialPayload])
 
   useEffect(() => {
@@ -411,13 +439,16 @@ export function NewsScreen({ T, news, dataState = {} }) {
         setError('')
 
         const res = await fetch(`${API_BASE}/api/news`, {
+          cache: 'no-store',
           headers: { Accept: 'application/json' },
         })
         const data = await parseJsonResponse(res, 'News request')
         const nextPayload = normaliseNewsPayload(data)
 
         if (!cancelled) {
-          setPayload(nextPayload)
+          setPayload((current) => (
+            shouldUseIncomingNewsPayload(nextPayload, current) ? nextPayload : current
+          ))
         }
       } catch (err) {
         if (!cancelled) {

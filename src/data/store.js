@@ -277,6 +277,35 @@ function getNewsUpdatedAt(newsItems, newsFallback = null) {
     null
 }
 
+function getNewsTimestampMs(newsItems, newsFallback = null) {
+  const updatedAt = getNewsUpdatedAt(newsItems, newsFallback)
+  if (!updatedAt) return null
+  const ts = new Date(updatedAt).getTime()
+  return Number.isFinite(ts) ? ts : null
+}
+
+function hasNewsItems(newsItems) {
+  if (Array.isArray(newsItems)) return newsItems.length > 0
+  return Array.isArray(newsItems?.items) && newsItems.items.length > 0
+}
+
+function chooseFreshNewsItems(remoteNewsItems, localNewsItems) {
+  const remoteHasItems = hasNewsItems(remoteNewsItems)
+  const localHasItems = hasNewsItems(localNewsItems)
+
+  if (remoteHasItems && !localHasItems) return remoteNewsItems
+  if (!remoteHasItems && localHasItems) return localNewsItems
+  if (!remoteHasItems) return remoteNewsItems
+
+  const remoteTs = getNewsTimestampMs(remoteNewsItems)
+  const localTs = getNewsTimestampMs(localNewsItems)
+
+  if (remoteTs == null && localTs == null) return remoteNewsItems
+  if (remoteTs == null) return localNewsItems
+  if (localTs == null) return remoteNewsItems
+  return remoteTs >= localTs ? remoteNewsItems : localNewsItems
+}
+
 function getDefaultData() {
   return {
     meta: withFallbackObject(DEFAULTS.meta, {}),
@@ -845,6 +874,10 @@ export async function getData() {
   if (withFallbackArray(normalised.councilEditorial, []).length) {
     safeCacheSection('councilEditorial', normalised.councilEditorial, { notify: false })
   }
+  const finalNewsItems = chooseFreshNewsItems(normalised.newsItems, readJson(KEYS.newsItems, null))
+  if (hasNewsItems(finalNewsItems)) {
+    safeCacheSection('newsItems', finalNewsItems, { notify: false })
+  }
 
   return {
     meta: mergeObject(normalised.meta, readJson(KEYS.meta, null)),
@@ -865,7 +898,7 @@ export async function getData() {
     policyRecords: withFallbackArray(readJson(KEYS.policyRecords, null), normalised.policyRecords),
     policyTaxonomy: mergeObject(normalised.policyTaxonomy, readJson(KEYS.policyTaxonomy, null)),
     policyDelivery: withFallbackArray(readJson(KEYS.policyDelivery, null), normalised.policyDelivery),
-    newsItems: readJson(KEYS.newsItems, null) || normalised.newsItems,
+    newsItems: finalNewsItems,
     councilRegistry: withFallbackArray(normalised.councilRegistry, readJson(KEYS.councilRegistry, null)),
     councilStatus: withFallbackArray(normalised.councilStatus, readJson(KEYS.councilStatus, null)),
     councilEditorial: withFallbackArray(normalised.councilEditorial, readJson(KEYS.councilEditorial, null)),
