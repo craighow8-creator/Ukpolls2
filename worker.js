@@ -1816,9 +1816,90 @@ const worker = {
 
     const NEWS_PER_SOURCE_LIMIT = 6
     const NEWS_TOTAL_LIMIT = 24
+    const NEWS_ELECTION_PER_SOURCE_LIMIT = 8
+    const NEWS_ELECTION_TOTAL_LIMIT = 32
     const GUARDIAN_NEWS_PAGE_SIZE = '25'
 
-    async function fetchBbcNewsDetailed() {
+    function isElectionModeOverrideEnabled(env) {
+      const value = String(
+        env?.NEWS_ELECTION_MODE ||
+        env?.ELECTION_MODE ||
+        env?.POLITISCOPE_ELECTION_MODE ||
+        ''
+      ).trim().toLowerCase()
+      return ['1', 'true', 'yes', 'on', 'active'].includes(value)
+    }
+
+    function isElectionLikeNewsItem(item) {
+      const text = `${item?.title || ''} ${item?.description || ''} ${item?.tag || ''} ${(item?.entities || []).join(' ')}`.toLowerCase()
+      return (
+        item?.storyType === 'election-result' ||
+        item?.storyType === 'polling' ||
+        item?.storyType === 'local-government' ||
+        Number(item?.electionScore || 0) >= 4 ||
+        Number(item?.pollImpactScore || 0) >= 4 ||
+        text.includes('local election') ||
+        text.includes('election') ||
+        text.includes('polling') ||
+        text.includes('poll ') ||
+        text.includes('vote') ||
+        text.includes('council')
+      )
+    }
+
+    function detectNewsElectionMode({ env, items = [], clusters = [] } = {}) {
+      if (isElectionModeOverrideEnabled(env)) {
+        return { active: true, reason: 'Manual override enabled' }
+      }
+
+      const enrichedItems = Array.isArray(items) ? items : []
+      const electionItems = enrichedItems.filter(isElectionLikeNewsItem)
+      const recentElectionItems = electionItems.filter((item) => {
+        const ts = storyTimestamp(item)
+        return ts != null && (Date.now() - ts) <= 36 * 3600000
+      })
+      const electionClusters = (Array.isArray(clusters) ? clusters : []).filter((cluster) => {
+        const tags = Array.isArray(cluster?.clusterTags) ? cluster.clusterTags : []
+        const entities = Array.isArray(cluster?.clusterEntities) ? cluster.clusterEntities : []
+        const title = String(cluster?.clusterTitle || '').toLowerCase()
+        return (
+          tags.some((tag) => ['ELECTIONS', 'SWING ALERT', 'POLLING IMPACT', 'KEY BATTLEGROUND'].includes(tag)) ||
+          entities.some((entity) => ['local elections', 'council', 'mayor'].includes(entity)) ||
+          title.includes('election') ||
+          title.includes('poll')
+        )
+      })
+
+      if (recentElectionItems.length >= 8) {
+        return { active: true, reason: `${recentElectionItems.length} recent election/polling stories detected` }
+      }
+      if (electionClusters.length >= 3) {
+        return { active: true, reason: `${electionClusters.length} election/polling clusters detected` }
+      }
+      if (electionItems.length >= Math.max(10, enrichedItems.length * 0.45)) {
+        return { active: true, reason: 'Election-related story volume is high' }
+      }
+
+      return { active: false, reason: 'Normal filtering mode' }
+    }
+
+    function shouldAllowRollingElectionStory({ title, url, combined, electionMode = false }) {
+      if (!electionMode) return false
+      const lowerTitle = String(title || '').toLowerCase()
+      const lowerUrl = String(url || '').toLowerCase()
+      const text = String(combined || '').toLowerCase()
+      if (!hasPoliticsSignal(text) && !hasHardPoliticsSignal(text) && !text.includes('election') && !text.includes('poll')) return false
+      return (
+        lowerTitle.includes('uk politics live') ||
+        lowerTitle.includes('as it happened') ||
+        lowerTitle.includes('latest') ||
+        lowerTitle.includes('live') ||
+        lowerUrl.includes('/politics/live/')
+      )
+    }
+
+    async function fetchBbcNewsDetailed(options = {}) {
+      const { electionMode = false } = options
       const feedUrls = [
         'https://feeds.bbci.co.uk/news/politics/rss.xml',
         'https://feeds.bbci.co.uk/news/rss.xml',
@@ -1862,18 +1943,21 @@ const worker = {
             textMatchesAny(combined, BBC_STRONG_POLITICS_TERMS)
 
           if (!looksPolitical) return rejectionTracker.reject('not UK politics')
-          if (title.toLowerCase().includes('uk politics live')) return rejectionTracker.reject('liveblog/as-it-happened')
-          if (title.toLowerCase().includes('as it happened')) return rejectionTracker.reject('liveblog/as-it-happened')
+          const rollingElectionStory = shouldAllowRollingElectionStory({ title, url, combined, electionMode })
+          if (title.toLowerCase().includes('uk politics live') && !rollingElectionStory) return rejectionTracker.reject('liveblog/as-it-happened')
+          if (title.toLowerCase().includes('as it happened') && !rollingElectionStory) return rejectionTracker.reject('liveblog/as-it-happened')
 
           let score = 4
           if (textMatchesAny(combined, BBC_STRONG_POLITICS_TERMS)) score += 2
           if (hasPoliticsSignal(combined)) score += 1
           if (hasHardPoliticsSignal(combined)) score += 2
           if (lowerUrl.includes('/news/')) score += 1
-          if (isOpinionLikeTitle(title)) score -= 2
-          if (isExplainerLikeTitle(title)) score -= 2
+          if (rollingElectionStory) score += 3
+          if (electionMode && (combined.includes('election') || combined.includes('poll'))) score += 2
+          if (isOpinionLikeTitle(title)) score -= electionMode ? 1 : 2
+          if (isExplainerLikeTitle(title)) score -= electionMode ? 1 : 2
           if (isWeakCivicStory(combined)) score -= 2
-          if (score < 5) return rejectionTracker.reject('low score')
+          if (score < (electionMode ? 4 : 5)) return rejectionTracker.reject('low score')
 
           return {
             title,
@@ -1905,7 +1989,8 @@ const worker = {
       return result.items
     }
 
-    async function fetchSkyNewsDetailed() {
+    async function fetchSkyNewsDetailed(options = {}) {
+      const { electionMode = false } = options
       const xml = await fetchText('https://feeds.skynews.com/feeds/rss/politics.xml')
       if (!xml) {
         return {
@@ -1930,18 +2015,21 @@ const worker = {
 
           if (!title || !url || !publishedAt) return rejectionTracker.reject('missing title/url/date')
           if (!isAllowedNewsPath(url)) return rejectionTracker.reject('excluded path')
-          if (!hasPoliticsSignal(combined)) return rejectionTracker.reject('not UK politics')
+          const rollingElectionStory = shouldAllowRollingElectionStory({ title, url, combined, electionMode })
+          if (!hasPoliticsSignal(combined) && !rollingElectionStory) return rejectionTracker.reject('not UK politics')
           if (isOpinionLikeTitle(title) && !textMatchesAny(combined, SKY_STRONG_POLITICS_TERMS)) return rejectionTracker.reject('opinion/analysis')
-          if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return rejectionTracker.reject('explainer/soft feature')
+          if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined) && !rollingElectionStory) return rejectionTracker.reject('explainer/soft feature')
           if (isWeakCivicStory(combined) && !hasHardPoliticsSignal(combined)) return rejectionTracker.reject('weak civic signal')
 
           let score = 3
           if (lowerUrl.includes('/politics')) score += 2
           if (textMatchesAny(combined, SKY_STRONG_POLITICS_TERMS)) score += 2
           if (hasHardPoliticsSignal(combined)) score += 2
-          if (isExplainerLikeTitle(title)) score -= 2
+          if (rollingElectionStory) score += 3
+          if (electionMode && (combined.includes('election') || combined.includes('poll'))) score += 2
+          if (isExplainerLikeTitle(title)) score -= electionMode ? 1 : 2
           if (isWeakCivicStory(combined)) score -= 2
-          if (score < 4) return rejectionTracker.reject('low score')
+          if (score < (electionMode ? 3 : 4)) return rejectionTracker.reject('low score')
 
           return {
             title,
@@ -1975,6 +2063,7 @@ const worker = {
         minScore = 4,
         urlPoliticsHints = [],
         baseScore = 3,
+        electionMode = false,
       } = options
 
       const title = stripTags(item.title || '')
@@ -1987,22 +2076,25 @@ const worker = {
 
       if (!title || !url || !publishedAt) return rejectionTracker.reject('missing title/url/date')
       if (!isAllowedNewsPath(url)) return rejectionTracker.reject('excluded path')
-      if (lowerTitle.includes('uk politics live')) return rejectionTracker.reject('liveblog/as-it-happened')
-      if (lowerTitle.includes('as it happened')) return rejectionTracker.reject('liveblog/as-it-happened')
+      const rollingElectionStory = shouldAllowRollingElectionStory({ title, url, combined, electionMode })
+      if (lowerTitle.includes('uk politics live') && !rollingElectionStory) return rejectionTracker.reject('liveblog/as-it-happened')
+      if (lowerTitle.includes('as it happened') && !rollingElectionStory) return rejectionTracker.reject('liveblog/as-it-happened')
 
       const hasPoliticsUrlHint = urlPoliticsHints.some((hint) => lowerUrl.includes(hint))
-      if (!hasPoliticsSignal(combined) && !hasPoliticsUrlHint) return rejectionTracker.reject('not UK politics')
+      if (!hasPoliticsSignal(combined) && !hasPoliticsUrlHint && !rollingElectionStory) return rejectionTracker.reject('not UK politics')
       if (isOpinionLikeTitle(title) && !textMatchesAny(combined, strongTerms)) return rejectionTracker.reject('opinion/analysis')
-      if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return rejectionTracker.reject('explainer/soft feature')
+      if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined) && !rollingElectionStory) return rejectionTracker.reject('explainer/soft feature')
       if (isWeakCivicStory(combined) && !hasHardPoliticsSignal(combined)) return rejectionTracker.reject('weak civic signal')
 
       let score = baseScore
       if (hasPoliticsUrlHint) score += 2
       if (textMatchesAny(combined, strongTerms)) score += 2
       if (hasHardPoliticsSignal(combined)) score += 2
-      if (isExplainerLikeTitle(title)) score -= 2
+      if (rollingElectionStory) score += 3
+      if (electionMode && (combined.includes('election') || combined.includes('poll'))) score += 2
+      if (isExplainerLikeTitle(title)) score -= electionMode ? 1 : 2
       if (isWeakCivicStory(combined)) score -= 2
-      if (score < minScore) return rejectionTracker.reject('low score')
+      if (score < (electionMode ? Math.max(2, minScore - 1) : minScore)) return rejectionTracker.reject('low score')
 
       return {
         title,
@@ -2015,7 +2107,8 @@ const worker = {
       }
     }
 
-    async function fetchChannel4NewsDetailed() {
+    async function fetchChannel4NewsDetailed(options = {}) {
+      const { electionMode = false } = options
       const feedUrl = 'https://www.channel4.com/news/politics/feed'
       const xml = await fetchText(feedUrl)
       if (!xml) {
@@ -2037,6 +2130,7 @@ const worker = {
           strongTerms: SKY_STRONG_POLITICS_TERMS,
           urlPoliticsHints: ['/news/politics', '/news/'],
           minScore: 4,
+          electionMode,
         }, rejectionTracker))
         .filter(Boolean)
 
@@ -2055,7 +2149,8 @@ const worker = {
       return result.items
     }
 
-    async function fetchGbNewsDetailed() {
+    async function fetchGbNewsDetailed(options = {}) {
+      const { electionMode = false } = options
       const feedUrl = 'https://www.gbnews.com/feeds/politics/uk.rss'
       const xml = await fetchText(feedUrl)
       if (!xml) {
@@ -2077,6 +2172,7 @@ const worker = {
           strongTerms: SKY_STRONG_POLITICS_TERMS,
           urlPoliticsHints: ['/politics', '/news/'],
           minScore: 5,
+          electionMode,
         }, rejectionTracker))
         .filter(Boolean)
 
@@ -2095,7 +2191,8 @@ const worker = {
       return result.items
     }
 
-    async function fetchGuardianNewsDetailed(env) {
+    async function fetchGuardianNewsDetailed(env, options = {}) {
+      const { electionMode = false } = options
       if (!env.GUARDIAN_API_KEY) {
         return {
           source: 'Guardian',
@@ -2150,21 +2247,24 @@ const worker = {
 
             if (!title || !url || !publishedAt) return rejectionTracker.reject('missing title/url/date')
             if (!isAllowedNewsPath(url)) return rejectionTracker.reject('excluded path')
-            if (lowerUrl.includes('/politics/live/')) return rejectionTracker.reject('liveblog/as-it-happened')
-            if (title.toLowerCase().includes('uk politics live')) return rejectionTracker.reject('liveblog/as-it-happened')
-            if (title.toLowerCase().includes('as it happened')) return rejectionTracker.reject('liveblog/as-it-happened')
+            const rollingElectionStory = shouldAllowRollingElectionStory({ title, url, combined, electionMode })
+            if (lowerUrl.includes('/politics/live/') && !rollingElectionStory) return rejectionTracker.reject('liveblog/as-it-happened')
+            if (title.toLowerCase().includes('uk politics live') && !rollingElectionStory) return rejectionTracker.reject('liveblog/as-it-happened')
+            if (title.toLowerCase().includes('as it happened') && !rollingElectionStory) return rejectionTracker.reject('liveblog/as-it-happened')
             if (!lowerUrl.includes('/politics/') && !lowerUrl.includes('/uk-news/')) return rejectionTracker.reject('not UK politics')
-            if (!hasPoliticsSignal(combined) && !lowerUrl.includes('/politics/')) return rejectionTracker.reject('not UK politics')
+            if (!hasPoliticsSignal(combined) && !lowerUrl.includes('/politics/') && !rollingElectionStory) return rejectionTracker.reject('not UK politics')
             if (isOpinionLikeTitle(title) && !combined.includes('starmer') && !combined.includes('farage') && !combined.includes('badenoch')) return rejectionTracker.reject('opinion/analysis')
-            if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return rejectionTracker.reject('explainer/soft feature')
+            if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined) && !rollingElectionStory) return rejectionTracker.reject('explainer/soft feature')
 
             let score = 3
             if (lowerUrl.includes('/politics/')) score += 2
             if (lowerUrl.includes('/uk-news/')) score += 1
             if (hasHardPoliticsSignal(combined)) score += 2
             if (isOpinionLikeTitle(title)) score -= 1
-            if (isExplainerLikeTitle(title)) score -= 2
-            if (score < 4) return rejectionTracker.reject('low score')
+            if (rollingElectionStory) score += 3
+            if (electionMode && (combined.includes('election') || combined.includes('poll'))) score += 2
+            if (isExplainerLikeTitle(title)) score -= electionMode ? 1 : 2
+            if (score < (electionMode ? 3 : 4)) return rejectionTracker.reject('low score')
 
             return {
               title,
@@ -2200,17 +2300,28 @@ const worker = {
       return result.items
     }
 
-    async function fetchLiveNewsPayload(env) {
-      const now = Date.now()
-
-      const sourceResults = await Promise.all([
-        fetchBbcNewsDetailed(),
-        fetchGuardianNewsDetailed(env),
-        fetchSkyNewsDetailed(),
-        fetchChannel4NewsDetailed(),
-        fetchGbNewsDetailed(),
+    async function fetchNewsSourceResults(env, options = {}) {
+      return Promise.all([
+        fetchBbcNewsDetailed(options),
+        fetchGuardianNewsDetailed(env, options),
+        fetchSkyNewsDetailed(options),
+        fetchChannel4NewsDetailed(options),
+        fetchGbNewsDetailed(options),
       ])
+    }
+
+    function electionModeRankBoost(item, electionMode) {
+      if (!electionMode) return 0
+      const electionScore = Number.isFinite(Number(item?.electionScore)) ? Number(item.electionScore) : 0
+      const pollImpactScore = Number.isFinite(Number(item?.pollImpactScore)) ? Number(item.pollImpactScore) : 0
+      const localElectionBoost = isElectionLikeNewsItem(item) ? 2 : 0
+      return Math.min(8, (electionScore * 0.65) + (pollImpactScore * 0.45) + localElectionBoost)
+    }
+
+    function shapeLiveNewsResults(sourceResults, { now = Date.now(), electionMode = false } = {}) {
       const allItems = sourceResults.flatMap((result) => result.items || [])
+      const ageWeight = electionMode ? 0.22 : 0.12
+      const ageCap = electionMode ? 8 : 6
 
       const ranked = allItems
         .map(enrichNewsStory)
@@ -2221,13 +2332,15 @@ const worker = {
           const aAgeHours = Number.isFinite(aTime) ? Math.max(0, (now - aTime) / 3600000) : 999
           const bAgeHours = Number.isFinite(bTime) ? Math.max(0, (now - bTime) / 3600000) : 999
 
-          const aRank = (a.score || 0) - Math.min(aAgeHours * 0.12, 6)
-          const bRank = (b.score || 0) - Math.min(bAgeHours * 0.12, 6)
+          const aRank = (a.score || 0) + electionModeRankBoost(a, electionMode) - Math.min(aAgeHours * ageWeight, ageCap)
+          const bRank = (b.score || 0) + electionModeRankBoost(b, electionMode) - Math.min(bAgeHours * ageWeight, ageCap)
 
           const aImportance = Number.isFinite(Number(a.importanceScore)) ? Number(a.importanceScore) : null
           const bImportance = Number.isFinite(Number(b.importanceScore)) ? Number(b.importanceScore) : null
           if (aImportance != null || bImportance != null) {
-            const diff = (bImportance ?? bRank) - (aImportance ?? aRank)
+            const aWeightedImportance = (aImportance ?? aRank) + electionModeRankBoost(a, electionMode)
+            const bWeightedImportance = (bImportance ?? bRank) + electionModeRankBoost(b, electionMode)
+            const diff = bWeightedImportance - aWeightedImportance
             if (diff !== 0) return diff
           }
 
@@ -2242,7 +2355,9 @@ const worker = {
       const deduped = dedupeNewsItems(ranked)
       const clustered = buildNewsClusters(deduped)
       const narratives = buildNarrativeSignals(clustered.clusteredStories)
-      const balanced = capNewsItemsBySource(clustered.items, NEWS_PER_SOURCE_LIMIT, NEWS_TOTAL_LIMIT)
+      const perSourceLimit = electionMode ? NEWS_ELECTION_PER_SOURCE_LIMIT : NEWS_PER_SOURCE_LIMIT
+      const totalLimit = electionMode ? NEWS_ELECTION_TOTAL_LIMIT : NEWS_TOTAL_LIMIT
+      const balanced = capNewsItemsBySource(clustered.items, perSourceLimit, totalLimit)
       const items = balanced.map(({ score, ...item }) => item)
       const finalCounts = new Map()
       for (const item of items) {
@@ -2263,17 +2378,56 @@ const worker = {
 
       return {
         items,
-        clusteredStories: clustered.clusteredStories,
-        clusterDiagnostics: {
-          ...clustered.clusterDiagnostics,
-          totalRawStories: ranked.length,
-          duplicateCollapseCount: Math.max(0, ranked.length - deduped.length),
-        },
-        narrativeSignals: narratives.narrativeSignals,
-        narrativeDiagnostics: narratives.narrativeDiagnostics,
+        ranked,
+        deduped,
+        clustered,
+        narratives,
         sourceDiagnostics,
-        preCapCount: deduped.length,
-        finalCount: items.length,
+      }
+    }
+
+    async function fetchLiveNewsPayload(env) {
+      const now = Date.now()
+      const overrideElectionMode = isElectionModeOverrideEnabled(env)
+      let electionModeInfo = overrideElectionMode
+        ? { active: true, reason: 'Manual override enabled' }
+        : { active: false, reason: 'Normal filtering mode' }
+
+      let sourceResults = await fetchNewsSourceResults(env, { electionMode: overrideElectionMode })
+      let shaped = shapeLiveNewsResults(sourceResults, { now, electionMode: overrideElectionMode })
+
+      if (!overrideElectionMode) {
+        electionModeInfo = detectNewsElectionMode({
+          env,
+          items: shaped.deduped,
+          clusters: shaped.clustered.clusteredStories,
+        })
+
+        if (electionModeInfo.active) {
+          sourceResults = await fetchNewsSourceResults(env, { electionMode: true })
+          shaped = shapeLiveNewsResults(sourceResults, { now, electionMode: true })
+        }
+      }
+
+      return {
+        items: shaped.items,
+        clusteredStories: shaped.clustered.clusteredStories,
+        clusterDiagnostics: {
+          ...shaped.clustered.clusterDiagnostics,
+          totalRawStories: shaped.ranked.length,
+          duplicateCollapseCount: Math.max(0, shaped.ranked.length - shaped.deduped.length),
+        },
+        narrativeSignals: shaped.narratives.narrativeSignals,
+        narrativeDiagnostics: shaped.narratives.narrativeDiagnostics,
+        sourceDiagnostics: shaped.sourceDiagnostics,
+        preCapCount: shaped.deduped.length,
+        finalCount: shaped.items.length,
+        electionMode: electionModeInfo.active,
+        electionModeReason: electionModeInfo.reason,
+        electionModeCaps: {
+          perSource: electionModeInfo.active ? NEWS_ELECTION_PER_SOURCE_LIMIT : NEWS_PER_SOURCE_LIMIT,
+          total: electionModeInfo.active ? NEWS_ELECTION_TOTAL_LIMIT : NEWS_TOTAL_LIMIT,
+        },
       }
     }
 
@@ -2695,6 +2849,9 @@ const worker = {
             clusterDiagnostics: payload?.clusterDiagnostics || null,
             narrativeDiagnostics: payload?.narrativeDiagnostics || null,
             sourceDiagnostics: Array.isArray(payload?.sourceDiagnostics) ? payload.sourceDiagnostics : [],
+            electionMode: Boolean(payload?.electionMode),
+            electionModeReason: payload?.electionModeReason || '',
+            electionModeCaps: payload?.electionModeCaps || null,
             sourceCount: new Set(items.map((item) => item.source).filter(Boolean)).size,
             sources: [...new Set(items.map((item) => item.source).filter(Boolean))],
             sourceType: 'live-fetch',
@@ -2789,6 +2946,8 @@ const worker = {
             sourceDiagnostics: livePayload.sourceDiagnostics,
             preCapCount: livePayload.preCapCount,
             finalCount: livePayload.finalCount,
+            electionMode: Boolean(livePayload.electionMode),
+            electionModeReason: livePayload.electionModeReason || '',
           }
           await recordAdminActionResult('news-refresh', result)
           return jsonResponse(result)
@@ -2881,6 +3040,8 @@ const worker = {
             sourceDiagnostics: livePayload.sourceDiagnostics,
             preCapCount: livePayload.preCapCount,
             finalCount: livePayload.finalCount,
+            electionMode: Boolean(livePayload.electionMode),
+            electionModeReason: livePayload.electionModeReason || '',
           }
           await recordAdminActionResult('news-refresh', steps.news)
 
