@@ -69,6 +69,13 @@ const worker = {
       return m ? m[1] : ''
     }
 
+    function getNamespacedTagValue(block, tag) {
+      const escaped = String(tag || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const re = new RegExp(`<${escaped}[^>]*>([\\s\\S]*?)</${escaped}>`, 'i')
+      const m = String(block || '').match(re)
+      return m ? m[1] : ''
+    }
+
     function parseRssItems(xml, sourceName) {
       const source = String(xml || '')
       const itemMatches = source.match(/<item\b[\s\S]*?<\/item>/gi) || []
@@ -78,7 +85,11 @@ const worker = {
         return itemMatches.map((item) => {
           const title = stripTags(getTagValue(item, 'title'))
           const url = stripTags(getTagValue(item, 'link'))
-          const description = stripTags(getTagValue(item, 'description') || getTagValue(item, 'summary'))
+          const description = stripTags(
+            getTagValue(item, 'description') ||
+            getTagValue(item, 'summary') ||
+            getNamespacedTagValue(item, 'content:encoded')
+          )
           const publishedAt = stripTags(getTagValue(item, 'pubDate') || getTagValue(item, 'published') || getTagValue(item, 'updated'))
           if (!title || !url) return null
           const parsedTime = publishedAt ? new Date(publishedAt).getTime() : NaN
@@ -578,6 +589,7 @@ const worker = {
       'bbc.co.uk',
       'theguardian.com',
       'news.sky.com',
+      'channel4.com',
       'ft.com',
       'gbnews.com',
       'dailymail.co.uk',
@@ -1431,6 +1443,129 @@ const worker = {
       return result.items
     }
 
+    function shapeRssPoliticsItem(item, options = {}) {
+      const {
+        sourceName,
+        strongTerms = SKY_STRONG_POLITICS_TERMS,
+        minScore = 4,
+        urlPoliticsHints = [],
+        baseScore = 3,
+      } = options
+
+      const title = stripTags(item.title || '')
+      const description = stripTags(item.description || item.summary || '')
+      const url = String(item.url || '')
+      const publishedAt = item.publishedAt || null
+      const lowerTitle = title.toLowerCase()
+      const lowerUrl = url.toLowerCase()
+      const combined = `${title} ${description}`.toLowerCase()
+
+      if (!title || !url || !publishedAt) return null
+      if (!isAllowedNewsPath(url)) return null
+      if (lowerTitle.includes('uk politics live')) return null
+      if (lowerTitle.includes('as it happened')) return null
+
+      const hasPoliticsUrlHint = urlPoliticsHints.some((hint) => lowerUrl.includes(hint))
+      if (!hasPoliticsSignal(combined) && !hasPoliticsUrlHint) return null
+      if (isOpinionLikeTitle(title) && !textMatchesAny(combined, strongTerms)) return null
+      if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return null
+      if (isWeakCivicStory(combined) && !hasHardPoliticsSignal(combined)) return null
+
+      let score = baseScore
+      if (hasPoliticsUrlHint) score += 2
+      if (textMatchesAny(combined, strongTerms)) score += 2
+      if (hasHardPoliticsSignal(combined)) score += 2
+      if (isExplainerLikeTitle(title)) score -= 2
+      if (isWeakCivicStory(combined)) score -= 2
+      if (score < minScore) return null
+
+      return {
+        title,
+        source: sourceName,
+        publishedAt,
+        url,
+        description,
+        tag: inferNewsTag(title),
+        score,
+      }
+    }
+
+    async function fetchChannel4NewsDetailed() {
+      const feedUrl = 'https://www.channel4.com/news/politics/feed'
+      const xml = await fetchText(feedUrl)
+      if (!xml) {
+        return {
+          source: 'Channel 4',
+          sourceUrl: feedUrl,
+          fetched: 0,
+          kept: 0,
+          items: [],
+          error: 'Feed unavailable',
+        }
+      }
+
+      const parsedItems = parseRssItems(xml, 'Channel 4 News')
+      const items = parsedItems
+        .map((item) => shapeRssPoliticsItem(item, {
+          sourceName: 'Channel 4 News',
+          strongTerms: SKY_STRONG_POLITICS_TERMS,
+          urlPoliticsHints: ['/news/politics', '/news/'],
+          minScore: 4,
+        }))
+        .filter(Boolean)
+
+      return {
+        source: 'Channel 4',
+        sourceUrl: feedUrl,
+        fetched: parsedItems.length,
+        kept: items.length,
+        items,
+      }
+    }
+
+    async function fetchChannel4News() {
+      const result = await fetchChannel4NewsDetailed()
+      return result.items
+    }
+
+    async function fetchGbNewsDetailed() {
+      const feedUrl = 'https://www.gbnews.com/feeds/politics/uk.rss'
+      const xml = await fetchText(feedUrl)
+      if (!xml) {
+        return {
+          source: 'GB News',
+          sourceUrl: feedUrl,
+          fetched: 0,
+          kept: 0,
+          items: [],
+          error: 'Feed unavailable',
+        }
+      }
+
+      const parsedItems = parseRssItems(xml, 'GB News')
+      const items = parsedItems
+        .map((item) => shapeRssPoliticsItem(item, {
+          sourceName: 'GB News',
+          strongTerms: SKY_STRONG_POLITICS_TERMS,
+          urlPoliticsHints: ['/politics', '/news/'],
+          minScore: 5,
+        }))
+        .filter(Boolean)
+
+      return {
+        source: 'GB News',
+        sourceUrl: feedUrl,
+        fetched: parsedItems.length,
+        kept: items.length,
+        items,
+      }
+    }
+
+    async function fetchGbNews() {
+      const result = await fetchGbNewsDetailed()
+      return result.items
+    }
+
     async function fetchGuardianNewsDetailed(env) {
       if (!env.GUARDIAN_API_KEY) {
         return {
@@ -1541,6 +1676,8 @@ const worker = {
         fetchBbcNewsDetailed(),
         fetchGuardianNewsDetailed(env),
         fetchSkyNewsDetailed(),
+        fetchChannel4NewsDetailed(),
+        fetchGbNewsDetailed(),
       ])
       const allItems = sourceResults.flatMap((result) => result.items || [])
 

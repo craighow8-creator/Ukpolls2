@@ -97,6 +97,7 @@ export function normaliseNewsSourceName(value) {
   if (lower.includes('bbc')) return 'BBC'
   if (lower.includes('guardian')) return 'Guardian'
   if (lower.includes('sky')) return 'Sky'
+  if (lower.includes('channel 4') || lower.includes('channel4')) return 'Channel 4 News'
   if (lower.includes('telegraph')) return 'Telegraph'
   if (lower.includes('gb news') || lower.includes('gbnews')) return 'GB News'
   if (lower.includes('independent')) return 'Independent'
