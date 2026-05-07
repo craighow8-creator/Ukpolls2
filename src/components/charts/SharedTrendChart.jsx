@@ -63,6 +63,11 @@ export function formatUkDate(value) {
   return `${pad2(d.getUTCDate())}-${pad2(d.getUTCMonth() + 1)}-${d.getUTCFullYear()}`
 }
 
+function formatPointDelta(value) {
+  if (!Number.isFinite(value) || Math.abs(value) < 0.05) return '0.0'
+  return `${value > 0 ? '+' : ''}${value.toFixed(1)}`
+}
+
 function monthShortLabel(value) {
   const d = toDate(value)
   if (!d) return ''
@@ -312,7 +317,7 @@ function makeTickIndexes(length) {
   return [...new Set(out)]
 }
 
-function PointDetails({ point, hidden, hardHidden = {}, partyKeys = PARTY_KEYS, T, selectedPartyKey = null, findPollById = null, findPollByLabel = null, findPollsterByLabel = null, onOpenPoll = null, onOpenPollster = null }) {
+function PointDetails({ point, previousPoint = null, hidden, hardHidden = {}, partyKeys = PARTY_KEYS, T, selectedPartyKey = null, findPollById = null, findPollByLabel = null, findPollsterByLabel = null, onOpenPoll = null, onOpenPollster = null }) {
   if (!point) return null
   const [showSources, setShowSources] = useState(false)
   const sourcePollsters = Array.isArray(point?.sourcePollsters) ? point.sourcePollsters.filter(Boolean) : []
@@ -480,13 +485,25 @@ function PointDetails({ point, hidden, hardHidden = {}, partyKeys = PARTY_KEYS, 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
         {partyKeys.filter((p) => point[p.key] != null && !hidden[p.key] && !hardHidden[p.key])
           .sort((a, b) => (point[b.key] || 0) - (point[a.key] || 0))
-          .map((p) => (
-            <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, flexShrink: 0 }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: T.tm, flex: 1 }}>{p.key}</span>
-              <span style={{ fontSize: 14, fontWeight: 800, color: p.color }}>{point[p.key]}%</span>
-            </div>
-          ))}
+          .map((p) => {
+            const delta = previousPoint && point[p.key] != null && previousPoint[p.key] != null
+              ? +(point[p.key] - previousPoint[p.key]).toFixed(1)
+              : null
+            return (
+              <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: T.tm, flex: 1 }}>{p.key}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4, fontSize: 14, fontWeight: 800, color: p.color }}>
+                  {point[p.key]}%
+                  {delta != null ? (
+                    <span style={{ fontSize: 10.5, fontWeight: 800, color: delta === 0 ? T.tl : p.color, opacity: delta === 0 ? 0.7 : 0.95 }}>
+                      {formatPointDelta(delta)}
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+            )
+          })}
       </div>
     </div>
   )
@@ -585,7 +602,7 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
       cancelAnimationFrame(frame)
       window.clearTimeout(timeout)
     }
-  }, [filteredTrends.length])
+  }, [filteredTrends.length, filteredTrends[0]?.date, filteredTrends[latestIndex]?.date])
 
   if (!filteredTrends || filteredTrends.length < 2) return null
 
@@ -1007,6 +1024,7 @@ export default function SharedTrendChart({ trends, rawPolls = [], partyKeys = PA
 
       <PointDetails
         point={filteredTrends[tooltip]}
+        previousPoint={tooltip > 0 ? filteredTrends[tooltip - 1] : null}
         hidden={{}}
         hardHidden={hardHidden}
         partyKeys={chartPartyKeys}

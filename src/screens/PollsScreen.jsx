@@ -18,6 +18,13 @@ const TABS = [
   { key: 'methodology', label: 'Methodology' },
 ]
 
+const TREND_RANGE_OPTIONS = [
+  { key: '30d', label: '30D', days: 30 },
+  { key: '60d', label: '60D', days: 60 },
+  { key: '6m', label: '6M', months: 6 },
+  { key: 'all', label: 'All' },
+]
+
 function normalisePollsTab(tab) {
   return TABS.some((item) => item.key === tab) ? tab : 'snapshot'
 }
@@ -103,6 +110,31 @@ function getVisibleTrendPolls(polls, months = 3) {
   })
 
   return filtered.length ? filtered : sorted
+}
+
+function trendRowTime(row) {
+  return parseDateish(row?.date || row?.fullDate)?.getTime() || 0
+}
+
+function filterTrendRowsByRange(rows, rangeKey = '60d') {
+  const sorted = [...(Array.isArray(rows) ? rows : [])].sort((a, b) => trendRowTime(a) - trendRowTime(b))
+  if (!sorted.length || rangeKey === 'all') return sorted
+
+  const option = TREND_RANGE_OPTIONS.find((item) => item.key === rangeKey) || TREND_RANGE_OPTIONS[1]
+  const latestTime = trendRowTime(sorted[sorted.length - 1])
+  if (!latestTime) return sorted
+
+  const start = new Date(latestTime)
+  if (option.months) start.setUTCMonth(start.getUTCMonth() - option.months)
+  else start.setUTCDate(start.getUTCDate() - (option.days || 60))
+
+  const startTime = start.getTime()
+  const filtered = sorted.filter((row) => {
+    const time = trendRowTime(row)
+    return time ? time >= startTime : true
+  })
+
+  return filtered.length >= 2 ? filtered : sorted
 }
 
 function formatMonthLabel(value) {
@@ -1500,6 +1532,106 @@ function getTrendValuesFromParties(parties, polls) {
     .sort((a, b) => b.current - a.current)
 }
 
+function getTrendPartyDisplayValue(row, partyKey) {
+  if (!row || !partyKey) return null
+  const meta = getPollPartyMeta(partyKey)
+  const local = POLL_PARTIES.find((party) => party.key === partyKey)
+  const candidateKeys = [
+    partyKey,
+    meta?.name,
+    meta?.short,
+    local?.name,
+    partyKey === 'ref' ? 'Reform UK' : null,
+    partyKey === 'lab' ? 'Labour' : null,
+    partyKey === 'con' ? 'Conservative' : null,
+    partyKey === 'grn' ? 'Green' : null,
+    partyKey === 'ld' ? 'Lib Dem' : null,
+    partyKey === 'rb' ? 'Restore Britain' : null,
+    partyKey === 'snp' ? 'SNP' : null,
+  ].filter(Boolean)
+
+  for (const key of [...new Set(candidateKeys)]) {
+    const value = safeNumber(row?.[key])
+    if (value != null) return value
+  }
+
+  return null
+}
+
+function buildTrendMovementRows(parties = [], trendRows = []) {
+  return POLL_PARTY_KEYS
+    .map((key) => {
+      const meta = getPollPartyMeta(key)
+      const party = (parties || []).find((item) => {
+        const registry = getPartyByName(item?.name || item?.abbr || key)
+        return registry?.name === meta.name || item?.abbr === meta.short
+      })
+      const values = (trendRows || [])
+        .map((row) => getTrendPartyDisplayValue(row, key))
+        .filter((value) => value != null)
+      const first = values[0]
+      const latest = values[values.length - 1]
+      const delta = values.length >= 2 ? +(latest - first).toFixed(1) : null
+
+      return {
+        key,
+        name: party?.name || meta.name,
+        abbr: party?.abbr || meta.short,
+        color: party?.color || meta.color,
+        current: latest ?? safeNumber(party?.pct),
+        delta,
+      }
+    })
+    .filter((row) => row.current != null)
+    .sort((a, b) => b.current - a.current)
+}
+
+function buildTrendBriefing({ parties, trendRows, hidden }) {
+  const rows = buildTrendMovementRows(parties, trendRows).filter((row) => !hidden?.[row.key])
+  if (!rows.length) {
+    return {
+      headline: 'Trend movement needs more visible data',
+      subhead: 'Bring a party back into view to rebuild the selected-window picture.',
+      chips: ['No visible lines'],
+    }
+  }
+
+  const leader = rows[0]
+  const second = rows[1]
+  const gap = leader && second ? +((leader.current || 0) - (second.current || 0)).toFixed(1) : null
+  const biggestGain = rows
+    .filter((row) => Number.isFinite(row.delta))
+    .sort((a, b) => (b.delta || 0) - (a.delta || 0))[0] || null
+  const biggestDrop = rows
+    .filter((row) => Number.isFinite(row.delta))
+    .sort((a, b) => (a.delta || 0) - (b.delta || 0))[0] || null
+  const gainActive = biggestGain && biggestGain.delta >= 0.4
+  const dropActive = biggestDrop && biggestDrop.delta <= -0.4
+
+  let headline = leader && second && gap != null
+    ? `${leader.name} lead ${second.name} by ${formatGap(gap)} pts in the selected window.`
+    : 'Trend movement remains readable across the selected window.'
+
+  if (gainActive && dropActive) {
+    headline = `${biggestGain.name} are up ${formatSignedMovement(biggestGain.delta)} pts over this window while ${biggestDrop.name} are down ${Math.abs(biggestDrop.delta).toFixed(1)} pts.`
+  } else if (gainActive) {
+    headline = `${biggestGain.name} are up ${formatSignedMovement(biggestGain.delta)} pts, the clearest gain in this window.`
+  } else if (dropActive) {
+    headline = `${biggestDrop.name} are down ${Math.abs(biggestDrop.delta).toFixed(1)} pts, the sharpest fall in this window.`
+  }
+
+  const chips = []
+  if (gainActive) chips.push(`${biggestGain.name} momentum`)
+  if (dropActive) chips.push(`${biggestDrop.name} weakening`)
+  if (leader && second && gap != null) chips.push(`${leader.name} +${formatGap(gap)} lead`)
+
+  return {
+    headline,
+    subhead: formatRangeLabel(trendRows),
+    chips: chips.slice(0, 3),
+  }
+}
+
 function formatDelta(delta) {
   const value = typeof delta === 'number' ? delta : 0
   return `${value > 0 ? '+' : ''}${value.toFixed(1)}`
@@ -2079,12 +2211,19 @@ function CombinedTrendCard({
   setFocused,
   setHidden,
 }) {
-  const displayTrends = buildDisplayTrendRows(polls, pollContext)
+  const [rangeKey, setRangeKey] = useState('60d')
+  const allDisplayTrends = useMemo(
+    () => buildDisplayTrendRows(polls, pollContext),
+    [polls, pollContext],
+  )
+  const displayTrends = useMemo(
+    () => filterTrendRowsByRange(allDisplayTrends, rangeKey),
+    [allDisplayTrends, rangeKey],
+  )
   const findPollById = (id) => (polls || []).find((poll) => String(poll?.id || '') === String(id || '')) || null
-  const story = buildTrendTakeaway({
+  const story = buildTrendBriefing({
     parties,
-    polls: displayTrends,
-    focusedKey: focused,
+    trendRows: displayTrends,
     hidden,
   })
 
@@ -2129,6 +2268,58 @@ function CombinedTrendCard({
       <div style={{ padding: '14px 16px 10px' }}>
         <div
           style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+            flexWrap: 'wrap',
+            marginBottom: 10,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 12,
+              fontWeight: 900,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: T.tl,
+            }}
+          >
+            Trend briefing
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {TREND_RANGE_OPTIONS.map((option) => {
+              const active = rangeKey === option.key
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => {
+                    haptic(4)
+                    setRangeKey(option.key)
+                  }}
+                  style={{
+                    border: `1px solid ${active ? T.pr : (T.cardBorder || 'rgba(0,0,0,0.10)')}`,
+                    background: active ? T.pr : T.sf,
+                    color: active ? '#fff' : T.tm,
+                    borderRadius: 999,
+                    padding: '6px 10px',
+                    fontSize: 11.5,
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    touchAction: 'manipulation',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div
+          style={{
             fontSize: 17,
             fontWeight: 800,
             color: T.th,
@@ -2153,6 +2344,27 @@ function CombinedTrendCard({
         >
           {story.subhead}
         </div>
+
+        {story.chips?.length ? (
+          <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 10 }}>
+            {story.chips.map((chip) => (
+              <span
+                key={chip}
+                style={{
+                  borderRadius: 999,
+                  padding: '6px 10px',
+                  background: T.sf,
+                  border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                  color: T.tm,
+                  fontSize: 11.5,
+                  fontWeight: 800,
+                }}
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        ) : null}
 
         <div style={{ marginTop: 12 }}>
           <SharedTrendChart
