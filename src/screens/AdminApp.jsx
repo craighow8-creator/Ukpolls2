@@ -405,6 +405,73 @@ function newsActionCounts(action) {
   return `Stories ${compactNumber(action.itemCount)} · sources ${compactNumber(action.sourceCount)}`
 }
 
+function newsSourceHealthStatus(row) {
+  if (row?.error) return 'Error'
+  const fetched = Number(row?.fetched)
+  const kept = Number(row?.kept)
+  const final = Number(row?.final)
+  if (!Number.isFinite(fetched) || fetched <= 0 || !Number.isFinite(kept) || kept <= 0) return 'Empty'
+  if (kept < 2 || (Number.isFinite(final) && final <= 0)) return 'Limited'
+  return 'OK'
+}
+
+function NewsSourceHealth({ sourceDiagnostics = [] }) {
+  const rows = Array.isArray(sourceDiagnostics) ? sourceDiagnostics : []
+  if (!rows.length) return null
+
+  return (
+    <div style={{ marginTop: 12, borderTop: `1px solid ${C.bdr}`, paddingTop: 12 }}>
+      <div style={{ fontSize: 10, fontWeight: 850, color: C.lo, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+        Source health
+      </div>
+      <div style={{ display: 'grid', gap: 7 }}>
+        {rows.map((row) => {
+          const status = newsSourceHealthStatus(row)
+          return (
+            <div
+              key={row.source || row.sourceUrl || JSON.stringify(row)}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'minmax(82px, 1.2fr) repeat(3, minmax(42px, 0.55fr)) minmax(66px, 0.75fr)',
+                gap: 8,
+                alignItems: 'center',
+                padding: '8px 9px',
+                borderRadius: 12,
+                background: 'rgba(255,255,255,0.045)',
+                border: `1px solid ${C.bdr}`,
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 800, color: C.hi, overflowWrap: 'anywhere' }}>
+                {row.source || 'Source'}
+              </div>
+              {[
+                ['Fetched', row.fetched],
+                ['Kept', row.kept],
+                ['Final', row.final],
+              ].map(([label, value]) => (
+                <div key={label} style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 9, fontWeight: 800, color: C.lo, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    {label}
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: C.hi, marginTop: 2 }}>
+                    {compactNumber(value)}
+                  </div>
+                </div>
+              ))}
+              <HealthStatusChip status={status} />
+              {row.error ? (
+                <div style={{ gridColumn: '1 / -1', fontSize: 11.5, color: '#ffb8c6', lineHeight: 1.4 }}>
+                  {row.error}
+                </div>
+              ) : null}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function fullRefreshCounts(action) {
   if (!action) return 'No action yet'
   const polls = action.steps?.polls || {}
@@ -498,7 +565,7 @@ function CommandList({ commands = [], note }) {
   )
 }
 
-function HealthCard({ title, status, summary, rows = [], issues = [], commands = [], note, action = null }) {
+function HealthCard({ title, status, summary, rows = [], issues = [], commands = [], note, action = null, extra = null }) {
   return (
     <div style={{ background: C.card, border: `1px solid ${C.bdr}`, borderRadius: 18, padding: 18 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start', marginBottom: 10 }}>
@@ -543,6 +610,8 @@ function HealthCard({ title, status, summary, rows = [], issues = [], commands =
           </ul>
         </div>
       ) : null}
+
+      {extra}
 
       <CommandList commands={commands} note={note} />
       {action ? (
@@ -673,6 +742,23 @@ function DataHealthTab({ data, onRefreshData }) {
   const newsItems = extractNewsItems(data?.newsItems)
   const newsUpdatedAt = firstPresent(newsMeta?.updatedAt, newsMeta?.fetchedAt, newsItems[0]?.publishedAt)
   const newsSources = newsMeta?.sourceCount || new Set(newsItems.map((item) => item?.source).filter(Boolean)).size
+  const newsSourceDiagnostics = Array.isArray(newsMeta?.sourceDiagnostics)
+    ? newsMeta.sourceDiagnostics
+    : Array.isArray(newsAction?.sourceDiagnostics)
+      ? newsAction.sourceDiagnostics
+      : []
+  const newsClusterDiagnostics = newsMeta?.clusterDiagnostics || {}
+  const newsNarrativeDiagnostics = newsMeta?.narrativeDiagnostics || {}
+  const newsPreCapCount = finiteIssueNumber(newsMeta?.preCapCount, newsAction?.preCapCount)
+  const newsFinalCount = finiteIssueNumber(newsMeta?.finalCount, newsAction?.finalCount, newsMeta?.storyCount, newsItems.length)
+  const newsClusterCount = finiteIssueNumber(
+    newsClusterDiagnostics?.totalClusters,
+    Array.isArray(data?.newsItems?.clusteredStories) ? data.newsItems.clusteredStories.length : null
+  )
+  const newsNarrativeCount = finiteIssueNumber(
+    newsNarrativeDiagnostics?.activeNarrativeCount,
+    Array.isArray(data?.newsItems?.narrativeSignals) ? data.newsItems.narrativeSignals.length : null
+  )
   const newsStatus = freshnessFromDate(newsUpdatedAt, { okDays: 1, staleDays: 3 })
   const pollIssues = buildPollIssues({ ingestStatus, action: pollAction })
   const marketIssues = buildMarketIssues({ failedSourceCount: marketFailedSources, action: marketsAction })
@@ -994,12 +1080,17 @@ function DataHealthTab({ data, onRefreshData }) {
             { label: 'Fetched/updated', value: formatAdminDateTime(newsUpdatedAt) },
             { label: 'Stories', value: compactNumber(newsMeta?.storyCount ?? newsItems.length) },
             { label: 'Sources', value: compactNumber(newsSources) },
+            { label: 'Pre-cap stories', value: compactNumber(newsPreCapCount) },
+            { label: 'Final stories', value: compactNumber(newsFinalCount) },
+            { label: 'Clusters', value: compactNumber(newsClusterCount) },
+            { label: 'Narratives', value: compactNumber(newsNarrativeCount) },
             { label: 'Last action', value: formatAdminDateTime(newsAction?.finishedAt || newsAction?.updatedAt) },
             { label: 'Action result', value: adminActionResultLabel(newsAction) },
             { label: 'What changed', value: newsActionCounts(newsAction) },
             { label: 'Action warnings', value: compactNumber(warningCount(newsAction)) },
           ]}
           issues={newsIssues}
+          extra={<NewsSourceHealth sourceDiagnostics={newsSourceDiagnostics} />}
           note="Worker refreshes news via /api/news; no CLI health script yet."
           action={{
             label: 'Refresh news',
