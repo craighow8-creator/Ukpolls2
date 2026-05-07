@@ -522,7 +522,7 @@ export default function App() {
   const renderScreen = (s, p = {}) => {
     switch (s) {
       case 'polls':
-        return <PollsScreen {...common} polls={POLLS_HISTORY} initialTab={p.tab || 'snapshot'} />
+        return <PollsScreen {...common} polls={POLLS_HISTORY} trends={TRENDS} milestones={MILESTONES} initialTab={p.tab || 'snapshot'} />
       case 'pollDetail':
         return <PollDetailScreen {...common} poll={p.poll} />
       case 'pollster':

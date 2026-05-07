@@ -520,7 +520,7 @@ function MilestoneCard({ T, m }) {
   )
 }
 
-export default function TrendsScreen({ T, trends = [], pollContext, milestones = [], nav }) {
+export function TrendsPanel({ T, trends = [], pollContext, milestones = [], nav, embedded = false }) {
   const [focusedPartyKey, setFocusedPartyKey] = useState(null)
   const [scope, setScope] = useState('all')
 
@@ -593,17 +593,7 @@ export default function TrendsScreen({ T, trends = [], pollContext, milestones =
   }, [focusedPartyKey, scopeHidden])
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100%',
-        background: T.sf,
-      }}
-    >
-      <ScrollAwayHeader T={T} />
-
-      <div style={{ padding: '12px 16px 40px' }}>
+    <div style={{ padding: embedded ? '0 0 40px' : '12px 16px 40px' }}>
         {!displayTrends.length ? (
           <div
             style={{
@@ -783,7 +773,22 @@ export default function TrendsScreen({ T, trends = [], pollContext, milestones =
         ) : null}
 
         <div style={{ height: 40 }} />
-      </div>
+    </div>
+  )
+}
+
+export default function TrendsScreen({ T, trends = [], pollContext, milestones = [], nav }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100%',
+        background: T.sf,
+      }}
+    >
+      <ScrollAwayHeader T={T} />
+      <TrendsPanel T={T} trends={trends} pollContext={pollContext} milestones={milestones} nav={nav} />
     </div>
   )
 }
