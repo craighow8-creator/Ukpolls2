@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { haptic } from '../components/ui'
 import { InfoButton } from '../components/InfoGlyph'
-import SectionDataMeta from '../components/SectionDataMeta'
 import { API_BASE } from '../constants'
 import { parseJsonResponse } from '../utils/http'
 import {
@@ -142,12 +141,11 @@ function SectionLabel({ T, children }) {
   )
 }
 
-function NewsHero({ T, meta, heroItem, loading }) {
+function NewsHero({ T, meta, heroItem }) {
   const freshness = getNewsFreshnessState(meta)
   const sourceSummary = formatNewsSourceList(meta?.sources || [], 4)
   const liveColor = freshness.tone === 'live' ? '#E4003B' : freshness.tone === 'stale' ? T.tl : T.pr
   const title = 'UK politics feed'
-  const updatedLine = freshness.relativeTime ? `Refreshed ${freshness.relativeTime}` : 'Monitoring the latest available feed'
   const leadContext = cleanNewsDisplayText(heroItem?.displaySummary || heroItem?.summaryDisplay, { maxLength: 180 })
   const summaryLine = sourceSummary
     ? `${sourceSummary}${meta?.storyCount ? ` · ${meta.storyCount} stories in view` : ''}`
@@ -170,28 +168,12 @@ function NewsHero({ T, meta, heroItem, loading }) {
         <div
           style={{
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: 'flex-end',
             alignItems: 'flex-start',
             gap: 12,
-            marginBottom: 16,
+            marginBottom: 10,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                background: liveColor,
-                boxShadow: `0 0 0 5px ${liveColor}18`,
-                animation: freshness.isLive ? 'livePulse 1.8s ease-out infinite' : 'none',
-                flexShrink: 0,
-              }}
-            />
-            <Badge color={liveColor}>{freshness.statusLabel}</Badge>
-            {loading ? <Badge color={T.pr} subtle>Refreshing</Badge> : null}
-          </div>
-
           <InfoButton id="news_feed" T={T} size={20} />
         </div>
 
@@ -212,11 +194,7 @@ function NewsHero({ T, meta, heroItem, loading }) {
           {title}
         </div>
 
-        <div style={{ fontSize: 15, fontWeight: 600, color: T.th, lineHeight: 1.45, marginTop: 10 }}>
-          {updatedLine}
-        </div>
-
-        <div style={{ fontSize: 14, fontWeight: 550, color: T.tm, lineHeight: 1.5, marginTop: 6 }}>
+        <div style={{ fontSize: 14, fontWeight: 550, color: T.tm, lineHeight: 1.5, marginTop: 10 }}>
           {summaryLine}
         </div>
 
@@ -454,7 +432,7 @@ function NewsCard({ T, item, big = false }) {
   )
 }
 
-export function NewsScreen({ T, news, dataState = {} }) {
+export function NewsScreen({ T, news }) {
   const initialPayload = useMemo(() => normaliseNewsPayload(news), [news])
   const [payload, setPayload] = useState(initialPayload)
   const [loading, setLoading] = useState(true)
@@ -524,10 +502,7 @@ export function NewsScreen({ T, news, dataState = {} }) {
       }}
     >
       <div style={{ padding: '12px 16px 40px' }}>
-        <NewsHero T={T} meta={meta} heroItem={heroItem} loading={loading} />
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
-          <SectionDataMeta T={T} section={dataState.newsItems || dataState.news || null} />
-        </div>
+        <NewsHero T={T} meta={meta} heroItem={heroItem} />
 
         {loading && !items.length ? (
           <div style={{ marginTop: 14 }}>
