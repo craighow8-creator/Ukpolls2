@@ -1322,6 +1322,243 @@ const worker = {
       }
     }
 
+    const NEWS_NARRATIVE_REGISTRY = [
+      {
+        id: 'reform-momentum',
+        title: 'Reform momentum building',
+        keywords: ['reform', 'farage', 'surge', 'gain', 'gains', 'momentum', 'support', 'poll'],
+        entities: ['Reform UK', 'Nigel Farage'],
+        tags: ['POLLING IMPACT', 'SWING ALERT', 'REFORM SURGE'],
+        storyTypes: ['polling', 'election-result', 'campaign'],
+      },
+      {
+        id: 'labour-pressure',
+        title: 'Labour under pressure',
+        keywords: ['labour', 'starmer', 'pressure', 'loss', 'losses', 'defence', 'drop', 'weakening'],
+        entities: ['Labour', 'Keir Starmer'],
+        tags: ['LABOUR DEFENCE', 'PARTY PRESSURE', 'SWING ALERT'],
+        storyTypes: ['polling', 'election-result', 'party-leadership', 'campaign'],
+      },
+      {
+        id: 'conservative-recovery',
+        title: 'Conservative recovery attempt',
+        keywords: ['conservative', 'conservatives', 'tories', 'badenoch', 'recovery', 'rebuild', 'fightback'],
+        entities: ['Conservative', 'Kemi Badenoch'],
+        tags: ['PARTY PRESSURE', 'LEADER WATCH'],
+        storyTypes: ['polling', 'party-leadership', 'campaign'],
+      },
+      {
+        id: 'migration-coverage',
+        title: 'Migration dominating coverage',
+        keywords: ['migration', 'immigration', 'asylum', 'small boats', 'border', 'deportation'],
+        entities: ['migration'],
+        tags: ['PARTY PRESSURE', 'POLICY SHIFT'],
+        storyTypes: ['migration', 'policy'],
+      },
+      {
+        id: 'nhs-pressure',
+        title: 'NHS pressure rising',
+        keywords: ['nhs', 'health', 'doctors', 'hospital', 'waiting', 'strike'],
+        entities: ['NHS'],
+        tags: ['POLICY SHIFT'],
+        storyTypes: ['policy'],
+      },
+      {
+        id: 'local-election-fallout',
+        title: 'Local election fallout',
+        keywords: ['local', 'election', 'elections', 'council', 'councils', 'seats', 'mayor', 'mayoral'],
+        entities: ['local elections', 'council', 'mayor'],
+        tags: ['ELECTIONS', 'SWING ALERT', 'KEY BATTLEGROUND'],
+        storyTypes: ['election-result', 'local-government', 'campaign'],
+      },
+      {
+        id: 'green-breakthrough',
+        title: 'Green breakthrough',
+        keywords: ['green', 'greens', 'breakthrough', 'gain', 'gains', 'surge'],
+        entities: ['Green Party'],
+        tags: ['GREEN BREAKTHROUGH', 'SWING ALERT', 'POLLING IMPACT'],
+        storyTypes: ['polling', 'election-result', 'campaign'],
+      },
+      {
+        id: 'leadership-instability',
+        title: 'Leadership instability',
+        keywords: ['leader', 'leadership', 'resign', 'resigns', 'resignation', 'cabinet', 'challenge', 'instability'],
+        entities: ['Keir Starmer', 'Kemi Badenoch', 'Nigel Farage', 'Ed Davey'],
+        tags: ['LEADER WATCH', 'PARTY PRESSURE'],
+        storyTypes: ['party-leadership', 'scandal'],
+      },
+      {
+        id: 'economic-pressure',
+        title: 'Economic pressure narrative',
+        keywords: ['economy', 'budget', 'tax', 'taxes', 'inflation', 'spending', 'growth', 'chancellor'],
+        entities: ['economy'],
+        tags: ['POLICY SHIFT'],
+        storyTypes: ['economy', 'policy'],
+      },
+      {
+        id: 'tactical-voting',
+        title: 'Tactical voting discussion',
+        keywords: ['tactical', 'vote', 'voting', 'coalition', 'split', 'anti-government', 'progressive alliance'],
+        entities: ['Labour', 'Liberal Democrats', 'Green Party', 'Conservative', 'Reform UK'],
+        tags: ['POLLING IMPACT', 'ELECTIONS'],
+        storyTypes: ['polling', 'campaign', 'election-result'],
+      },
+    ]
+
+    function normaliseNarrativeTerm(value) {
+      return String(value || '').toLowerCase().trim()
+    }
+
+    function countNarrativeMatches(values = [], targets = []) {
+      const normalisedValues = values.map(normaliseNarrativeTerm).filter(Boolean)
+      return targets.reduce((sum, target) => {
+        const t = normaliseNarrativeTerm(target)
+        if (!t) return sum
+        return sum + (normalisedValues.some((value) => value === t || value.includes(t) || t.includes(value)) ? 1 : 0)
+      }, 0)
+    }
+
+    function getNarrativeClusterText(cluster) {
+      return normaliseNewsHeadline([
+        cluster?.clusterTitle,
+        cluster?.clusterSummary,
+        ...(Array.isArray(cluster?.articles) ? cluster.articles.slice(0, 4).map((article) => `${article.title || ''} ${article.description || ''}`) : []),
+      ].filter(Boolean).join(' '))
+    }
+
+    function scoreClusterForNarrative(cluster, narrative, now = Date.now()) {
+      if (!cluster || !narrative) return null
+      const articles = Array.isArray(cluster.articles) ? cluster.articles : []
+      const clusterText = getNarrativeClusterText(cluster)
+      const keywords = Array.isArray(narrative.keywords) ? narrative.keywords : []
+      const keywordMatches = keywords.reduce((sum, keyword) => sum + (clusterText.includes(normaliseNarrativeTerm(keyword)) ? 1 : 0), 0)
+      const entityMatches = countNarrativeMatches(cluster.clusterEntities || [], narrative.entities || [])
+      const tagMatches = countNarrativeMatches(cluster.clusterTags || [], narrative.tags || [])
+      const typeMatches = countNarrativeMatches(
+        [...new Set(articles.map((article) => article.storyType).filter(Boolean))],
+        narrative.storyTypes || []
+      )
+
+      if (!keywordMatches && !entityMatches && !tagMatches && !typeMatches) return null
+      if (!entityMatches && keywordMatches < 2 && !tagMatches && !typeMatches) return null
+
+      const sources = Array.isArray(cluster.clusterSources) ? cluster.clusterSources : []
+      const updatedTs = storyTimestamp({ publishedAt: cluster.clusterUpdatedAt })
+      const ageHours = updatedTs ? Math.max(0, (now - updatedTs) / 3600000) : 999
+      const recencyWeight = ageHours <= 6 ? 3 : ageHours <= 24 ? 2 : ageHours <= 72 ? 1 : 0
+      const importance = Number(cluster.clusterImportance || 0)
+      const electionScore = Math.max(...articles.map((article) => Number(article.electionScore || 0)), 0)
+      const pollImpactScore = Math.max(...articles.map((article) => Number(article.pollImpactScore || 0)), 0)
+
+      const score =
+        entityMatches * 5 +
+        tagMatches * 4 +
+        typeMatches * 3 +
+        Math.min(keywordMatches, 5) * 2 +
+        Math.min(sources.length, 5) * 1.5 +
+        Math.min(articles.length, 5) +
+        Math.min(importance / 3, 5) +
+        Math.min((electionScore + pollImpactScore) / 4, 4) +
+        recencyWeight
+
+      return {
+        score: Math.round(score * 10) / 10,
+        keywordMatches,
+        entityMatches,
+        tagMatches,
+        typeMatches,
+        ageHours,
+      }
+    }
+
+    function narrativeMomentum(score, recentClusterCount, sourceCount, highImportanceCount) {
+      if (recentClusterCount >= 2 && sourceCount >= 3 && highImportanceCount >= 1) return 'accelerating'
+      if (recentClusterCount >= 1 && (sourceCount >= 2 || score >= 18)) return 'rising'
+      if (recentClusterCount === 0) return 'fading'
+      return 'stable'
+    }
+
+    function buildNarrativeSignals(clusteredStories = []) {
+      const now = Date.now()
+      const signals = []
+
+      for (const narrative of NEWS_NARRATIVE_REGISTRY) {
+        const related = []
+        for (const cluster of clusteredStories || []) {
+          const match = scoreClusterForNarrative(cluster, narrative, now)
+          if (match && match.score > 0) {
+            related.push({ cluster, match })
+          }
+        }
+
+        if (!related.length) continue
+
+        related.sort((a, b) => b.match.score - a.match.score)
+        const sources = [...new Set(related.flatMap(({ cluster }) => cluster.clusterSources || []).filter(Boolean))]
+        const articles = related.flatMap(({ cluster }) => Array.isArray(cluster.articles) ? cluster.articles : [])
+        const recentClusters = related.filter(({ match }) => match.ageHours <= 24)
+        const highImportanceCount = related.filter(({ cluster }) => Number(cluster.clusterImportance || 0) >= 10).length
+        const rawScore = related.reduce((sum, { match }) => sum + match.score, 0)
+        const score = Math.round(Math.min(rawScore, 100) * 10) / 10
+        const allEntities = related.flatMap(({ cluster }) => cluster.clusterEntities || [])
+        const allTags = related.flatMap(({ cluster }) => cluster.clusterTags || [])
+        const entityCounts = new Map()
+        const tagCounts = new Map()
+
+        for (const entity of allEntities) entityCounts.set(entity, (entityCounts.get(entity) || 0) + 1)
+        for (const tag of allTags) tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1)
+
+        const updatedTimes = related
+          .map(({ cluster }) => storyTimestamp({ publishedAt: cluster.clusterUpdatedAt }))
+          .filter((ts) => ts != null)
+          .sort((a, b) => b - a)
+        const momentum = narrativeMomentum(score, recentClusters.length, sources.length, highImportanceCount)
+
+        signals.push({
+          narrativeId: narrative.id,
+          title: narrative.title,
+          score,
+          momentum,
+          storyCount: articles.length,
+          sourceCount: sources.length,
+          clusterCount: related.length,
+          relatedClusters: related.slice(0, 4).map(({ cluster, match }) => ({
+            clusterId: cluster.clusterId,
+            clusterTitle: cluster.clusterTitle,
+            clusterStoryCount: cluster.clusterStoryCount,
+            clusterSources: cluster.clusterSources,
+            clusterUpdatedAt: cluster.clusterUpdatedAt,
+            matchScore: match.score,
+          })),
+          dominantEntities: [...entityCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([entity]) => entity),
+          dominantTags: [...tagCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([tag]) => tag),
+          lastUpdated: updatedTimes.length ? new Date(updatedTimes[0]).toISOString() : null,
+          accelerating: momentum === 'accelerating',
+          cooling: momentum === 'fading',
+          dominantToday: score >= 22 || recentClusters.length >= 2,
+          crossSource: sources.length >= 3,
+          narrowlyCovered: sources.length <= 1,
+        })
+      }
+
+      const narrativeSignals = signals
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score
+          return String(b.lastUpdated || '').localeCompare(String(a.lastUpdated || ''))
+        })
+        .slice(0, 6)
+
+      return {
+        narrativeSignals,
+        narrativeDiagnostics: {
+          registryCount: NEWS_NARRATIVE_REGISTRY.length,
+          activeNarrativeCount: narrativeSignals.length,
+          clusterCount: clusteredStories.length,
+          dominantNarrative: narrativeSignals[0]?.narrativeId || null,
+        },
+      }
+    }
+
     function getHostname(rawUrl) {
       try {
         return new URL(rawUrl).hostname.replace(/^www\./, '').toLowerCase()
@@ -1967,6 +2204,7 @@ const worker = {
 
       const deduped = dedupeNewsItems(ranked)
       const clustered = buildNewsClusters(deduped)
+      const narratives = buildNarrativeSignals(clustered.clusteredStories)
       const balanced = capNewsItemsBySource(clustered.items, NEWS_PER_SOURCE_LIMIT, NEWS_TOTAL_LIMIT)
       const items = balanced.map(({ score, ...item }) => item)
       const finalCounts = new Map()
@@ -1991,6 +2229,8 @@ const worker = {
           totalRawStories: ranked.length,
           duplicateCollapseCount: Math.max(0, ranked.length - deduped.length),
         },
+        narrativeSignals: narratives.narrativeSignals,
+        narrativeDiagnostics: narratives.narrativeDiagnostics,
         sourceDiagnostics,
         preCapCount: deduped.length,
         finalCount: items.length,
@@ -2038,11 +2278,22 @@ const worker = {
         }
         if (!Array.isArray(payload.clusteredStories) || !payload.clusteredStories.length) {
           const clustered = buildNewsClusters(payload.items)
+          const narratives = buildNarrativeSignals(clustered.clusteredStories)
           return {
             ...payload,
             items: clustered.items,
             clusteredStories: clustered.clusteredStories,
             clusterDiagnostics: clustered.clusterDiagnostics,
+            narrativeSignals: narratives.narrativeSignals,
+            narrativeDiagnostics: narratives.narrativeDiagnostics,
+          }
+        }
+        if (!Array.isArray(payload.narrativeSignals)) {
+          const narratives = buildNarrativeSignals(payload.clusteredStories)
+          return {
+            ...payload,
+            narrativeSignals: narratives.narrativeSignals,
+            narrativeDiagnostics: narratives.narrativeDiagnostics,
           }
         }
         return payload
@@ -2392,6 +2643,7 @@ const worker = {
         return jsonResponse({
           items,
           clusteredStories: Array.isArray(payload?.clusteredStories) ? payload.clusteredStories : [],
+          narrativeSignals: Array.isArray(payload?.narrativeSignals) ? payload.narrativeSignals : [],
           meta: {
             fetchedAt,
             updatedAt: fetchedAt,
@@ -2401,6 +2653,7 @@ const worker = {
             preCapCount: payload?.preCapCount || items.length,
             finalCount: payload?.finalCount || items.length,
             clusterDiagnostics: payload?.clusterDiagnostics || null,
+            narrativeDiagnostics: payload?.narrativeDiagnostics || null,
             sourceDiagnostics: Array.isArray(payload?.sourceDiagnostics) ? payload.sourceDiagnostics : [],
             sourceCount: new Set(items.map((item) => item.source).filter(Boolean)).size,
             sources: [...new Set(items.map((item) => item.source).filter(Boolean))],

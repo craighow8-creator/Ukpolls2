@@ -184,6 +184,7 @@ export function normaliseNewsPayload(payload) {
       ? base.newsItems
       : []
   const rawClusters = Array.isArray(base.clusteredStories) ? base.clusteredStories : []
+  const rawNarratives = Array.isArray(base.narrativeSignals) ? base.narrativeSignals : []
 
   const items = [...rawItems]
     .filter((item) => item && typeof item === 'object')
@@ -234,6 +235,19 @@ export function normaliseNewsPayload(payload) {
       articles: Array.isArray(cluster.articles) ? cluster.articles : [],
     }))
 
+  const narrativeSignals = rawNarratives
+    .filter((signal) => signal && typeof signal === 'object')
+    .map((signal) => ({
+      ...signal,
+      titleDisplay: cleanNewsDisplayText(signal.title, { maxLength: 90 }),
+      dominantEntitiesDisplay: Array.isArray(signal.dominantEntities)
+        ? signal.dominantEntities.map((entity) => cleanNewsDisplayText(entity, { maxLength: 40 })).filter(Boolean)
+        : [],
+      dominantTagsDisplay: Array.isArray(signal.dominantTags)
+        ? signal.dominantTags.map((tag) => cleanNewsDisplayText(tag, { maxLength: 40 })).filter(Boolean)
+        : [],
+    }))
+
   const sourceNames = [...new Set(items.map((item) => item.sourceDisplay).filter(Boolean))]
   const latestPublishedAt = items[0]?.publishedAt || null
   const meta = base.meta && typeof base.meta === 'object' ? base.meta : {}
@@ -242,9 +256,11 @@ export function normaliseNewsPayload(payload) {
   return {
     items,
     clusteredStories,
+    narrativeSignals,
     meta: {
       ...meta,
       clusterDiagnostics: base.clusterDiagnostics || meta.clusterDiagnostics || null,
+      narrativeDiagnostics: base.narrativeDiagnostics || meta.narrativeDiagnostics || null,
       updatedAt,
       fetchedAt: base.fetchedAt || meta.fetchedAt || updatedAt,
       storyCount: Number.isFinite(meta.storyCount) ? meta.storyCount : items.length,

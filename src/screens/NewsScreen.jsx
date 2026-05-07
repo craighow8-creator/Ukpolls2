@@ -125,6 +125,68 @@ function EmptyState({ T, title, body }) {
   )
 }
 
+function momentumGlyph(momentum) {
+  switch (momentum) {
+    case 'accelerating':
+    case 'rising':
+      return '↑'
+    case 'fading':
+      return '↓'
+    default:
+      return '→'
+  }
+}
+
+function momentumCopy(signal) {
+  if (signal?.crossSource) return `Covered across ${signal.sourceCount} sources`
+  if (signal?.clusterCount) return `${signal.clusterCount} developing cluster${signal.clusterCount === 1 ? '' : 's'}`
+  if (signal?.storyCount) return `${signal.storyCount} related stor${signal.storyCount === 1 ? 'y' : 'ies'}`
+  return 'Developing narrative'
+}
+
+function NarrativeSignals({ T, signals = [] }) {
+  const visible = signals.slice(0, 3)
+  if (!visible.length) return null
+
+  return (
+    <div style={{ marginTop: 14 }}>
+      <div style={{ fontSize: 12, fontWeight: 850, letterSpacing: '0.08em', textTransform: 'uppercase', color: T.tl, margin: '0 0 9px' }}>
+        Narratives shaping coverage
+      </div>
+      <div style={{ display: 'grid', gap: 8 }}>
+        {visible.map((signal) => {
+          const glyph = momentumGlyph(signal.momentum)
+          const hot = signal.momentum === 'accelerating' || signal.momentum === 'rising'
+          return (
+            <div
+              key={signal.narrativeId}
+              style={{
+                borderRadius: 16,
+                padding: '11px 13px',
+                background: T.c0,
+                border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: T.th, lineHeight: 1.25 }}>
+                  {signal.titleDisplay || signal.title}
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 900, color: hot ? T.pr : T.tl, flexShrink: 0 }}>
+                  {glyph}
+                </div>
+              </div>
+              <div style={{ fontSize: 12.5, fontWeight: 650, color: T.tm, lineHeight: 1.45, marginTop: 4 }}>
+                {momentumCopy(signal)}
+                {signal.dominantEntitiesDisplay?.length ? ` · ${signal.dominantEntitiesDisplay.slice(0, 2).join(' · ')}` : ''}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function SectionLabel({ T, children }) {
   return (
     <div
@@ -613,6 +675,7 @@ export function NewsScreen({ T, news }) {
 
   const items = payload.items
   const meta = payload.meta
+  const narrativeSignals = payload.narrativeSignals || []
   const heroItem = items[0] || null
   const rest = useMemo(() => items.slice(1), [items])
   const safeError = useMemo(() => getNewsErrorState(payload, items.length > 0), [payload, items.length])
@@ -654,6 +717,8 @@ export function NewsScreen({ T, news }) {
             />
           </div>
         ) : null}
+
+        {narrativeSignals.length ? <NarrativeSignals T={T} signals={narrativeSignals} /> : null}
 
         {!loading && !error && !heroItem ? (
           <div style={{ marginTop: 14 }}>
