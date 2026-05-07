@@ -1787,6 +1787,33 @@ const worker = {
       )
     }
 
+    function createNewsRejectionTracker() {
+      const counts = new Map()
+      return {
+        reject(reason) {
+          const label = String(reason || 'other').trim() || 'other'
+          counts.set(label, (counts.get(label) || 0) + 1)
+          return null
+        },
+        merge(other) {
+          for (const row of other?.rejectionReasons || []) {
+            const label = String(row.reason || 'other').trim() || 'other'
+            counts.set(label, (counts.get(label) || 0) + (Number(row.count) || 0))
+          }
+        },
+        diagnostics() {
+          const rejectionReasons = [...counts.entries()]
+            .map(([reason, count]) => ({ reason, count }))
+            .sort((a, b) => b.count - a.count || a.reason.localeCompare(b.reason))
+          return {
+            rejected: rejectionReasons.reduce((sum, row) => sum + row.count, 0),
+            rejectionReasons: rejectionReasons.slice(0, 6),
+            topRejectionReason: rejectionReasons[0]?.reason || '',
+          }
+        },
+      }
+    }
+
     const NEWS_PER_SOURCE_LIMIT = 6
     const NEWS_TOTAL_LIMIT = 24
     const GUARDIAN_NEWS_PAGE_SIZE = '25'
@@ -1798,6 +1825,7 @@ const worker = {
       ]
       let fetched = 0
       const keptItems = []
+      const rejectionTracker = createNewsRejectionTracker()
 
       for (const feedUrl of feedUrls) {
         const xml = await fetchText(feedUrl)
@@ -1821,8 +1849,8 @@ const worker = {
           const publishedAtRaw = stripTags(pubMatch?.[1] || '')
           const publishedAtTs = publishedAtRaw ? new Date(publishedAtRaw).getTime() : NaN
 
-          if (!title || !url) return null
-          if (!isAllowedNewsPath(url)) return null
+          if (!title || !url) return rejectionTracker.reject('missing title/url/date')
+          if (!isAllowedNewsPath(url)) return rejectionTracker.reject('excluded path')
 
           const combined = `${title} ${description}`.toLowerCase()
           const lowerUrl = url.toLowerCase()
@@ -1833,9 +1861,9 @@ const worker = {
             lowerUrl.includes('/news/uk-politics') ||
             textMatchesAny(combined, BBC_STRONG_POLITICS_TERMS)
 
-          if (!looksPolitical) return null
-          if (title.toLowerCase().includes('uk politics live')) return null
-          if (title.toLowerCase().includes('as it happened')) return null
+          if (!looksPolitical) return rejectionTracker.reject('not UK politics')
+          if (title.toLowerCase().includes('uk politics live')) return rejectionTracker.reject('liveblog/as-it-happened')
+          if (title.toLowerCase().includes('as it happened')) return rejectionTracker.reject('liveblog/as-it-happened')
 
           let score = 4
           if (textMatchesAny(combined, BBC_STRONG_POLITICS_TERMS)) score += 2
@@ -1845,7 +1873,7 @@ const worker = {
           if (isOpinionLikeTitle(title)) score -= 2
           if (isExplainerLikeTitle(title)) score -= 2
           if (isWeakCivicStory(combined)) score -= 2
-          if (score < 5) return null
+          if (score < 5) return rejectionTracker.reject('low score')
 
           return {
             title,
@@ -1868,6 +1896,7 @@ const worker = {
         fetched,
         kept: items.length,
         items,
+        ...rejectionTracker.diagnostics(),
       }
     }
 
@@ -1889,6 +1918,7 @@ const worker = {
       }
 
       const parsedItems = parseRssItems(xml, 'Sky News')
+      const rejectionTracker = createNewsRejectionTracker()
       const items = parsedItems
         .map((item) => {
           const title = stripTags(item.title || '')
@@ -1898,12 +1928,12 @@ const worker = {
           const lowerUrl = url.toLowerCase()
           const combined = `${title} ${description}`.toLowerCase()
 
-          if (!title || !url || !publishedAt) return null
-          if (!isAllowedNewsPath(url)) return null
-          if (!hasPoliticsSignal(combined)) return null
-          if (isOpinionLikeTitle(title) && !textMatchesAny(combined, SKY_STRONG_POLITICS_TERMS)) return null
-          if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return null
-          if (isWeakCivicStory(combined) && !hasHardPoliticsSignal(combined)) return null
+          if (!title || !url || !publishedAt) return rejectionTracker.reject('missing title/url/date')
+          if (!isAllowedNewsPath(url)) return rejectionTracker.reject('excluded path')
+          if (!hasPoliticsSignal(combined)) return rejectionTracker.reject('not UK politics')
+          if (isOpinionLikeTitle(title) && !textMatchesAny(combined, SKY_STRONG_POLITICS_TERMS)) return rejectionTracker.reject('opinion/analysis')
+          if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return rejectionTracker.reject('explainer/soft feature')
+          if (isWeakCivicStory(combined) && !hasHardPoliticsSignal(combined)) return rejectionTracker.reject('weak civic signal')
 
           let score = 3
           if (lowerUrl.includes('/politics')) score += 2
@@ -1911,7 +1941,7 @@ const worker = {
           if (hasHardPoliticsSignal(combined)) score += 2
           if (isExplainerLikeTitle(title)) score -= 2
           if (isWeakCivicStory(combined)) score -= 2
-          if (score < 4) return null
+          if (score < 4) return rejectionTracker.reject('low score')
 
           return {
             title,
@@ -1929,6 +1959,7 @@ const worker = {
         fetched: parsedItems.length,
         kept: items.length,
         items,
+        ...rejectionTracker.diagnostics(),
       }
     }
 
@@ -1937,7 +1968,7 @@ const worker = {
       return result.items
     }
 
-    function shapeRssPoliticsItem(item, options = {}) {
+    function shapeRssPoliticsItem(item, options = {}, rejectionTracker = createNewsRejectionTracker()) {
       const {
         sourceName,
         strongTerms = SKY_STRONG_POLITICS_TERMS,
@@ -1954,16 +1985,16 @@ const worker = {
       const lowerUrl = url.toLowerCase()
       const combined = `${title} ${description}`.toLowerCase()
 
-      if (!title || !url || !publishedAt) return null
-      if (!isAllowedNewsPath(url)) return null
-      if (lowerTitle.includes('uk politics live')) return null
-      if (lowerTitle.includes('as it happened')) return null
+      if (!title || !url || !publishedAt) return rejectionTracker.reject('missing title/url/date')
+      if (!isAllowedNewsPath(url)) return rejectionTracker.reject('excluded path')
+      if (lowerTitle.includes('uk politics live')) return rejectionTracker.reject('liveblog/as-it-happened')
+      if (lowerTitle.includes('as it happened')) return rejectionTracker.reject('liveblog/as-it-happened')
 
       const hasPoliticsUrlHint = urlPoliticsHints.some((hint) => lowerUrl.includes(hint))
-      if (!hasPoliticsSignal(combined) && !hasPoliticsUrlHint) return null
-      if (isOpinionLikeTitle(title) && !textMatchesAny(combined, strongTerms)) return null
-      if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return null
-      if (isWeakCivicStory(combined) && !hasHardPoliticsSignal(combined)) return null
+      if (!hasPoliticsSignal(combined) && !hasPoliticsUrlHint) return rejectionTracker.reject('not UK politics')
+      if (isOpinionLikeTitle(title) && !textMatchesAny(combined, strongTerms)) return rejectionTracker.reject('opinion/analysis')
+      if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return rejectionTracker.reject('explainer/soft feature')
+      if (isWeakCivicStory(combined) && !hasHardPoliticsSignal(combined)) return rejectionTracker.reject('weak civic signal')
 
       let score = baseScore
       if (hasPoliticsUrlHint) score += 2
@@ -1971,7 +2002,7 @@ const worker = {
       if (hasHardPoliticsSignal(combined)) score += 2
       if (isExplainerLikeTitle(title)) score -= 2
       if (isWeakCivicStory(combined)) score -= 2
-      if (score < minScore) return null
+      if (score < minScore) return rejectionTracker.reject('low score')
 
       return {
         title,
@@ -1999,13 +2030,14 @@ const worker = {
       }
 
       const parsedItems = parseRssItems(xml, 'Channel 4 News')
+      const rejectionTracker = createNewsRejectionTracker()
       const items = parsedItems
         .map((item) => shapeRssPoliticsItem(item, {
           sourceName: 'Channel 4 News',
           strongTerms: SKY_STRONG_POLITICS_TERMS,
           urlPoliticsHints: ['/news/politics', '/news/'],
           minScore: 4,
-        }))
+        }, rejectionTracker))
         .filter(Boolean)
 
       return {
@@ -2014,6 +2046,7 @@ const worker = {
         fetched: parsedItems.length,
         kept: items.length,
         items,
+        ...rejectionTracker.diagnostics(),
       }
     }
 
@@ -2037,13 +2070,14 @@ const worker = {
       }
 
       const parsedItems = parseRssItems(xml, 'GB News')
+      const rejectionTracker = createNewsRejectionTracker()
       const items = parsedItems
         .map((item) => shapeRssPoliticsItem(item, {
           sourceName: 'GB News',
           strongTerms: SKY_STRONG_POLITICS_TERMS,
           urlPoliticsHints: ['/politics', '/news/'],
           minScore: 5,
-        }))
+        }, rejectionTracker))
         .filter(Boolean)
 
       return {
@@ -2052,6 +2086,7 @@ const worker = {
         fetched: parsedItems.length,
         kept: items.length,
         items,
+        ...rejectionTracker.diagnostics(),
       }
     }
 
@@ -2102,6 +2137,7 @@ const worker = {
 
         const data = await res.json()
         const results = Array.isArray(data?.response?.results) ? data.response.results : []
+        const rejectionTracker = createNewsRejectionTracker()
 
         const items = results
           .map((item) => {
@@ -2112,15 +2148,15 @@ const worker = {
             const lowerUrl = String(url || '').toLowerCase()
             const combined = `${title} ${description}`.toLowerCase()
 
-            if (!title || !url || !publishedAt) return null
-            if (!isAllowedNewsPath(url)) return null
-            if (lowerUrl.includes('/politics/live/')) return null
-            if (title.toLowerCase().includes('uk politics live')) return null
-            if (title.toLowerCase().includes('as it happened')) return null
-            if (!lowerUrl.includes('/politics/') && !lowerUrl.includes('/uk-news/')) return null
-            if (!hasPoliticsSignal(combined) && !lowerUrl.includes('/politics/')) return null
-            if (isOpinionLikeTitle(title) && !combined.includes('starmer') && !combined.includes('farage') && !combined.includes('badenoch')) return null
-            if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return null
+            if (!title || !url || !publishedAt) return rejectionTracker.reject('missing title/url/date')
+            if (!isAllowedNewsPath(url)) return rejectionTracker.reject('excluded path')
+            if (lowerUrl.includes('/politics/live/')) return rejectionTracker.reject('liveblog/as-it-happened')
+            if (title.toLowerCase().includes('uk politics live')) return rejectionTracker.reject('liveblog/as-it-happened')
+            if (title.toLowerCase().includes('as it happened')) return rejectionTracker.reject('liveblog/as-it-happened')
+            if (!lowerUrl.includes('/politics/') && !lowerUrl.includes('/uk-news/')) return rejectionTracker.reject('not UK politics')
+            if (!hasPoliticsSignal(combined) && !lowerUrl.includes('/politics/')) return rejectionTracker.reject('not UK politics')
+            if (isOpinionLikeTitle(title) && !combined.includes('starmer') && !combined.includes('farage') && !combined.includes('badenoch')) return rejectionTracker.reject('opinion/analysis')
+            if (isExplainerLikeTitle(title) && !hasHardPoliticsSignal(combined)) return rejectionTracker.reject('explainer/soft feature')
 
             let score = 3
             if (lowerUrl.includes('/politics/')) score += 2
@@ -2128,7 +2164,7 @@ const worker = {
             if (hasHardPoliticsSignal(combined)) score += 2
             if (isOpinionLikeTitle(title)) score -= 1
             if (isExplainerLikeTitle(title)) score -= 2
-            if (score < 4) return null
+            if (score < 4) return rejectionTracker.reject('low score')
 
             return {
               title,
@@ -2146,6 +2182,7 @@ const worker = {
           fetched: results.length,
           kept: items.length,
           items,
+          ...rejectionTracker.diagnostics(),
         }
       } catch {
         return {
@@ -2218,6 +2255,9 @@ const worker = {
         fetched: result.fetched || 0,
         kept: result.kept || 0,
         final: finalCounts.get(result.items?.[0]?.source || `${result.source} News`) || finalCounts.get(result.source) || 0,
+        rejected: result.rejected || 0,
+        rejectionReasons: Array.isArray(result.rejectionReasons) ? result.rejectionReasons : [],
+        topRejectionReason: result.topRejectionReason || '',
         ...(result.error ? { error: result.error } : {}),
       }))
 

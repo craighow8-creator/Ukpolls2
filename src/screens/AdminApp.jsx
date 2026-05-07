@@ -432,7 +432,7 @@ function NewsSourceHealth({ sourceDiagnostics = [] }) {
               key={row.source || row.sourceUrl || JSON.stringify(row)}
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'minmax(82px, 1.2fr) repeat(3, minmax(42px, 0.55fr)) minmax(66px, 0.75fr)',
+                gridTemplateColumns: 'minmax(82px, 1.1fr) repeat(4, minmax(42px, 0.5fr)) minmax(66px, 0.72fr)',
                 gap: 8,
                 alignItems: 'center',
                 padding: '8px 9px',
@@ -448,6 +448,7 @@ function NewsSourceHealth({ sourceDiagnostics = [] }) {
                 ['Fetched', row.fetched],
                 ['Kept', row.kept],
                 ['Final', row.final],
+                ['Rejected', row.rejected],
               ].map(([label, value]) => (
                 <div key={label} style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 9, fontWeight: 800, color: C.lo, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
@@ -462,6 +463,11 @@ function NewsSourceHealth({ sourceDiagnostics = [] }) {
               {row.error ? (
                 <div style={{ gridColumn: '1 / -1', fontSize: 11.5, color: '#ffb8c6', lineHeight: 1.4 }}>
                   {row.error}
+                </div>
+              ) : null}
+              {row.topRejectionReason ? (
+                <div style={{ gridColumn: '1 / -1', fontSize: 11.5, color: C.lo, lineHeight: 1.4 }}>
+                  Top drop: <span style={{ color: C.hi, fontWeight: 750 }}>{row.topRejectionReason}</span>
                 </div>
               ) : null}
             </div>
