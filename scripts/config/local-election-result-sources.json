@@ -14,6 +14,19 @@
       "notes": "Official Sheffield City Council 7 May 2026 ward-level local election results."
     },
     {
+      "sourceId": "democracy-club-local-results-2026",
+      "sourceName": "Democracy Club local election results CSV",
+      "enabled": true,
+      "priority": false,
+      "parserType": "democracy-club-results-csv",
+      "sourceLabel": "Democracy Club / official result source",
+      "sourceUrl": "https://candidates.democracyclub.org.uk/data/export_csv/?election_id=2026-05-07%24&field_group=results",
+      "lastChecked": "08-05-2026",
+      "verificationStatus": "democracy-club-results",
+      "requireCandidateMatch": true,
+      "notes": "Bulk candidate-level results feed. Rows are imported only when votes and an official result source URL are present. Existing higher-trust official council imports are preserved."
+    },
+    {
       "councilSlug": "birmingham-city-council",
       "councilName": "Birmingham City Council",
       "enabled": false,

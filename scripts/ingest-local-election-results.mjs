@@ -46,9 +46,14 @@ function slugify(value) {
 }
 
 function simplifyCouncilKey(value = '') {
+  const text = String(value || '').replace(/[-_]+/g, ' ')
   return slugify(
-    String(value || '')
+    text
       .replace(/^city of /i, '')
+      .replace(/^borough of /i, '')
+      .replace(/^district of /i, '')
+      .replace(/^county of /i, '')
+      .replace(/, city of$/i, '')
       .replace(/\b(city council|county council|district council|borough council|metropolitan borough council|london borough|council)\b/gi, '')
       .replace(/\s+/g, ' '),
   )
@@ -240,6 +245,20 @@ function findCouncil(config, maps) {
   return null
 }
 
+function findCouncilForResult(result, config, maps) {
+  const slug = String(result?.councilSlug || config?.councilSlug || '').trim()
+  if (slug && maps.councilsBySlug.has(slug)) return maps.councilsBySlug.get(slug)
+
+  for (const key of [result?.council, result?.councilSlug, config?.councilName, config?.councilSlug]
+    .map(simplifyCouncilKey)
+    .filter(Boolean)) {
+    const council = maps.councilsBySimpleName.get(key)
+    if (council) return council
+  }
+
+  return null
+}
+
 function findWard(council, wardName, maps) {
   const map = maps.wardsByCouncil.get(council?.id)
   if (!map) return null
@@ -256,6 +275,7 @@ function normaliseOfficialResultParty(value = '') {
   const key = text.toLowerCase()
 
   if (key === 'the conservative party candidate' || key === 'conservative party candidate' || key === 'conservative party') return 'Conservative'
+  if (key === 'conservative and unionist party') return 'Conservative'
   if (key === 'green party') return 'Green'
   if (key === 'labour party') return 'Labour'
   if (key === 'labour and co-operative party') return 'Labour and Co-operative'
@@ -267,6 +287,7 @@ function normaliseOfficialResultParty(value = '') {
 function normalizeManualRow(row, config) {
   return {
     council: pick(row, ['council', 'councilName', 'Council']) || config.councilName || '',
+    councilSlug: pick(row, ['councilSlug', 'council_slug']) || config.councilSlug || '',
     ward: pick(row, ['ward', 'wardName', 'Ward', 'WARD']),
     candidateName: pick(row, ['candidateName', 'candidate', 'name', 'Candidate', 'CANDIDATE']),
     party: pick(row, ['party', 'partyName', 'Party', 'PARTY']),
@@ -278,7 +299,98 @@ function normalizeManualRow(row, config) {
     sourceLabel: pick(row, ['sourceLabel', 'source_label', 'Source Label']) || config.sourceLabel || 'Official local election results',
     lastChecked: pick(row, ['lastChecked', 'last_checked', 'Last Checked']) || config.lastChecked || '',
     verificationStatus: pick(row, ['verificationStatus', 'verification_status', 'Verification Status']) || config.verificationStatus || 'verified',
+    ballotPaperId: pick(row, ['ballotPaperId', 'ballot_paper_id']),
   }
+}
+
+function extractDemocracyClubCouncilSlug(row = {}) {
+  const electionId = String(row.election_id || '').trim()
+  const ballotId = String(row.ballot_paper_id || '').trim()
+  for (const value of [electionId, ballotId]) {
+    const match = value.match(/^local\.([^.]+)(?:\.|$)/i)
+    if (match?.[1]) return slugify(match[1])
+  }
+  return ''
+}
+
+function normaliseDemocracyClubTurnout(row = {}) {
+  const percentage = String(row.turnout_percentage || '').trim()
+  if (percentage) return percentage.endsWith('%') ? percentage : `${percentage}%`
+  return String(row.turnout_reported || '').trim()
+}
+
+function parseDemocracyClubResultsCsv(text, config, electionDate) {
+  const rows = []
+  const stats = {
+    source: config.sourceName || config.sourceId || 'Democracy Club local election results CSV',
+    rowsFetched: 0,
+    rowsReady: 0,
+    skippedWrongDate: 0,
+    skippedNotLocal: 0,
+    skippedCancelled: 0,
+    skippedNoVotes: 0,
+    skippedNoSource: 0,
+    skippedMissingFields: 0,
+  }
+
+  for (const row of parseCsv(text)) {
+    stats.rowsFetched += 1
+    const rowElectionDate = String(row.election_date || '').trim()
+    const electionId = String(row.election_id || '').trim()
+    const votes = String(row.votes_cast || '').trim()
+    const sourceUrl = String(row.results_source || '').trim()
+    const councilSlug = extractDemocracyClubCouncilSlug(row)
+
+    if (rowElectionDate !== electionDate) {
+      stats.skippedWrongDate += 1
+      continue
+    }
+    if (!/^local(?:\.|$)/i.test(electionId)) {
+      stats.skippedNotLocal += 1
+      continue
+    }
+    if (normaliseBoolean(row.cancelled_poll)) {
+      stats.skippedCancelled += 1
+      continue
+    }
+    if (!votes) {
+      stats.skippedNoVotes += 1
+      continue
+    }
+    if (!sourceUrl) {
+      stats.skippedNoSource += 1
+      continue
+    }
+    if (!councilSlug || !row.post_label || !row.person_name) {
+      stats.skippedMissingFields += 1
+      continue
+    }
+
+    rows.push(
+      normalizeManualRow(
+        {
+          council: councilSlug,
+          councilSlug,
+          ward: row.post_label,
+          candidateName: row.person_name,
+          party: normaliseOfficialResultParty(row.party_name),
+          votes,
+          elected: normaliseBoolean(row.elected),
+          turnout: normaliseDemocracyClubTurnout(row),
+          sourceUrl,
+          sourceLabel: config.sourceLabel,
+          lastChecked: config.lastChecked,
+          verificationStatus: config.verificationStatus,
+          electionDate: rowElectionDate,
+          ballotPaperId: row.ballot_paper_id,
+        },
+        { ...config, electionDate },
+      ),
+    )
+  }
+
+  stats.rowsReady = rows.length
+  return { rows, stats }
 }
 
 function extractSheffieldTurnout(sectionHtml = '') {
@@ -380,6 +492,15 @@ async function loadResultsForSource(config, globalElectionDate) {
     return parseSheffieldOfficialResultPage(html, config, electionDate)
   }
 
+  if (parserType === 'democracy-club-results-csv') {
+    const sourceUrl = String(config.sourceUrl || '').trim()
+    if (!sourceUrl) {
+      return { rows: [], warning: `Missing sourceUrl for ${config.sourceId || config.sourceName || 'Democracy Club results CSV'}.` }
+    }
+    const csvText = await fetchText(sourceUrl)
+    return parseDemocracyClubResultsCsv(csvText, config, electionDate)
+  }
+
   return { rows: [], warning: `Unsupported parser type "${parserType}" for ${config.councilSlug || config.councilName}.` }
 }
 
@@ -390,12 +511,102 @@ async function fetchCouncilCandidateRows(apiBase, councilSlug) {
   const payload = await response.json().catch(() => null)
   return (Array.isArray(payload?.wards) ? payload.wards : []).flatMap((ward) =>
     (Array.isArray(ward.candidates) ? ward.candidates : []).map((candidate) => ({
+      candidateId: candidate.id,
       wardSlug: ward.slug,
       wardName: ward.name,
       candidateName: candidate.name,
       party: candidate.party,
     })),
   )
+}
+
+async function fetchExistingResultCoverage(apiBase) {
+  const response = await fetch(`${apiBase.replace(/\/$/, '')}/api/local-vote/health`).catch(() => null)
+  if (!response?.ok) return new Map()
+  const payload = await response.json().catch(() => null)
+  const rows = Array.isArray(payload?.resultCoverageByCouncil) ? payload.resultCoverageByCouncil : []
+  const map = new Map()
+  for (const row of rows) {
+    if (Number(row?.results || 0) <= 0) continue
+    for (const key of [row.slug, row.name].map(simplifyCouncilKey).filter(Boolean)) {
+      map.set(key, row)
+    }
+  }
+  return map
+}
+
+function buildProtectedOfficialCouncilKeys(sourceConfigs) {
+  const keys = new Set()
+  for (const source of sourceConfigs) {
+    if (!source.enabled || source.parserType === 'democracy-club-results-csv') continue
+    for (const key of [source.councilSlug, source.councilName].map(simplifyCouncilKey).filter(Boolean)) {
+      keys.add(key)
+    }
+  }
+  return keys
+}
+
+function isCouncilProtectedFromBulkResults(council, existingResultCoverage, protectedOfficialCouncilKeys) {
+  const keys = [council?.slug, council?.name].map(simplifyCouncilKey).filter(Boolean)
+  return keys.some((key) => existingResultCoverage.has(key) || protectedOfficialCouncilKeys.has(key))
+}
+
+function summariseSkippedRows(skipped) {
+  const councilNotFound = new Map()
+  const wardNotFound = new Map()
+
+  for (const row of skipped) {
+    if (row.reason === 'council-not-found') {
+      const key = String(row.council || '').trim() || 'unknown'
+      const entry = councilNotFound.get(key) || { council: key, rows: 0, samples: [] }
+      entry.rows += 1
+      if (entry.samples.length < 3) {
+        entry.samples.push({ ward: row.ward || '', candidateName: row.candidateName || '' })
+      }
+      councilNotFound.set(key, entry)
+    }
+
+    if (row.reason === 'ward-not-found') {
+      const key = `${row.council || 'unknown'}|${row.ward || 'unknown'}`
+      const entry = wardNotFound.get(key) || { council: row.council || 'unknown', ward: row.ward || 'unknown', rows: 0, samples: [] }
+      entry.rows += 1
+      if (entry.samples.length < 3) {
+        entry.samples.push({ candidateName: row.candidateName || '' })
+      }
+      wardNotFound.set(key, entry)
+    }
+  }
+
+  return {
+    unmatchedCouncilsTop20: [...councilNotFound.values()]
+      .sort((a, b) => b.rows - a.rows || a.council.localeCompare(b.council))
+      .slice(0, 20),
+    unmatchedWardsTop20: [...wardNotFound.values()]
+      .sort((a, b) => b.rows - a.rows || a.council.localeCompare(b.council) || a.ward.localeCompare(b.ward))
+      .slice(0, 20),
+  }
+}
+
+function candidateMatchKey({ wardName = '', candidateName = '', party = '', partyName = '' } = {}) {
+  return `${wardKey(wardName)}|${String(candidateName || '').trim().toLowerCase()}|${normaliseOfficialResultParty(party || partyName).toLowerCase()}`
+}
+
+async function attachCandidateIds(apiBase, rowsForImport) {
+  const rowsByCouncil = new Map()
+  for (const row of rowsForImport) {
+    const list = rowsByCouncil.get(row.councilSlug) || []
+    list.push(row)
+    rowsByCouncil.set(row.councilSlug, list)
+  }
+
+  for (const [councilSlug, rows] of rowsByCouncil.entries()) {
+    const candidateRows = await fetchCouncilCandidateRows(apiBase, councilSlug)
+    const candidateMap = new Map(candidateRows.map((candidate) => [candidateMatchKey(candidate), candidate]))
+    for (const row of rows) {
+      const match = candidateMap.get(candidateMatchKey(row))
+      if (match?.candidateId) row.candidateId = match.candidateId
+    }
+  }
 }
 
 async function buildCandidateMatchDiagnostics(apiBase, rowsForImport) {
@@ -410,13 +621,10 @@ async function buildCandidateMatchDiagnostics(apiBase, rowsForImport) {
   for (const [councilSlug, rows] of rowsByCouncil.entries()) {
     const candidateRows = await fetchCouncilCandidateRows(apiBase, councilSlug)
     const candidateKeys = new Set(
-      candidateRows.map((candidate) =>
-        `${wardKey(candidate.wardName)}|${String(candidate.candidateName || '').trim().toLowerCase()}|${String(candidate.party || '').trim().toLowerCase()}`,
-      ),
+      candidateRows.map((candidate) => candidateMatchKey(candidate)),
     )
     const unmatched = rows.filter((row) => {
-      const key = `${wardKey(row.wardName)}|${String(row.candidateName || '').trim().toLowerCase()}|${String(row.partyName || '').trim().toLowerCase()}`
-      return !candidateKeys.has(key)
+      return !candidateKeys.has(candidateMatchKey(row))
     })
 
     summaries.push({
@@ -434,6 +642,39 @@ async function buildCandidateMatchDiagnostics(apiBase, rowsForImport) {
   }
 
   return summaries
+}
+
+function summariseCandidateDiagnostics(diagnostics) {
+  const totals = diagnostics.reduce((summary, row) => {
+    summary.councils += 1
+    summary.resultRows += Number(row.resultRows || 0)
+    summary.candidateRows += Number(row.candidateRows || 0)
+    summary.matchedCandidates += Number(row.matchedCandidates || 0)
+    summary.unmatchedCandidates += Number(row.unmatchedCandidates || 0)
+    return summary
+  }, {
+    councils: 0,
+    resultRows: 0,
+    candidateRows: 0,
+    matchedCandidates: 0,
+    unmatchedCandidates: 0,
+  })
+
+  return {
+    totals,
+    councilsWithUnmatchedCandidates: diagnostics.filter((row) => Number(row.unmatchedCandidates || 0) > 0).length,
+    worstUnmatchedCouncils: diagnostics
+      .filter((row) => Number(row.unmatchedCandidates || 0) > 0)
+      .sort((a, b) => Number(b.unmatchedCandidates || 0) - Number(a.unmatchedCandidates || 0))
+      .slice(0, 10)
+      .map((row) => ({
+        councilSlug: row.councilSlug,
+        resultRows: row.resultRows,
+        matchedCandidates: row.matchedCandidates,
+        unmatchedCandidates: row.unmatchedCandidates,
+        unmatchedSamples: row.unmatchedSamples.slice(0, 5),
+      })),
+  }
 }
 
 function normalizeImportRow({ council, ward, result, sourceConfig, electionDate }) {
@@ -457,6 +698,8 @@ function normalizeImportRow({ council, ward, result, sourceConfig, electionDate 
     sourceAttribution: 'official-result-source',
     sourceType: 'official-election-result',
     parserType: sourceConfig.parserType,
+    ballotPaperId: result.ballotPaperId || '',
+    requireCandidateMatch: sourceConfig.requireCandidateMatch === true,
   }
 }
 
@@ -499,7 +742,11 @@ export async function ingestLocalElectionResults() {
 
   const electionDate = String(config.electionDate || '2026-05-07').trim()
   const sourceConfigs = (Array.isArray(config.sources) ? config.sources : [])
-    .filter((source) => !COUNCIL_FILTER || slugify(source.councilSlug || source.councilName) === slugify(COUNCIL_FILTER))
+    .filter((source) => {
+      if (!COUNCIL_FILTER) return true
+      if (source.parserType === 'democracy-club-results-csv') return true
+      return slugify(source.councilSlug || source.councilName) === slugify(COUNCIL_FILTER)
+    })
 
   if (!sourceConfigs.length) {
     fail('No result source config entries matched.')
@@ -512,27 +759,59 @@ export async function ingestLocalElectionResults() {
 
   const lookup = await fetchLookupIndex(apiBase)
   const maps = buildLookupMaps(lookup)
-  const rowsForImport = []
+  const existingResultCoverage = await fetchExistingResultCoverage(apiBase)
+  const protectedOfficialCouncilKeys = buildProtectedOfficialCouncilKeys(sourceConfigs)
+  let rowsForImport = []
   const warnings = []
   const skipped = []
+  const sourceStats = []
+  const preservedOfficialCouncilSlugs = new Set()
 
   for (const sourceConfig of enabledSources) {
-    const council = findCouncil(sourceConfig, maps)
-    if (!council) {
-      warnings.push(`Council not found in lookup index: ${sourceConfig.councilSlug || sourceConfig.councilName}`)
-      continue
-    }
-
     const loaded = await loadResultsForSource(sourceConfig, electionDate)
     if (loaded.warning) warnings.push(loaded.warning)
+    if (loaded.stats) sourceStats.push(loaded.stats)
 
     for (const result of loaded.rows || []) {
+      const council = sourceConfig.parserType === 'democracy-club-results-csv'
+        ? findCouncilForResult(result, sourceConfig, maps)
+        : findCouncil(sourceConfig, maps)
+
+      if (!council) {
+        skipped.push({
+          reason: 'council-not-found',
+          council: result.councilSlug || result.council || sourceConfig.councilSlug || sourceConfig.councilName,
+          candidateName: result.candidateName,
+          ward: result.ward,
+        })
+        continue
+      }
+
+      if (COUNCIL_FILTER && slugify(council.slug) !== slugify(COUNCIL_FILTER) && simplifyCouncilKey(council.name) !== simplifyCouncilKey(COUNCIL_FILTER)) {
+        continue
+      }
+
+      if (sourceConfig.parserType === 'democracy-club-results-csv' && isCouncilProtectedFromBulkResults(council, existingResultCoverage, protectedOfficialCouncilKeys)) {
+        preservedOfficialCouncilSlugs.add(council.slug)
+        skipped.push({
+          reason: 'preserved-existing-official-results',
+          council: council.slug,
+          candidateName: result.candidateName,
+          ward: result.ward,
+        })
+        continue
+      }
+
       if (!result.candidateName || !result.ward) {
         skipped.push({ reason: 'missing-result-fields', council: council.slug, result })
         continue
       }
       if (!result.sourceUrl && !sourceConfig.sourceUrl) {
         skipped.push({ reason: 'missing-source-url', council: council.slug, candidateName: result.candidateName, ward: result.ward })
+        continue
+      }
+      if (result.votes === '' || result.votes == null) {
+        skipped.push({ reason: 'missing-votes', council: council.slug, candidateName: result.candidateName, ward: result.ward })
         continue
       }
 
@@ -546,14 +825,43 @@ export async function ingestLocalElectionResults() {
     }
   }
 
+  await attachCandidateIds(apiBase, rowsForImport)
+  rowsForImport = rowsForImport.filter((row) => {
+    if (!row.requireCandidateMatch || row.candidateId) return true
+    skipped.push({
+      reason: 'candidate-not-found',
+      council: row.councilSlug,
+      candidateName: row.candidateName,
+      ward: row.wardName,
+    })
+    return false
+  })
+
+  const rowsByCouncilCount = new Map()
+  const matchedWardKeys = new Set()
+  for (const row of rowsForImport) {
+    rowsByCouncilCount.set(row.councilSlug, Number(rowsByCouncilCount.get(row.councilSlug) || 0) + 1)
+    matchedWardKeys.add(`${row.councilSlug}|${row.wardSlug}`)
+  }
+
   const summaryBase = {
     apiBase,
     electionDate,
     configPath: CONFIG_PATH,
-    enabledSources: enabledSources.map((source) => source.councilSlug || source.councilName),
+    enabledSources: enabledSources.map((source) => source.councilSlug || source.councilName || source.sourceId || source.sourceName),
     rowsReady: rowsForImport.length,
     skipped: skipped.slice(0, 50),
     warnings,
+    sourceStats,
+    perCouncilResultCounts: Object.fromEntries([...rowsByCouncilCount.entries()].sort((a, b) => a[0].localeCompare(b[0]))),
+    matchedCouncils: rowsByCouncilCount.size,
+    matchedWards: matchedWardKeys.size,
+    skippedCounts: skipped.reduce((counts, row) => {
+      counts[row.reason] = Number(counts[row.reason] || 0) + 1
+      return counts
+    }, {}),
+    preservedOfficialCouncils: [...preservedOfficialCouncilSlugs].sort(),
+    ...summariseSkippedRows(skipped),
   }
 
   if (!rowsForImport.length) {
@@ -562,7 +870,12 @@ export async function ingestLocalElectionResults() {
 
   if (checkOnly) {
     const candidateDiagnostics = await buildCandidateMatchDiagnostics(apiBase, rowsForImport)
-    console.log(JSON.stringify({ ok: true, dryRun: true, ...summaryBase, candidateDiagnostics }, null, 2))
+    console.log(JSON.stringify({
+      ok: true,
+      dryRun: true,
+      ...summaryBase,
+      candidateDiagnostics: summariseCandidateDiagnostics(candidateDiagnostics),
+    }, null, 2))
     return
   }
 
@@ -575,7 +888,7 @@ export async function ingestLocalElectionResults() {
     sourceLabel,
     sourceUrl: '',
     totalRows: rowsForImport.length,
-    priorityCouncils: sourceConfigs.filter((source) => source.priority).map((source) => source.councilSlug || source.councilName),
+    priorityCouncils: sourceConfigs.filter((source) => source.priority).map((source) => source.councilSlug || source.councilName || source.sourceId || source.sourceName),
   })
 
   const chunkSize = Number.isFinite(CHUNK_SIZE) && CHUNK_SIZE > 0 ? CHUNK_SIZE : 25
