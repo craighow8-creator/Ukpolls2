@@ -962,9 +962,13 @@ const worker = {
       const isCampaign = includesAny(text, ['campaign', 'campaigning', 'candidate', 'manifesto', 'leaflet'])
       const hasMovement = includesAny(text, ['surge', 'breakthrough', 'gain', 'swing', 'lead', 'ahead', 'pressure', 'collapse', 'drop'])
       const hasDeveloping = includesAny(text, ['breaking', 'live', 'developing', 'latest'])
+      const hasResultSignal = includesAny(text, ['result', 'results', 'declared', 'declaration', 'gain', 'gains', 'loss', 'losses', 'control', 'majority', 'swing', 'turnout', 'seat', 'seats'])
+      const hasCouncilGain = includesAny(text, ['council gain', 'gains control', 'gain control', 'takes control', 'win control', 'wins control', 'gain from'])
+      const hasCouncilLoss = includesAny(text, ['council loss', 'loses control', 'lost control', 'loss of control', 'losses', 'loses seat', 'loss of seats'])
+      const hasPostElectionAnalysis = hasResultSignal && includesAny(text, ['analysis', 'fallout', 'aftermath', 'what it means', 'lessons', 'national polling', 'leadership pressure'])
 
       let storyType = 'general-politics'
-      if (isElection && includesAny(text, ['result', 'declared', 'declaration', 'gain from', 'seat gain', 'wins', 'won'])) storyType = 'election-result'
+      if (isElection && includesAny(text, ['result', 'results', 'declared', 'declaration', 'gain from', 'seat gain', 'wins', 'won', 'control', 'majority', 'swing'])) storyType = 'election-result'
       else if (isPolling) storyType = 'polling'
       else if (isLeadership) storyType = 'party-leadership'
       else if (isScandal) storyType = 'scandal'
@@ -995,11 +999,33 @@ const worker = {
         importanceScore += 7
         electionScore += 8
         pushUnique(tags, 'ELECTIONS')
+        pushUnique(tags, 'RESULTS')
         pushUnique(tags, 'SWING ALERT')
       } else if (isElection) {
         importanceScore += 4
         electionScore += 5
         pushUnique(tags, 'ELECTIONS')
+      }
+
+      if (hasCouncilGain) {
+        importanceScore += 4
+        electionScore += 4
+        pushUnique(tags, 'COUNCIL GAIN')
+      }
+      if (hasCouncilLoss) {
+        importanceScore += 4
+        electionScore += 4
+        pushUnique(tags, 'COUNCIL LOSS')
+      }
+      if (hasResultSignal && text.includes('swing')) {
+        importanceScore += 3
+        pollImpactScore += 2
+        pushUnique(tags, 'SWING')
+      }
+      if (hasPostElectionAnalysis) {
+        importanceScore += 3
+        electionScore += 2
+        pushUnique(tags, 'POST-ELECTION ANALYSIS')
       }
 
       if (isLocal || entities.includes('council') || entities.includes('mayor')) {
@@ -1018,6 +1044,11 @@ const worker = {
         importanceScore += 4
         urgencyScore += 2
         pushUnique(tags, storyType === 'party-leadership' ? 'LEADER WATCH' : 'PARTY PRESSURE')
+      }
+      if (includesAny(text, ['leadership pressure', 'pressure on', 'calls for', 'resign', 'resignation', 'blame'])) {
+        importanceScore += 2
+        urgencyScore += 1
+        pushUnique(tags, 'LEADER PRESSURE')
       }
 
       if (isPolicy || isEconomy || isMigration) {
@@ -1038,7 +1069,8 @@ const worker = {
       if (!tags.length && category) pushUnique(tags, String(category).toUpperCase())
 
       let whyItMatters = 'A relevant Westminster story to watch.'
-      if (storyType === 'election-result') whyItMatters = 'Election-related story with possible council-control implications.'
+      if (hasPostElectionAnalysis) whyItMatters = 'Post-election analysis can show what results mean for party momentum.'
+      else if (storyType === 'election-result') whyItMatters = 'Election-related story with possible council-control implications.'
       else if (isPolling) whyItMatters = 'Could shift the reading of party momentum in the polling picture.'
       else if (entities.includes('Reform UK')) whyItMatters = 'Relevant to Reform UK national momentum.'
       else if (entities.includes('Labour')) whyItMatters = 'Could signal pressure on Labour in national or local battlegrounds.'
@@ -1054,7 +1086,7 @@ const worker = {
         urgencyScore: Math.round(Math.max(0, urgencyScore) * 10) / 10,
         electionScore: Math.round(Math.max(0, electionScore) * 10) / 10,
         pollImpactScore: Math.round(Math.max(0, pollImpactScore) * 10) / 10,
-        tags: tags.slice(0, 4),
+        tags: tags.slice(0, 6),
         entities,
         whyItMatters: whyItMatters.slice(0, 140),
       }
@@ -1830,6 +1862,38 @@ const worker = {
       return ['1', 'true', 'yes', 'on', 'active'].includes(value)
     }
 
+    function electionModePhaseOverride(env) {
+      const value = String(
+        env?.NEWS_ELECTION_MODE_PHASE ||
+        env?.ELECTION_MODE_PHASE ||
+        env?.POLITISCOPE_ELECTION_MODE_PHASE ||
+        ''
+      ).trim().toLowerCase()
+      return ['campaign', 'polling-day', 'results', 'aftermath'].includes(value) ? value : ''
+    }
+
+    function getPostElectionSignalText(item) {
+      return `${item?.title || ''} ${item?.description || ''} ${item?.summary || ''} ${item?.tag || ''} ${(item?.tags || []).join(' ')} ${(item?.entities || []).join(' ')}`.toLowerCase()
+    }
+
+    function hasResultsSignal(item) {
+      const text = getPostElectionSignalText(item)
+      return (
+        item?.storyType === 'election-result' ||
+        includesAny(text, ['result', 'results', 'declared', 'declaration', 'gain', 'gains', 'loss', 'losses', 'control', 'majority', 'swing', 'turnout', 'seat', 'seats'])
+      ) && includesAny(text, ['election', 'council', 'mayor', 'mayoral', 'vote', 'poll'])
+    }
+
+    function hasPollingDaySignal(item) {
+      const text = getPostElectionSignalText(item)
+      return includesAny(text, ['polls open', 'polling stations', 'voters go to the polls', 'election day', 'voting begins'])
+    }
+
+    function hasPostElectionAnalysisSignal(item) {
+      const text = getPostElectionSignalText(item)
+      return hasResultsSignal(item) && includesAny(text, ['analysis', 'fallout', 'aftermath', 'what it means', 'lessons', 'pressure', 'national polling', 'leadership', 'resign', 'blame'])
+    }
+
     function isElectionLikeNewsItem(item) {
       const text = `${item?.title || ''} ${item?.description || ''} ${item?.tag || ''} ${(item?.entities || []).join(' ')}`.toLowerCase()
       return (
@@ -1848,12 +1912,16 @@ const worker = {
     }
 
     function detectNewsElectionMode({ env, items = [], clusters = [] } = {}) {
+      const phaseOverride = electionModePhaseOverride(env)
       if (isElectionModeOverrideEnabled(env)) {
-        return { active: true, reason: 'Manual override enabled' }
+        return { active: true, phase: phaseOverride || 'campaign', reason: 'Manual override enabled' }
       }
 
       const enrichedItems = Array.isArray(items) ? items : []
       const electionItems = enrichedItems.filter(isElectionLikeNewsItem)
+      const resultsItems = enrichedItems.filter(hasResultsSignal)
+      const pollingDayItems = enrichedItems.filter(hasPollingDaySignal)
+      const aftermathItems = enrichedItems.filter(hasPostElectionAnalysisSignal)
       const recentElectionItems = electionItems.filter((item) => {
         const ts = storyTimestamp(item)
         return ts != null && (Date.now() - ts) <= 36 * 3600000
@@ -1869,18 +1937,37 @@ const worker = {
           title.includes('poll')
         )
       })
+      const resultClusters = electionClusters.filter((cluster) => {
+        const title = String(cluster?.clusterTitle || '').toLowerCase()
+        const summary = String(cluster?.clusterSummary || '').toLowerCase()
+        const tags = Array.isArray(cluster?.clusterTags) ? cluster.clusterTags : []
+        return (
+          tags.some((tag) => ['RESULTS', 'COUNCIL GAIN', 'COUNCIL LOSS', 'SWING', 'POST-ELECTION ANALYSIS'].includes(tag)) ||
+          includesAny(`${title} ${summary}`, ['result', 'declared', 'gain', 'loss', 'control', 'majority', 'swing'])
+        )
+      })
+
+      if (aftermathItems.length >= 4) {
+        return { active: true, phase: 'aftermath', reason: `${aftermathItems.length} post-election analysis stories detected` }
+      }
+      if (resultsItems.length >= 5 || resultClusters.length >= 2) {
+        return { active: true, phase: 'results', reason: `${Math.max(resultsItems.length, resultClusters.length)} results signals detected` }
+      }
+      if (pollingDayItems.length >= 3) {
+        return { active: true, phase: 'polling-day', reason: `${pollingDayItems.length} polling-day stories detected` }
+      }
 
       if (recentElectionItems.length >= 8) {
-        return { active: true, reason: `${recentElectionItems.length} recent election/polling stories detected` }
+        return { active: true, phase: 'campaign', reason: `${recentElectionItems.length} recent election/polling stories detected` }
       }
       if (electionClusters.length >= 3) {
-        return { active: true, reason: `${electionClusters.length} election/polling clusters detected` }
+        return { active: true, phase: 'campaign', reason: `${electionClusters.length} election/polling clusters detected` }
       }
       if (electionItems.length >= Math.max(10, enrichedItems.length * 0.45)) {
-        return { active: true, reason: 'Election-related story volume is high' }
+        return { active: true, phase: 'campaign', reason: 'Election-related story volume is high' }
       }
 
-      return { active: false, reason: 'Normal filtering mode' }
+      return { active: false, phase: 'campaign', reason: 'Normal filtering mode' }
     }
 
     function shouldAllowRollingElectionStory({ title, url, combined, electionMode = false }) {
@@ -2310,15 +2397,29 @@ const worker = {
       ])
     }
 
-    function electionModeRankBoost(item, electionMode) {
+    function electionModeRankBoost(item, electionMode, electionModePhase = 'campaign') {
       if (!electionMode) return 0
       const electionScore = Number.isFinite(Number(item?.electionScore)) ? Number(item.electionScore) : 0
       const pollImpactScore = Number.isFinite(Number(item?.pollImpactScore)) ? Number(item.pollImpactScore) : 0
       const localElectionBoost = isElectionLikeNewsItem(item) ? 2 : 0
-      return Math.min(8, (electionScore * 0.65) + (pollImpactScore * 0.45) + localElectionBoost)
+      let boost = (electionScore * 0.65) + (pollImpactScore * 0.45) + localElectionBoost
+      const text = getPostElectionSignalText(item)
+      const tags = Array.isArray(item?.tags) ? item.tags : []
+
+      if (electionModePhase === 'results' || electionModePhase === 'aftermath') {
+        if (hasResultsSignal(item)) boost += 5
+        if (hasPostElectionAnalysisSignal(item)) boost += electionModePhase === 'aftermath' ? 5 : 3
+        if (tags.some((tag) => ['RESULTS', 'COUNCIL GAIN', 'COUNCIL LOSS', 'SWING', 'LEADER PRESSURE', 'POST-ELECTION ANALYSIS'].includes(tag))) boost += 3
+        if (includesAny(text, ['declared', 'declaration', 'gain', 'loss', 'control', 'majority', 'swing', 'turnout', 'council', 'mayor', 'seat'])) boost += 2
+        if (hasPollingDaySignal(item)) boost -= 6
+      } else if (electionModePhase === 'polling-day') {
+        if (hasPollingDaySignal(item)) boost += 4
+      }
+
+      return Math.min(electionModePhase === 'results' || electionModePhase === 'aftermath' ? 14 : 8, boost)
     }
 
-    function shapeLiveNewsResults(sourceResults, { now = Date.now(), electionMode = false } = {}) {
+    function shapeLiveNewsResults(sourceResults, { now = Date.now(), electionMode = false, electionModePhase = 'campaign' } = {}) {
       const allItems = sourceResults.flatMap((result) => result.items || [])
       const ageWeight = electionMode ? 0.22 : 0.12
       const ageCap = electionMode ? 8 : 6
@@ -2332,14 +2433,14 @@ const worker = {
           const aAgeHours = Number.isFinite(aTime) ? Math.max(0, (now - aTime) / 3600000) : 999
           const bAgeHours = Number.isFinite(bTime) ? Math.max(0, (now - bTime) / 3600000) : 999
 
-          const aRank = (a.score || 0) + electionModeRankBoost(a, electionMode) - Math.min(aAgeHours * ageWeight, ageCap)
-          const bRank = (b.score || 0) + electionModeRankBoost(b, electionMode) - Math.min(bAgeHours * ageWeight, ageCap)
+          const aRank = (a.score || 0) + electionModeRankBoost(a, electionMode, electionModePhase) - Math.min(aAgeHours * ageWeight, ageCap)
+          const bRank = (b.score || 0) + electionModeRankBoost(b, electionMode, electionModePhase) - Math.min(bAgeHours * ageWeight, ageCap)
 
           const aImportance = Number.isFinite(Number(a.importanceScore)) ? Number(a.importanceScore) : null
           const bImportance = Number.isFinite(Number(b.importanceScore)) ? Number(b.importanceScore) : null
           if (aImportance != null || bImportance != null) {
-            const aWeightedImportance = (aImportance ?? aRank) + electionModeRankBoost(a, electionMode)
-            const bWeightedImportance = (bImportance ?? bRank) + electionModeRankBoost(b, electionMode)
+            const aWeightedImportance = (aImportance ?? aRank) + electionModeRankBoost(a, electionMode, electionModePhase)
+            const bWeightedImportance = (bImportance ?? bRank) + electionModeRankBoost(b, electionMode, electionModePhase)
             const diff = bWeightedImportance - aWeightedImportance
             if (diff !== 0) return diff
           }
@@ -2389,12 +2490,17 @@ const worker = {
     async function fetchLiveNewsPayload(env) {
       const now = Date.now()
       const overrideElectionMode = isElectionModeOverrideEnabled(env)
+      const overrideElectionModePhase = electionModePhaseOverride(env)
       let electionModeInfo = overrideElectionMode
-        ? { active: true, reason: 'Manual override enabled' }
-        : { active: false, reason: 'Normal filtering mode' }
+        ? { active: true, phase: overrideElectionModePhase || 'campaign', reason: 'Manual override enabled' }
+        : { active: false, phase: 'campaign', reason: 'Normal filtering mode' }
 
       let sourceResults = await fetchNewsSourceResults(env, { electionMode: overrideElectionMode })
-      let shaped = shapeLiveNewsResults(sourceResults, { now, electionMode: overrideElectionMode })
+      let shaped = shapeLiveNewsResults(sourceResults, {
+        now,
+        electionMode: overrideElectionMode,
+        electionModePhase: electionModeInfo.phase,
+      })
 
       if (!overrideElectionMode) {
         electionModeInfo = detectNewsElectionMode({
@@ -2405,7 +2511,11 @@ const worker = {
 
         if (electionModeInfo.active) {
           sourceResults = await fetchNewsSourceResults(env, { electionMode: true })
-          shaped = shapeLiveNewsResults(sourceResults, { now, electionMode: true })
+          shaped = shapeLiveNewsResults(sourceResults, {
+            now,
+            electionMode: true,
+            electionModePhase: electionModeInfo.phase,
+          })
         }
       }
 
@@ -2423,6 +2533,7 @@ const worker = {
         preCapCount: shaped.deduped.length,
         finalCount: shaped.items.length,
         electionMode: electionModeInfo.active,
+        electionModePhase: electionModeInfo.phase,
         electionModeReason: electionModeInfo.reason,
         electionModeCaps: {
           perSource: electionModeInfo.active ? NEWS_ELECTION_PER_SOURCE_LIMIT : NEWS_PER_SOURCE_LIMIT,
@@ -2850,6 +2961,7 @@ const worker = {
             narrativeDiagnostics: payload?.narrativeDiagnostics || null,
             sourceDiagnostics: Array.isArray(payload?.sourceDiagnostics) ? payload.sourceDiagnostics : [],
             electionMode: Boolean(payload?.electionMode),
+            electionModePhase: payload?.electionModePhase || 'campaign',
             electionModeReason: payload?.electionModeReason || '',
             electionModeCaps: payload?.electionModeCaps || null,
             sourceCount: new Set(items.map((item) => item.source).filter(Boolean)).size,
@@ -2947,6 +3059,7 @@ const worker = {
             preCapCount: livePayload.preCapCount,
             finalCount: livePayload.finalCount,
             electionMode: Boolean(livePayload.electionMode),
+            electionModePhase: livePayload.electionModePhase || 'campaign',
             electionModeReason: livePayload.electionModeReason || '',
           }
           await recordAdminActionResult('news-refresh', result)
@@ -3041,6 +3154,7 @@ const worker = {
             preCapCount: livePayload.preCapCount,
             finalCount: livePayload.finalCount,
             electionMode: Boolean(livePayload.electionMode),
+            electionModePhase: livePayload.electionModePhase || 'campaign',
             electionModeReason: livePayload.electionModeReason || '',
           }
           await recordAdminActionResult('news-refresh', steps.news)

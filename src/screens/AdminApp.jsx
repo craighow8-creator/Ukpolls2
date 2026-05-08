@@ -758,6 +758,11 @@ function DataHealthTab({ data, onRefreshData }) {
   const newsPreCapCount = finiteIssueNumber(newsMeta?.preCapCount, newsAction?.preCapCount)
   const newsFinalCount = finiteIssueNumber(newsMeta?.finalCount, newsAction?.finalCount, newsMeta?.storyCount, newsItems.length)
   const newsElectionMode = Boolean(newsMeta?.electionMode || data?.newsItems?.electionMode)
+  const newsElectionModePhase = firstPresent(
+    newsMeta?.electionModePhase,
+    data?.newsItems?.electionModePhase,
+    newsAction?.electionModePhase,
+  )
   const newsElectionModeReason = firstPresent(
     newsMeta?.electionModeReason,
     data?.newsItems?.electionModeReason,
@@ -1097,6 +1102,7 @@ function DataHealthTab({ data, onRefreshData }) {
             { label: 'Clusters', value: compactNumber(newsClusterCount) },
             { label: 'Narratives', value: compactNumber(newsNarrativeCount) },
             { label: 'Election mode', value: newsElectionMode ? 'Active' : 'Normal' },
+            { label: 'Election phase', value: newsElectionMode ? (newsElectionModePhase || 'campaign') : 'Normal' },
             { label: 'Mode reason', value: newsElectionModeReason || 'Normal filtering mode' },
             { label: 'Last action', value: formatAdminDateTime(newsAction?.finishedAt || newsAction?.updatedAt) },
             { label: 'Action result', value: adminActionResultLabel(newsAction) },
