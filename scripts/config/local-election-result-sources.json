@@ -4,15 +4,14 @@
     {
       "councilSlug": "sheffield-city-council",
       "councilName": "Sheffield City Council",
-      "enabled": false,
+      "enabled": true,
       "priority": true,
-      "parserType": "manual-csv",
-      "csvPath": "data/local-result-sources/sheffield-2026-results.csv",
+      "parserType": "sheffield-official-html",
       "sourceLabel": "Official local election results",
-      "sourceUrl": "",
-      "lastChecked": "",
+      "sourceUrl": "https://www.sheffield.gov.uk/your-city-council/elections/local-elections-results-2026",
+      "lastChecked": "08-05-2026",
       "verificationStatus": "verified",
-      "notes": "Enable after Sheffield publishes official 7 May 2026 ward results."
+      "notes": "Official Sheffield City Council 7 May 2026 ward-level local election results."
     },
     {
       "councilSlug": "birmingham-city-council",

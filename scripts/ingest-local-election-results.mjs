@@ -124,12 +124,48 @@ function pick(row, keys) {
   return ''
 }
 
+function decodeHtml(value = '') {
+  return String(value || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&apos;/gi, "'")
+    .replace(/&ndash;/gi, '-')
+    .replace(/&mdash;/gi, '-')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([a-f0-9]+);/gi, (_, code) => String.fromCharCode(Number.parseInt(code, 16)))
+}
+
+function stripHtml(value = '') {
+  return decodeHtml(String(value || '').replace(/<[^>]+>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function chunkArray(values, size) {
   const chunks = []
   for (let i = 0; i < values.length; i += size) {
     chunks.push(values.slice(i, i + size))
   }
   return chunks
+}
+
+async function fetchText(url) {
+  const response = await fetch(url, {
+    headers: {
+      'user-agent': 'Politiscope official local result importer',
+    },
+  }).catch((error) => {
+    fail(`Failed to fetch official result source: ${url}`, error?.message || String(error))
+  })
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    fail(`Official result source fetch failed (${response.status}): ${url}`, text)
+  }
+
+  return response.text()
 }
 
 function resolveRepoPath(pathValue) {
@@ -215,6 +251,19 @@ function normaliseBoolean(value) {
   return ['1', 'true', 'yes', 'y', 'elected', 'winner', 'won'].includes(text)
 }
 
+function normaliseOfficialResultParty(value = '') {
+  const text = stripHtml(value)
+  const key = text.toLowerCase()
+
+  if (key === 'the conservative party candidate' || key === 'conservative party candidate' || key === 'conservative party') return 'Conservative'
+  if (key === 'green party') return 'Green'
+  if (key === 'labour party') return 'Labour'
+  if (key === 'labour and co-operative party') return 'Labour and Co-operative'
+  if (key === 'liberal democrats') return 'Liberal Democrat'
+  if (key === 'reformuk - changing politics for good') return 'Reform UK'
+  return text
+}
+
 function normalizeManualRow(row, config) {
   return {
     council: pick(row, ['council', 'councilName', 'Council']) || config.councilName || '',
@@ -230,6 +279,73 @@ function normalizeManualRow(row, config) {
     lastChecked: pick(row, ['lastChecked', 'last_checked', 'Last Checked']) || config.lastChecked || '',
     verificationStatus: pick(row, ['verificationStatus', 'verification_status', 'Verification Status']) || config.verificationStatus || 'verified',
   }
+}
+
+function extractSheffieldTurnout(sectionHtml = '') {
+  const text = stripHtml(sectionHtml)
+  const match = text.match(/\bTurnout:\s*([0-9]+(?:\.[0-9]+)?%)/i)
+  return match?.[1] || ''
+}
+
+function parseSheffieldOfficialResultPage(html, config, electionDate) {
+  const sourceUrl = String(config.sourceUrl || '').trim()
+  const rows = []
+  const warnings = []
+  const sectionRegex = /<h3\b[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/h3>([\s\S]*?)(?=<h3\b[^>]*id="|$)/gi
+  let sectionMatch = null
+
+  while ((sectionMatch = sectionRegex.exec(html))) {
+    const ward = stripHtml(sectionMatch[2])
+    const sectionHtml = sectionMatch[3] || ''
+    const tableMatch = sectionHtml.match(/<table\b[\s\S]*?<\/table>/i)
+    if (!ward || !tableMatch) continue
+
+    const turnout = extractSheffieldTurnout(sectionHtml)
+    const rowRegex = /<tr\b[^>]*>([\s\S]*?)<\/tr>/gi
+    let tableRowMatch = null
+    while ((tableRowMatch = rowRegex.exec(tableMatch[0]))) {
+      const cellMatches = [...tableRowMatch[1].matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)]
+      if (cellMatches.length < 3) continue
+
+      const nameHtml = cellMatches[0][1] || ''
+      const partyHtml = cellMatches[1][1] || ''
+      const votesHtml = cellMatches[2][1] || ''
+      const candidateName = stripHtml(nameHtml)
+      const party = normaliseOfficialResultParty(partyHtml)
+      const votes = stripHtml(votesHtml).replace(/,/g, '')
+      if (!candidateName || !party) continue
+
+      rows.push(
+        normalizeManualRow(
+          {
+            council: config.councilName,
+            ward,
+            candidateName,
+            party,
+            votes,
+            elected: /<strong\b/i.test(nameHtml) || /<strong\b/i.test(partyHtml) || /<strong\b/i.test(votesHtml),
+            turnout,
+            sourceUrl,
+            sourceLabel: config.sourceLabel,
+            lastChecked: config.lastChecked,
+            verificationStatus: config.verificationStatus,
+            electionDate,
+          },
+          { ...config, electionDate },
+        ),
+      )
+    }
+  }
+
+  const wardCount = new Set(rows.map((row) => wardKey(row.ward))).size
+  if (wardCount < 28) {
+    warnings.push(`Sheffield parser found ${wardCount} wards; expected 28.`)
+  }
+  if (!rows.length) {
+    warnings.push('Sheffield parser found no result rows.')
+  }
+
+  return { rows, warning: warnings.join(' ') }
 }
 
 async function loadResultsForSource(config, globalElectionDate) {
@@ -255,7 +371,69 @@ async function loadResultsForSource(config, globalElectionDate) {
     }
   }
 
+  if (parserType === 'sheffield-official-html') {
+    const sourceUrl = String(config.sourceUrl || '').trim()
+    if (!sourceUrl) {
+      return { rows: [], warning: `Missing sourceUrl for ${config.councilSlug || config.councilName}.` }
+    }
+    const html = await fetchText(sourceUrl)
+    return parseSheffieldOfficialResultPage(html, config, electionDate)
+  }
+
   return { rows: [], warning: `Unsupported parser type "${parserType}" for ${config.councilSlug || config.councilName}.` }
+}
+
+async function fetchCouncilCandidateRows(apiBase, councilSlug) {
+  if (!councilSlug) return []
+  const response = await fetch(`${apiBase.replace(/\/$/, '')}/api/local-vote/councils/${encodeURIComponent(councilSlug)}`).catch(() => null)
+  if (!response?.ok) return []
+  const payload = await response.json().catch(() => null)
+  return (Array.isArray(payload?.wards) ? payload.wards : []).flatMap((ward) =>
+    (Array.isArray(ward.candidates) ? ward.candidates : []).map((candidate) => ({
+      wardSlug: ward.slug,
+      wardName: ward.name,
+      candidateName: candidate.name,
+      party: candidate.party,
+    })),
+  )
+}
+
+async function buildCandidateMatchDiagnostics(apiBase, rowsForImport) {
+  const rowsByCouncil = new Map()
+  for (const row of rowsForImport) {
+    const list = rowsByCouncil.get(row.councilSlug) || []
+    list.push(row)
+    rowsByCouncil.set(row.councilSlug, list)
+  }
+
+  const summaries = []
+  for (const [councilSlug, rows] of rowsByCouncil.entries()) {
+    const candidateRows = await fetchCouncilCandidateRows(apiBase, councilSlug)
+    const candidateKeys = new Set(
+      candidateRows.map((candidate) =>
+        `${wardKey(candidate.wardName)}|${String(candidate.candidateName || '').trim().toLowerCase()}|${String(candidate.party || '').trim().toLowerCase()}`,
+      ),
+    )
+    const unmatched = rows.filter((row) => {
+      const key = `${wardKey(row.wardName)}|${String(row.candidateName || '').trim().toLowerCase()}|${String(row.partyName || '').trim().toLowerCase()}`
+      return !candidateKeys.has(key)
+    })
+
+    summaries.push({
+      councilSlug,
+      resultRows: rows.length,
+      candidateRows: candidateRows.length,
+      matchedCandidates: rows.length - unmatched.length,
+      unmatchedCandidates: unmatched.length,
+      unmatchedSamples: unmatched.slice(0, 25).map((row) => ({
+        ward: row.wardName,
+        candidateName: row.candidateName,
+        party: row.partyName,
+      })),
+    })
+  }
+
+  return summaries
 }
 
 function normalizeImportRow({ council, ward, result, sourceConfig, electionDate }) {
@@ -383,7 +561,8 @@ export async function ingestLocalElectionResults() {
   }
 
   if (checkOnly) {
-    console.log(JSON.stringify({ ok: true, dryRun: true, ...summaryBase }, null, 2))
+    const candidateDiagnostics = await buildCandidateMatchDiagnostics(apiBase, rowsForImport)
+    console.log(JSON.stringify({ ok: true, dryRun: true, ...summaryBase, candidateDiagnostics }, null, 2))
     return
   }
 
