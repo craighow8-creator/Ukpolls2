@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { InfoButton } from '../../components/InfoGlyph'
 import { COUNCIL_PROFILES, LOCAL_ELECTIONS, LOCAL_REGIONS } from '../../data/elections'
 import {
+  fetchLocalVoteGuideHealth,
   fetchLocalVoteGuideLookupIndex,
   isUkPostcode,
   normalisePostcodeInput,
@@ -43,6 +44,11 @@ const LOCAL_ELECTION_EXPLAINER = [
     title: 'National signal',
     body: 'Local results can show whether parties are gaining or losing ground before a general election.',
   },
+]
+
+const LOCAL_RESULTS_IMPORT_COMMANDS = [
+  'npm run local-results:import:remote -- --dry-run',
+  'npm run local-results:import:remote',
 ]
 
 function readStoredLocalsTabState() {
@@ -111,6 +117,137 @@ function formatWardCoverage(wards = []) {
   const wardLabel = `${wards.length} ${wards.length === 1 ? 'ward' : 'wards'} available`
   if (!candidateWardCount) return wardLabel
   return `${wardLabel} · ${candidateWardCount} ${candidateWardCount === 1 ? 'ward' : 'wards'} with candidate detail`
+}
+
+function formatLocalCount(value) {
+  const number = Number(value || 0)
+  if (!Number.isFinite(number)) return '0'
+  return number.toLocaleString('en-GB')
+}
+
+function LocalResultsReadinessCard({ T, health }) {
+  const counts = health?.counts || {}
+  const resultRows = Number(counts.resultRows || 0)
+  const hasHealth = Boolean(health?.counts)
+  const resultsLoaded = resultRows > 0
+  const stats = [
+    { label: 'Candidate councils', value: counts.candidateCouncils },
+    { label: 'Candidate wards', value: counts.candidateWards },
+    { label: 'Candidates', value: counts.candidates },
+    { label: 'Result rows', value: counts.resultRows },
+  ]
+
+  return (
+    <SurfaceCard
+      T={T}
+      borderColor={resultsLoaded ? '#02A95B44' : '#F59E0B44'}
+      style={{ marginBottom: 12 }}
+    >
+      <SectionLabel T={T}>
+        {resultsLoaded ? 'Results data loaded' : 'Results awaiting official import'}
+      </SectionLabel>
+
+      <div
+        style={{
+          fontSize: 14,
+          fontWeight: 650,
+          color: T.th,
+          lineHeight: 1.55,
+          textAlign: 'center',
+          maxWidth: 620,
+          margin: '0 auto 12px',
+        }}
+      >
+        {resultsLoaded
+          ? 'Official result rows are loaded. Council-level gains, losses and control changes are not summarised here yet.'
+          : 'Candidate coverage is loaded. Ward and council results will appear after official result sources are imported.'}
+      </div>
+
+      {hasHealth ? (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            gap: 8,
+            marginBottom: resultsLoaded ? 0 : 12,
+          }}
+        >
+          {stats.map((item) => (
+            <div
+              key={item.label}
+              style={{
+                borderRadius: 12,
+                padding: '9px 8px',
+                background: T.c1 || 'rgba(0,0,0,0.035)',
+                border: `1px solid ${T.cardBorder || 'rgba(0,0,0,0.08)'}`,
+                textAlign: 'center',
+              }}
+            >
+              <div style={{ fontSize: 18, fontWeight: 850, color: T.th, lineHeight: 1 }}>
+                {formatLocalCount(item.value)}
+              </div>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: T.tl,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  lineHeight: 1.3,
+                  marginTop: 5,
+                }}
+              >
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: T.tl,
+            lineHeight: 1.45,
+            textAlign: 'center',
+            marginBottom: 10,
+          }}
+        >
+          Result readiness counts are temporarily unavailable.
+        </div>
+      )}
+
+      {!resultsLoaded ? (
+        <div
+          style={{
+            display: 'grid',
+            gap: 6,
+            padding: '9px 10px',
+            borderRadius: 12,
+            background: T.c0,
+            border: `1px dashed ${T.cardBorder || 'rgba(0,0,0,0.14)'}`,
+          }}
+        >
+          {LOCAL_RESULTS_IMPORT_COMMANDS.map((command) => (
+            <code
+              key={command}
+              style={{
+                display: 'block',
+                fontSize: 11,
+                fontWeight: 750,
+                color: T.th,
+                whiteSpace: 'normal',
+                overflowWrap: 'anywhere',
+                textAlign: 'center',
+              }}
+            >
+              {command}
+            </code>
+          ))}
+        </div>
+      ) : null}
+    </SurfaceCard>
+  )
 }
 
 function buildLookupMaps(lookup = {}) {
@@ -244,6 +381,7 @@ export default function LocalsTab({
   const [voteGuideMessage, setVoteGuideMessage] = useState(storedStateRef.current.voteGuideMessage || '')
   const [voteGuideBusy, setVoteGuideBusy] = useState(false)
   const [lookupBrowseResults, setLookupBrowseResults] = useState(storedStateRef.current.lookupBrowseResults || null)
+  const [localVoteHealth, setLocalVoteHealth] = useState(null)
   const resultsAnchorRef = useRef(null)
   const regions = LOCAL_REGIONS || []
   const {
@@ -284,6 +422,18 @@ export default function LocalsTab({
       window.requestAnimationFrame(restore)
       window.setTimeout(restore, 80)
       window.setTimeout(restore, 220)
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetchLocalVoteGuideHealth().then((payload) => {
+      if (!cancelled) setLocalVoteHealth(payload)
+    })
+
+    return () => {
+      cancelled = true
     }
   }, [])
 
@@ -389,6 +539,8 @@ export default function LocalsTab({
   return (
     <>
       <SectionLabel T={T}>Local Authorities</SectionLabel>
+
+      <LocalResultsReadinessCard T={T} health={localVoteHealth} />
 
       <SurfaceCard T={T} style={{ marginBottom: 12 }}>
         <SectionLabel T={T}>Search or browse Local Authorities</SectionLabel>

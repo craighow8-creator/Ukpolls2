@@ -888,6 +888,12 @@ export async function fetchLocalVoteGuideLookupIndex() {
   return localVoteLookupIndexPromise
 }
 
+export async function fetchLocalVoteGuideHealth() {
+  const payload = await fetchLocalVoteGuideJson('/api/local-vote/health')
+  if (!payload || typeof payload !== 'object') return null
+  return payload
+}
+
 export async function resolveExternalLocalVoteGuideMatch({ councilName = '', wardName = '' } = {}) {
   const lookup = await fetchLocalVoteGuideLookupIndex()
   if (!lookup) return null
